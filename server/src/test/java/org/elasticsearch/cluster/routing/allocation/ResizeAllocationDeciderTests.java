@@ -32,19 +32,25 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.TestShardRouting;
 import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
+import org.elasticsearch.cluster.routing.allocation.command.AllocationCommands;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.ResizeAllocationDecider;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.test.gateway.TestGatewayAllocator;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.elasticsearch.cluster.routing.ShardRoutingState.INITIALIZING;
 import static org.elasticsearch.cluster.routing.ShardRoutingState.STARTED;
 import static org.elasticsearch.cluster.routing.ShardRoutingState.UNASSIGNED;
+import static org.hamcrest.Matchers.equalTo;
 
 
 public class ResizeAllocationDeciderTests extends ESAllocationTestCase {
@@ -236,4 +242,85 @@ public class ResizeAllocationDeciderTests extends ESAllocationTestCase {
                     routingAllocation).getExplanation());
         }
     }
+
+    public void testNoRetryOnFailure() {
+        final int numberOfTargetShards = 1 << randomIntBetween(0, 3);
+        ClusterState clusterState = createInitialClusterState(true);
+        int shardId = randomIntBetween(0, numberOfTargetShards -1);
+
+        final String node;
+        int numberOfSourceShards = clusterState.metaData().index("source").getNumberOfShards();
+        if (numberOfTargetShards < numberOfSourceShards) {
+            node = randomFrom(Sets.newHashSet(clusterState.nodes().getDataNodes().values())).value.getId();
+            IndexMetaData sourceMetaData = clusterState.metaData().index("source");
+            clusterState = ClusterState.builder(clusterState).metaData(MetaData.builder(clusterState.metaData())
+                .put(IndexMetaData.builder(sourceMetaData).settings(Settings.builder().put(sourceMetaData.getSettings())
+                    .put(IndexMetaData.INDEX_ROUTING_REQUIRE_GROUP_PREFIX + "._id", node)))).build();
+        } else {
+            int sourceShardId = numberOfTargetShards == numberOfSourceShards
+                ? shardId
+                : IndexMetaData.selectSplitShard(shardId, clusterState.metaData().index("source"), numberOfTargetShards).id();
+            node = clusterState.getRoutingTable().index("source").shard(sourceShardId).primaryShard().currentNodeId();
+        }
+
+        MetaData.Builder metaBuilder = MetaData.builder(clusterState.metaData());
+        metaBuilder.put(IndexMetaData.builder("target").settings(settings(Version.CURRENT)
+            .put(IndexMetaData.INDEX_RESIZE_SOURCE_NAME.getKey(), "source")
+            .put(IndexMetaData.INDEX_RESIZE_SOURCE_UUID_KEY, IndexMetaData.INDEX_UUID_NA_VALUE))
+            .numberOfShards(numberOfTargetShards).numberOfReplicas(0));
+        MetaData metaData = metaBuilder.build();
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(clusterState.routingTable());
+        routingTableBuilder.addAsNew(metaData.index("target"));
+        clusterState = ClusterState.builder(clusterState)
+            .routingTable(routingTableBuilder.build())
+            .metaData(metaData).build();
+        verifyAllocationAndDecision(clusterState, shardId, node, UNASSIGNED, 0);
+
+        clusterState = strategy.reroute(clusterState, "reroute");
+        verifyAllocationAndDecision(clusterState, shardId, node, INITIALIZING, 0);
+
+        List<FailedShard> failedShards = Collections.singletonList(
+            new FailedShard(clusterState.routingTable().index("target").shard(shardId).primaryShard(), "boom",
+                new UnsupportedOperationException(), randomBoolean()));
+        clusterState = strategy.applyFailedShards(clusterState, failedShards);
+        verifyAllocationAndDecision(clusterState, shardId, node, UNASSIGNED, 1);
+
+        clusterState = strategy.reroute(clusterState, "reroute");
+
+        verifyAllocationAndDecision(clusterState, shardId, node, UNASSIGNED, 1);
+
+        clusterState = strategy.reroute(clusterState, new AllocationCommands(), false, true).getClusterState();
+
+        verifyAllocationAndDecision(clusterState, shardId, node, INITIALIZING, 0);
+    }
+
+    private void verifyAllocationAndDecision(ClusterState clusterState, int shardId, String node, ShardRoutingState routingState,
+                                             int expectedFailures) {
+        ShardRouting targetShardRouting = clusterState.routingTable().index("target").shard(shardId).primaryShard();
+        assertThat(targetShardRouting.unassignedInfo().getNumFailedAllocations(), equalTo(expectedFailures));
+        assertThat(targetShardRouting.state(), equalTo(routingState));
+
+        Decision decision = expectedFailures == 0 ? Decision.YES : Decision.NO;
+        Matcher<String> explanationMatcher = decision == Decision.YES
+            ? Matchers.allOf() : Matchers.containsString("resize failed on previous attempt");
+
+        RoutingAllocation routingAllocation = new RoutingAllocation(null, clusterState.getRoutingNodes(), clusterState, null, 0);
+        ResizeAllocationDecider resizeAllocationDecider = new ResizeAllocationDecider();
+        Decision actual = resizeAllocationDecider.canAllocate(targetShardRouting, routingAllocation);
+        assertEquals(decision, actual);
+        actual = resizeAllocationDecider.canAllocate(targetShardRouting, clusterState.getRoutingNodes().node(node),
+            routingAllocation);
+        assertEquals(decision, actual);
+
+        routingAllocation.debugDecision(true);
+
+        actual = resizeAllocationDecider.canAllocate(targetShardRouting, routingAllocation);
+        assertEquals(decision.type(), actual.type());
+        assertThat(actual.getExplanation(), explanationMatcher);
+        actual = resizeAllocationDecider.canAllocate(targetShardRouting, clusterState.getRoutingNodes().node(node),
+            routingAllocation);
+        assertEquals(decision.type(), actual.type());
+        assertThat(actual.getExplanation(), explanationMatcher);
+    }
+
 }

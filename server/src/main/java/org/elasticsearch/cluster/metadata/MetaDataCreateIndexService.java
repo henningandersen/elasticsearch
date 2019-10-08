@@ -767,9 +767,11 @@ public class MetaDataCreateIndexService {
             final List<String> nodesToAllocateOn = validateShrinkIndex(currentState, resizeSourceIndex.getName(),
                 mappingKeys, resizeIntoName, indexSettingsBuilder.build());
             indexSettingsBuilder
-                .put(initialRecoveryIdFilter, Strings.arrayToCommaDelimitedString(nodesToAllocateOn.toArray()))
-                // we only try once and then give up with a shrink index
-                .put("index.allocation.max_retries", 1);
+                .put(initialRecoveryIdFilter, Strings.arrayToCommaDelimitedString(nodesToAllocateOn.toArray()));
+            if (currentState.getNodes().getMinNodeVersion().before(Version.V_7_5_0)) {
+                // we only try once and then give up with a shrink index. In 7.5+, this is handled by the ResizeAllocationDecider.
+                indexSettingsBuilder.put("index.allocation.max_retries", 1);
+            }
         } else if (type == ResizeType.SPLIT) {
             validateSplitIndex(currentState, resizeSourceIndex.getName(), mappingKeys, resizeIntoName, indexSettingsBuilder.build());
             indexSettingsBuilder.putNull(initialRecoveryIdFilter);

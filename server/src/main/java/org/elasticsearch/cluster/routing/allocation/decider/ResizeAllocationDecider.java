@@ -53,6 +53,11 @@ public class ResizeAllocationDecider extends AllocationDecider {
             }
             IndexMetaData sourceIndexMetaData = allocation.metaData().getIndexSafe(resizeSourceIndex);
             if (indexMetaData.getNumberOfShards() < sourceIndexMetaData.getNumberOfShards()) {
+                Decision noRetriesDecision = checkNoRetries(unassignedInfo, allocation);
+                if (noRetriesDecision != null) {
+                    return noRetriesDecision;
+                }
+
                 // this only handles splits and clone so far.
                 return Decision.ALWAYS;
             }
@@ -66,15 +71,33 @@ public class ResizeAllocationDecider extends AllocationDecider {
             }
             if (node != null) { // we might get called from the 2 param canAllocate method..
                 if (sourceShardRouting.currentNodeId().equals(node.nodeId())) {
+                    Decision noRetriesDecision = checkNoRetries(unassignedInfo, allocation);
+                    if (noRetriesDecision != null) {
+                        return noRetriesDecision;
+                    }
                     return allocation.decision(Decision.YES, NAME, "source primary is allocated on this node");
                 } else {
                     return allocation.decision(Decision.NO, NAME, "source primary is allocated on another node");
                 }
             } else {
+                Decision noRetriesDecision = checkNoRetries(unassignedInfo, allocation);
+                if (noRetriesDecision != null) {
+                    return noRetriesDecision;
+                }
                 return allocation.decision(Decision.YES, NAME, "source primary is active");
             }
         }
         return super.canAllocate(shardRouting, node, allocation);
+    }
+
+    private Decision checkNoRetries(UnassignedInfo unassignedInfo, RoutingAllocation allocation) {
+        if (unassignedInfo != null && unassignedInfo.getNumFailedAllocations() > 0) {
+            return allocation.decision(Decision.NO, NAME,
+                "resize failed on previous attempt - manually call [/_cluster/reroute?retry_failed=true] to retry, [%s]",
+                unassignedInfo.toString());
+        } else {
+            return null;
+        }
     }
 
     @Override
