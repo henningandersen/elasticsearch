@@ -11,6 +11,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.CheckedBiConsumer;
@@ -276,7 +277,8 @@ public class FollowingEngineTests extends ESTestCase {
                 globalCheckpoint::longValue,
                 () -> RetentionLeases.EMPTY,
                 () -> primaryTerm.get(),
-                EngineTestCase.tombstoneDocSupplier());
+                EngineTestCase.tombstoneDocSupplier(),
+                EngineTestCase.globalCheckpointNotifier(threadPool));
     }
 
     private static Store createStore(
@@ -616,7 +618,7 @@ public class FollowingEngineTests extends ESTestCase {
                     assertThat(result.getResultType(), equalTo(Engine.Result.Type.SUCCESS));
                     operationWithTerms.put(op.seqNo(), term);
                     if (rarely()) {
-                        followingEngine.refresh("test");
+                        followingEngine.asyncRefresh("test", true, ActionListener.wrap(() -> {}));
                     }
                 }
                 // Primary should reject duplicates

@@ -21,6 +21,7 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.util.Bits;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -180,7 +181,7 @@ public class SourceOnlySnapshotShardTests extends IndexShardTestCase {
             final String id = Integer.toString(i);
             indexDoc(shard, "_doc", id, randomDoc());
             if (randomBoolean()) {
-                shard.refresh("test");
+                shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             }
         }
         for (int i = 0; i < numInitialDocs; i++) {
@@ -193,7 +194,7 @@ public class SourceOnlySnapshotShardTests extends IndexShardTestCase {
                 }
             }
             if (frequently()) {
-                shard.refresh("test");
+                shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             }
         }
         SnapshotId snapshotId = new SnapshotId("test", "test");
@@ -219,7 +220,7 @@ public class SourceOnlySnapshotShardTests extends IndexShardTestCase {
             assertEquals(copy.getTotalFileCount(), copy.getIncrementalFileCount());
             assertEquals(copy.getStage(), IndexShardSnapshotStatus.Stage.DONE);
         }
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         ShardRouting shardRouting = TestShardRouting.newShardRouting(new ShardId("index", "_na_", 0), randomAlphaOfLength(10), true,
             ShardRoutingState.INITIALIZING,
             new RecoverySource.SnapshotRecoverySource(
@@ -235,7 +236,7 @@ public class SourceOnlySnapshotShardTests extends IndexShardTestCase {
         assertEquals(restoredShard.recoveryState().getStage(), RecoveryState.Stage.DONE);
         assertEquals(restoredShard.recoveryState().getTranslog().recoveredOperations(), 0);
         assertEquals(IndexShardState.POST_RECOVERY, restoredShard.state());
-        restoredShard.refresh("test");
+        restoredShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         assertEquals(restoredShard.docStats().getCount(), shard.docStats().getCount());
         EngineException engineException = expectThrows(EngineException.class, () -> restoredShard.get(
             new Engine.Get(false, false, Integer.toString(0), new Term("_id", Uid.encodeId(Integer.toString(0))))));
@@ -321,7 +322,7 @@ public class SourceOnlySnapshotShardTests extends IndexShardTestCase {
                     }
                 }
             }
-            targetShard.refresh("test");
+            targetShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             success = true;
         } finally {
             if (success == false) {

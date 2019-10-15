@@ -27,6 +27,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -101,7 +102,7 @@ public class RefreshListenersTests extends ESTestCase {
         refreshMetric = new MeanMetric();
         listeners = new RefreshListeners(
                 () -> maxListeners,
-                () -> engine.refresh("too-many-listeners"),
+                () -> engine.asyncRefresh("too-many-listeners", true, ActionListener.wrap(() -> {})),
                 // Immediately run listeners rather than adding them to the listener thread pool like IndexShard does to simplify the test.
                 Runnable::run,
                 logger,
@@ -150,7 +151,8 @@ public class RefreshListenersTests extends ESTestCase {
                 () -> SequenceNumbers.NO_OPS_PERFORMED,
                 () -> RetentionLeases.EMPTY,
                 () -> primaryTerm,
-                EngineTestCase.tombstoneDocSupplier());
+                EngineTestCase.tombstoneDocSupplier(),
+                EngineTestCase.globalCheckpointNotifier(threadPool));
         engine = new InternalEngine(config);
         engine.recoverFromTranslog((e, s) -> 0, Long.MAX_VALUE);
         listeners.setCurrentRefreshLocationSupplier(engine::getTranslogLastWriteLocation);
@@ -169,7 +171,7 @@ public class RefreshListenersTests extends ESTestCase {
         assertFalse(listeners.addOrNotify(index.getTranslogLocation(), listener));
         assertNull(listener.forcedRefresh.get());
         assertEquals(1, listeners.pendingCount());
-        engine.refresh("I said so");
+        engine.asyncRefresh("I said so", true, ActionListener.wrap(() -> {}));
         assertFalse(listener.forcedRefresh.get());
         listener.assertNoError();
         assertEquals(0, listeners.pendingCount());
@@ -178,11 +180,11 @@ public class RefreshListenersTests extends ESTestCase {
     public void testAfterRefresh() throws Exception {
         assertEquals(0, listeners.pendingCount());
         Engine.IndexResult index = index("1");
-        engine.refresh("I said so");
+        engine.asyncRefresh("I said so", true, ActionListener.wrap(() -> {}));
         if (randomBoolean()) {
             index(randomFrom("1" /* same document */, "2" /* different document */));
             if (randomBoolean()) {
-                engine.refresh("I said so");
+                engine.asyncRefresh("I said so", true, ActionListener.wrap(() -> {}));
             }
         }
         DummyRefreshListener listener = new DummyRefreshListener();
@@ -205,7 +207,7 @@ public class RefreshListenersTests extends ESTestCase {
         }
         assertNull(threadPool.getThreadContext().getHeader("test"));
         assertEquals(1, latch.getCount());
-        engine.refresh("I said so");
+        engine.asyncRefresh("I said so", true, ActionListener.wrap(() -> {}));
         latch.await();
     }
 
@@ -247,7 +249,7 @@ public class RefreshListenersTests extends ESTestCase {
     public void testClose() throws Exception {
         assertEquals(0, listeners.pendingCount());
         Engine.IndexResult refreshedOperation = index("1");
-        engine.refresh("I said so");
+        engine.asyncRefresh("I said so", true, ActionListener.wrap(() -> {}));
         Engine.IndexResult unrefreshedOperation = index("1");
         {
             /* Closing flushed pending listeners as though they were refreshed. Since this can only happen when the index is closed and no
@@ -291,7 +293,7 @@ public class RefreshListenersTests extends ESTestCase {
         AtomicBoolean run = new AtomicBoolean(true);
         Thread refresher = new Thread(() -> {
             while (run.get()) {
-                engine.refresh("test");
+                engine.asyncRefresh("test", true, ActionListener.wrap(() -> {}));
             }
         });
         refresher.start();
@@ -323,7 +325,8 @@ public class RefreshListenersTests extends ESTestCase {
         maxListeners = between(1, threadCount * 2);
 
         // This thread just refreshes every once in a while to cause trouble.
-        Cancellable refresher = threadPool.scheduleWithFixedDelay(() -> engine.refresh("because test"), timeValueMillis(100), Names.SAME);
+        Cancellable refresher = threadPool.scheduleWithFixedDelay(
+            () -> engine.asyncRefresh("because test", true, ActionListener.wrap(() -> {})), timeValueMillis(100), Names.SAME);
 
         // These threads add and block until the refresh makes the change visible and then do a non-realtime get.
         Thread[] indexers = new Thread[threadCount];
@@ -370,7 +373,7 @@ public class RefreshListenersTests extends ESTestCase {
         assertEquals(0, listeners.pendingCount());
         DummyRefreshListener listener = new DummyRefreshListener();
         assertFalse(listeners.addOrNotify(index("1").getTranslogLocation(), listener));
-        engine.refresh("I said so");
+        engine.asyncRefresh("I said so", true, ActionListener.wrap(() -> {}));
         assertFalse(listener.forcedRefresh.get());
         listener.assertNoError();
 

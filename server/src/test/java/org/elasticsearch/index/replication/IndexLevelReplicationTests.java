@@ -624,7 +624,7 @@ public class IndexLevelReplicationTests extends ESIndexLevelReplicationTestCase 
             final BulkShardRequest deleteRequest = deleteOnPrimary(new DeleteRequest(index.getName()).id("d1"), primary);
             deleteOnReplica(deleteRequest, shards, replica); // delete arrives on replica first.
             final long deleteTimestamp = threadPool.relativeTimeInMillis();
-            replica.refresh("test");
+            replica.asyncRefresh("test", ActionListener.wrap(() -> {}));
             assertBusy(() ->
                 assertThat(threadPool.relativeTimeInMillis() - deleteTimestamp, greaterThan(gcInterval.millis()))
             );

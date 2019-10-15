@@ -19,6 +19,7 @@
 package org.elasticsearch.index.shard;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -65,7 +66,7 @@ public class ShardGetServiceTests extends IndexShardTestCase {
         try (Engine.Searcher searcher = primary.getEngine().acquireSearcher("test", Engine.SearcherScope.INTERNAL)) {
             assertEquals(searcher.getIndexReader().maxDoc(), 1); // we read from the translog
         }
-        primary.getEngine().refresh("test");
+        primary.asyncRefresh("test", ActionListener.wrap(() -> {}));
         try (Engine.Searcher searcher = primary.getEngine().acquireSearcher("test", Engine.SearcherScope.INTERNAL)) {
             assertEquals(searcher.getIndexReader().maxDoc(), 2);
         }

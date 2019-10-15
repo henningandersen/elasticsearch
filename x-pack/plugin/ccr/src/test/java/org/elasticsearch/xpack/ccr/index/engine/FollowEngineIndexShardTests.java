@@ -90,7 +90,7 @@ public class FollowEngineIndexShardTests extends IndexShardTestCase {
         indexShard.acquirePrimaryOperationPermit(actionListener, ThreadPool.Names.GENERIC, "");
         latch.await();
         assertThat(indexShard.getLocalCheckpoint(), equalTo(seqNoBeforeGap));
-        indexShard.refresh("test");
+        indexShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         assertThat(indexShard.docStats().getCount(), equalTo(9L));
         closeShards(indexShard);
     }
@@ -111,7 +111,7 @@ public class FollowEngineIndexShardTests extends IndexShardTestCase {
         EngineTestCase.generateNewSeqNo(IndexShardTestCase.getEngine(source));
         indexDoc(source, "_doc", "2");
         if (randomBoolean()) {
-            source.refresh("test");
+            source.asyncRefresh("test", ActionListener.wrap(() -> {}));
         }
         flushShard(source); // only flush source
         ShardRouting routing = ShardRoutingHelper.initWithSameId(target.routingEntry(),

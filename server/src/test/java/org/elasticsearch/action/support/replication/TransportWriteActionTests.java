@@ -147,7 +147,7 @@ public class TransportWriteActionTests extends ESTestCase {
                 result.respond(listener);
                 assertNotNull(listener.response);
                 assertNull(listener.failure);
-                verify(indexShard, never()).refresh(any());
+                verify(indexShard, never()).asyncRefresh(any(), ActionListener.wrap(() -> {}));
                 verify(indexShard, never()).addRefreshListener(any(), any());
             }));
     }
@@ -162,7 +162,7 @@ public class TransportWriteActionTests extends ESTestCase {
         result.respond(listener);
         assertNotNull(listener.response);
         assertNull(listener.failure);
-        verify(indexShard, never()).refresh(any());
+        verify(indexShard, never()).asyncRefresh(any(), ActionListener.wrap(() -> {}));
         verify(indexShard, never()).addRefreshListener(any(), any());
     }
 
@@ -177,7 +177,7 @@ public class TransportWriteActionTests extends ESTestCase {
                 assertNotNull(listener.response);
                 assertNull(listener.failure);
                 assertTrue(listener.response.forcedRefresh);
-                verify(indexShard).refresh("refresh_flag_index");
+                verify(indexShard).asyncRefresh("refresh_flag_index", ActionListener.wrap(() -> {}));
                 verify(indexShard, never()).addRefreshListener(any(), any());
             }));
     }
@@ -192,7 +192,7 @@ public class TransportWriteActionTests extends ESTestCase {
         result.respond(listener);
         assertNotNull(listener.response);
         assertNull(listener.failure);
-        verify(indexShard).refresh("refresh_flag_index");
+        verify(indexShard).asyncRefresh("refresh_flag_index", ActionListener.wrap(() -> {}));
         verify(indexShard, never()).addRefreshListener(any(), any());
     }
 
@@ -209,7 +209,7 @@ public class TransportWriteActionTests extends ESTestCase {
 
                 @SuppressWarnings({"unchecked", "rawtypes"})
                 ArgumentCaptor<Consumer<Boolean>> refreshListener = ArgumentCaptor.forClass((Class) Consumer.class);
-                verify(indexShard, never()).refresh(any());
+                verify(indexShard, never()).asyncRefresh(any(), ActionListener.wrap(() -> {}));
                 verify(indexShard).addRefreshListener(any(), refreshListener.capture());
 
                 // Now we can fire the listener manually and we'll get a response
@@ -231,7 +231,7 @@ public class TransportWriteActionTests extends ESTestCase {
         assertNull(listener.response); // Haven't responded yet
         @SuppressWarnings({ "unchecked", "rawtypes" })
         ArgumentCaptor<Consumer<Boolean>> refreshListener = ArgumentCaptor.forClass((Class) Consumer.class);
-        verify(indexShard, never()).refresh(any());
+        verify(indexShard, never()).asyncRefresh(any(), ActionListener.wrap(() -> {}));
         verify(indexShard).addRefreshListener(any(), refreshListener.capture());
 
         // Now we can fire the listener manually and we'll get a response

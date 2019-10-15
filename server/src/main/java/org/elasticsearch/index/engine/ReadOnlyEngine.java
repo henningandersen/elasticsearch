@@ -29,6 +29,7 @@ import org.apache.lucene.search.ReferenceManager;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.lucene.Lucene;
 import org.elasticsearch.common.lucene.index.ElasticsearchDirectoryReader;
 import org.elasticsearch.common.util.concurrent.ReleasableLock;
@@ -72,7 +73,7 @@ public class ReadOnlyEngine extends Engine {
         BlockTreeTermsReader.FSTLoadMode.AUTO.name());
     private final SegmentInfos lastCommittedSegmentInfos;
     private final SeqNoStats seqNoStats;
-    private final ElasticsearchReaderManager readerManager;
+    private final InternalReaderManager readerManager;
     private final IndexCommit indexCommit;
     private final Lock indexWriterLock;
     private final DocsStats docsStats;
@@ -116,7 +117,7 @@ public class ReadOnlyEngine extends Engine {
                 this.seqNoStats = seqNoStats;
                 this.indexCommit = Lucene.getIndexCommit(lastCommittedSegmentInfos, directory);
                 reader = wrapReader(open(indexCommit), readerWrapperFunction);
-                readerManager = new ElasticsearchReaderManager(reader, refreshListener);
+                readerManager = new InternalReaderManager(reader, refreshListener);
                 this.docsStats = docsStats(lastCommittedSegmentInfos);
                 assert translogStats != null || obtainLock : "mutiple translogs instances should not be opened at the same time";
                 this.translogStats = translogStats != null ? translogStats : translogStats(config, lastCommittedSegmentInfos);
@@ -245,7 +246,7 @@ public class ReadOnlyEngine extends Engine {
     }
 
     @Override
-    protected ReferenceManager<ElasticsearchDirectoryReader> getReferenceManager(SearcherScope scope) {
+    protected IndexReaderManager getIndexReaderManager(SearcherScope scope) {
         return readerManager;
     }
 
@@ -377,14 +378,14 @@ public class ReadOnlyEngine extends Engine {
     }
 
     @Override
-    public void refresh(String source) {
+    protected void refresh(String source) {
         // we could allow refreshes if we want down the road the reader manager will then reflect changes to a rw-engine
         // opened side-by-side
     }
 
     @Override
-    public boolean maybeRefresh(String source) throws EngineException {
-        return false;
+    public void asyncRefresh(String source, boolean blocking, ActionListener<Boolean> listener) {
+        listener.onResponse(false);
     }
 
     @Override

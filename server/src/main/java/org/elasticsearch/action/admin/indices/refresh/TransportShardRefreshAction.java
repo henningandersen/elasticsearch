@@ -60,18 +60,21 @@ public class TransportShardRefreshAction
 
     @Override
     protected void shardOperationOnPrimary(BasicReplicationRequest shardRequest, IndexShard primary,
-            ActionListener<PrimaryResult<BasicReplicationRequest, ReplicationResponse>> listener) {
-        ActionListener.completeWith(listener, () -> {
-            primary.refresh("api");
-            logger.trace("{} refresh request executed on primary", primary.shardId());
-            return new PrimaryResult<>(shardRequest, new ReplicationResponse());
-        });
+                                           ActionListener<PrimaryResult<BasicReplicationRequest, ReplicationResponse>> listener) {
+        primary.asyncRefresh("api", ActionListener.map(listener, ignored -> new PrimaryResult<>(shardRequest, new ReplicationResponse())));
+        logger.trace("{} refresh request executed on primary", primary.shardId());
+    }
+
+    @Override
+    protected void asyncShardOperationOnReplica(BasicReplicationRequest shardRequest, IndexShard replica,
+                                                ActionListener<ReplicaResult> listener) {
+        replica.asyncRefresh("api", ActionListener.map(listener, ignored -> new ReplicaResult()));
+        logger.trace("{} refresh request executed on replica", replica.shardId());
     }
 
     @Override
     protected ReplicaResult shardOperationOnReplica(BasicReplicationRequest request, IndexShard replica) {
-        replica.refresh("api");
-        logger.trace("{} refresh request executed on replica", replica.shardId());
-        return new ReplicaResult();
+        assert false : "async implementation is overridden";
+        throw new UnsupportedOperationException("async implementation is overridden");
     }
 }

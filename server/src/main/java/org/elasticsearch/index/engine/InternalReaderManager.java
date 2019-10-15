@@ -38,7 +38,7 @@ import org.elasticsearch.common.lucene.index.ElasticsearchDirectoryReader;
  *
  */
 @SuppressForbidden(reason = "reference counting is required here")
-class ElasticsearchReaderManager extends ReferenceManager<ElasticsearchDirectoryReader> {
+final class InternalReaderManager extends ReferenceManager<ElasticsearchDirectoryReader> implements IndexReaderManager {
     private final BiConsumer<ElasticsearchDirectoryReader, ElasticsearchDirectoryReader> refreshListener;
 
     /**
@@ -49,8 +49,8 @@ class ElasticsearchReaderManager extends ReferenceManager<ElasticsearchDirectory
      * @param reader            the directoryReader to use for future reopens
      * @param refreshListener   A consumer that is called every time a new reader is opened
      */
-    ElasticsearchReaderManager(ElasticsearchDirectoryReader reader,
-                               BiConsumer<ElasticsearchDirectoryReader, ElasticsearchDirectoryReader> refreshListener) {
+    InternalReaderManager(ElasticsearchDirectoryReader reader,
+                          BiConsumer<ElasticsearchDirectoryReader, ElasticsearchDirectoryReader> refreshListener) {
         this.current = reader;
         this.refreshListener = refreshListener;
         refreshListener.accept(current, null);
@@ -78,5 +78,15 @@ class ElasticsearchReaderManager extends ReferenceManager<ElasticsearchDirectory
     @Override
     protected int getRefCount(ElasticsearchDirectoryReader reference) {
         return reference.getRefCount();
+    }
+
+    @Override
+    public boolean refresh(boolean blocking) throws IOException {
+        if (blocking) {
+            maybeRefreshBlocking();
+            return true;
+        } else {
+            return maybeRefresh();
+        }
     }
 }

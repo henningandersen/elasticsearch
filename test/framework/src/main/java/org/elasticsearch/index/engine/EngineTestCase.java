@@ -49,7 +49,10 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ActionRunnable;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.cluster.ClusterModule;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -93,6 +96,7 @@ import org.elasticsearch.index.seqno.LocalCheckpointTracker;
 import org.elasticsearch.index.seqno.ReplicationTracker;
 import org.elasticsearch.index.seqno.RetentionLeases;
 import org.elasticsearch.index.seqno.SequenceNumbers;
+import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.store.Store;
 import org.elasticsearch.index.translog.Translog;
@@ -169,7 +173,7 @@ public abstract class EngineTestCase extends ESTestCase {
         if (refresh) {
             engine.refresh("test");
         }
-        try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
+        try (Engine.Searcher searcher = engine.acquireSearcher("test", Engine.SearcherScope.INTERNAL)) {
             final TotalHitCountCollector collector = new TotalHitCountCollector();
             searcher.search(new MatchAllDocsQuery(), collector);
             assertThat(collector.getTotalHits(), equalTo(numDocs));
@@ -238,7 +242,7 @@ public abstract class EngineTestCase extends ESTestCase {
             config.getTranslogConfig(), config.getFlushMergesAfter(),
             config.getExternalRefreshListener(), Collections.emptyList(), config.getIndexSort(),
             config.getCircuitBreakerService(), globalCheckpointSupplier, config.retentionLeasesSupplier(),
-                config.getPrimaryTermSupplier(), tombstoneDocSupplier());
+                config.getPrimaryTermSupplier(), tombstoneDocSupplier(), config.getGlobalCheckpointNotifier());
     }
 
     public EngineConfig copy(EngineConfig config, Analyzer analyzer) {
@@ -248,7 +252,7 @@ public abstract class EngineTestCase extends ESTestCase {
                 config.getTranslogConfig(), config.getFlushMergesAfter(),
                 config.getExternalRefreshListener(), Collections.emptyList(), config.getIndexSort(),
                 config.getCircuitBreakerService(), config.getGlobalCheckpointSupplier(), config.retentionLeasesSupplier(),
-                config.getPrimaryTermSupplier(), config.getTombstoneDocSupplier());
+                config.getPrimaryTermSupplier(), config.getTombstoneDocSupplier(), config.getGlobalCheckpointNotifier());
     }
 
     public EngineConfig copy(EngineConfig config, MergePolicy mergePolicy) {
@@ -258,7 +262,7 @@ public abstract class EngineTestCase extends ESTestCase {
             config.getTranslogConfig(), config.getFlushMergesAfter(),
             config.getExternalRefreshListener(), Collections.emptyList(), config.getIndexSort(),
             config.getCircuitBreakerService(), config.getGlobalCheckpointSupplier(), config.retentionLeasesSupplier(),
-                config.getPrimaryTermSupplier(), config.getTombstoneDocSupplier());
+                config.getPrimaryTermSupplier(), config.getTombstoneDocSupplier(), config.getGlobalCheckpointNotifier());
     }
 
     @Override
@@ -395,6 +399,16 @@ public abstract class EngineTestCase extends ESTestCase {
                     Collections.singletonList(doc), null, XContentType.JSON, null);
             }
         };
+    }
+
+    public static EngineConfig.GlobalCheckpointNotifier globalCheckpointNotifier(ThreadPool threadPool) {
+        return (waitingForGlobalCheckpoint, listener) ->
+            threadPool.executor(ThreadPool.Names.MANAGEMENT).execute(new ActionRunnable<>(listener) {
+                @Override
+                protected void doRun() {
+                    listener.onResponse(waitingForGlobalCheckpoint);
+                }
+            });
     }
 
     protected Store createStore() throws IOException {
@@ -706,7 +720,8 @@ public abstract class EngineTestCase extends ESTestCase {
                 globalCheckpointSupplier,
                 retentionLeasesSupplier,
                 primaryTerm,
-                tombstoneDocSupplier());
+                tombstoneDocSupplier(),
+                globalCheckpointNotifier(threadPool));
     }
 
     protected EngineConfig config(EngineConfig config, Store store, Path translogPath,
@@ -721,7 +736,7 @@ public abstract class EngineTestCase extends ESTestCase {
             translogConfig, config.getFlushMergesAfter(), config.getExternalRefreshListener(),
             config.getInternalRefreshListener(), config.getIndexSort(), config.getCircuitBreakerService(),
             config.getGlobalCheckpointSupplier(), config.retentionLeasesSupplier(),
-            config.getPrimaryTermSupplier(), tombstoneDocSupplier);
+            config.getPrimaryTermSupplier(), tombstoneDocSupplier, config.getGlobalCheckpointNotifier());
     }
 
     protected EngineConfig noOpConfig(IndexSettings indexSettings, Store store, Path translogPath) {
@@ -775,7 +790,7 @@ public abstract class EngineTestCase extends ESTestCase {
         if (refresh) {
             engine.refresh("test");
         }
-        try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
+        try (Engine.Searcher searcher = engine.acquireSearcher("test", Engine.SearcherScope.INTERNAL)) {
             final TotalHitCountCollector collector = new TotalHitCountCollector();
             searcher.search(new MatchAllDocsQuery(), collector);
             assertThat(collector.getTotalHits(), equalTo(numDocs));
@@ -931,7 +946,7 @@ public abstract class EngineTestCase extends ESTestCase {
 
         assertVisibleCount(replicaEngine, lastFieldValue == null ? 0 : 1);
         if (lastFieldValue != null) {
-            try (Engine.Searcher searcher = replicaEngine.acquireSearcher("test")) {
+            try (Engine.Searcher searcher = replicaEngine.acquireSearcher("test", Engine.SearcherScope.INTERNAL)) {
                 final TotalHitCountCollector collector = new TotalHitCountCollector();
                 searcher.search(new TermQuery(new Term("value", lastFieldValue)), collector);
                 assertThat(collector.getTotalHits(), equalTo(1));
@@ -1010,7 +1025,7 @@ public abstract class EngineTestCase extends ESTestCase {
         if (refresh) {
             engine.refresh("test_get_doc_ids");
         }
-        try (Engine.Searcher searcher = engine.acquireSearcher("test_get_doc_ids")) {
+        try (Engine.Searcher searcher = engine.acquireSearcher("test_get_doc_ids", Engine.SearcherScope.INTERNAL)) {
             List<DocIdSeqNoAndSource> docs = new ArrayList<>();
             for (LeafReaderContext leafContext : searcher.getIndexReader().leaves()) {
                 LeafReader reader = leafContext.reader();
@@ -1130,7 +1145,7 @@ public abstract class EngineTestCase extends ESTestCase {
         if (engine instanceof InternalEngine) {
             try {
                 engine.refresh("test");
-                try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
+                try (Engine.Searcher searcher = engine.acquireSearcher("test", Engine.SearcherScope.INTERNAL)) {
                     assertAtMostOneLuceneDocumentPerSequenceNumber(engine.config().getIndexSettings(), searcher.getDirectoryReader());
                 }
             } catch (AlreadyClosedException ignored) {
@@ -1237,5 +1252,11 @@ public abstract class EngineTestCase extends ESTestCase {
      */
     public static long getNumVersionLookups(Engine engine) {
         return ((InternalEngine) engine).getNumVersionLookups();
+    }
+
+    public static boolean refreshAndWait(Engine engine, String source) {
+        PlainActionFuture<Boolean> listener = new PlainActionFuture<>();
+        engine.asyncRefresh(source, true, listener);
+        return listener.actionGet();
     }
 }

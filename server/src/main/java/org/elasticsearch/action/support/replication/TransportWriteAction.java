@@ -293,7 +293,7 @@ public abstract class TransportWriteAction<
             boolean waitUntilRefresh = false;
             switch (request.getRefreshPolicy()) {
                 case IMMEDIATE:
-                    indexShard.refresh("refresh_flag_index");
+                    indexShard.asyncRefresh("refresh_flag_index", ActionListener.wrap(() -> {}));
                     refreshed.set(true);
                     break;
                 case WAIT_UNTIL:

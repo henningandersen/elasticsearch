@@ -37,7 +37,6 @@ import org.apache.lucene.index.Terms;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryCache;
 import org.apache.lucene.search.QueryCachingPolicy;
-import org.apache.lucene.search.ReferenceManager;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.search.suggest.document.CompletionTerms;
 import org.apache.lucene.store.AlreadyClosedException;
@@ -47,6 +46,7 @@ import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.Accountables;
 import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.ExceptionsHelper;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.common.CheckedRunnable;
 import org.elasticsearch.common.FieldMemoryStats;
@@ -101,6 +101,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -143,6 +144,7 @@ public abstract class Engine implements Closeable {
      *  reduce index buffer sizes on inactive shards.
      */
     protected volatile long lastWriteNanos = System.nanoTime();
+    final LongAdder externalReaderDelayedTimeInNanos = new LongAdder();
 
     protected Engine(EngineConfig engineConfig) {
         Objects.requireNonNull(engineConfig.getStore(), "Store must be provided to the engine");
@@ -670,15 +672,15 @@ public abstract class Engine implements Closeable {
         }
         Releasable releasable = store::decRef;
         try {
-            ReferenceManager<ElasticsearchDirectoryReader> referenceManager = getReferenceManager(scope);
-            final ElasticsearchDirectoryReader acquire = referenceManager.acquire();
+            final IndexReaderManager readerManager = getIndexReaderManager(scope);
+            final ElasticsearchDirectoryReader acquire = readerManager.acquire();
             AtomicBoolean released = new AtomicBoolean(false);
             Searcher engineSearcher = new Searcher(source, acquire,
                 engineConfig.getSimilarity(), engineConfig.getQueryCache(), engineConfig.getQueryCachingPolicy(),
                 () -> {
                 if (released.compareAndSet(false, true)) {
                     try {
-                        referenceManager.release(acquire);
+                        readerManager.release(acquire);
                     } finally {
                         store.decRef();
                     }
@@ -703,7 +705,7 @@ public abstract class Engine implements Closeable {
         }
     }
 
-    protected abstract ReferenceManager<ElasticsearchDirectoryReader> getReferenceManager(SearcherScope scope);
+    protected abstract IndexReaderManager getIndexReaderManager(SearcherScope scope);
 
     public enum SearcherScope {
         EXTERNAL, INTERNAL
@@ -1030,17 +1032,19 @@ public abstract class Engine implements Closeable {
      * Synchronously refreshes the engine for new search operations to reflect the latest
      * changes.
      */
-    @Nullable
-    public abstract void refresh(String source) throws EngineException;
+    abstract void refresh(String source);
 
     /**
-     * Synchronously refreshes the engine for new search operations to reflect the latest
-     * changes unless another thread is already refreshing the engine concurrently.
-     *
-     * @return <code>true</code> if the a refresh happened. Otherwise <code>false</code>
+     * Refresh the engine for new search operations reflect the latest changes
      */
-    @Nullable
-    public abstract boolean maybeRefresh(String source) throws EngineException;
+    public abstract void asyncRefresh(String source, boolean blocking, ActionListener<Boolean> listener);
+
+    /**
+     * The total time that an external reader spent waiting for the global checkpoint before it can be exposed.
+     */
+    public final TimeValue totalExternalRefreshDelayTime() {
+        return TimeValue.timeValueNanos(externalReaderDelayedTimeInNanos.sum());
+    }
 
     /**
      * Called when our engine is using too much heap and should move buffered indexed/deleted documents to disk.

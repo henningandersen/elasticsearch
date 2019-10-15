@@ -1569,7 +1569,7 @@ public class IndexShardTests extends IndexShardTestCase {
         for (int i = 1; shard.refreshStats().getTotalTimeInMillis() == initialTotalTime; i++) {
             indexDoc(shard, "_doc", "test");
             assertThat(shard.refreshStats().getTotal(), equalTo(initialRefreshes + i - 1));
-            shard.refresh("test");
+            shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             assertThat(shard.refreshStats().getTotal(), equalTo(initialRefreshes + i));
             assertThat(shard.refreshStats().getTotalTimeInMillis(), greaterThanOrEqualTo(initialTotalTime));
         }
@@ -1593,7 +1593,7 @@ public class IndexShardTests extends IndexShardTestCase {
         for (int i = 1; shard.refreshStats().getExternalTotalTimeInMillis() == initialTotalTime; i++) {
             indexDoc(shard, "_doc", "test");
             assertThat(shard.refreshStats().getExternalTotal(), equalTo(2L + i - 1));
-            shard.refresh("test");
+            shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             assertThat(shard.refreshStats().getExternalTotal(), equalTo(2L + i));
             assertThat(shard.refreshStats().getExternalTotalTimeInMillis(), greaterThanOrEqualTo(initialTotalTime));
         }
@@ -2249,7 +2249,7 @@ public class IndexShardTests extends IndexShardTestCase {
         // we can't issue this request through a client because of the inconsistencies we created with the cluster state
         // doing it directly instead
         indexDoc(newShard, "_doc", "0");
-        newShard.refresh("test");
+        newShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         assertDocCount(newShard, 1);
 
         closeShards(newShard);
@@ -2324,10 +2324,10 @@ public class IndexShardTests extends IndexShardTestCase {
         EngineTestCase.generateNewSeqNo(source.getEngine()); // create a gap in the history
         indexDoc(source, "_doc", "2");
         if (randomBoolean()) {
-            source.refresh("test");
+            source.asyncRefresh("test", ActionListener.wrap(() -> {}));
         }
         indexDoc(target, "_doc", "1");
-        target.refresh("test");
+        target.asyncRefresh("test", ActionListener.wrap(() -> {}));
         assertDocs(target, "1");
         flushShard(source); // only flush source
         ShardRouting routing = ShardRoutingHelper.initWithSameId(target.routingEntry(),
@@ -2376,7 +2376,7 @@ public class IndexShardTests extends IndexShardTestCase {
         IndexShard shard = newStartedShard(true);
         indexDoc(shard, "_doc", "0", "{\"foo\" : \"bar\"}");
         indexDoc(shard, "_doc", "1", "{\"foobar\" : \"bar\"}");
-        shard.refresh("test");
+        refreshAndWait(shard, "test");
 
         try (Engine.GetResult getResult = shard
                 .get(new Engine.Get(false, false, "1",
@@ -2436,9 +2436,9 @@ public class IndexShardTests extends IndexShardTestCase {
         IndexShard shard = newShard(new ShardId(metaData.getIndex(), 0), true, "n1", metaData, wrapper);
         recoverShardFromStore(shard);
         indexDoc(shard, "_doc", "0", "{\"foo\" : \"bar\"}");
-        shard.refresh("created segment 1");
+        shard.asyncRefresh("created segment 1", ActionListener.wrap(() -> {}));
         indexDoc(shard, "_doc", "1", "{\"foobar\" : \"bar\"}");
-        shard.refresh("created segment 2");
+        shard.asyncRefresh("created segment 2", ActionListener.wrap(() -> {}));
 
         // test global ordinals are evicted
         MappedFieldType foo = shard.mapperService().fullName("foo");
@@ -2461,7 +2461,7 @@ public class IndexShardTests extends IndexShardTestCase {
         assertEquals(shard.fieldData().stats("foo").getEvictions(), before.getEvictions());
         assertEquals(shard.fieldData().stats("foo").getMemorySizeInBytes(), after.getMemorySizeInBytes());
         shard.flush(new FlushRequest().force(true).waitIfOngoing(true));
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         assertEquals(shard.fieldData().stats("foo").getMemorySizeInBytes(), before.getMemorySizeInBytes());
         assertEquals(shard.fieldData().stats("foo").getEvictions(), before.getEvictions());
 
@@ -2473,7 +2473,7 @@ public class IndexShardTests extends IndexShardTestCase {
         indexDoc(shard, "_doc", "0", "{\"foo\" : \"bar\"}");
         deleteDoc(shard, "_doc", "0");
         indexDoc(shard, "_doc", "1", "{\"foo\" : \"bar\"}");
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
 
         final AtomicInteger preIndex = new AtomicInteger();
         final AtomicInteger postIndex = new AtomicInteger();
@@ -2523,7 +2523,7 @@ public class IndexShardTests extends IndexShardTestCase {
     public void testSearchIsReleaseIfWrapperFails() throws IOException {
         IndexShard shard = newStartedShard(true);
         indexDoc(shard, "_doc", "0", "{\"foo\" : \"bar\"}");
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         CheckedFunction<DirectoryReader, DirectoryReader, IOException> wrapper = reader -> {
             throw new RuntimeException("boom");
         };
@@ -2792,7 +2792,7 @@ public class IndexShardTests extends IndexShardTestCase {
 
         indexDoc(sourceShard, "_doc", "0", "{\"foo\" : \"bar\"}");
         indexDoc(sourceShard, "_doc", "1", "{\"foo\" : \"bar\"}");
-        sourceShard.refresh("test");
+        sourceShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
 
 
         ShardRouting targetRouting = newShardRouting(new ShardId("index_1", "index_1", 0), "n1", true,
@@ -2879,7 +2879,7 @@ public class IndexShardTests extends IndexShardTestCase {
                 indexDoc(indexShard, "_doc", id);
             }
             if (randomBoolean()) {
-                indexShard.refresh("test");
+                indexShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             } else {
                 indexShard.flush(new FlushRequest());
             }
@@ -2935,7 +2935,7 @@ public class IndexShardTests extends IndexShardTestCase {
             indexShard.flush(flushRequest);
 
             if (randomBoolean()) {
-                indexShard.refresh("test");
+                indexShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             }
             {
                 final DocsStats docStats = indexShard.docStats();
@@ -2951,7 +2951,7 @@ public class IndexShardTests extends IndexShardTestCase {
             indexShard.forceMerge(forceMergeRequest);
 
             if (randomBoolean()) {
-                indexShard.refresh("test");
+                indexShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             } else {
                 indexShard.flush(new FlushRequest());
             }
@@ -2988,7 +2988,7 @@ public class IndexShardTests extends IndexShardTestCase {
             if (randomBoolean()) {
                 indexShard.flush(new FlushRequest());
             } else {
-                indexShard.refresh("test");
+                indexShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             }
             {
                 final DocsStats docsStats = indexShard.docStats();
@@ -3012,7 +3012,7 @@ public class IndexShardTests extends IndexShardTestCase {
             if (randomBoolean()) {
                 indexShard.flush(new FlushRequest());
             } else {
-                indexShard.refresh("test");
+                indexShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             }
             {
                 final DocsStats docsStats = indexShard.docStats();
@@ -3037,7 +3037,7 @@ public class IndexShardTests extends IndexShardTestCase {
         IndexShard indexShard = newStartedShard();
         indexDoc(indexShard, "_doc", "0", "{}");
         if (randomBoolean()) {
-            indexShard.refresh("test");
+            indexShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         }
         indexDoc(indexShard, "_doc", "1", "{}");
         indexShard.flush(new FlushRequest());
@@ -3204,7 +3204,7 @@ public class IndexShardTests extends IndexShardTestCase {
         for (long i = 0; i < numDocs; i++) {
             indexDoc(indexShard, "_doc", Long.toString(i), "{}");
             if (randomBoolean()) {
-                indexShard.refresh("test");
+                indexShard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             }
         }
         indexShard.flush(new FlushRequest());
@@ -3473,7 +3473,7 @@ public class IndexShardTests extends IndexShardTestCase {
         IndexShard primary = newShard(new ShardId(metaData.getIndex(), 0), true, "n1", metaData, null);
         recoverShardFromStore(primary);
         indexDoc(primary, "_doc", "0", "{\"foo\" : \"foo\"}");
-        primary.refresh("forced refresh");
+        primary.asyncRefresh("forced refresh", ActionListener.wrap(() -> {}));
 
         SegmentsStats ss = primary.segmentStats(randomBoolean(), randomBoolean());
         CircuitBreaker breaker = primary.circuitBreakerService.getBreaker(CircuitBreaker.ACCOUNTING);
@@ -3488,7 +3488,7 @@ public class IndexShardTests extends IndexShardTestCase {
         breaker = primary.circuitBreakerService.getBreaker(CircuitBreaker.ACCOUNTING);
         assertThat(preRefreshBytes, equalTo(breaker.getUsed()));
 
-        primary.refresh("refresh");
+        primary.asyncRefresh("refresh", ActionListener.wrap(() -> {}));
 
         ss = primary.segmentStats(randomBoolean(), randomBoolean());
         breaker = primary.circuitBreakerService.getBreaker(CircuitBreaker.ACCOUNTING);
@@ -3519,7 +3519,7 @@ public class IndexShardTests extends IndexShardTestCase {
             primary.sync();
             flushShard(primary);
         }
-        primary.refresh("force refresh");
+        primary.asyncRefresh("force refresh", ActionListener.wrap(() -> {}));
 
         ss = primary.segmentStats(randomBoolean(), randomBoolean());
         breaker = primary.circuitBreakerService.getBreaker(CircuitBreaker.ACCOUNTING);
@@ -3568,7 +3568,7 @@ public class IndexShardTests extends IndexShardTestCase {
 
                         if (randomBoolean()) {
                             logger.debug("--> {} refreshing", threadName);
-                            primary.refresh("forced refresh");
+                            primary.asyncRefresh("forced refresh", ActionListener.wrap(() -> {}));
                         }
 
                         if (randomBoolean()) {
@@ -3610,7 +3610,7 @@ public class IndexShardTests extends IndexShardTestCase {
 
         // Close remaining searchers
         IOUtils.close(searchers);
-        primary.refresh("test");
+        refreshAndWait(primary, "test");
 
         SegmentsStats ss = primary.segmentStats(randomBoolean(), randomBoolean());
         CircuitBreaker breaker = primary.circuitBreakerService.getBreaker(CircuitBreaker.ACCOUNTING);
@@ -3656,7 +3656,7 @@ public class IndexShardTests extends IndexShardTestCase {
         recoverShardFromStore(primary);
         for (int i = 0; i < 3; i++) {
             indexDoc(primary, "_doc", "" + i, "{\"foo\" : \"" + randomAlphaOfLength(10) + "\"}");
-            primary.refresh("test"); // produce segments
+            primary.asyncRefresh("test", ActionListener.wrap(() -> {})); // produce segments
         }
         List<Segment> segments = primary.segments(false);
         Set<String> names = new HashSet<>();
@@ -3668,7 +3668,7 @@ public class IndexShardTests extends IndexShardTestCase {
         assertEquals(3, segments.size());
         primary.flush(new FlushRequest());
         primary.forceMerge(new ForceMergeRequest().maxNumSegments(1).flush(false));
-        primary.refresh("test");
+        primary.asyncRefresh("test", ActionListener.wrap(() -> {}));
         segments = primary.segments(false);
         for (Segment segment : segments) {
             if (names.contains(segment.getName())) {
@@ -3702,7 +3702,7 @@ public class IndexShardTests extends IndexShardTestCase {
 
         for (int i = 0; i < 3; i++) {
             indexDoc(indexShard, "_doc", "" + i, "{\"foo\" : \"" + randomAlphaOfLength(10) + "\"}");
-            indexShard.refresh("test"); // produce segments
+            indexShard.asyncRefresh("test", ActionListener.wrap(() -> {})); // produce segments
         }
 
         // check stats on closed and on opened shard
@@ -4145,7 +4145,7 @@ public class IndexShardTests extends IndexShardTestCase {
                 config.getQueryCachingPolicy(), config.getTranslogConfig(), config.getFlushMergesAfter(),
                 config.getExternalRefreshListener(), config.getInternalRefreshListener(), config.getIndexSort(),
                 config.getCircuitBreakerService(), config.getGlobalCheckpointSupplier(), config.retentionLeasesSupplier(),
-                config.getPrimaryTermSupplier(), config.getTombstoneDocSupplier());
+                config.getPrimaryTermSupplier(), config.getTombstoneDocSupplier(), config.getGlobalCheckpointNotifier());
             return new InternalEngine(configWithWarmer);
         });
         Thread recoveryThread = new Thread(() -> expectThrows(AlreadyClosedException.class, () -> recoverShardFromStore(shard)));

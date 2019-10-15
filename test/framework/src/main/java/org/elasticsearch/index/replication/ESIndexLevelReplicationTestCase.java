@@ -461,7 +461,7 @@ public abstract class ESIndexLevelReplicationTestCase extends IndexShardTestCase
 
         public synchronized void refresh(String source) {
             for (IndexShard shard : this) {
-                shard.refresh(source);
+                shard.asyncRefresh(source, ActionListener.wrap(() -> {}));
             }
         }
 

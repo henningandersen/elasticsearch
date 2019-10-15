@@ -462,7 +462,7 @@ public class RecoveryTests extends ESIndexLevelReplicationTestCase {
                         assertThat(ExceptionsHelper.unwrap(e, IOException.class).getMessage(), equalTo("simulated"));
                     }
                 })));
-            expectThrows(AlreadyClosedException.class, () -> replica.refresh("test"));
+            expectThrows(AlreadyClosedException.class, () -> replica.asyncRefresh("test", ActionListener.wrap(() -> {})));
             group.removeReplica(replica);
             replica.store().close();
             closeShards(replica);

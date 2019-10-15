@@ -26,6 +26,7 @@ import org.apache.lucene.search.QueryCachingPolicy;
 import org.apache.lucene.search.ReferenceManager;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.similarities.Similarity;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
@@ -94,6 +95,7 @@ public final class EngineConfig {
 
     private final LongSupplier primaryTermSupplier;
     private final TombstoneDocSupplier tombstoneDocSupplier;
+    private final GlobalCheckpointNotifier globalCheckpointNotifier;
 
     /**
      * Index setting to change the low level lucene codec used for writing new segments.
@@ -132,7 +134,8 @@ public final class EngineConfig {
                         CircuitBreakerService circuitBreakerService, LongSupplier globalCheckpointSupplier,
                         Supplier<RetentionLeases> retentionLeasesSupplier,
                         LongSupplier primaryTermSupplier,
-                        TombstoneDocSupplier tombstoneDocSupplier) {
+                        TombstoneDocSupplier tombstoneDocSupplier,
+                        GlobalCheckpointNotifier globalCheckpointNotifier) {
         this.shardId = shardId;
         this.allocationId = allocationId;
         this.indexSettings = indexSettings;
@@ -171,6 +174,7 @@ public final class EngineConfig {
         this.retentionLeasesSupplier = Objects.requireNonNull(retentionLeasesSupplier);
         this.primaryTermSupplier = primaryTermSupplier;
         this.tombstoneDocSupplier = tombstoneDocSupplier;
+        this.globalCheckpointNotifier = globalCheckpointNotifier;
     }
 
     /**
@@ -380,5 +384,13 @@ public final class EngineConfig {
 
     public TombstoneDocSupplier getTombstoneDocSupplier() {
         return tombstoneDocSupplier;
+    }
+
+    public interface GlobalCheckpointNotifier {
+        void awaitGlobalCheckpoint(long waitingForGlobalCheckpoint, ActionListener<Long> listener);
+    }
+
+    public GlobalCheckpointNotifier getGlobalCheckpointNotifier() {
+        return globalCheckpointNotifier;
     }
 }

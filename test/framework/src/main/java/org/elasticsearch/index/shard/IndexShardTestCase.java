@@ -21,6 +21,8 @@ package org.elasticsearch.index.shard;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.store.Directory;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.LatchedActionListener;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.PlainActionFuture;
@@ -91,6 +93,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -864,5 +867,11 @@ public abstract class IndexShardTestCase extends ESTestCase {
                 }
             }
         };
+    }
+
+    public static boolean refreshAndWait(IndexShard shard, String source) {
+        PlainActionFuture<Boolean> listener = new PlainActionFuture<>();
+        shard.asyncRefresh(source, listener);
+        return listener.actionGet();
     }
 }

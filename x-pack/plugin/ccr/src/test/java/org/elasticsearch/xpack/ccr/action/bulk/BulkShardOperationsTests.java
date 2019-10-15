@@ -8,6 +8,7 @@ package org.elasticsearch.xpack.ccr.action.bulk;
 
 import org.apache.lucene.index.Term;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.support.replication.TransportWriteAction;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -115,7 +116,7 @@ public class BulkShardOperationsTests extends IndexShardTestCase {
                 secondBulk.add(op);
             }
             if (rarely()) {
-                oldPrimary.refresh("test");
+                oldPrimary.asyncRefresh("test", ActionListener.wrap(() -> {}));
             }
             if (rarely()) {
                 oldPrimary.flush(new FlushRequest());

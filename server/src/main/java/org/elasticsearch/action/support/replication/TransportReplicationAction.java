@@ -204,6 +204,20 @@ public abstract class TransportReplicationAction<
     protected abstract ReplicaResult shardOperationOnReplica(ReplicaRequest shardRequest, IndexShard replica) throws Exception;
 
     /**
+     * Asynchronously execute the specified replica operation. This is done under a permit from
+     * {@link IndexShard#acquireReplicaOperationPermit(long, long, long, ActionListener, String, Object)}.
+     * The default async implementation delegates to the sync implementation.
+     *
+     * @param shardRequest the request to the replica shard
+     * @param replica      the replica shard to perform the operation on
+     * @param listener     the listener that holds the result
+     */
+    protected void asyncShardOperationOnReplica(ReplicaRequest shardRequest, IndexShard replica,
+                                                ActionListener<ReplicaResult> listener) {
+        ActionListener.completeWith(listener, () -> shardOperationOnReplica(shardRequest, replica));
+    }
+
+    /**
      * Cluster level block to check before request execution. Returning null means that no blocks need to be checked.
      */
     @Nullable
@@ -519,11 +533,12 @@ public abstract class TransportReplicationAction<
         public void onResponse(Releasable releasable) {
             try {
                 assert replica.getActiveOperationsCount() != 0 : "must perform shard operation under a permit";
-                final ReplicaResult replicaResult = shardOperationOnReplica(replicaRequest.getRequest(), replica);
-                releasable.close(); // release shard operation lock before responding to caller
-                final TransportReplicationAction.ReplicaResponse response =
-                        new ReplicaResponse(replica.getLocalCheckpoint(), replica.getLastSyncedGlobalCheckpoint());
-                replicaResult.respond(new ResponseListener(response));
+                asyncShardOperationOnReplica(replicaRequest.getRequest(), replica, ActionListener.runBefore(
+                    ActionListener.wrap(replicaResult -> {
+                        final TransportReplicationAction.ReplicaResponse response =
+                            new ReplicaResponse(replica.getLocalCheckpoint(), replica.getLastSyncedGlobalCheckpoint());
+                        replicaResult.respond(new ResponseListener(response));
+                    }, AsyncReplicaAction.this::onFailure), releasable::close));
             } catch (final Exception e) {
                 Releasables.closeWhileHandlingException(releasable); // release shard operation lock before responding to caller
                 AsyncReplicaAction.this.onFailure(e);

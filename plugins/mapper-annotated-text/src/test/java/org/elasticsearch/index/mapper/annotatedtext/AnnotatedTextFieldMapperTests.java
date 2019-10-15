@@ -28,6 +28,7 @@ import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.termvectors.TermVectorsRequest;
@@ -132,7 +133,7 @@ public class AnnotatedTextFieldMapperTests extends ESSingleNodeTestCase {
         IndexShard shard = indexService.getShard(0);
         shard.applyIndexOperationOnPrimary(Versions.MATCH_ANY, VersionType.INTERNAL,
             sourceToParse, SequenceNumbers.UNASSIGNED_SEQ_NO, 0, IndexRequest.UNSET_AUTO_GENERATED_TIMESTAMP, false);
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         try (Engine.Searcher searcher = shard.acquireSearcher("test")) {
             LeafReader leaf = searcher.getDirectoryReader().leaves().get(0).reader();
             TermsEnum terms = leaf.terms("field").iterator();
@@ -187,7 +188,7 @@ public class AnnotatedTextFieldMapperTests extends ESSingleNodeTestCase {
         IndexShard shard = indexService.getShard(0);
         shard.applyIndexOperationOnPrimary(Versions.MATCH_ANY, VersionType.INTERNAL,
             sourceToParse, SequenceNumbers.UNASSIGNED_SEQ_NO, 0, IndexRequest.UNSET_AUTO_GENERATED_TIMESTAMP, false);
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         try (Engine.Searcher searcher = shard.acquireSearcher("test")) {
             LeafReader leaf = searcher.getDirectoryReader().leaves().get(0).reader();
             TermsEnum terms = leaf.terms("field").iterator();
@@ -386,7 +387,7 @@ public class AnnotatedTextFieldMapperTests extends ESSingleNodeTestCase {
         IndexShard shard = indexService.getShard(0);
         shard.applyIndexOperationOnPrimary(Versions.MATCH_ANY, VersionType.INTERNAL,
             sourceToParse, SequenceNumbers.UNASSIGNED_SEQ_NO, 0, IndexRequest.UNSET_AUTO_GENERATED_TIMESTAMP, false);
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         try (Engine.Searcher searcher = shard.acquireSearcher("test")) {
             LeafReader leaf = searcher.getDirectoryReader().leaves().get(0).reader();
             TermsEnum terms = leaf.terms("field").iterator();
@@ -428,7 +429,7 @@ public class AnnotatedTextFieldMapperTests extends ESSingleNodeTestCase {
         IndexShard shard = indexService.getShard(0);
         shard.applyIndexOperationOnPrimary(Versions.MATCH_ANY, VersionType.INTERNAL,
             sourceToParse, SequenceNumbers.UNASSIGNED_SEQ_NO, 0, IndexRequest.UNSET_AUTO_GENERATED_TIMESTAMP, false);
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         try (Engine.Searcher searcher = shard.acquireSearcher("test")) {
             LeafReader leaf = searcher.getDirectoryReader().leaves().get(0).reader();
             TermsEnum terms = leaf.terms("field").iterator();

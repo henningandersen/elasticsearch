@@ -541,7 +541,7 @@ public class IndexShardIT extends ESSingleNodeTestCase {
                     assertNotNull(shardRef.get());
                     // this is all IMC needs to do - check current memory and refresh
                     assertTrue(shardRef.get().getIndexBufferRAMBytesUsed() > 0);
-                    shardRef.get().refresh("test");
+                    shardRef.get().asyncRefresh("test", ActionListener.wrap(() -> {}));
                 } catch (Exception e) {
                     failures.add(e);
                     throw e;
@@ -555,7 +555,7 @@ public class IndexShardIT extends ESSingleNodeTestCase {
                     assertNotNull(shardRef.get());
                     // this is all IMC needs to do - check current memory and refresh
                     assertTrue(shardRef.get().getIndexBufferRAMBytesUsed() > 0);
-                    shardRef.get().refresh("test");
+                    shardRef.get().asyncRefresh("test", ActionListener.wrap(() -> {}));
                 } catch (Exception e) {
                     failures.add(e);
                     throw e;
@@ -773,10 +773,10 @@ public class IndexShardIT extends ESSingleNodeTestCase {
         for (int i = 0; i < numDocs; i++) {
             client().prepareIndex("test", "_doc", Integer.toString(i)).setSource("{}", XContentType.JSON).get();
             if (randomBoolean()) {
-                shard.refresh("test");
+                shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             }
         }
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         assertThat(client().search(countRequest).actionGet().getHits().getTotalHits().value, equalTo(numDocs));
         assertThat(shard.getLocalCheckpoint(), equalTo(shard.seqNoStats().getMaxSeqNo()));
 
@@ -795,10 +795,10 @@ public class IndexShardIT extends ESSingleNodeTestCase {
         for (int i = 0; i < moreDocs; i++) {
             client().prepareIndex("test", "_doc", Long.toString(i + numDocs)).setSource("{}", XContentType.JSON).get();
             if (randomBoolean()) {
-                shard.refresh("test");
+                shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
             }
         }
-        shard.refresh("test");
+        shard.asyncRefresh("test", ActionListener.wrap(() -> {}));
         try (Engine.Searcher searcher = shard.acquireSearcher("test")) {
             assertThat("numDocs=" + numDocs + " moreDocs=" + moreDocs,
                 (long) searcher.getIndexReader().numDocs(), equalTo(numDocs + moreDocs));

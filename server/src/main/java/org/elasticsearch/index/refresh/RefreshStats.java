@@ -40,6 +40,8 @@ public class RefreshStats implements Writeable, ToXContentFragment {
 
     private long externalTotalTimeInMillis;
 
+    private long externalTotalDelayTimeInMillis;
+
     /**
      * Number of waiting refresh listeners.
      */
@@ -55,6 +57,9 @@ public class RefreshStats implements Writeable, ToXContentFragment {
             externalTotal = in.readVLong();
             externalTotalTimeInMillis = in.readVLong();
         }
+        if (in.getVersion().onOrAfter(Version.V_8_0_0)) {
+            externalTotalDelayTimeInMillis = in.readLong();
+        }
         listeners = in.readVInt();
     }
 
@@ -66,14 +71,19 @@ public class RefreshStats implements Writeable, ToXContentFragment {
             out.writeVLong(externalTotal);
             out.writeVLong(externalTotalTimeInMillis);
         }
+        if (out.getVersion().onOrAfter(Version.V_8_0_0)) {
+            out.writeLong(externalTotalDelayTimeInMillis);
+        }
         out.writeVInt(listeners);
     }
 
-    public RefreshStats(long total, long totalTimeInMillis, long externalTotal, long externalTotalTimeInMillis, int listeners) {
+    public RefreshStats(long total, long totalTimeInMillis, long externalTotal, long externalTotalTimeInMillis,
+                        long externalTotalDelayTimeInMills, int listeners) {
         this.total = total;
         this.totalTimeInMillis = totalTimeInMillis;
         this.externalTotal = externalTotal;
         this.externalTotalTimeInMillis = externalTotalTimeInMillis;
+        this.externalTotalDelayTimeInMillis = externalTotalDelayTimeInMills;
         this.listeners = listeners;
     }
 
@@ -89,6 +99,7 @@ public class RefreshStats implements Writeable, ToXContentFragment {
         this.totalTimeInMillis += refreshStats.totalTimeInMillis;
         this.externalTotal += refreshStats.externalTotal;
         this.externalTotalTimeInMillis += refreshStats.externalTotalTimeInMillis;
+        this.externalTotalDelayTimeInMillis += refreshStats.externalTotalDelayTimeInMillis;
         this.listeners += refreshStats.listeners;
     }
 
@@ -119,6 +130,13 @@ public class RefreshStats implements Writeable, ToXContentFragment {
     }
 
     /**
+     * The total time in millis spent waiting for the external reader to be safe
+     */
+    public long getExternalTotalDelayTimeInMillis() {
+        return externalTotalDelayTimeInMillis;
+    }
+
+    /**
      * The total time refreshes have been executed.
      */
     public TimeValue getTotalTime() {
@@ -131,6 +149,14 @@ public class RefreshStats implements Writeable, ToXContentFragment {
     public TimeValue getExternalTotalTime() {
         return new TimeValue(externalTotalTimeInMillis);
     }
+
+    /**
+     * The total time spent waiting for the external reader to be safe
+     */
+    public TimeValue getExternalTotalDelayTime() {
+        return new TimeValue(getExternalTotalDelayTimeInMillis());
+    }
+
     /**
      * The number of waiting refresh listeners.
      */
@@ -145,6 +171,7 @@ public class RefreshStats implements Writeable, ToXContentFragment {
         builder.humanReadableField("total_time_in_millis", "total_time", getTotalTime());
         builder.field("external_total", externalTotal);
         builder.humanReadableField("external_total_time_in_millis", "external_total_time", getExternalTotalTime());
+        builder.humanReadableField("external_total_delay_time_in_millis", "external_total_delay_time", getExternalTotalDelayTime());
         builder.field("listeners", listeners);
         builder.endObject();
         return builder;
@@ -160,11 +187,12 @@ public class RefreshStats implements Writeable, ToXContentFragment {
                 && totalTimeInMillis == rhs.totalTimeInMillis
                 && externalTotal == rhs.externalTotal
                 && externalTotalTimeInMillis == rhs.externalTotalTimeInMillis
+                && externalTotalDelayTimeInMillis == rhs.externalTotalDelayTimeInMillis
                 && listeners == rhs.listeners;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(total, totalTimeInMillis, externalTotal, externalTotalTimeInMillis, listeners);
+        return Objects.hash(total, totalTimeInMillis, externalTotal, externalTotalTimeInMillis, externalTotalDelayTimeInMillis, listeners);
     }
 }

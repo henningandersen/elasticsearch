@@ -931,12 +931,12 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     /**
      * Writes all indexing changes to disk and opens a new searcher reflecting all changes.  This can throw {@link AlreadyClosedException}.
      */
-    public void refresh(String source) {
+    public void asyncRefresh(String source, ActionListener<Boolean> listener) {
         verifyNotClosed();
         if (logger.isTraceEnabled()) {
             logger.trace("refresh with source [{}]", source);
         }
-        getEngine().refresh(source);
+        getEngine().asyncRefresh(source, true, listener);
     }
 
     /**
@@ -957,6 +957,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             TimeUnit.NANOSECONDS.toMillis(refreshMetric.sum()),
             externalRefreshMetric.count(),
             TimeUnit.NANOSECONDS.toMillis(externalRefreshMetric.sum()),
+            getEngine().totalExternalRefreshDelayTime().millis(),
             listeners);
     }
 
@@ -1343,7 +1344,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             // we may not expose operations that were indexed with a refresh listener that was immediately
             // responded to in addRefreshListener. The refresh must happen under the same mutex used in addRefreshListener
             // and before moving this shard to POST_RECOVERY state (i.e., allow to read from this shard).
-            getEngine().refresh("post_recovery");
+            asyncRefresh("post_recovery", ActionListener.wrap(() -> {}));
             synchronized (mutex) {
                 if (state == IndexShardState.CLOSED) {
                     throw new IndexShardClosedException(shardId);
@@ -1689,8 +1690,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
      */
     public void finalizeRecovery() {
         recoveryState().setStage(RecoveryState.Stage.FINALIZE);
+        asyncRefresh("recovery_finalization", ActionListener.wrap(() -> {}));
         Engine engine = getEngine();
-        engine.refresh("recovery_finalization");
         engine.config().setEnableGcDeletes(true);
     }
 
@@ -2701,7 +2702,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 this.warmer.warm(reader);
             }
         };
-        return new EngineConfig(shardId, shardRouting.allocationId().getId(),
+        return  new EngineConfig(shardId, shardRouting.allocationId().getId(),
                 threadPool, indexSettings, warmer, store, indexSettings.getMergePolicy(),
                 mapperService != null ? mapperService.indexAnalyzer() : null,
                 similarityService.similarity(mapperService), codecService, shardEventListener,
@@ -2710,7 +2711,14 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 Collections.singletonList(refreshListeners),
                 Collections.singletonList(new RefreshMetricUpdater(refreshMetric)),
                 indexSort, circuitBreakerService, globalCheckpointSupplier, replicationTracker::getRetentionLeases,
-                () -> getOperationPrimaryTerm(), tombstoneDocSupplier());
+                () -> getOperationPrimaryTerm(), tombstoneDocSupplier(),
+                (waitingForGlobalCheckpoint, listener) -> globalCheckpointListeners.add(waitingForGlobalCheckpoint, (gcp, e) -> {
+                    if (e == null) {
+                        listener.onResponse(gcp);
+                    } else {
+                        listener.onFailure(e);
+                    }
+                }, null));
     }
 
     /**
@@ -3140,7 +3148,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     private RefreshListeners buildRefreshListeners() {
         return new RefreshListeners(
             indexSettings::getMaxRefreshListeners,
-            () -> refresh("too_many_listeners"),
+            () -> asyncRefresh("too_many_listeners", ActionListener.wrap(() -> {})),
             threadPool.executor(ThreadPool.Names.LISTENER),
             logger, threadPool.getThreadContext(),
             externalRefreshMetric);
@@ -3197,7 +3205,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 if (logger.isTraceEnabled()) {
                     logger.trace("refresh with source [schedule]");
                 }
-                return getEngine().maybeRefresh("schedule");
+                getEngine().asyncRefresh("schedule", false, ActionListener.wrap(() -> {}));
+                return true;
             }
         }
         final Engine engine = getEngine();
