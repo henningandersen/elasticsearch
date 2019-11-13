@@ -18,11 +18,11 @@ public class ExceptionHandlingIT extends ESIntegTestCase {
     /**
      * When creating index against a non-master we get a RemoteTransportException.
      *
-     * The onFailure invocation happens in TransportMasterNodeAction:190
-     * https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/action/support/master/TransportMasterNodeAction.java#L190
+     * The onFailure invocation happens in
+     * <a href="https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/action/support/master/TransportMasterNodeAction.java#L190">TransportMasterNodeAction:190</a>
      *
-     * and is turned into a RemoteTransportException in TransportService:236
-     * https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/transport/InboundHandler.java#L236
+     * and is turned into a RemoteTransportException in
+     * <a href="https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/transport/InboundHandler.java#L236">TransportService:236</a>
      *
      * since it is handled like any transport exception.
      *
@@ -49,8 +49,8 @@ public class ExceptionHandlingIT extends ESIntegTestCase {
     /**
      * When creating index directly against master we get the original exception from onResponse
      *
-     * The onFailure invocation happens in TransportMasterNodeAction:162
-     * https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/action/support/master/TransportMasterNodeAction.java#L162
+     * The onFailure invocation happens in
+     * <a href="https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/action/support/master/TransportMasterNodeAction.java#L162">TransportMasterNodeAction:162</a>
      *
      * coming from ActionListener.wrap being used
      *
@@ -75,9 +75,7 @@ public class ExceptionHandlingIT extends ESIntegTestCase {
 
     /**
      * When suing nodes stats, exceptions from onResponse are silently ignored because of (inadvertent?) double-fire check in
-     *
-     * TransportNodesAction:218
-     * https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/action/support/nodes/TransportNodesAction.java#L218
+     * <a href="https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/action/support/nodes/TransportNodesAction.java#L218">TransportNodesAction:218</a>
      *
      *
      * @throws InterruptedException
