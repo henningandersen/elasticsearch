@@ -32,16 +32,21 @@ tasks.register("bwcTest") {
 
 configurations {
   restSpec
+  reindexRestSpec
 }
 
 dependencies {
   restSpec project(':rest-api-spec')
+  reindexRestSpec project(':modules:reindex')
 }
 
 processTestResources {
   from({ zipTree(configurations.restSpec.singleFile) })
   dependsOn configurations.restSpec
+  from(configurations.reindexRestSpec)
 }
+
+
 
 for (Version bwcVersion : bwcVersions.wireCompatible) {
   if (bwcVersion == VersionProperties.getElasticsearchVersion()) {
