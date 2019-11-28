@@ -172,7 +172,7 @@ public abstract class ScrollableHitSource {
     }
     private void startNextScroll(TimeValue extraKeepAlive, RejectAwareActionListener<Response> searchListener) {
 //        assert scrollId.get() != null;
-        doRestart(extraKeepAlive, restartFromValue + 1, searchListener);
+        doRestart(extraKeepAlive, restartFromValue, searchListener);
 //        doStartNextScroll(scrollId.get(), extraKeepAlive, searchListener);
     }
 

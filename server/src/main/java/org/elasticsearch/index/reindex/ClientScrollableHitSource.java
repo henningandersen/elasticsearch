@@ -90,14 +90,15 @@ public class ClientScrollableHitSource extends ScrollableHitSource {
 
     private SearchRequest createRestartFromRequest(long restartFromValue, TimeValue extraKeepAlive) {
         SearchRequest restartFromRequest = new SearchRequest(firstSearchRequest).scroll((Scroll) null);
-        RangeQueryBuilder restartFromFilter = new RangeQueryBuilder(SeqNoFieldMapper.NAME).gte(restartFromValue);
+//        RangeQueryBuilder restartFromFilter = new RangeQueryBuilder(SeqNoFieldMapper.NAME).gte(restartFromValue);
         SearchSourceBuilder newSearchSourceBuilder =
             restartFromRequest.source() != null ? restartFromRequest.source().copy() : new SearchSourceBuilder();
-        if (newSearchSourceBuilder.query() == null) {
-            newSearchSourceBuilder.query(restartFromFilter);
-        } else {
-            newSearchSourceBuilder.query(new BoolQueryBuilder().filter(restartFromRequest.source().query()).filter(restartFromFilter));
-        }
+        newSearchSourceBuilder.searchAfter(new Object[] { restartFromValue });
+//        if (newSearchSourceBuilder.query() == null) {
+//            newSearchSourceBuilder.query(restartFromFilter);
+//        } else {
+//            newSearchSourceBuilder.query(new BoolQueryBuilder().filter(restartFromRequest.source().query()).filter(restartFromFilter));
+//        }
         restartFromRequest.source(newSearchSourceBuilder);
         return restartFromRequest;
     }

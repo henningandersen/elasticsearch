@@ -49,12 +49,12 @@ import org.apache.lucene.search.Weight;
 import org.elasticsearch.action.search.SearchTask;
 import org.elasticsearch.common.Booleans;
 import org.elasticsearch.common.CheckedConsumer;
+import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.lucene.Lucene;
 import org.elasticsearch.common.lucene.search.TopDocsAndMaxScore;
 import org.elasticsearch.common.util.concurrent.QueueResizingEsThreadPoolExecutor;
 import org.elasticsearch.index.IndexSortConfig;
 import org.elasticsearch.index.mapper.MappedFieldType;
-import org.elasticsearch.index.mapper.DateFieldMapper.DateFieldType;
 import org.elasticsearch.search.DocValueFormat;
 import org.elasticsearch.search.SearchPhase;
 import org.elasticsearch.search.SearchService;
@@ -407,7 +407,7 @@ public class QueryPhase implements SearchPhase {
 
     private static Query tryRewriteLongSort(SearchContext searchContext, IndexReader reader,
                                             Query query, boolean hasFilterCollector) throws IOException {
-        if (searchContext.searchAfter() != null) return null; //TODO: handle sort optimization with search after
+        //if (searchContext.searchAfter() != null) return null; //TODO: handle sort optimization with search after
         if (searchContext.scrollContext() != null) return null;
         if (searchContext.collapse() != null) return null;
         if (searchContext.trackScores()) return null;
@@ -422,8 +422,7 @@ public class QueryPhase implements SearchPhase {
         if (searchContext.mapperService() == null) return null; // mapperService can be null in tests
         final MappedFieldType fieldType = searchContext.mapperService().fullName(fieldName);
         if (fieldType == null) return null; // for unmapped fields, default behaviour depending on "unmapped_type" flag
-        if ((fieldType.typeName().equals("long") == false) && (fieldType instanceof DateFieldType == false)
-            && fieldType.typeName().equals("_seq_no") == false) return null;
+        //if ((fieldType.typeName().equals("long") == false) && (fieldType instanceof DateFieldType == false)) return null;
         if (fieldType.indexOptions() == IndexOptions.NONE) return null; //TODO: change to pointDataDimensionCount() when implemented
         if (fieldType.hasDocValues() == false) return null;
 
@@ -469,6 +468,9 @@ public class QueryPhase implements SearchPhase {
         long maxValue = LongPoint.decodeDimension(maxValueBytes, 0);
 
         Query rewrittenQuery;
+        Long searchAfter = searchContext.searchAfter() == null ? null : (long) searchContext.searchAfter().fields[0];
+        // TODO Support for more than one sort field
+        searchContext.searchAfter(null);
         if (minValue == maxValue) {
             rewrittenQuery = new DocValuesFieldExistsQuery(fieldName);
         } else {
@@ -478,13 +480,17 @@ public class QueryPhase implements SearchPhase {
             if (pivotDistance == 0) { // 0 if maxValue = (minValue + 1)
                 pivotDistance = 1;
             }
-            rewrittenQuery = LongPoint.newDistanceFeatureQuery(sortField.getField(), 1, origin, pivotDistance);
+            rewrittenQuery = new XLongDistanceFeatureQuery(sortField.getField(),
+                searchAfter == null ? Long.MIN_VALUE : searchAfter, origin, pivotDistance);
         }
-        rewrittenQuery = new BooleanQuery.Builder()
+        BooleanQuery.Builder bq = new BooleanQuery.Builder()
             .add(query, BooleanClause.Occur.FILTER) // filter for original query
-            .add(rewrittenQuery, BooleanClause.Occur.SHOULD) //should for rewrittenQuery
-            .build();
-        return rewrittenQuery;
+            .add(rewrittenQuery, BooleanClause.Occur.SHOULD); //should for rewrittenQuery
+        if (searchAfter != null) {
+            bq.add(fieldType.rangeQuery(searchAfter, Long.MAX_VALUE, false, true, ShapeRelation.INTERSECTS,
+                null, null, searchContext.getQueryShardContext()), BooleanClause.Occur.FILTER);
+        }
+        return bq.build();
     }
 
     /**
