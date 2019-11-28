@@ -422,7 +422,8 @@ public class QueryPhase implements SearchPhase {
         if (searchContext.mapperService() == null) return null; // mapperService can be null in tests
         final MappedFieldType fieldType = searchContext.mapperService().fullName(fieldName);
         if (fieldType == null) return null; // for unmapped fields, default behaviour depending on "unmapped_type" flag
-        if ((fieldType.typeName().equals("long") == false) && (fieldType instanceof DateFieldType == false)) return null;
+        if ((fieldType.typeName().equals("long") == false) && (fieldType instanceof DateFieldType == false)
+            && fieldType.typeName().equals("_seq_no") == false) return null;
         if (fieldType.indexOptions() == IndexOptions.NONE) return null; //TODO: change to pointDataDimensionCount() when implemented
         if (fieldType.hasDocValues() == false) return null;
 
