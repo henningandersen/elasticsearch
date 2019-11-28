@@ -171,8 +171,9 @@ public abstract class ScrollableHitSource {
         ));
     }
     private void startNextScroll(TimeValue extraKeepAlive, RejectAwareActionListener<Response> searchListener) {
-        assert scrollId.get() != null;
-        doStartNextScroll(scrollId.get(), extraKeepAlive, searchListener);
+//        assert scrollId.get() != null;
+        doRestart(extraKeepAlive, restartFromValue + 1, searchListener);
+//        doStartNextScroll(scrollId.get(), extraKeepAlive, searchListener);
     }
 
     private void onResponse(Response response) {
@@ -201,7 +202,7 @@ public abstract class ScrollableHitSource {
     }
 
     private long extractRestartFromValue(List<? extends Hit> hits, long defaultValue) {
-        if (resilient && hits.size() != 0) {
+        if (true && hits.size() != 0) {
             return hits.get(hits.size() - 1).getSeqNo();
         } else {
             return defaultValue;

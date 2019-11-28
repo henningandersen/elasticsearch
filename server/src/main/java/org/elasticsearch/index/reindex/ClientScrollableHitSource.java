@@ -42,6 +42,7 @@ import org.elasticsearch.index.mapper.RoutingFieldMapper;
 import org.elasticsearch.index.mapper.SeqNoFieldMapper;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -69,14 +70,15 @@ public class ClientScrollableHitSource extends ScrollableHitSource {
         this.client = client;
         this.firstSearchRequest = firstSearchRequest;
         firstSearchRequest.allowPartialSearchResults(false);
+        firstSearchRequest.source().trackTotalHitsUpTo(firstSearchRequest.source().size());
     }
 
     @Override
     public void doStart(TimeValue extraKeepAlive, RejectAwareActionListener<Response> searchListener) {
         SearchRequest searchRequest = firstSearchRequest;
-        if (extraKeepAlive != null && extraKeepAlive.nanos() != 0) {
-            searchRequest = new SearchRequest(searchRequest).scroll(keepAliveTime(extraKeepAlive));
-        }
+//        if (extraKeepAlive != null && extraKeepAlive.nanos() != 0) {
+            searchRequest = new SearchRequest(searchRequest).scroll((Scroll) null);//keepAliveTime(extraKeepAlive));
+//        }
         client.search(searchRequest, wrapListener(searchListener));
     }
 
@@ -87,7 +89,7 @@ public class ClientScrollableHitSource extends ScrollableHitSource {
     }
 
     private SearchRequest createRestartFromRequest(long restartFromValue, TimeValue extraKeepAlive) {
-        SearchRequest restartFromRequest = new SearchRequest(firstSearchRequest).scroll(keepAliveTime(extraKeepAlive));
+        SearchRequest restartFromRequest = new SearchRequest(firstSearchRequest).scroll((Scroll) null);
         RangeQueryBuilder restartFromFilter = new RangeQueryBuilder(SeqNoFieldMapper.NAME).gte(restartFromValue);
         SearchSourceBuilder newSearchSourceBuilder =
             restartFromRequest.source() != null ? restartFromRequest.source().copy() : new SearchSourceBuilder();
