@@ -94,6 +94,7 @@ public class ClientScrollableHitSource extends ScrollableHitSource {
         SearchSourceBuilder newSearchSourceBuilder =
             restartFromRequest.source() != null ? restartFromRequest.source().copy() : new SearchSourceBuilder();
         newSearchSourceBuilder.searchAfter(new Object[] { restartFromValue });
+        newSearchSourceBuilder.query(new RangeQueryBuilder(SeqNoFieldMapper.NAME).lt(restartFromValue + (firstSearchRequest.source().size() * 2)));
 //        if (newSearchSourceBuilder.query() == null) {
 //            newSearchSourceBuilder.query(restartFromFilter);
 //        } else {
