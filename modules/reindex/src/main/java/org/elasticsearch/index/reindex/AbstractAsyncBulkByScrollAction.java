@@ -322,6 +322,11 @@ public abstract class AbstractAsyncBulkByScrollAction<Request extends AbstractBu
             return;
         }
         worker.countBatch();
+
+        if (true) {
+            asyncResponse.done(TimeValue.ZERO);
+            return;
+        }
         List<? extends ScrollableHitSource.Hit> hits = response.getHits();
         if (mainRequest.getMaxDocs() != MAX_DOCS_ALL_MATCHES) {
             // Truncate the hits if we have more than the request max docs
