@@ -487,7 +487,7 @@ public class QueryPhase implements SearchPhase {
             .add(query, BooleanClause.Occur.FILTER) // filter for original query
             .add(rewrittenQuery, BooleanClause.Occur.SHOULD); //should for rewrittenQuery
         if (searchAfter != null) {
-            bq.add(fieldType.rangeQuery(searchAfter, searchAfter + (2*searchContext.size()), false, true, ShapeRelation.INTERSECTS,
+            bq.add(fieldType.rangeQuery(searchAfter, searchAfter + (searchContext.size()), false, true, ShapeRelation.INTERSECTS,
                 null, null, searchContext.getQueryShardContext()), BooleanClause.Occur.FILTER);
         }
         return bq.build();
