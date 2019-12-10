@@ -712,7 +712,7 @@ public class AsyncBulkByScrollActionTests extends ESTestCase {
 
     public void testCheckpointListener() throws Exception {
         long initialRestartFromValue = randomLongBetween(0, 1000);
-        ScrollableHitSource.Checkpoint initialCheckpoint = new ScrollableHitSource.Checkpoint(initialRestartFromValue);
+        ScrollableHitSource.Checkpoint initialCheckpoint = new ScrollableHitSource.Checkpoint(initialRestartFromValue, index, shard);
         AtomicReference<ScrollableHitSource.Checkpoint> resultCheckpoint = new AtomicReference<>();
         AtomicReference<BulkByScrollTask.Status> resultStatus = new AtomicReference<>();
         DummyAsyncBulkByScrollAction action = new DummyAsyncBulkByScrollAction(true, initialCheckpoint, (c, s) -> {
@@ -791,7 +791,7 @@ public class AsyncBulkByScrollActionTests extends ESTestCase {
             @Override
             public ScrollableHitSource.Checkpoint getCheckpoint() {
                 assertThat(response.getHits(), not(empty()));
-                return new ScrollableHitSource.Checkpoint(response.getHits().get(response.getHits().size()-1).getSeqNo());
+                return new ScrollableHitSource.Checkpoint(response.getHits().get(response.getHits().size()-1).getSeqNo(), index, shard);
             }
 
             @Override

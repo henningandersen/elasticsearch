@@ -118,7 +118,7 @@ public class ClientScrollableHitSourceTests extends ESTestCase {
         ScrollableHitSource.Checkpoint initialCheckpoint = null;
         if (randomBoolean()) {
             seqNo = seqNoGenerator.getAsLong();
-            initialCheckpoint = new ScrollableHitSource.Checkpoint(seqNo);
+            initialCheckpoint = new ScrollableHitSource.Checkpoint(seqNo, index, shard);
         }
         ClientScrollableHitSource hitSource = new ClientScrollableHitSource(logger, BackoffPolicy.constantBackoff(TimeValue.ZERO, retries),
             threadPool, actualSearchRetries::incrementAndGet, response -> handleResponse(responses, response), failureHandler,

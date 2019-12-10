@@ -144,7 +144,7 @@ public class ReindexTaskStateUpdaterTests extends ReindexTestCase {
         firstAssignmentLatch.await();
 
         BulkByScrollTask.Status status = new BulkByScrollTask.Status(Collections.emptyList(), null);
-        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(10), status);
+        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(10, index, shard), status);
         assertCheckpointBusy(taskId, reindexClient, 10);
         assertFalse(cancelled.get());
 
@@ -166,7 +166,7 @@ public class ReindexTaskStateUpdaterTests extends ReindexTestCase {
         });
         secondAssignmentLatch.await();
 
-        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(20), status);
+        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(20, index, shard), status);
         assertBusy(() -> assertTrue(cancelled.get()));
 
         PlainActionFuture<ReindexTaskState> getFuture = PlainActionFuture.newFuture();
@@ -200,7 +200,7 @@ public class ReindexTaskStateUpdaterTests extends ReindexTestCase {
         firstAssignmentLatch.await();
 
         BulkByScrollTask.Status status = new BulkByScrollTask.Status(Collections.emptyList(), null);
-        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(10), status);
+        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(10, index, shard), status);
         assertCheckpointBusy(taskId, reindexClient, 10);
 
 
@@ -209,7 +209,7 @@ public class ReindexTaskStateUpdaterTests extends ReindexTestCase {
         updater.finish(response, null);
         finishedFuture.actionGet();
 
-        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(20), status);
+        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(20, index, shard), status);
 
         PlainActionFuture<ReindexTaskState> getFuture = PlainActionFuture.newFuture();
         reindexClient.getReindexTaskDoc(taskId, getFuture);
@@ -241,7 +241,7 @@ public class ReindexTaskStateUpdaterTests extends ReindexTestCase {
         firstAssignmentLatch.await();
 
         BulkByScrollTask.Status status = new BulkByScrollTask.Status(Collections.emptyList(), null);
-        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(10), status);
+        updater.onCheckpoint(new ScrollableHitSource.Checkpoint(10, index, shard), status);
 
         assertCheckpointBusy(taskId, reindexClient, 10);
 

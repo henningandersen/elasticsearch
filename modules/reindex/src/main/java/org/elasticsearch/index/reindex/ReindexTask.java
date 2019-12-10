@@ -247,7 +247,8 @@ public class ReindexTask extends AllocatedPersistentTask {
         Supplier<ThreadContext.StoredContext> context = threadContext.newRestorableContext(false);
         // TODO: Eventually we only want to retain security context
         try (ThreadContext.StoredContext ignore = stashWithHeaders(threadContext, reindexTaskParams.getHeaders())) {
-            reindexer.execute(childTask, reindexRequest, new ContextPreservingActionListener<>(context, new ActionListener<>() {
+            reindexer.execute(childTask, reindexRequest, null, new ContextPreservingActionListener<>(context,
+                new ActionListener<>() {
                 @Override
                 public void onResponse(BulkByScrollResponse response) {
                     transientStatus = response.getStatus();

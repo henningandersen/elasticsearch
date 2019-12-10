@@ -48,6 +48,7 @@ import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static java.util.Collections.emptyList;
@@ -60,15 +61,22 @@ import static org.elasticsearch.common.unit.TimeValue.timeValueNanos;
 public class ClientScrollableHitSource extends ScrollableHitSource {
     private final ParentTaskAssigningClient client;
     private final SearchRequest firstSearchRequest;
+    private final List<Set<String>> indexGroups;
 
     public ClientScrollableHitSource(Logger logger, BackoffPolicy backoffPolicy, ThreadPool threadPool, Runnable countSearchRetry,
                                      Consumer<AsyncResponse> onResponse, Consumer<Exception> fail,
-                                     ParentTaskAssigningClient client, SearchRequest firstSearchRequest, boolean resilient,
-                                     Checkpoint checkpoint) {
+                                     ParentTaskAssigningClient client, SearchRequest firstSearchRequest, List<Set<String>> indexGroups,
+                                     boolean resilient, Checkpoint checkpoint) {
         super(logger, backoffPolicy, threadPool, countSearchRetry, onResponse, fail, resilient, checkpoint);
         this.client = client;
+        this.indexGroups = indexGroups;
         this.firstSearchRequest = firstSearchRequest;
         firstSearchRequest.allowPartialSearchResults(false);
+        if (checkpoint != null) {
+            currentIndexIndex = checkpoint.index;
+        } else {
+            currentIndexIndex = 0;
+        }
     }
 
     @Override

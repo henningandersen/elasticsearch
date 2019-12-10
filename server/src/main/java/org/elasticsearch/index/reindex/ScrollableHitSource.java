@@ -180,7 +180,7 @@ public abstract class ScrollableHitSource {
         setScroll(response.getScrollId());
         onResponse.accept(new AsyncResponse() {
             private final AtomicBoolean alreadyDone = new AtomicBoolean();
-            private final Checkpoint checkpoint = new Checkpoint(extractRestartFromValue(response.getHits(), restartFromValue));
+            private final Checkpoint checkpoint = new Checkpoint(extractRestartFromValue(response.getHits(), restartFromValue), index, shard);
             @Override
             public Response response() {
                 return response;
@@ -560,7 +560,7 @@ public abstract class ScrollableHitSource {
         private static final String RESTART_FROM_VALUE = "restartFromValue";
 
         private static final ConstructingObjectParser<Checkpoint, Void> PARSER =
-            new ConstructingObjectParser<>("reindex/checkpoint", a -> new Checkpoint((long) a[0]));
+            new ConstructingObjectParser<>("reindex/checkpoint", a -> new Checkpoint((long) a[0], (int) a[1], (int) a[2]));
 
         static {
             PARSER.declareLong(ConstructingObjectParser.constructorArg(), new ParseField(RESTART_FROM_VALUE));
@@ -568,15 +568,17 @@ public abstract class ScrollableHitSource {
 
         // package-private for testing.
         final long restartFromValue;
-
-        protected Checkpoint(long restartFromValue) {
+        final int index;
+        protected Checkpoint(long restartFromValue, int index) {
             this.restartFromValue = restartFromValue;
+            this.index = index;
         }
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
             builder.field(RESTART_FROM_VALUE, restartFromValue);
+            builder.field(INDEX, index);
             return builder.endObject();
         }
 

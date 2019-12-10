@@ -62,11 +62,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.synchronizedList;
@@ -101,7 +105,8 @@ public class Reindexer {
         void onCheckpoint(ScrollableHitSource.Checkpoint checkpoint, BulkByScrollTask.Status status);
     }
 
-    public void execute(BulkByScrollTask task, ReindexRequest request, ActionListener<BulkByScrollResponse> listener,
+    public void execute(BulkByScrollTask task, ReindexRequest request, List<Set<String>> indexGroups,
+                        ActionListener<BulkByScrollResponse> listener,
                         ScrollableHitSource.Checkpoint checkpoint, CheckpointListener checkpointListener, boolean resilient) {
         request.getSearchRequest().allowPartialSearchResults(false);
         // remote reindex not supported yet.
@@ -113,13 +118,18 @@ public class Reindexer {
             resilient = addSeqNoSorting(request.getSearchRequest());
         }
 
+        if (indexGroups == null && request.getRemoteInfo() == null) {
+            indexGroups = Collections.singletonList(Arrays.stream(request.getSearchRequest().indices()).collect(Collectors.toSet()));
+        }
+
         final boolean finalResilient = resilient;
+        final List<Set<String>> finalIndexGroups = indexGroups;
         BulkByScrollParallelizationHelper.executeSlicedAction(task, request, ReindexAction.INSTANCE, listener, client,
             clusterService.localNode(),
             () -> {
                 ParentTaskAssigningClient assigningClient = new ParentTaskAssigningClient(client, clusterService.localNode(), task);
                 AsyncIndexBySearchAction searchAction = new AsyncIndexBySearchAction(task, logger, assigningClient, threadPool,
-                    scriptService, reindexSslConfig, request, finalResilient, listener, checkpoint, checkpointListener);
+                    scriptService, reindexSslConfig, request, finalIndexGroups, finalResilient, listener, checkpoint, checkpointListener);
                 searchAction.start();
             });
     }
@@ -218,7 +228,7 @@ public class Reindexer {
 
         AsyncIndexBySearchAction(BulkByScrollTask task, Logger logger, ParentTaskAssigningClient client,
                                  ThreadPool threadPool, ScriptService scriptService, ReindexSslConfig sslConfig, ReindexRequest request,
-                                 boolean resilient, ActionListener<BulkByScrollResponse> listener,
+                                 List<Set<String>> finalIndexGroups, boolean resilient, ActionListener<BulkByScrollResponse> listener,
                                  ScrollableHitSource.Checkpoint checkpoint, CheckpointListener checkpointListener) {
             super(task,
                 /*

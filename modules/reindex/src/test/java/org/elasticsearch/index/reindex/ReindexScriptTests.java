@@ -91,7 +91,7 @@ public class ReindexScriptTests extends AbstractAsyncBulkByScrollActionScriptTes
     @Override
     protected Reindexer.AsyncIndexBySearchAction action(ScriptService scriptService, ReindexRequest request) {
         ReindexSslConfig sslConfig = Mockito.mock(ReindexSslConfig.class);
-        return new Reindexer.AsyncIndexBySearchAction(task, logger, null, threadPool, scriptService, sslConfig, request, false, listener(),
+        return new Reindexer.AsyncIndexBySearchAction(task, logger, null, threadPool, scriptService, sslConfig, request, finalIndexGroups, false, listener(),
             null, null);
     }
 }
