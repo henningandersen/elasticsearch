@@ -121,8 +121,11 @@ public final class ListenableFuture<V> extends BaseFuture<V> implements ActionLi
                         Thread.currentThread().interrupt();
                         throw new IllegalStateException("Future got interrupted", e);
                     } catch (ExecutionException e) {
-                        if (e.getCause() instanceof RuntimeException)
+                        // FutureUtils.rethrowExecutionException unwraps cause, which means the exception reported is not the same as
+                        // the one given to onFailure. This masks away important debug info like RemoteTransportException.
+                        if (e.getCause() instanceof RuntimeException) {
                             throw (RuntimeException) e.getCause();
+                        }
                         throw FutureUtils.rethrowExecutionException(e);
                     }
                     V value = result;
