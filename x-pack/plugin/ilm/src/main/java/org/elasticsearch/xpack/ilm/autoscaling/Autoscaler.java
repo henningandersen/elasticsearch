@@ -71,14 +71,20 @@ public class Autoscaler {
      * @return true if scale up/out is necessary.
      */
     public boolean scaleHot(ClusterState state, ClusterInfo clusterInfo, Predicate<IndexMetaData> hotPredicate) {
-        state = futureHotState(state);
-
-        state = allocate(state, clusterInfo, a -> {});
-        state = allocate(state, clusterInfo, this::startPrimaryShards);
+        state = simulateScaleHot(state, clusterInfo);
 
         MetaData metaData = state.metaData();
         return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
             .map(u -> metaData.getIndexSafe(u.index())).anyMatch(hotPredicate);
+    }
+
+    // allow test to verify more internal resulting state.
+    ClusterState simulateScaleHot(ClusterState state, ClusterInfo clusterInfo) {
+        state = futureHotState(state);
+
+        state = allocate(state, clusterInfo, a -> {});
+        state = allocate(state, clusterInfo, this::startPrimaryShards);
+        return state;
     }
 
     private ClusterState allocate(ClusterState state, ClusterInfo clusterInfo, Consumer<RoutingAllocation> allocationManipulator) {
