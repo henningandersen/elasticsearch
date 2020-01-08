@@ -10,6 +10,7 @@ import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
+import org.elasticsearch.cluster.routing.RecoverySource;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
@@ -30,6 +31,8 @@ import org.elasticsearch.xpack.core.ilm.LifecycleSettings;
 import org.elasticsearch.xpack.core.ilm.RolloverAction;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.StreamSupport;
 
 import static org.elasticsearch.xpack.core.ilm.LifecycleExecutionState.ILM_CUSTOM_METADATA_KEY;
 
@@ -63,7 +66,8 @@ public class AutoscalerTests extends ESTestCase {
             .build();
 
         ClusterSettings clusterSettings = new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS);
-        AllocationDeciders yesDeciders = new AllocationDeciders(Collections.singleton(new SameShardAllocationDecider(Settings.EMPTY, clusterSettings)));
+        AllocationDeciders yesDeciders = new AllocationDeciders(Collections.singleton(new SameShardAllocationDecider(Settings.EMPTY,
+            clusterSettings)));
         BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY, clusterSettings);
         EmptyClusterInfoService clusterInfoService = EmptyClusterInfoService.INSTANCE;
         GatewayAllocator noopGatewayAllocator = new GatewayAllocator() {
@@ -82,39 +86,49 @@ public class AutoscalerTests extends ESTestCase {
         assertFalse(new Autoscaler(yesDeciders, shardsAllocator, new IndexNameExpressionResolver(), Settings.EMPTY)
             .scaleHot(clusterState, clusterInfoService.getClusterInfo(), i -> true));
 
-        AllocationDeciders noDeciders = new AllocationDeciders(Collections.singleton(new AllocationDecider() {
-            @Override
-            public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-                return Decision.NO;
-            }
+        AllocationDeciders aboveThreshold = new AllocationDeciders(List.of(new SameShardAllocationDecider(Settings.EMPTY, clusterSettings),
+            new AllocationDecider() {
+                @Override
+                public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+                    return canAllocate(shardRouting, allocation);
+                }
 
-            @Override
-            public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-                return Decision.NO;
-            }
+                @Override
+                public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+                    return Decision.NO;
+                }
 
-            @Override
-            public Decision canAllocate(ShardRouting shardRouting, RoutingAllocation allocation) {
-                return Decision.NO;
-            }
+                @Override
+                public Decision canAllocate(ShardRouting shardRouting, RoutingAllocation allocation) {
 
-            @Override
-            public Decision canAllocate(IndexMetaData indexMetaData, RoutingNode node, RoutingAllocation allocation) {
-                return Decision.NO;
-            }
+                    boolean skipLowTresholdChecks = shardRouting.primary() &&
+                        shardRouting.active() == false && shardRouting.recoverySource().getType() == RecoverySource.Type.EMPTY_STORE;
+                    return skipLowTresholdChecks ? Decision.YES : Decision.NO;
+                }
 
-            @Override
-            public Decision canAllocate(RoutingNode node, RoutingAllocation allocation) {
-                return Decision.NO;
-            }
+                @Override
+                public Decision canAllocate(IndexMetaData indexMetaData, RoutingNode node, RoutingAllocation allocation) {
+                    return Decision.NO;
+                }
 
-            @Override
-            public Decision canForceAllocatePrimary(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-                return Decision.NO;
-            }
-        }));
+                @Override
+                public Decision canAllocate(RoutingNode node, RoutingAllocation allocation) {
+                    return Decision.NO;
+                }
 
-        assertTrue(new Autoscaler(noDeciders, shardsAllocator, new IndexNameExpressionResolver(), Settings.EMPTY)
+                @Override
+                public Decision canForceAllocatePrimary(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+                    return canAllocate(shardRouting, node, allocation);
+                }
+            }));
+
+        assertTrue(new Autoscaler(aboveThreshold, shardsAllocator, new IndexNameExpressionResolver(), Settings.EMPTY)
             .scaleHot(clusterState, clusterInfoService.getClusterInfo(), i -> true));
+
+        ClusterState scaledState = new Autoscaler(aboveThreshold, shardsAllocator, new IndexNameExpressionResolver(), Settings.EMPTY)
+            .simulateScaleHot(clusterState, clusterInfoService.getClusterInfo());
+
+        assertFalse(StreamSupport.stream(scaledState.getRoutingNodes().unassigned().spliterator(), false).anyMatch(ShardRouting::primary));
+        assertFalse(scaledState.getRoutingNodes().unassigned().isEmpty());
     }
 }
