@@ -68,7 +68,7 @@ public class UpdateSettingsStepTests extends AbstractStepTestCase<UpdateSettings
 
     @Override
     public UpdateSettingsStep copyInstance(UpdateSettingsStep instance) {
-        return new UpdateSettingsStep(instance.getKey(), instance.getNextStepKey(), instance.getClient(), instance.getSettings());
+        return new UpdateSettingsStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext(), instance.getSettings());
     }
 
     public void testPerformAction() throws Exception {

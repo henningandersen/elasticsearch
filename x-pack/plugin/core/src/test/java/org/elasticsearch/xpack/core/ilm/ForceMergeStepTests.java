@@ -55,13 +55,13 @@ public class ForceMergeStepTests extends AbstractStepTestCase<ForceMergeStep> {
                 throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new ForceMergeStep(key, nextKey, instance.getClient(), maxNumSegments);
+        return new ForceMergeStep(key, nextKey, instance.getIndexLifecycleContext(), maxNumSegments);
     }
 
     @Override
     public ForceMergeStep copyInstance(ForceMergeStep instance) {
         return new ForceMergeStep(instance.getKey(), instance.getNextStepKey(),
-            instance.getClient(), instance.getMaxNumSegments());
+            instance.getIndexLifecycleContext(), instance.getMaxNumSegments());
     }
 
     public void testPerformActionComplete() {

@@ -43,12 +43,12 @@ public class OpenFollowerIndexStepTests extends AbstractStepTestCase<OpenFollowe
             nextKey = new Step.StepKey(key.getPhase(), key.getAction(), key.getName() + randomAlphaOfLength(5));
         }
 
-        return new OpenFollowerIndexStep(key, nextKey, instance.getClient());
+        return new OpenFollowerIndexStep(key, nextKey, instance.getIndexLifecycleContext());
     }
 
     @Override
     protected OpenFollowerIndexStep copyInstance(OpenFollowerIndexStep instance) {
-        return new OpenFollowerIndexStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new OpenFollowerIndexStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext());
     }
 
     public void testOpenFollowerIndexIsNoopForAlreadyOpenIndex() {

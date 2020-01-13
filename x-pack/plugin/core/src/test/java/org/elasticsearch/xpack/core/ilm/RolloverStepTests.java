@@ -64,12 +64,12 @@ public class RolloverStepTests extends AbstractStepTestCase<RolloverStep> {
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new RolloverStep(key, nextKey, instance.getClient());
+        return new RolloverStep(key, nextKey, instance.getIndexLifecycleContext());
     }
 
     @Override
     public RolloverStep copyInstance(RolloverStep instance) {
-        return new RolloverStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new RolloverStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext());
     }
 
     private static void assertRolloverIndexRequest(RolloverRequest request, String alias) {

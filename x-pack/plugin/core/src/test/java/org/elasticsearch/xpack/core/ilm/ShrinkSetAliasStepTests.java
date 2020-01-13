@@ -63,12 +63,12 @@ public class ShrinkSetAliasStepTests extends AbstractStepTestCase<ShrinkSetAlias
         default:
             throw new AssertionError("Illegal randomisation branch");
         }
-        return new ShrinkSetAliasStep(key, nextKey, instance.getClient(), shrunkIndexPrefix);
+        return new ShrinkSetAliasStep(key, nextKey, instance.getIndexLifecycleContext(), shrunkIndexPrefix);
     }
 
     @Override
     public ShrinkSetAliasStep copyInstance(ShrinkSetAliasStep instance) {
-        return new ShrinkSetAliasStep(instance.getKey(), instance.getNextStepKey(), instance.getClient(), instance.getShrunkIndexPrefix());
+        return new ShrinkSetAliasStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext(), instance.getShrunkIndexPrefix());
     }
 
     public void testPerformAction() {

@@ -33,12 +33,12 @@ public abstract class AbstractUnfollowIndexStepTestCase<T extends AbstractUnfoll
             nextKey = new Step.StepKey(key.getPhase(), key.getAction(), key.getName() + randomAlphaOfLength(5));
         }
 
-        return newInstance(key, nextKey, instance.getClient());
+        return newInstance(key, nextKey, instance.getIndexLifecycleContext());
     }
 
     @Override
     protected final T copyInstance(T instance) {
-        return newInstance(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return newInstance(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext());
     }
 
     public final void testNotAFollowerIndex() {

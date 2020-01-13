@@ -7,7 +7,6 @@ package org.elasticsearch.xpack.core.ilm;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.shrink.ResizeRequest;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -24,8 +23,9 @@ public class ShrinkStep extends AsyncActionStep {
     private int numberOfShards;
     private String shrunkIndexPrefix;
 
-    public ShrinkStep(StepKey key, StepKey nextStepKey, Client client, int numberOfShards, String shrunkIndexPrefix) {
-        super(key, nextStepKey, client);
+    public ShrinkStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext,
+                      int numberOfShards, String shrunkIndexPrefix) {
+        super(key, nextStepKey, indexLifecycleContext);
         this.numberOfShards = numberOfShards;
         this.shrunkIndexPrefix = shrunkIndexPrefix;
     }
@@ -60,7 +60,8 @@ public class ShrinkStep extends AsyncActionStep {
         ResizeRequest resizeRequest = new ResizeRequest(shrunkenIndexName, indexMetaData.getIndex().getName());
         resizeRequest.getTargetIndexRequest().settings(relevantTargetSettings);
 
-        getClient().admin().indices().resizeIndex(resizeRequest, ActionListener.wrap(response -> {
+        getIndexLifecycleContext().resizeIndex(shrunkenIndexName, indexMetaData.getIndex().getName(), relevantTargetSettings,
+            ActionListener.wrap(response -> {
             listener.onResponse(response.isAcknowledged());
         }, listener::onFailure));
 

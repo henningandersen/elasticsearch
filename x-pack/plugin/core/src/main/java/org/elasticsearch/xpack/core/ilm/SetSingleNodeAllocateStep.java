@@ -8,8 +8,6 @@ package org.elasticsearch.xpack.core.ilm;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -50,8 +48,8 @@ public class SetSingleNodeAllocateStep extends AsyncActionStep {
         new NodeVersionAllocationDecider()
     ));
 
-    public SetSingleNodeAllocateStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    public SetSingleNodeAllocateStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext) {
+        super(key, nextStepKey, indexLifecycleContext);
     }
 
     @Override
@@ -80,11 +78,7 @@ public class SetSingleNodeAllocateStep extends AsyncActionStep {
             Randomness.shuffle(validNodeIds);
             Optional<String> nodeId = validNodeIds.stream().findAny();
             if (nodeId.isPresent()) {
-                Settings settings = Settings.builder()
-                        .put(IndexMetaData.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey() + "_id", nodeId.get()).build();
-                UpdateSettingsRequest updateSettingsRequest = new UpdateSettingsRequest(indexMetaData.getIndex().getName())
-                        .settings(settings);
-                getClient().admin().indices().updateSettings(updateSettingsRequest,
+                getIndexLifecycleContext().setSingleNodeAllocation(indexMetaData.getIndex().getName(), nodeId.get(),
                         ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
             } else {
                 // No nodes currently match the allocation rules so just wait until there is one that does

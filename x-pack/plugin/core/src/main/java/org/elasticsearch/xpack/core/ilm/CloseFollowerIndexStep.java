@@ -6,8 +6,6 @@
 package org.elasticsearch.xpack.core.ilm;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.close.CloseIndexRequest;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 
@@ -19,8 +17,8 @@ final class CloseFollowerIndexStep extends AsyncRetryDuringSnapshotActionStep {
 
     static final String NAME = "close-follower-index";
 
-    CloseFollowerIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    CloseFollowerIndexStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecyleContext) {
+        super(key, nextStepKey, indexLifecyleContext);
     }
 
     @Override
@@ -33,8 +31,7 @@ final class CloseFollowerIndexStep extends AsyncRetryDuringSnapshotActionStep {
         }
 
         if (indexMetaData.getState() == IndexMetaData.State.OPEN) {
-            CloseIndexRequest closeIndexRequest = new CloseIndexRequest(followerIndex);
-            getClient().admin().indices().close(closeIndexRequest, ActionListener.wrap(
+            getIndexLifecycleContext().close(followerIndex, ActionListener.wrap(
                 r -> {
                     assert r.isAcknowledged() : "close index response is not acknowledged";
                     listener.onResponse(true);

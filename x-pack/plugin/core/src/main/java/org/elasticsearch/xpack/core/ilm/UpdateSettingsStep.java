@@ -6,8 +6,6 @@
 package org.elasticsearch.xpack.core.ilm;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -23,15 +21,14 @@ public class UpdateSettingsStep extends AsyncActionStep {
 
     private final Settings settings;
 
-    public UpdateSettingsStep(StepKey key, StepKey nextStepKey, Client client, Settings settings) {
-        super(key, nextStepKey, client);
+    public UpdateSettingsStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext, Settings settings) {
+        super(key, nextStepKey, indexLifecycleContext);
         this.settings = settings;
     }
 
     @Override
     public void performAction(IndexMetaData indexMetaData, ClusterState currentState, ClusterStateObserver observer, Listener listener) {
-        UpdateSettingsRequest updateSettingsRequest = new UpdateSettingsRequest(indexMetaData.getIndex().getName()).settings(settings);
-        getClient().admin().indices().updateSettings(updateSettingsRequest,
+        getIndexLifecycleContext().updateSettings(indexMetaData.getIndex().getName(), settings,
                 ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
     }
 

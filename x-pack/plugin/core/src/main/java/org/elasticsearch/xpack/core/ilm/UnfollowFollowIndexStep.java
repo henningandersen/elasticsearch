@@ -9,8 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.xpack.core.ccr.action.UnfollowAction;
 
 import java.util.List;
 
@@ -19,14 +17,13 @@ final class UnfollowFollowIndexStep extends AbstractUnfollowIndexStep {
 
     static final String NAME = "unfollow-follower-index";
 
-    UnfollowFollowIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    UnfollowFollowIndexStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext) {
+        super(key, nextStepKey, indexLifecycleContext);
     }
 
     @Override
     void innerPerformAction(String followerIndex, Listener listener) {
-        UnfollowAction.Request request = new UnfollowAction.Request(followerIndex);
-        getClient().execute(UnfollowAction.INSTANCE, request, ActionListener.wrap(
+        getIndexLifecycleContext().unfollow(followerIndex, ActionListener.wrap(
             r -> {
                 assert r.isAcknowledged() : "unfollow response is not acknowledged";
                 listener.onResponse(true);

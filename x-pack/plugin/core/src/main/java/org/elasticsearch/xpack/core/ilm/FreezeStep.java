@@ -6,11 +6,8 @@
 package org.elasticsearch.xpack.core.ilm;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
-import org.elasticsearch.protocol.xpack.frozen.FreezeRequest;
-import org.elasticsearch.xpack.core.frozen.action.FreezeIndexAction;
 
 /**
  * Freezes an index.
@@ -18,14 +15,13 @@ import org.elasticsearch.xpack.core.frozen.action.FreezeIndexAction;
 public class FreezeStep extends AsyncRetryDuringSnapshotActionStep {
     public static final String NAME = "freeze";
 
-    public FreezeStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    public FreezeStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext) {
+        super(key, nextStepKey, indexLifecycleContext);
     }
 
     @Override
     public void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentState, Listener listener) {
-        getClient().admin().indices().execute(FreezeIndexAction.INSTANCE,
-            new FreezeRequest(indexMetaData.getIndex().getName()),
+        getIndexLifecycleContext().freeze(indexMetaData.getIndex().getName(),
             ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
     }
 }

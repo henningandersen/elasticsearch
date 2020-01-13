@@ -7,7 +7,6 @@ package org.elasticsearch.xpack.core.ilm;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -22,8 +21,8 @@ public class ShrinkSetAliasStep extends AsyncRetryDuringSnapshotActionStep {
     public static final String NAME = "aliases";
     private String shrunkIndexPrefix;
 
-    public ShrinkSetAliasStep(StepKey key, StepKey nextStepKey, Client client, String shrunkIndexPrefix) {
-        super(key, nextStepKey, client);
+    public ShrinkSetAliasStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext, String shrunkIndexPrefix) {
+        super(key, nextStepKey, indexLifecycleContext);
         this.shrunkIndexPrefix = shrunkIndexPrefix;
     }
 
@@ -51,7 +50,7 @@ public class ShrinkSetAliasStep extends AsyncRetryDuringSnapshotActionStep {
                 .filter(aliasMetaDataToAdd.filter() == null ? null : aliasMetaDataToAdd.filter().string())
                 .writeIndex(null));
         });
-        getClient().admin().indices().aliases(aliasesRequest, ActionListener.wrap(response ->
+        getIndexLifecycleContext().aliases(aliasesRequest, ActionListener.wrap(response ->
             listener.onResponse(true), listener::onFailure));
     }
 

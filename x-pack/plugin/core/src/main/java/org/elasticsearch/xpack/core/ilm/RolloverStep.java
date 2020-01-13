@@ -8,8 +8,6 @@ package org.elasticsearch.xpack.core.ilm;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.rollover.RolloverRequest;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -26,7 +24,7 @@ public class RolloverStep extends AsyncActionStep {
 
     public static final String NAME = "attempt-rollover";
 
-    public RolloverStep(StepKey key, StepKey nextStepKey, Client client) {
+    public RolloverStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext client) {
         super(key, nextStepKey, client);
     }
 
@@ -69,8 +67,7 @@ public class RolloverStep extends AsyncActionStep {
         }
 
         // Calling rollover with no conditions will always roll over the index
-        RolloverRequest rolloverRequest = new RolloverRequest(rolloverAlias, null);
-        getClient().admin().indices().rolloverIndex(rolloverRequest,
+        getIndexLifecycleContext().rolloverIndex(rolloverAlias,
             ActionListener.wrap(response -> {
                 assert response.isRolledOver() : "the only way this rollover call should fail is with an exception";
                 listener.onResponse(response.isRolledOver());
