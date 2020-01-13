@@ -5,7 +5,6 @@
  */
 package org.elasticsearch.xpack.core.ilm;
 
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -18,15 +17,15 @@ import java.util.Objects;
  */
 public abstract class AsyncActionStep extends Step {
 
-    private Client client;
+    private IndexLifecycleContext indexLifecycleContext;
 
-    public AsyncActionStep(StepKey key, StepKey nextStepKey, Client client) {
+    public AsyncActionStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext) {
         super(key, nextStepKey);
-        this.client = client;
+        this.indexLifecycleContext = indexLifecycleContext;
     }
 
-    protected Client getClient() {
-        return client;
+    protected IndexLifecycleContext getIndexLifecycleContext() {
+        return indexLifecycleContext;
     }
 
     public static TimeValue getMasterTimeout(ClusterState clusterState){

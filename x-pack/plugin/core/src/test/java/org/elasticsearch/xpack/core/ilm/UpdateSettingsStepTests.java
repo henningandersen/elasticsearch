@@ -55,7 +55,7 @@ public class UpdateSettingsStepTests extends AbstractStepMasterTimeoutTestCase<U
 
     @Override
     public UpdateSettingsStep copyInstance(UpdateSettingsStep instance) {
-        return new UpdateSettingsStep(instance.getKey(), instance.getNextStepKey(), instance.getClient(), instance.getSettings());
+        return new UpdateSettingsStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext(), instance.getSettings());
     }
 
     @Override

@@ -7,7 +7,6 @@ package org.elasticsearch.xpack.core.ilm;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeRequest;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -21,7 +20,7 @@ public class ForceMergeStep extends AsyncActionStep {
     public static final String NAME = "forcemerge";
     private final int maxNumSegments;
 
-    public ForceMergeStep(StepKey key, StepKey nextStepKey, Client client, int maxNumSegments) {
+    public ForceMergeStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext client, int maxNumSegments) {
         super(key, nextStepKey, client);
         this.maxNumSegments = maxNumSegments;
     }
@@ -34,9 +33,8 @@ public class ForceMergeStep extends AsyncActionStep {
     public void performAction(IndexMetaData indexMetaData, ClusterState currentState, ClusterStateObserver observer, Listener listener) {
         ForceMergeRequest request = new ForceMergeRequest(indexMetaData.getIndex().getName());
         request.maxNumSegments(maxNumSegments);
-        getClient().admin().indices()
-            .forceMerge(request, ActionListener.wrap(response -> listener.onResponse(true),
-                listener::onFailure));
+        getIndexLifecycleContext().forceMerge(indexMetaData.getIndex().getName(), maxNumSegments,
+            ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
     }
 
     @Override

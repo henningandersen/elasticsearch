@@ -8,7 +8,6 @@ package org.elasticsearch.xpack.core.ilm;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.SnapshotsInProgress;
@@ -28,8 +27,8 @@ import java.util.function.Consumer;
 public abstract class AsyncRetryDuringSnapshotActionStep extends AsyncActionStep {
     private final Logger logger = LogManager.getLogger(AsyncRetryDuringSnapshotActionStep.class);
 
-    public AsyncRetryDuringSnapshotActionStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    public AsyncRetryDuringSnapshotActionStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecyleContext) {
+        super(key, nextStepKey, indexLifecyleContext);
     }
 
     @Override

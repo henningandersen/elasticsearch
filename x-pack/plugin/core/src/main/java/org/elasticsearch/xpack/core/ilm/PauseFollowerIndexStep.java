@@ -6,21 +6,18 @@
 package org.elasticsearch.xpack.core.ilm;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.xpack.core.ccr.action.PauseFollowAction;
 
 final class PauseFollowerIndexStep extends AbstractUnfollowIndexStep {
 
     static final String NAME = "pause-follower-index";
 
-    PauseFollowerIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    PauseFollowerIndexStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext) {
+        super(key, nextStepKey, indexLifecycleContext);
     }
 
     @Override
     void innerPerformAction(String followerIndex, Listener listener) {
-        PauseFollowAction.Request request = new PauseFollowAction.Request(followerIndex);
-        getClient().execute(PauseFollowAction.INSTANCE, request, ActionListener.wrap(
+        getIndexLifecycleContext().pauseFollow(followerIndex, ActionListener.wrap(
             r -> {
                 assert r.isAcknowledged() : "pause follow response is not acknowledged";
                 listener.onResponse(true);

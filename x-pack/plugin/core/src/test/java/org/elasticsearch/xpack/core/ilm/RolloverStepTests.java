@@ -51,12 +51,12 @@ public class RolloverStepTests extends AbstractStepMasterTimeoutTestCase<Rollove
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new RolloverStep(key, nextKey, instance.getClient());
+        return new RolloverStep(key, nextKey, instance.getIndexLifecycleContext());
     }
 
     @Override
     public RolloverStep copyInstance(RolloverStep instance) {
-        return new RolloverStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new RolloverStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext());
     }
 
     private IndexMetaData getIndexMetaData(String alias) {

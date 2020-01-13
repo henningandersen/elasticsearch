@@ -44,12 +44,12 @@ public class FreezeStepTests extends AbstractStepMasterTimeoutTestCase<FreezeSte
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new FreezeStep(key, nextKey, instance.getClient());
+        return new FreezeStep(key, nextKey, instance.getIndexLifecycleContext());
     }
 
     @Override
     public FreezeStep copyInstance(FreezeStep instance) {
-        return new FreezeStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new FreezeStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext());
     }
 
     @Override
