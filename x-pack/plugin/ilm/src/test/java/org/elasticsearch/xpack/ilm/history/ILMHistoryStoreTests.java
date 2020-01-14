@@ -68,7 +68,7 @@ public class ILMHistoryStoreTests extends ESTestCase {
         threadPool = new TestThreadPool(this.getClass().getName());
         client = new VerifyingClient(threadPool);
         clusterService = ClusterServiceUtils.createClusterService(threadPool);
-        historyStore = new ILMHistoryStore(Settings.EMPTY, client, clusterService, threadPool);
+        historyStore = new DefaultILMHistoryStore(Settings.EMPTY, client, clusterService, threadPool);
     }
 
     @After
@@ -81,7 +81,7 @@ public class ILMHistoryStoreTests extends ESTestCase {
 
     public void testNoActionIfDisabled() throws Exception {
         Settings settings = Settings.builder().put(LIFECYCLE_HISTORY_INDEX_ENABLED_SETTING.getKey(), false).build();
-        try (ILMHistoryStore disabledHistoryStore = new ILMHistoryStore(settings, client, null, threadPool)) {
+        try (ILMHistoryStore disabledHistoryStore = new DefaultILMHistoryStore(settings, client, null, threadPool)) {
             String policyId = randomAlphaOfLength(5);
             final long timestamp = randomNonNegativeLong();
             ILMHistoryItem record = ILMHistoryItem.success("index", policyId, timestamp, null, null);
@@ -191,7 +191,7 @@ public class ILMHistoryStoreTests extends ESTestCase {
         });
 
         CountDownLatch latch = new CountDownLatch(1);
-        ILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
+        DefaultILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
             Assert::assertTrue,
             ex -> {
                 logger.error(ex);
@@ -219,7 +219,7 @@ public class ILMHistoryStoreTests extends ESTestCase {
         });
 
         CountDownLatch latch = new CountDownLatch(1);
-        ILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
+        DefaultILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
             Assert::assertFalse,
             ex -> {
                 logger.error(ex);
@@ -252,7 +252,7 @@ public class ILMHistoryStoreTests extends ESTestCase {
         });
 
         CountDownLatch latch = new CountDownLatch(1);
-        ILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
+        DefaultILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
             indexCreated -> fail("should have called onFailure, not onResponse"),
             ex -> {
                 assertThat(ex, instanceOf(IllegalStateException.class));
@@ -278,7 +278,7 @@ public class ILMHistoryStoreTests extends ESTestCase {
         });
 
         CountDownLatch latch = new CountDownLatch(1);
-        ILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
+        DefaultILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
             indexCreated -> fail("should have called onFailure, not onResponse"),
             ex -> {
                 assertThat(ex, instanceOf(IllegalStateException.class));
@@ -307,7 +307,7 @@ public class ILMHistoryStoreTests extends ESTestCase {
         });
 
         CountDownLatch latch = new CountDownLatch(1);
-        ILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
+        DefaultILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
             Assert::assertFalse,
             ex -> {
                 logger.error(ex);
@@ -333,7 +333,7 @@ public class ILMHistoryStoreTests extends ESTestCase {
         });
 
         CountDownLatch latch = new CountDownLatch(1);
-        ILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
+        DefaultILMHistoryStore.ensureHistoryIndex(client, state, new LatchedActionListener<>(ActionListener.wrap(
             response -> {
                 logger.error(response);
                 fail("should have called onFailure, not onResponse");

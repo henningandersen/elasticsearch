@@ -94,6 +94,7 @@ import org.elasticsearch.xpack.ilm.action.TransportRemoveIndexLifecyclePolicyAct
 import org.elasticsearch.xpack.ilm.action.TransportRetryAction;
 import org.elasticsearch.xpack.ilm.action.TransportStartILMAction;
 import org.elasticsearch.xpack.ilm.action.TransportStopILMAction;
+import org.elasticsearch.xpack.ilm.history.DefaultILMHistoryStore;
 import org.elasticsearch.xpack.ilm.history.ILMHistoryStore;
 import org.elasticsearch.xpack.ilm.history.ILMHistoryTemplateRegistry;
 import org.elasticsearch.xpack.slm.SLMInfoTransportAction;
@@ -179,7 +180,7 @@ public class IndexLifecycle extends Plugin implements ActionPlugin {
             @SuppressWarnings("unused")
             ILMHistoryTemplateRegistry ilmTemplateRegistry =
                 new ILMHistoryTemplateRegistry(settings, clusterService, threadPool, client, xContentRegistry);
-            ilmHistoryStore.set(new ILMHistoryStore(settings, new OriginSettingClient(client, INDEX_LIFECYCLE_ORIGIN),
+            ilmHistoryStore.set(new DefaultILMHistoryStore(settings, new OriginSettingClient(client, INDEX_LIFECYCLE_ORIGIN),
                 clusterService, threadPool));
             indexLifecycleInitialisationService.set(new IndexLifecycleService(settings, client, clusterService, threadPool,
                 getClock(), System::currentTimeMillis, xContentRegistry, ilmHistoryStore.get()));
