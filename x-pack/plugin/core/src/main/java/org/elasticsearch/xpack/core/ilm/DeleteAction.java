@@ -5,7 +5,6 @@
  */
 package org.elasticsearch.xpack.core.ilm;
 
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -57,12 +56,12 @@ public class DeleteAction implements LifecycleAction {
     }
 
     @Override
-    public List<Step> toSteps(Client client, String phase, Step.StepKey nextStepKey) {
+    public List<Step> toSteps(IndexLifecycleContext indexLifecycleContext, String phase, Step.StepKey nextStepKey) {
         Step.StepKey waitForNoFollowerStepKey = new Step.StepKey(phase, NAME, WaitForNoFollowersStep.NAME);
         Step.StepKey deleteStepKey = new Step.StepKey(phase, NAME, DeleteStep.NAME);
 
-        WaitForNoFollowersStep waitForNoFollowersStep = new WaitForNoFollowersStep(waitForNoFollowerStepKey, deleteStepKey, client);
-        DeleteStep deleteStep = new DeleteStep(deleteStepKey, nextStepKey, client);
+        WaitForNoFollowersStep waitForNoFollowersStep = new WaitForNoFollowersStep(waitForNoFollowerStepKey, deleteStepKey, indexLifecycleContext);
+        DeleteStep deleteStep = new DeleteStep(deleteStepKey, nextStepKey, indexLifecycleContext);
         return Arrays.asList(waitForNoFollowersStep, deleteStep);
     }
 

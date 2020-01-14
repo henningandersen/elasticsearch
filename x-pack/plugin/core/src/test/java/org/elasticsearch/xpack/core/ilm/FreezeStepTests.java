@@ -25,7 +25,7 @@ public class FreezeStepTests extends AbstractStepMasterTimeoutTestCase<FreezeSte
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
 
-        return new FreezeStep(stepKey, nextStepKey, client);
+        return new FreezeStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client));
     }
 
     @Override

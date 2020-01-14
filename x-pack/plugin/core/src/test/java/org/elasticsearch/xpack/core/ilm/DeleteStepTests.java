@@ -24,7 +24,7 @@ public class DeleteStepTests extends AbstractStepMasterTimeoutTestCase<DeleteSte
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
 
-        return new DeleteStep(stepKey, nextStepKey, client);
+        return new DeleteStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client));
     }
 
     @Override

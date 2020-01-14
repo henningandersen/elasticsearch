@@ -27,7 +27,7 @@ public class UpdateSettingsStepTests extends AbstractStepMasterTimeoutTestCase<U
         StepKey nextStepKey = randomStepKey();
         Settings settings = Settings.builder().put(randomAlphaOfLength(10), randomAlphaOfLength(10)).build();
 
-        return new UpdateSettingsStep(stepKey, nextStepKey, client, settings);
+        return new UpdateSettingsStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client), settings);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class UpdateSettingsStepTests extends AbstractStepMasterTimeoutTestCase<U
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new UpdateSettingsStep(key, nextKey, client, settings);
+        return new UpdateSettingsStep(key, nextKey, new DefaultIndexLifecycleContext(client), settings);
     }
 
     @Override
