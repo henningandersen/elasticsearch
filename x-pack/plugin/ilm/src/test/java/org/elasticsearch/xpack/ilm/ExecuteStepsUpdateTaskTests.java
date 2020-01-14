@@ -22,9 +22,10 @@ import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.core.ilm.DefaultIndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.ErrorStep;
-import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
 import org.elasticsearch.xpack.core.ilm.IndexLifecycleMetadata;
+import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicyMetadata;
 import org.elasticsearch.xpack.core.ilm.LifecycleSettings;
@@ -106,7 +107,8 @@ public class ExecuteStepsUpdateTaskTests extends ESTestCase {
             randomNonNegativeLong(), randomNonNegativeLong()));
         policyMap.put(invalidPolicyName, new LifecyclePolicyMetadata(invalidPolicy, Collections.emptyMap(),
             randomNonNegativeLong(), randomNonNegativeLong()));
-        policyStepsRegistry = new PolicyStepsRegistry(NamedXContentRegistry.EMPTY, client);
+        policyStepsRegistry = new PolicyStepsRegistry(NamedXContentRegistry.EMPTY,
+            pmd -> new DefaultIndexLifecycleContext(client));
 
         indexName = randomAlphaOfLength(5);
         lifecycleMetadata = new IndexLifecycleMetadata(policyMap, OperationMode.RUNNING);

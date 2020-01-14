@@ -24,11 +24,12 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.core.ilm.DefaultIndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.ErrorStep;
-import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
 import org.elasticsearch.xpack.core.ilm.IndexLifecycleMetadata;
 import org.elasticsearch.xpack.core.ilm.InitializePolicyContextStep;
 import org.elasticsearch.xpack.core.ilm.LifecycleAction;
+import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicyMetadata;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicyTests;
@@ -92,7 +93,7 @@ public class PolicyStepsRegistryTests extends ESTestCase {
         PhaseExecutionInfo pei = new PhaseExecutionInfo(policy.getName(), phase, 1, randomNonNegativeLong());
         String phaseJson = Strings.toString(pei);
         LifecycleAction action = randomFrom(phase.getActions().values());
-        Step step = randomFrom(action.toSteps(client, phaseName, MOCK_STEP_KEY));
+        Step step = randomFrom(action.toSteps(new DefaultIndexLifecycleContext(client), phaseName, MOCK_STEP_KEY));
         LifecycleExecutionState.Builder lifecycleState = LifecycleExecutionState.builder();
         lifecycleState.setPhaseDefinition(phaseJson);
         IndexMetaData indexMetaData = IndexMetaData.builder("test")
@@ -106,7 +107,8 @@ public class PolicyStepsRegistryTests extends ESTestCase {
             .build();
         SortedMap<String, LifecyclePolicyMetadata> metas = new TreeMap<>();
         metas.put("policy", policyMetadata);
-        PolicyStepsRegistry registry = new PolicyStepsRegistry(metas, null, null, REGISTRY, client);
+        PolicyStepsRegistry registry = new PolicyStepsRegistry(metas, null, null, REGISTRY,
+            pmd -> new DefaultIndexLifecycleContext(client));
         Step actualStep = registry.getStep(indexMetaData, step.getKey());
         assertThat(actualStep.getKey(), equalTo(step.getKey()));
     }
@@ -145,7 +147,8 @@ public class PolicyStepsRegistryTests extends ESTestCase {
             .build();
         SortedMap<String, LifecyclePolicyMetadata> metas = new TreeMap<>();
         metas.put("policy", policyMetadata);
-        PolicyStepsRegistry registry = new PolicyStepsRegistry(metas, null, null, REGISTRY, client);
+        PolicyStepsRegistry registry = new PolicyStepsRegistry(metas, null, null, REGISTRY,
+            pmd -> new DefaultIndexLifecycleContext(client));
         Step step = registry.getStep(indexMetaData, InitializePolicyContextStep.KEY);
         assertNotNull(step);
     }
@@ -160,7 +163,7 @@ public class PolicyStepsRegistryTests extends ESTestCase {
         PhaseExecutionInfo pei = new PhaseExecutionInfo(policy.getName(), phase, 1, randomNonNegativeLong());
         String phaseJson = Strings.toString(pei);
         LifecycleAction action = randomFrom(phase.getActions().values());
-        Step step = randomFrom(action.toSteps(client, phaseName, MOCK_STEP_KEY));
+        Step step = randomFrom(action.toSteps(new DefaultIndexLifecycleContext(client), phaseName, MOCK_STEP_KEY));
         LifecycleExecutionState.Builder lifecycleState = LifecycleExecutionState.builder();
         lifecycleState.setPhaseDefinition(phaseJson);
         IndexMetaData indexMetaData = IndexMetaData.builder("test")
@@ -174,7 +177,8 @@ public class PolicyStepsRegistryTests extends ESTestCase {
             .build();
         SortedMap<String, LifecyclePolicyMetadata> metas = new TreeMap<>();
         metas.put("policy", policyMetadata);
-        PolicyStepsRegistry registry = new PolicyStepsRegistry(metas, null, null, REGISTRY, client);
+        PolicyStepsRegistry registry = new PolicyStepsRegistry(metas, null, null, REGISTRY,
+            pmd -> new DefaultIndexLifecycleContext(client));
         Step actualStep = registry.getStep(indexMetaData,
             new Step.StepKey(step.getKey().getPhase(), step.getKey().getAction(), step.getKey().getName() + "-bad"));
         assertNull(actualStep);
@@ -187,7 +191,7 @@ public class PolicyStepsRegistryTests extends ESTestCase {
         String policyName = randomAlphaOfLength(5);
         LifecyclePolicy newPolicy = LifecyclePolicyTests.randomTestLifecyclePolicy(policyName);
         logger.info("--> policy: {}", newPolicy);
-        List<Step> policySteps = newPolicy.toSteps(client);
+        List<Step> policySteps = newPolicy.toSteps(new DefaultIndexLifecycleContext(client));
         Map<String, String> headers = new HashMap<>();
         if (randomBoolean()) {
             headers.put(randomAlphaOfLength(10), randomAlphaOfLength(10));
@@ -226,7 +230,8 @@ public class PolicyStepsRegistryTests extends ESTestCase {
             .build();
 
         // start with empty registry
-        PolicyStepsRegistry registry = new PolicyStepsRegistry(NamedXContentRegistry.EMPTY, client);
+        PolicyStepsRegistry registry = new PolicyStepsRegistry(NamedXContentRegistry.EMPTY,
+            pmd -> new DefaultIndexLifecycleContext(client));
 
         // add new policy
         registry.update(currentState);
@@ -299,7 +304,8 @@ public class PolicyStepsRegistryTests extends ESTestCase {
             .metaData(metaData)
             .nodes(DiscoveryNodes.builder().localNodeId(nodeId).masterNodeId(nodeId).add(masterNode).build())
             .build();
-        PolicyStepsRegistry registry = new PolicyStepsRegistry(NamedXContentRegistry.EMPTY, client);
+        PolicyStepsRegistry registry = new PolicyStepsRegistry(NamedXContentRegistry.EMPTY,
+            pmd -> new DefaultIndexLifecycleContext(client));
         // add new policy
         registry.update(currentState);
 
@@ -335,7 +341,7 @@ public class PolicyStepsRegistryTests extends ESTestCase {
         LifecyclePolicy updatedPolicy = new LifecyclePolicy(policyName, phases);
         logger.info("--> policy: {}", newPolicy);
         logger.info("--> updated policy: {}", updatedPolicy);
-        List<Step> policySteps = newPolicy.toSteps(client);
+        List<Step> policySteps = newPolicy.toSteps(new DefaultIndexLifecycleContext(client));
         Map<String, String> headers = new HashMap<>();
         if (randomBoolean()) {
             headers.put(randomAlphaOfLength(10), randomAlphaOfLength(10));
@@ -375,7 +381,8 @@ public class PolicyStepsRegistryTests extends ESTestCase {
             .build();
 
         // start with empty registry
-        PolicyStepsRegistry registry = new PolicyStepsRegistry(REGISTRY, client);
+        PolicyStepsRegistry registry = new PolicyStepsRegistry(REGISTRY,
+            pmd -> new DefaultIndexLifecycleContext(client));
 
         // add new policy
         registry.update(currentState);

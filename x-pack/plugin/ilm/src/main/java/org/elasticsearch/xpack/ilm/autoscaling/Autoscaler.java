@@ -8,6 +8,7 @@ package org.elasticsearch.xpack.ilm.autoscaling;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
@@ -54,7 +55,7 @@ import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF
  */
 //todo: a service using generic rollover functionality
 public class Autoscaler {
-    private final static Logger logger = LogManager.getLogger(Autoscaler.class);
+    private static final Logger logger = LogManager.getLogger(Autoscaler.class);
     private static final Pattern INDEX_NAME_PATTERN = Pattern.compile("^.*-\\d+$"); // copied from rollover
     private final AllocationDeciders allocationDeciders;
     private final ShardsAllocator shardsAllocator;
@@ -211,4 +212,8 @@ public class Autoscaler {
         }
     }
 
+
+    public void scaleILM(ActionListener<Boolean> listener) {
+
+    }
 }
