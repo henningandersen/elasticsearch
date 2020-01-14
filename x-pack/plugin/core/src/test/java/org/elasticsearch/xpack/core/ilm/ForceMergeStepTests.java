@@ -86,7 +86,7 @@ public class ForceMergeStepTests extends AbstractStepTestCase<ForceMergeStep> {
             return null;
         }).when(indicesClient).forceMerge(any(), any());
 
-        ForceMergeStep step = new ForceMergeStep(stepKey, nextStepKey, client, maxNumSegments);
+        ForceMergeStep step = new ForceMergeStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client), maxNumSegments);
         SetOnce<Boolean> completed = new SetOnce<>();
         step.performAction(indexMetaData, null, null, new AsyncActionStep.Listener() {
             @Override
@@ -127,7 +127,7 @@ public class ForceMergeStepTests extends AbstractStepTestCase<ForceMergeStep> {
             return null;
         }).when(indicesClient).forceMerge(any(), any());
 
-        ForceMergeStep step = new ForceMergeStep(stepKey, nextStepKey, client, maxNumSegments);
+        ForceMergeStep step = new ForceMergeStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client), maxNumSegments);
         SetOnce<Boolean> exceptionThrown = new SetOnce<>();
         step.performAction(indexMetaData, null, null, new AsyncActionStep.Listener() {
             @Override

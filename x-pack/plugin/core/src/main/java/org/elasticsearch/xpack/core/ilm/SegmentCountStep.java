@@ -9,10 +9,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.segments.IndexSegments;
-import org.elasticsearch.action.admin.indices.segments.IndicesSegmentsRequest;
 import org.elasticsearch.action.admin.indices.segments.ShardSegments;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.ParseField;
@@ -38,8 +36,8 @@ public class SegmentCountStep extends AsyncWaitStep {
 
     private final int maxNumSegments;
 
-    public SegmentCountStep(StepKey key, StepKey nextStepKey, Client client, int maxNumSegments) {
-        super(key, nextStepKey, client);
+    public SegmentCountStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext, int maxNumSegments) {
+        super(key, nextStepKey, indexLifecycleContext);
         this.maxNumSegments = maxNumSegments;
     }
 
@@ -49,9 +47,9 @@ public class SegmentCountStep extends AsyncWaitStep {
 
     @Override
     public void evaluateCondition(IndexMetaData indexMetaData, Listener listener) {
-        getClient().admin().indices().segments(new IndicesSegmentsRequest(indexMetaData.getIndex().getName()),
+        getIndexLifecycleContext().segments(indexMetaData.getIndex().getName(),
             ActionListener.wrap(response -> {
-                IndexSegments idxSegments = response.getIndices().get(indexMetaData.getIndex().getName());
+                IndexSegments idxSegments = response.getSegments();
                 if (idxSegments == null || (response.getShardFailures() != null && response.getShardFailures().length > 0)) {
                     final DefaultShardOperationFailedException[] failures = response.getShardFailures();
                     logger.info("[{}] retrieval of segment counts after force merge did not succeed, " +

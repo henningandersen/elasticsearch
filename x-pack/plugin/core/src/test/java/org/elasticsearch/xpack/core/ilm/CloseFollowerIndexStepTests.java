@@ -50,7 +50,8 @@ public class CloseFollowerIndexStepTests extends AbstractStepTestCase<CloseFollo
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -92,7 +93,8 @@ public class CloseFollowerIndexStepTests extends AbstractStepTestCase<CloseFollo
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -119,7 +121,8 @@ public class CloseFollowerIndexStepTests extends AbstractStepTestCase<CloseFollo
             .numberOfReplicas(0)
             .build();
         Client client = Mockito.mock(Client.class);
-        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -138,7 +141,7 @@ public class CloseFollowerIndexStepTests extends AbstractStepTestCase<CloseFollo
     protected CloseFollowerIndexStep createRandomInstance() {
         Step.StepKey stepKey = randomStepKey();
         Step.StepKey nextStepKey = randomStepKey();
-        return new CloseFollowerIndexStep(stepKey, nextStepKey, Mockito.mock(Client.class));
+        return new CloseFollowerIndexStep(stepKey, nextStepKey, Mockito.mock(IndexLifecycleContext.class));
     }
 
     @Override

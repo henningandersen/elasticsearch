@@ -10,12 +10,7 @@ import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
-import org.elasticsearch.action.admin.indices.stats.IndicesStatsRequest;
-import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.admin.indices.stats.ShardStats;
-import org.elasticsearch.client.AdminClient;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.ToXContentObject;
@@ -43,7 +38,7 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
     protected WaitForNoFollowersStep createRandomInstance() {
         Step.StepKey stepKey = randomStepKey();
         Step.StepKey nextStepKey = randomStepKey();
-        return new WaitForNoFollowersStep(stepKey, nextStepKey, mock(Client.class));
+        return new WaitForNoFollowersStep(stepKey, nextStepKey, mock(IndexLifecycleContext.class));
     }
 
     @Override
@@ -57,12 +52,12 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
             nextKey = new Step.StepKey(key.getPhase(), key.getAction(), key.getName() + randomAlphaOfLength(5));
         }
 
-        return new WaitForNoFollowersStep(key, nextKey, instance.getClient());
+        return new WaitForNoFollowersStep(key, nextKey, instance.getIndexLifecycleContext());
     }
 
     @Override
     protected WaitForNoFollowersStep copyInstance(WaitForNoFollowersStep instance) {
-        return new WaitForNoFollowersStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new WaitForNoFollowersStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext());
     }
 
     public void testConditionMet() {
@@ -77,7 +72,7 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
             .numberOfReplicas(randomIntBetween(1, 10))
             .build();
 
-        mockIndexStatsCall(step.getClient(), indexName, randomIndexStats(false, numberOfShards));
+        mockIndexStatsCall(step.getIndexLifecycleContext(), indexName, randomIndexStats(false, numberOfShards));
 
         final SetOnce<Boolean> conditionMetHolder = new SetOnce<>();
         final SetOnce<ToXContentObject> stepInfoHolder = new SetOnce<>();
@@ -110,7 +105,7 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
             .numberOfReplicas(randomIntBetween(1, 10))
             .build();
 
-        mockIndexStatsCall(step.getClient(), indexName, randomIndexStats(true, numberOfShards));
+        mockIndexStatsCall(step.getIndexLifecycleContext(), indexName, randomIndexStats(true, numberOfShards));
 
         final SetOnce<Boolean> conditionMetHolder = new SetOnce<>();
         final SetOnce<ToXContentObject> stepInfoHolder = new SetOnce<>();
@@ -147,7 +142,7 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
         ShardStats sStats = new ShardStats(null, mockShardPath(), null, null, null, null);
         ShardStats[] shardStats = new ShardStats[1];
         shardStats[0] = sStats;
-        mockIndexStatsCall(step.getClient(), indexName, new IndexStats(indexName, "uuid", shardStats));
+        mockIndexStatsCall(step.getIndexLifecycleContext(), indexName, new IndexStats(indexName, "uuid", shardStats));
 
         final SetOnce<Boolean> conditionMetHolder = new SetOnce<>();
         final SetOnce<ToXContentObject> stepInfoHolder = new SetOnce<>();
@@ -182,17 +177,13 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
 
         final Exception expectedException = new RuntimeException(randomAlphaOfLength(5));
 
-        Client client = step.getClient();
-        AdminClient adminClient = Mockito.mock(AdminClient.class);
-        IndicesAdminClient indicesClient = Mockito.mock(IndicesAdminClient.class);
-        Mockito.when(client.admin()).thenReturn(adminClient);
-        Mockito.when(adminClient.indices()).thenReturn(indicesClient);
+        IndexLifecycleContext context = step.getIndexLifecycleContext();
         Mockito.doAnswer(invocationOnMock -> {
             @SuppressWarnings("unchecked")
-            ActionListener<IndicesStatsResponse> listener = (ActionListener<IndicesStatsResponse>) invocationOnMock.getArguments()[1];
+            ActionListener<IndexStats> listener = (ActionListener<IndexStats>) invocationOnMock.getArguments()[1];
             listener.onFailure(expectedException);
             return null;
-        }).when(indicesClient).stats(any(), any());
+        }).when(context).stats(any(), any());
 
         final SetOnce<Exception> exceptionHolder = new SetOnce<>();
         step.evaluateCondition(indexMetaData, new AsyncWaitStep.Listener() {
@@ -211,26 +202,17 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
         assertThat(exceptionHolder.get(), equalTo(expectedException));
     }
 
-    private void mockIndexStatsCall(Client client, String expectedIndexName, IndexStats indexStats) {
-        AdminClient adminClient = Mockito.mock(AdminClient.class);
-        IndicesAdminClient indicesClient = Mockito.mock(IndicesAdminClient.class);
-        Mockito.when(client.admin()).thenReturn(adminClient);
-        Mockito.when(adminClient.indices()).thenReturn(indicesClient);
+    private void mockIndexStatsCall(IndexLifecycleContext context, String expectedIndexName, IndexStats indexStats) {
         Mockito.doAnswer(invocationOnMock -> {
-            IndicesStatsRequest request = (IndicesStatsRequest) invocationOnMock.getArguments()[0];
-            assertThat(request.indices().length, equalTo(1));
-            assertThat(request.indices()[0], equalTo(expectedIndexName));
+            String index = (String) invocationOnMock.getArguments()[0];
+            assertThat(index, equalTo(expectedIndexName));
 
             @SuppressWarnings("unchecked")
-            ActionListener<IndicesStatsResponse> listener = (ActionListener<IndicesStatsResponse>) invocationOnMock.getArguments()[1];
+            ActionListener<IndexStats> listener = (ActionListener<IndexStats>) invocationOnMock.getArguments()[1];
 
-            // Trying to create a real IndicesStatsResponse requires setting up a ShardRouting, so just mock it
-            IndicesStatsResponse response = mock(IndicesStatsResponse.class);
-            when(response.getIndex(expectedIndexName)).thenReturn(indexStats);
-
-            listener.onResponse(response);
+            listener.onResponse(indexStats);
             return null;
-        }).when(indicesClient).stats(any(), any());
+        }).when(context).stats(any(), any());
     }
 
     private IndexStats randomIndexStats(boolean isLeaderIndex, int numOfShards) {

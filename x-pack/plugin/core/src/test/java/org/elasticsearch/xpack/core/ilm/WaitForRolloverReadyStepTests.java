@@ -59,7 +59,7 @@ public class WaitForRolloverReadyStepTests extends AbstractStepTestCase<WaitForR
         TimeValue maxAge = (maxDocs == null && maxSize == null || randomBoolean())
             ? TimeValue.parseTimeValue(randomPositiveTimeValue(), "rollover_action_test")
             : null;
-        return new WaitForRolloverReadyStep(stepKey, nextStepKey, client, maxSize, maxAge, maxDocs);
+        return new WaitForRolloverReadyStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client), maxSize, maxAge, maxDocs);
     }
 
     @Override
@@ -92,12 +92,12 @@ public class WaitForRolloverReadyStepTests extends AbstractStepTestCase<WaitForR
             default:
                 throw new AssertionError("Illegal randomisation branch");
         }
-        return new WaitForRolloverReadyStep(key, nextKey, instance.getClient(), maxSize, maxAge, maxDocs);
+        return new WaitForRolloverReadyStep(key, nextKey, instance.getIndexLifecycleContext(), maxSize, maxAge, maxDocs);
     }
 
     @Override
     protected WaitForRolloverReadyStep copyInstance(WaitForRolloverReadyStep instance) {
-        return new WaitForRolloverReadyStep(instance.getKey(), instance.getNextStepKey(), instance.getClient(),
+        return new WaitForRolloverReadyStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext(),
             instance.getMaxSize(), instance.getMaxAge(), instance.getMaxDocs());
     }
 

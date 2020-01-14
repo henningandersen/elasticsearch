@@ -8,6 +8,7 @@ package org.elasticsearch.xpack.core.ilm;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.admin.indices.rollover.RolloverRequest;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -67,7 +68,8 @@ public class RolloverStep extends AsyncActionStep {
         }
 
         // Calling rollover with no conditions will always roll over the index
-        getIndexLifecycleContext().rolloverIndex(rolloverAlias,
+        RolloverRequest rolloverRequest = new RolloverRequest(rolloverAlias, null);
+        getIndexLifecycleContext().rollover(rolloverRequest,
             ActionListener.wrap(response -> {
                 assert response.isRolledOver() : "the only way this rollover call should fail is with an exception";
                 listener.onResponse(response.isRolledOver());

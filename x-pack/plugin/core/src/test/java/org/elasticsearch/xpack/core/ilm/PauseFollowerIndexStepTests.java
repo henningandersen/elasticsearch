@@ -26,8 +26,8 @@ import static org.hamcrest.Matchers.sameInstance;
 public class PauseFollowerIndexStepTests extends AbstractUnfollowIndexStepTestCase<PauseFollowerIndexStep> {
 
     @Override
-    protected PauseFollowerIndexStep newInstance(Step.StepKey key, Step.StepKey nextKey, Client client) {
-        return new PauseFollowerIndexStep(key, nextKey, client);
+    protected PauseFollowerIndexStep newInstance(Step.StepKey key, Step.StepKey nextKey, IndexLifecycleContext indexLifecycleContext) {
+        return new PauseFollowerIndexStep(key, nextKey, indexLifecycleContext);
     }
 
     public void testPauseFollowingIndex() {
@@ -55,7 +55,8 @@ public class PauseFollowerIndexStepTests extends AbstractUnfollowIndexStepTestCa
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        PauseFollowerIndexStep step = new PauseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        PauseFollowerIndexStep step = new PauseFollowerIndexStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -92,7 +93,8 @@ public class PauseFollowerIndexStepTests extends AbstractUnfollowIndexStepTestCa
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        PauseFollowerIndexStep step = new PauseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        PauseFollowerIndexStep step = new PauseFollowerIndexStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {

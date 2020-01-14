@@ -31,7 +31,7 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
     protected WaitForFollowShardTasksStep createRandomInstance() {
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
-        return new WaitForFollowShardTasksStep(stepKey, nextStepKey, Mockito.mock(Client.class));
+        return new WaitForFollowShardTasksStep(stepKey, nextStepKey, Mockito.mock(IndexLifecycleContext.class));
     }
 
     @Override
@@ -45,12 +45,12 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
             nextKey = new StepKey(key.getPhase(), key.getAction(), key.getName() + randomAlphaOfLength(5));
         }
 
-        return new WaitForFollowShardTasksStep(key, nextKey, instance.getClient());
+        return new WaitForFollowShardTasksStep(key, nextKey, instance.getIndexLifecycleContext());
     }
 
     @Override
     protected WaitForFollowShardTasksStep copyInstance(WaitForFollowShardTasksStep instance) {
-        return new WaitForFollowShardTasksStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new WaitForFollowShardTasksStep(instance.getKey(), instance.getNextStepKey(), instance.getIndexLifecycleContext());
     }
 
     public void testConditionMet() {
@@ -67,7 +67,8 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
         );
         mockFollowStatsCall(client, indexMetadata.getIndex().getName(), statsResponses);
 
-        WaitForFollowShardTasksStep step = new WaitForFollowShardTasksStep(randomStepKey(), randomStepKey(), client);
+        WaitForFollowShardTasksStep step = new WaitForFollowShardTasksStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         final boolean[] conditionMetHolder = new boolean[1];
         final ToXContentObject[] informationContextHolder = new ToXContentObject[1];
         final Exception[] exceptionHolder = new Exception[1];
@@ -103,7 +104,8 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
         );
         mockFollowStatsCall(client, indexMetadata.getIndex().getName(), statsResponses);
 
-        WaitForFollowShardTasksStep step = new WaitForFollowShardTasksStep(randomStepKey(), randomStepKey(), client);
+        WaitForFollowShardTasksStep step = new WaitForFollowShardTasksStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         final boolean[] conditionMetHolder = new boolean[1];
         final ToXContentObject[] informationContextHolder = new ToXContentObject[1];
         final Exception[] exceptionHolder = new Exception[1];
@@ -138,7 +140,8 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
             .build();
         Client client = Mockito.mock(Client.class);
 
-        WaitForFollowShardTasksStep step = new WaitForFollowShardTasksStep(randomStepKey(), randomStepKey(), client);
+        WaitForFollowShardTasksStep step = new WaitForFollowShardTasksStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         final boolean[] conditionMetHolder = new boolean[1];
         final ToXContentObject[] informationContextHolder = new ToXContentObject[1];
         final Exception[] exceptionHolder = new Exception[1];

@@ -5,7 +5,6 @@
  */
 package org.elasticsearch.xpack.core.ilm;
 
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 
@@ -17,15 +16,15 @@ import org.elasticsearch.common.xcontent.ToXContentObject;
  */
 public abstract class AsyncWaitStep extends Step {
 
-    private Client client;
+    private IndexLifecycleContext indexLifecycleContext;
 
-    public AsyncWaitStep(StepKey key, StepKey nextStepKey, Client client) {
+    public AsyncWaitStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext) {
         super(key, nextStepKey);
-        this.client = client;
+        this.indexLifecycleContext = indexLifecycleContext;
     }
 
-    protected Client getClient() {
-        return client;
+    protected IndexLifecycleContext getIndexLifecycleContext() {
+        return indexLifecycleContext;
     }
 
     public abstract void evaluateCondition(IndexMetaData indexMetaData, Listener listener);

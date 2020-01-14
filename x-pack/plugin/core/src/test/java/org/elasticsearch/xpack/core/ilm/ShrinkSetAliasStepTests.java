@@ -42,7 +42,7 @@ public class ShrinkSetAliasStepTests extends AbstractStepTestCase<ShrinkSetAlias
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
         String shrunkIndexPrefix = randomAlphaOfLength(10);
-        return new ShrinkSetAliasStep(stepKey, nextStepKey, client, shrunkIndexPrefix);
+        return new ShrinkSetAliasStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client), shrunkIndexPrefix);
     }
 
     @Override

@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.rollover.RolloverRequest;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -34,9 +33,9 @@ public class WaitForRolloverReadyStep extends AsyncWaitStep {
     private final TimeValue maxAge;
     private final Long maxDocs;
 
-    public WaitForRolloverReadyStep(StepKey key, StepKey nextStepKey, Client client, ByteSizeValue maxSize, TimeValue maxAge,
+    public WaitForRolloverReadyStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext, ByteSizeValue maxSize, TimeValue maxAge,
                                     Long maxDocs) {
-        super(key, nextStepKey, client);
+        super(key, nextStepKey, indexLifecycleContext);
         this.maxSize = maxSize;
         this.maxAge = maxAge;
         this.maxDocs = maxDocs;
@@ -124,7 +123,7 @@ public class WaitForRolloverReadyStep extends AsyncWaitStep {
         if (maxDocs != null) {
             rolloverRequest.addMaxIndexDocsCondition(maxDocs);
         }
-        getClient().admin().indices().rolloverIndex(rolloverRequest,
+        getIndexLifecycleContext().rollover(rolloverRequest,
             ActionListener.wrap(response -> listener.onResponse(response.getConditionStatus().values().stream().anyMatch(i -> i),
                 new WaitForRolloverReadyStep.EmptyInfo()), listener::onFailure));
     }

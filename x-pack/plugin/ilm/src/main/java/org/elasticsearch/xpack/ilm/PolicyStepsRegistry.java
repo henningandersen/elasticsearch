@@ -24,7 +24,9 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.xpack.core.ClientHelper;
+import org.elasticsearch.xpack.core.ilm.DefaultIndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.ErrorStep;
+import org.elasticsearch.xpack.core.ilm.IndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.IndexLifecycleMetadata;
 import org.elasticsearch.xpack.core.ilm.InitializePolicyContextStep;
 import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
@@ -123,7 +125,8 @@ public class PolicyStepsRegistry {
                 LifecyclePolicySecurityClient policyClient = new LifecyclePolicySecurityClient(client, ClientHelper.INDEX_LIFECYCLE_ORIGIN,
                         policyMetadata.getHeaders());
                 lifecyclePolicyMap.put(policyMetadata.getName(), policyMetadata);
-                List<Step> policyAsSteps = policyMetadata.getPolicy().toSteps(policyClient);
+                IndexLifecycleContext context = new DefaultIndexLifecycleContext(policyClient);
+                List<Step> policyAsSteps = policyMetadata.getPolicy().toSteps(context);
                 if (policyAsSteps.isEmpty() == false) {
                     firstStepMap.put(policyMetadata.getName(), policyAsSteps.get(0));
                     final Map<Step.StepKey, Step> stepMapForPolicy = new LinkedHashMap<>();
@@ -165,7 +168,8 @@ public class PolicyStepsRegistry {
         }
         LifecyclePolicySecurityClient policyClient = new LifecyclePolicySecurityClient(client,
             ClientHelper.INDEX_LIFECYCLE_ORIGIN, lifecyclePolicyMap.get(policy).getHeaders());
-        final List<Step> steps = policyToExecute.toSteps(policyClient);
+        IndexLifecycleContext context = new DefaultIndexLifecycleContext(policyClient);
+        final List<Step> steps = policyToExecute.toSteps(context);
         // Build a list of steps that correspond with the phase the index is currently in
         final List<Step> phaseSteps;
         if (steps == null) {

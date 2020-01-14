@@ -6,7 +6,6 @@
 package org.elasticsearch.xpack.core.ilm;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
@@ -27,8 +26,8 @@ final class WaitForFollowShardTasksStep extends AsyncWaitStep {
 
     static final String NAME = "wait-for-follow-shard-tasks";
 
-    WaitForFollowShardTasksStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    WaitForFollowShardTasksStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext) {
+        super(key, nextStepKey, indexLifecycleContext);
     }
 
     @Override
@@ -39,21 +38,19 @@ final class WaitForFollowShardTasksStep extends AsyncWaitStep {
             return;
         }
 
-        FollowStatsAction.StatsRequest request = new FollowStatsAction.StatsRequest();
-        request.setIndices(new String[]{indexMetaData.getIndex().getName()});
-        getClient().execute(FollowStatsAction.INSTANCE, request,
+        getIndexLifecycleContext().followStats(indexMetaData.getIndex().getName(),
             ActionListener.wrap(r -> handleResponse(r, listener), listener::onFailure));
     }
 
-    void handleResponse(FollowStatsAction.StatsResponses responses, Listener listener) {
-        List<ShardFollowNodeTaskStatus> unSyncedShardFollowStatuses = responses.getStatsResponses()
+    void handleResponse(List<FollowStatsAction.StatsResponse> responses, Listener listener) {
+        List<ShardFollowNodeTaskStatus> unSyncedShardFollowStatuses = responses
             .stream()
             .map(FollowStatsAction.StatsResponse::status)
             .filter(shardFollowStatus -> shardFollowStatus.leaderGlobalCheckpoint() != shardFollowStatus.followerGlobalCheckpoint())
             .collect(Collectors.toList());
 
         // Follow stats api needs to return stats for follower index and all shard follow tasks should be synced:
-        boolean conditionMet = responses.getStatsResponses().size() > 0 && unSyncedShardFollowStatuses.isEmpty();
+        boolean conditionMet = responses.size() > 0 && unSyncedShardFollowStatuses.isEmpty();
         if (conditionMet) {
             listener.onResponse(true, null);
         } else {

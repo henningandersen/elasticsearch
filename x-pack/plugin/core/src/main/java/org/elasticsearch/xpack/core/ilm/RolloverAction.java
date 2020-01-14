@@ -5,7 +5,6 @@
  */
 package org.elasticsearch.xpack.core.ilm;
 
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
@@ -134,7 +133,7 @@ public class RolloverAction implements LifecycleAction {
     }
 
     @Override
-    public List<Step> toSteps(Client client, String phase, Step.StepKey nextStepKey) {
+    public List<Step> toSteps(IndexLifecycleContext indexLifecycleContext, String phase, StepKey nextStepKey) {
         Settings indexingComplete = Settings.builder().put(LifecycleSettings.LIFECYCLE_INDEXING_COMPLETE, true).build();
 
         StepKey waitForRolloverReadyStepKey = new StepKey(phase, NAME, WaitForRolloverReadyStep.NAME);
@@ -143,12 +142,12 @@ public class RolloverAction implements LifecycleAction {
         StepKey setIndexingCompleteStepKey = new StepKey(phase, NAME, INDEXING_COMPLETE_STEP_NAME);
 
         WaitForRolloverReadyStep waitForRolloverReadyStep = new WaitForRolloverReadyStep(waitForRolloverReadyStepKey, rolloverStepKey,
-            client, maxSize, maxAge, maxDocs);
-        RolloverStep rolloverStep = new RolloverStep(rolloverStepKey, updateDateStepKey, client);
+            indexLifecycleContext, maxSize, maxAge, maxDocs);
+        RolloverStep rolloverStep = new RolloverStep(rolloverStepKey, updateDateStepKey, indexLifecycleContext);
         UpdateRolloverLifecycleDateStep updateDateStep = new UpdateRolloverLifecycleDateStep(updateDateStepKey, setIndexingCompleteStepKey,
             System::currentTimeMillis);
         UpdateSettingsStep setIndexingCompleteStep = new UpdateSettingsStep(setIndexingCompleteStepKey, nextStepKey,
-            client, indexingComplete);
+            indexLifecycleContext, indexingComplete);
         return Arrays.asList(waitForRolloverReadyStep, rolloverStep, updateDateStep, setIndexingCompleteStep);
     }
 

@@ -44,7 +44,7 @@ public class RolloverStepTests extends AbstractStepTestCase<RolloverStep> {
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
 
-        return new RolloverStep(stepKey, nextStepKey, client);
+        return new RolloverStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client));
     }
 
     @Override

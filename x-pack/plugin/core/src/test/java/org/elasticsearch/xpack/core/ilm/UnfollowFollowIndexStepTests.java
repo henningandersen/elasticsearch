@@ -29,8 +29,8 @@ import static org.hamcrest.Matchers.sameInstance;
 public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestCase<UnfollowFollowIndexStep> {
 
     @Override
-    protected UnfollowFollowIndexStep newInstance(Step.StepKey key, Step.StepKey nextKey, Client client) {
-        return new UnfollowFollowIndexStep(key, nextKey, client);
+    protected UnfollowFollowIndexStep newInstance(Step.StepKey key, Step.StepKey nextKey, IndexLifecycleContext indexLifecycleContext) {
+        return new UnfollowFollowIndexStep(key, nextKey, indexLifecycleContext);
     }
 
     public void testUnFollow() {
@@ -58,7 +58,8 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey(), client);
+        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -100,7 +101,8 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey(), client);
+        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -143,7 +145,8 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
 
         AtomicBoolean completed = new AtomicBoolean(false);
         AtomicReference<Exception> failure = new AtomicReference<>();
-        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey(), client);
+        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey(),
+            new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {

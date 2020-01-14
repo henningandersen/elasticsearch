@@ -121,7 +121,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
         SetOnce<Boolean> conditionMetResult = new SetOnce<>();
         SetOnce<ToXContentObject> conditionInfo = new SetOnce<>();
 
-        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, client, maxNumSegments);
+        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client), maxNumSegments);
         step.evaluateCondition(makeMeta(index), new AsyncWaitStep.Listener() {
             @Override
             public void onResponse(boolean conditionMet, ToXContentObject info) {
@@ -179,7 +179,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
         SetOnce<Boolean> conditionMetResult = new SetOnce<>();
         SetOnce<ToXContentObject> conditionInfo = new SetOnce<>();
 
-        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, client, maxNumSegments);
+        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client), maxNumSegments);
         step.evaluateCondition(makeMeta(index), new AsyncWaitStep.Listener() {
             @Override
             public void onResponse(boolean conditionMet, ToXContentObject info) {
@@ -240,7 +240,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
         SetOnce<Boolean> conditionMetResult = new SetOnce<>();
         SetOnce<ToXContentObject> conditionInfo = new SetOnce<>();
 
-        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, client, maxNumSegments);
+        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client), maxNumSegments);
         step.evaluateCondition(makeMeta(index), new AsyncWaitStep.Listener() {
             @Override
             public void onResponse(boolean conditionMet, ToXContentObject info) {
@@ -281,7 +281,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
 
         SetOnce<Boolean> exceptionThrown = new SetOnce<>();
 
-        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, client, maxNumSegments);
+        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, new DefaultIndexLifecycleContext(client), maxNumSegments);
         step.evaluateCondition(makeMeta(index), new AsyncWaitStep.Listener() {
             @Override
             public void onResponse(boolean conditionMet, ToXContentObject info) {

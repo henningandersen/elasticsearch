@@ -9,10 +9,8 @@ package org.elasticsearch.xpack.core.ilm;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsRequest;
 import org.elasticsearch.action.admin.indices.stats.ShardStats;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ToXContentObject;
@@ -37,8 +35,8 @@ public class WaitForNoFollowersStep extends AsyncWaitStep {
     static final String NAME = "wait-for-shard-history-leases";
     static final String CCR_LEASE_KEY = "ccr";
 
-    WaitForNoFollowersStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    WaitForNoFollowersStep(StepKey key, StepKey nextStepKey, IndexLifecycleContext indexLifecycleContext) {
+        super(key, nextStepKey, indexLifecycleContext);
     }
 
     @Override
@@ -47,8 +45,7 @@ public class WaitForNoFollowersStep extends AsyncWaitStep {
         request.clear();
         String indexName = indexMetaData.getIndex().getName();
         request.indices(indexName);
-        getClient().admin().indices().stats(request, ActionListener.wrap((response) -> {
-            IndexStats indexStats = response.getIndex(indexName);
+        getIndexLifecycleContext().stats(indexMetaData.getIndex().getName(), ActionListener.wrap((indexStats) -> {
             if (indexStats == null) {
                 // Index was probably deleted
                 logger.debug("got null shard stats for index {}, proceeding on the assumption it has been deleted",

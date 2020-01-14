@@ -29,7 +29,7 @@ public class OpenFollowerIndexStepTests extends AbstractStepTestCase<OpenFollowe
     protected OpenFollowerIndexStep createRandomInstance() {
         Step.StepKey stepKey = randomStepKey();
         Step.StepKey nextStepKey = randomStepKey();
-        return new OpenFollowerIndexStep(stepKey, nextStepKey, Mockito.mock(Client.class));
+        return new OpenFollowerIndexStep(stepKey, nextStepKey, Mockito.mock(IndexLifecycleContext.class));
     }
 
     @Override
@@ -60,7 +60,7 @@ public class OpenFollowerIndexStepTests extends AbstractStepTestCase<OpenFollowe
             .numberOfReplicas(0)
             .build();
         Client client = Mockito.mock(Client.class);
-        OpenFollowerIndexStep step = new OpenFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        OpenFollowerIndexStep step = new OpenFollowerIndexStep(randomStepKey(), randomStepKey(), new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -101,7 +101,7 @@ public class OpenFollowerIndexStepTests extends AbstractStepTestCase<OpenFollowe
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        OpenFollowerIndexStep step = new OpenFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        OpenFollowerIndexStep step = new OpenFollowerIndexStep(randomStepKey(), randomStepKey(), new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -143,7 +143,7 @@ public class OpenFollowerIndexStepTests extends AbstractStepTestCase<OpenFollowe
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        OpenFollowerIndexStep step = new OpenFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        OpenFollowerIndexStep step = new OpenFollowerIndexStep(randomStepKey(), randomStepKey(), new DefaultIndexLifecycleContext(client));
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {

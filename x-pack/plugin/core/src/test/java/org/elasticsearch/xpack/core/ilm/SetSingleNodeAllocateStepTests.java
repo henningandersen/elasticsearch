@@ -64,7 +64,7 @@ public class SetSingleNodeAllocateStepTests extends AbstractStepTestCase<SetSing
 
     @Override
     protected SetSingleNodeAllocateStep createRandomInstance() {
-        return new SetSingleNodeAllocateStep(randomStepKey(), randomStepKey(), client);
+        return new SetSingleNodeAllocateStep(randomStepKey(), randomStepKey(), new DefaultIndexLifecycleContext(client));
     }
 
     @Override
@@ -88,7 +88,7 @@ public class SetSingleNodeAllocateStepTests extends AbstractStepTestCase<SetSing
 
     @Override
     protected SetSingleNodeAllocateStep copyInstance(SetSingleNodeAllocateStep instance) {
-        return new SetSingleNodeAllocateStep(instance.getKey(), instance.getNextStepKey(), client);
+        return new SetSingleNodeAllocateStep(instance.getKey(), instance.getNextStepKey(), new DefaultIndexLifecycleContext(client));
     }
 
     public static void assertSettingsRequestContainsValueFrom(UpdateSettingsRequest request, String settingsKey,

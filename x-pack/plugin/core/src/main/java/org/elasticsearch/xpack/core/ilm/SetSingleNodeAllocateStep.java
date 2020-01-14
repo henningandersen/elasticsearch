@@ -78,7 +78,9 @@ public class SetSingleNodeAllocateStep extends AsyncActionStep {
             Randomness.shuffle(validNodeIds);
             Optional<String> nodeId = validNodeIds.stream().findAny();
             if (nodeId.isPresent()) {
-                getIndexLifecycleContext().setSingleNodeAllocation(indexMetaData.getIndex().getName(), nodeId.get(),
+                Settings settings = Settings.builder()
+                        .put(IndexMetaData.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey() + "_id", nodeId.get()).build();
+                getIndexLifecycleContext().updateSettings(indexMetaData.getIndex().getName(), settings,
                         ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
             } else {
                 // No nodes currently match the allocation rules so just wait until there is one that does

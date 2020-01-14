@@ -5,7 +5,6 @@
  */
 package org.elasticsearch.xpack.core.ilm;
 
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
@@ -85,16 +84,16 @@ public class ForceMergeAction implements LifecycleAction {
     }
 
     @Override
-    public List<Step> toSteps(Client client, String phase, Step.StepKey nextStepKey) {
+    public List<Step> toSteps(IndexLifecycleContext indexLifecycleContext, String phase, StepKey nextStepKey) {
         Settings readOnlySettings = Settings.builder().put(IndexMetaData.SETTING_BLOCKS_WRITE, true).build();
 
         StepKey readOnlyKey = new StepKey(phase, NAME, ReadOnlyAction.NAME);
         StepKey forceMergeKey = new StepKey(phase, NAME, ForceMergeStep.NAME);
         StepKey countKey = new StepKey(phase, NAME, SegmentCountStep.NAME);
 
-        UpdateSettingsStep readOnlyStep = new UpdateSettingsStep(readOnlyKey, forceMergeKey, client, readOnlySettings);
-        ForceMergeStep forceMergeStep = new ForceMergeStep(forceMergeKey, countKey, client, maxNumSegments);
-        SegmentCountStep segmentCountStep = new SegmentCountStep(countKey, nextStepKey, client, maxNumSegments);
+        UpdateSettingsStep readOnlyStep = new UpdateSettingsStep(readOnlyKey, forceMergeKey, indexLifecycleContext, readOnlySettings);
+        ForceMergeStep forceMergeStep = new ForceMergeStep(forceMergeKey, countKey, indexLifecycleContext, maxNumSegments);
+        SegmentCountStep segmentCountStep = new SegmentCountStep(countKey, nextStepKey, indexLifecycleContext, maxNumSegments);
         return Arrays.asList(readOnlyStep, forceMergeStep, segmentCountStep);
     }
 
