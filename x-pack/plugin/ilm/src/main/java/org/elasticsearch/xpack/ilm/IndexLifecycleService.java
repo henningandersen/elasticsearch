@@ -26,10 +26,14 @@ import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.shard.IndexEventListener;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.xpack.core.ClientHelper;
 import org.elasticsearch.xpack.core.XPackField;
+import org.elasticsearch.xpack.core.ilm.DefaultIndexLifecycleContext;
+import org.elasticsearch.xpack.core.ilm.IndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.IndexLifecycleMetadata;
 import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
+import org.elasticsearch.xpack.core.ilm.LifecyclePolicyMetadata;
 import org.elasticsearch.xpack.core.ilm.LifecycleSettings;
 import org.elasticsearch.xpack.core.ilm.OperationMode;
 import org.elasticsearch.xpack.core.ilm.ShrinkStep;
@@ -53,6 +57,7 @@ public class IndexLifecycleService
     implements ClusterStateListener, ClusterStateApplier, SchedulerEngine.Listener, Closeable, LocalNodeMasterListener, IndexEventListener {
     private static final Logger logger = LogManager.getLogger(IndexLifecycleService.class);
     private static final Set<String> IGNORE_STEPS_MAINTENANCE_REQUESTED = Collections.singleton(ShrinkStep.NAME);
+    private final Client client;
     private volatile boolean isMaster = false;
     private volatile TimeValue pollInterval;
 
@@ -71,12 +76,13 @@ public class IndexLifecycleService
                                  ILMHistoryStore ilmHistoryStore) {
         super();
         this.settings = settings;
+        this.client = client;
         this.clusterService = clusterService;
         this.clock = clock;
         this.nowSupplier = nowSupplier;
         this.scheduledJob = null;
         this.ilmHistoryStore = ilmHistoryStore;
-        this.policyRegistry = new PolicyStepsRegistry(xContentRegistry, client);
+        this.policyRegistry = new PolicyStepsRegistry(xContentRegistry, this::createIndexLifecycleContext);
         this.lifecycleRunner = new IndexLifecycleRunner(policyRegistry, ilmHistoryStore, clusterService, threadPool, nowSupplier);
         this.pollInterval = LifecycleSettings.LIFECYCLE_POLL_INTERVAL_SETTING.get(settings);
         clusterService.addStateApplier(this);
@@ -373,5 +379,13 @@ public class IndexLifecycleService
     private boolean isClusterServiceStoppedOrClosed() {
         final State state = clusterService.lifecycleState();
         return state == State.STOPPED || state == State.CLOSED;
+    }
+
+
+    private IndexLifecycleContext createIndexLifecycleContext(LifecyclePolicyMetadata policyMetadata) {
+        LifecyclePolicySecurityClient policyClient = new LifecyclePolicySecurityClient(client, ClientHelper.INDEX_LIFECYCLE_ORIGIN,
+            policyMetadata.getHeaders());
+
+        return new DefaultIndexLifecycleContext(policyClient);
     }
 }

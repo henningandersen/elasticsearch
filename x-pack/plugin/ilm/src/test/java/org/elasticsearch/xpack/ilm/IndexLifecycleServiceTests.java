@@ -28,6 +28,7 @@ import org.elasticsearch.index.Index;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.TestThreadPool;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.xpack.core.ilm.IndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.IndexLifecycleMetadata;
 import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
@@ -198,7 +199,7 @@ public class IndexLifecycleServiceTests extends ESTestCase {
     public void testRequestedStopInShrinkActionButNotShrinkStep() {
         // test all the shrink action steps that ILM can be stopped during (basically all of them minus the actual shrink)
         ShrinkAction action = new ShrinkAction(1);
-        action.toSteps(mock(Client.class), "warm", randomStepKey()).stream()
+        action.toSteps(mock(IndexLifecycleContext.class), "warm", randomStepKey()).stream()
             .map(sk -> sk.getKey().getName())
             .filter(name -> name.equals(ShrinkStep.NAME) == false)
             .forEach(this::verifyCanStopWithStep);

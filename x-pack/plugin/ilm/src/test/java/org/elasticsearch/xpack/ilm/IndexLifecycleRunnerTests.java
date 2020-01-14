@@ -36,7 +36,9 @@ import org.elasticsearch.xpack.core.ilm.AsyncActionStep;
 import org.elasticsearch.xpack.core.ilm.AsyncWaitStep;
 import org.elasticsearch.xpack.core.ilm.ClusterStateActionStep;
 import org.elasticsearch.xpack.core.ilm.ClusterStateWaitStep;
+import org.elasticsearch.xpack.core.ilm.DefaultIndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.ErrorStep;
+import org.elasticsearch.xpack.core.ilm.IndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.IndexLifecycleMetadata;
 import org.elasticsearch.xpack.core.ilm.LifecycleAction;
 import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
@@ -77,6 +79,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static java.util.stream.Collectors.toList;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.awaitLatch;
@@ -139,7 +142,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         PhaseExecutionInfo phaseExecutionInfo = new PhaseExecutionInfo(policy.getName(), phase, 1, randomNonNegativeLong());
         String phaseJson = Strings.toString(phaseExecutionInfo);
         LifecycleAction action = randomFrom(phase.getActions().values());
-        Step step = randomFrom(action.toSteps(new NoOpClient(threadPool), phaseName, null));
+        Step step = randomFrom(action.toSteps(new DefaultIndexLifecycleContext(new NoOpClient(threadPool)), phaseName, null));
         StepKey stepKey = step.getKey();
 
         PolicyStepsRegistry stepRegistry = createOneStepPolicyStepRegistry(policyName, step);
@@ -175,7 +178,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         String phaseJson = Strings.toString(phaseExecutionInfo);
         NoOpClient client = new NoOpClient(threadPool);
         List<Step> waitForRolloverStepList =
-            action.toSteps(client, phaseName, null).stream()
+            action.toSteps(new DefaultIndexLifecycleContext(client), phaseName, null).stream()
                 .filter(s -> s.getKey().getName().equals(WaitForRolloverReadyStep.NAME))
                 .collect(toList());
         assertThat(waitForRolloverStepList.size(), is(1));
@@ -689,7 +692,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         PhaseExecutionInfo pei = new PhaseExecutionInfo(policy.getName(), phase, 1, randomNonNegativeLong());
         String phaseJson = Strings.toString(pei);
         LifecycleAction action = randomFrom(phase.getActions().values());
-        Step step = randomFrom(action.toSteps(client, phaseName, MOCK_STEP_KEY));
+        Step step = randomFrom(action.toSteps(new DefaultIndexLifecycleContext(client), phaseName, MOCK_STEP_KEY));
         Settings indexSettings = Settings.builder()
             .put("index.number_of_shards", 1)
             .put("index.number_of_replicas", 0)
@@ -707,7 +710,8 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
             .build();
         SortedMap<String, LifecyclePolicyMetadata> metas = new TreeMap<>();
         metas.put(policyName, policyMetadata);
-        PolicyStepsRegistry registry = new PolicyStepsRegistry(metas, firstStepMap, stepMap, REGISTRY, client);
+        PolicyStepsRegistry registry = new PolicyStepsRegistry(metas, firstStepMap, stepMap, REGISTRY,
+            pmd -> new DefaultIndexLifecycleContext(client));
 
         // First step is retrieved because there are no settings for the index
         IndexMetaData indexMetaDataWithNoKey = IndexMetaData.builder(index.getName())
@@ -1074,8 +1078,9 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         private static Logger logger = LogManager.getLogger(MockPolicyStepsRegistry.class);
 
         MockPolicyStepsRegistry(SortedMap<String, LifecyclePolicyMetadata> lifecyclePolicyMap, Map<String, Step> firstStepMap,
-                                Map<String, Map<StepKey, Step>> stepMap, NamedXContentRegistry xContentRegistry, Client client) {
-            super(lifecyclePolicyMap, firstStepMap, stepMap, xContentRegistry, client);
+                                Map<String, Map<StepKey, Step>> stepMap, NamedXContentRegistry xContentRegistry,
+                                Function<LifecyclePolicyMetadata, IndexLifecycleContext> contextFactory) {
+            super(lifecyclePolicyMap, firstStepMap, stepMap, xContentRegistry, contextFactory);
         }
 
         public void setResolver(BiFunction<IndexMetaData, StepKey, Step> fn) {
@@ -1110,7 +1115,8 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         stepMap.put(policyName, policySteps);
         Client client = mock(Client.class);
         when(client.settings()).thenReturn(Settings.EMPTY);
-        return new MockPolicyStepsRegistry(lifecyclePolicyMap, firstStepMap, stepMap, REGISTRY, client);
+        return new MockPolicyStepsRegistry(lifecyclePolicyMap, firstStepMap, stepMap, REGISTRY,
+            pmd -> new DefaultIndexLifecycleContext(client));
     }
 
     private class NoOpHistoryStore extends ILMHistoryStore {

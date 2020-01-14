@@ -8,7 +8,6 @@ package org.elasticsearch.xpack.ilm;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.Diff;
 import org.elasticsearch.cluster.DiffableUtils;
@@ -23,8 +22,6 @@ import org.elasticsearch.common.xcontent.XContentParseException;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.Index;
-import org.elasticsearch.xpack.core.ClientHelper;
-import org.elasticsearch.xpack.core.ilm.DefaultIndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.ErrorStep;
 import org.elasticsearch.xpack.core.ilm.IndexLifecycleContext;
 import org.elasticsearch.xpack.core.ilm.IndexLifecycleMetadata;
@@ -47,12 +44,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PolicyStepsRegistry {
     private static final Logger logger = LogManager.getLogger(PolicyStepsRegistry.class);
 
-    private final Client client;
+    private final Function<LifecyclePolicyMetadata, IndexLifecycleContext> contextFactory;
     // keeps track of existing policies in the cluster state
     private final SortedMap<String, LifecyclePolicyMetadata> lifecyclePolicyMap;
     // keeps track of what the first step in a policy is, the key is policy name
@@ -61,18 +59,20 @@ public class PolicyStepsRegistry {
     private final Map<String, Map<Step.StepKey, Step>> stepMap;
     private final NamedXContentRegistry xContentRegistry;
 
-    public PolicyStepsRegistry(NamedXContentRegistry xContentRegistry, Client client) {
-        this(new TreeMap<>(), new HashMap<>(), new HashMap<>(), xContentRegistry, client);
+    public PolicyStepsRegistry(NamedXContentRegistry xContentRegistry,
+                               Function<LifecyclePolicyMetadata, IndexLifecycleContext> contextFactory) {
+        this(new TreeMap<>(), new HashMap<>(), new HashMap<>(), xContentRegistry, contextFactory);
     }
 
     PolicyStepsRegistry(SortedMap<String, LifecyclePolicyMetadata> lifecyclePolicyMap,
                         Map<String, Step> firstStepMap, Map<String, Map<Step.StepKey, Step>> stepMap,
-                        NamedXContentRegistry xContentRegistry, Client client) {
+                        NamedXContentRegistry xContentRegistry,
+                        Function<LifecyclePolicyMetadata, IndexLifecycleContext> contextFactory) {
         this.lifecyclePolicyMap = lifecyclePolicyMap;
         this.firstStepMap = firstStepMap;
         this.stepMap = stepMap;
         this.xContentRegistry = xContentRegistry;
-        this.client = client;
+        this.contextFactory = contextFactory;
     }
 
     SortedMap<String, LifecyclePolicyMetadata> getLifecyclePolicyMap() {
@@ -122,11 +122,8 @@ public class PolicyStepsRegistry {
 
         if (mapDiff.getUpserts().isEmpty() == false) {
             for (LifecyclePolicyMetadata policyMetadata : mapDiff.getUpserts().values()) {
-                LifecyclePolicySecurityClient policyClient = new LifecyclePolicySecurityClient(client, ClientHelper.INDEX_LIFECYCLE_ORIGIN,
-                        policyMetadata.getHeaders());
                 lifecyclePolicyMap.put(policyMetadata.getName(), policyMetadata);
-                IndexLifecycleContext context = new DefaultIndexLifecycleContext(policyClient);
-                List<Step> policyAsSteps = policyMetadata.getPolicy().toSteps(context);
+                List<Step> policyAsSteps = policyMetadata.getPolicy().toSteps(contextFactory.apply(policyMetadata));
                 if (policyAsSteps.isEmpty() == false) {
                     firstStepMap.put(policyMetadata.getName(), policyAsSteps.get(0));
                     final Map<Step.StepKey, Step> stepMapForPolicy = new LinkedHashMap<>();
@@ -166,10 +163,9 @@ public class PolicyStepsRegistry {
             }
             policyToExecute = new LifecyclePolicy(currentPolicy.getType(), currentPolicy.getName(), phaseMap);
         }
-        LifecyclePolicySecurityClient policyClient = new LifecyclePolicySecurityClient(client,
-            ClientHelper.INDEX_LIFECYCLE_ORIGIN, lifecyclePolicyMap.get(policy).getHeaders());
-        IndexLifecycleContext context = new DefaultIndexLifecycleContext(policyClient);
-        final List<Step> steps = policyToExecute.toSteps(context);
+//        LifecyclePolicySecurityClient policyClient = new LifecyclePolicySecurityClient(client,
+//            ClientHelper.INDEX_LIFECYCLE_ORIGIN, lifecyclePolicyMap.get(policy).getHeaders());
+        final List<Step> steps = policyToExecute.toSteps(contextFactory.apply(policyMetadata));
         // Build a list of steps that correspond with the phase the index is currently in
         final List<Step> phaseSteps;
         if (steps == null) {
