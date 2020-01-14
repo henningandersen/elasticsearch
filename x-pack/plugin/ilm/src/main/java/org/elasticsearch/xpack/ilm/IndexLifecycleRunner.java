@@ -32,25 +32,34 @@ import org.elasticsearch.xpack.core.ilm.TerminalPolicyStep;
 import org.elasticsearch.xpack.ilm.history.ILMHistoryItem;
 import org.elasticsearch.xpack.ilm.history.ILMHistoryStore;
 
+import java.util.function.BiConsumer;
 import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 
 import static org.elasticsearch.xpack.core.ilm.LifecycleSettings.LIFECYCLE_ORIGINATION_DATE;
 
 class IndexLifecycleRunner {
     private static final Logger logger = LogManager.getLogger(IndexLifecycleRunner.class);
-    private final ThreadPool threadPool;
-    private final ClusterService clusterService;
     private final PolicyStepsRegistry stepRegistry;
     private final ILMHistoryStore ilmHistoryStore;
     private final LongSupplier nowSupplier;
+    private final BiConsumer<String, ClusterStateUpdateTask> clusterStateUpdater;
+    private final Supplier<ClusterStateObserver> clusterStateObserverFactory;
 
     IndexLifecycleRunner(PolicyStepsRegistry stepRegistry, ILMHistoryStore ilmHistoryStore, ClusterService clusterService,
                          ThreadPool threadPool, LongSupplier nowSupplier) {
+        this(stepRegistry, ilmHistoryStore, nowSupplier, clusterService::submitStateUpdateTask,
+            () -> new ClusterStateObserver(clusterService, null, logger, threadPool.getThreadContext()));
+    }
+
+    IndexLifecycleRunner(PolicyStepsRegistry stepRegistry, ILMHistoryStore ilmHistoryStore, LongSupplier nowSupplier,
+                                BiConsumer<String, ClusterStateUpdateTask> clusterStateUpdater,
+                                Supplier<ClusterStateObserver> clusterStateObserverFactory) {
         this.stepRegistry = stepRegistry;
         this.ilmHistoryStore = ilmHistoryStore;
-        this.clusterService = clusterService;
         this.nowSupplier = nowSupplier;
-        this.threadPool = threadPool;
+        this.clusterStateUpdater = clusterStateUpdater;
+        this.clusterStateObserverFactory = clusterStateObserverFactory;
     }
 
     /**
@@ -191,7 +200,7 @@ class IndexLifecycleRunner {
             int currentRetryAttempt = lifecycleState.getFailedStepRetryCount() == null ? 1 : 1 + lifecycleState.getFailedStepRetryCount();
             logger.info("policy [{}] for index [{}] on an error step due to a transitive error, moving back to the failed " +
                 "step [{}] for execution. retry attempt [{}]", policy, index, lifecycleState.getFailedStep(), currentRetryAttempt);
-            clusterService.submitStateUpdateTask("ilm-retry-failed-step", new ClusterStateUpdateTask() {
+            clusterStateUpdater.accept("ilm-retry-failed-step", new ClusterStateUpdateTask() {
                 @Override
                 public ClusterState execute(ClusterState currentState) {
                     return IndexLifecycleTransition.moveClusterStateToPreviouslyFailedStep(currentState, index,
@@ -251,7 +260,7 @@ class IndexLifecycleRunner {
         if (currentStep instanceof AsyncActionStep) {
             logger.debug("[{}] running policy with async action step [{}]", index, currentStep.getKey());
             ((AsyncActionStep) currentStep).performAction(indexMetaData, currentState,
-                new ClusterStateObserver(clusterService, null, logger, threadPool.getThreadContext()), new AsyncActionStep.Listener() {
+                clusterStateObserverFactory.get(), new AsyncActionStep.Listener() {
 
                     @Override
                     public void onResponse(boolean complete) {
@@ -320,7 +329,7 @@ class IndexLifecycleRunner {
             }
         } else if (currentStep instanceof ClusterStateActionStep || currentStep instanceof ClusterStateWaitStep) {
             logger.debug("[{}] running policy with current-step [{}]", indexMetaData.getIndex().getName(), currentStep.getKey());
-            clusterService.submitStateUpdateTask("ilm-execute-cluster-state-steps",
+            clusterStateUpdater.accept("ilm-execute-cluster-state-steps",
                 new ExecuteStepsUpdateTask(policy, indexMetaData.getIndex(), currentStep, stepRegistry, this, nowSupplier));
         } else {
             logger.trace("[{}] ignoring step execution from cluster state change event [{}]", index, currentStep.getKey());
@@ -333,7 +342,7 @@ class IndexLifecycleRunner {
      */
     private void moveToStep(Index index, String policy, Step.StepKey currentStepKey, Step.StepKey newStepKey) {
         logger.debug("[{}] moving to step [{}] {} -> {}", index.getName(), policy, currentStepKey, newStepKey);
-        clusterService.submitStateUpdateTask("ilm-move-to-step",
+        clusterStateUpdater.accept("ilm-move-to-step",
             new MoveToNextStepUpdateTask(index, policy, currentStepKey, newStepKey, nowSupplier, stepRegistry, clusterState ->
             {
                 IndexMetaData indexMetaData = clusterState.metaData().index(index);
@@ -350,7 +359,7 @@ class IndexLifecycleRunner {
     private void moveToErrorStep(Index index, String policy, Step.StepKey currentStepKey, Exception e) {
         logger.error(new ParameterizedMessage("policy [{}] for index [{}] failed on step [{}]. Moving to ERROR step",
             policy, index.getName(), currentStepKey), e);
-        clusterService.submitStateUpdateTask("ilm-move-to-error-step",
+        clusterStateUpdater.accept("ilm-move-to-error-step",
             new MoveToErrorStepUpdateTask(index, policy, currentStepKey, e, nowSupplier, stepRegistry::getStep, clusterState -> {
                 IndexMetaData indexMetaData = clusterState.metaData().index(index);
                 registerFailedOperation(indexMetaData, e);
@@ -362,7 +371,7 @@ class IndexLifecycleRunner {
      * changing other execution state.
      */
     private void setStepInfo(Index index, String policy, Step.StepKey currentStepKey, ToXContentObject stepInfo) {
-        clusterService.submitStateUpdateTask("ilm-set-step-info", new SetStepInfoUpdateTask(index, policy, currentStepKey, stepInfo));
+        clusterStateUpdater.accept("ilm-set-step-info", new SetStepInfoUpdateTask(index, policy, currentStepKey, stepInfo));
     }
 
     /**

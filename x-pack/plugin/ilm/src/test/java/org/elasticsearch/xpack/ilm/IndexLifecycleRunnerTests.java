@@ -57,8 +57,8 @@ import org.elasticsearch.xpack.core.ilm.Step;
 import org.elasticsearch.xpack.core.ilm.Step.StepKey;
 import org.elasticsearch.xpack.core.ilm.TerminalPolicyStep;
 import org.elasticsearch.xpack.core.ilm.WaitForRolloverReadyStep;
+import org.elasticsearch.xpack.ilm.history.DefaultILMHistoryStore;
 import org.elasticsearch.xpack.ilm.history.ILMHistoryItem;
-import org.elasticsearch.xpack.ilm.history.ILMHistoryStore;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.ArgumentMatcher;
@@ -1119,7 +1119,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
             pmd -> new DefaultIndexLifecycleContext(client));
     }
 
-    private class NoOpHistoryStore extends ILMHistoryStore {
+    private class NoOpHistoryStore extends DefaultILMHistoryStore {
 
         private final List<ILMHistoryItem> items = new ArrayList<>();
 
