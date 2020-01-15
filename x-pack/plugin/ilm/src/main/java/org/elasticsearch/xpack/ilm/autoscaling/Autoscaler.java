@@ -27,7 +27,6 @@ import org.elasticsearch.cluster.metadata.MetaDataIndexTemplateService;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
@@ -111,7 +110,7 @@ public class Autoscaler {
 
     private ClusterState simulateAllocationOfFutureState(ClusterState state, ClusterInfo clusterInfo) {
         state = allocate(state, clusterInfo, a -> {});
-        state = allocate(state, clusterInfo, this::startPrimaryShards);
+        state = allocate(state, clusterInfo, this::startShards);
         return state;
     }
 
@@ -139,12 +138,14 @@ public class Autoscaler {
         return newStateBuilder.build();
     }
 
-    private void startPrimaryShards(RoutingAllocation allocation) {
-        // simulate that all primaries are started so replicas can recover.
-        allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING).stream()
-            .filter(ShardRouting::primary)
-            .filter(s -> s.relocatingNodeId() == null)
-            .forEach(s -> allocation.routingNodes().startShard(logger, s, allocation.changes()));
+    private void startShards(RoutingAllocation allocation) {
+        // simulate that all primaries are started so replicas can recover and replicas to get to green.
+        // also starts initializing relocated shards, which removes the relocation source too.
+        allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING)
+            .forEach(s -> {
+                logger.info("Starting [{}]", s);
+                allocation.routingNodes().startShard(logger, s, allocation.changes());
+            });
     }
 
     /**
