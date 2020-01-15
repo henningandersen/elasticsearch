@@ -160,20 +160,18 @@ public class Autoscaler {
             }
         }
 
-        MetaData.Builder newMetaData = MetaData.builder(state.metaData());
+
+
+        MetaData newMetaData = state.metaData();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder(state.routingTable());
-        aliases.stream().map(a -> simulateRollover(a, state))
-            .forEach(index -> {
-                newMetaData.put(index, false);
-                routingTableBuilder.addAsNew(index);
-
-            });
-
+        for (String alias : aliases) {
+            newMetaData = simulateRollover(alias, newMetaData, state.nodes(), routingTableBuilder);
+        }
         return ClusterState.builder(state).metaData(newMetaData).routingTable(routingTableBuilder.build()).build();
     }
 
-    private IndexMetaData simulateRollover(String aliasName, ClusterState currentState) {
-        final MetaData metaData = currentState.metaData();
+    // todo: bad function with sideeffects...
+    private MetaData simulateRollover(String aliasName, MetaData metaData, DiscoveryNodes nodes, RoutingTable.Builder routingTableBuilder) {
         SortedMap<String, AliasOrIndex> lookup = metaData.getAliasAndIndexLookup();
         final AliasOrIndex.Alias alias = (AliasOrIndex.Alias) lookup.get(aliasName);
         IndexMetaData indexMetaData = alias.getWriteIndex();
@@ -185,12 +183,17 @@ public class Autoscaler {
         RolloverInfo rolloverInfo = new RolloverInfo(aliasName, Collections.emptyList(),
             System.currentTimeMillis()); // todo: time.
 
-        return createIndexMetaData(rolloverIndexName, rolloverInfo, currentState);
+        MetaData.Builder builder = MetaData.builder(metaData);
+        IndexMetaData newIndexMetaData = createIndexMetaData(rolloverIndexName, rolloverInfo, nodes, metaData);
+        builder.put(newIndexMetaData, false);
+        builder.put(IndexMetaData.builder(indexMetaData).putRolloverInfo(rolloverInfo));
+        routingTableBuilder.addAsNew(newIndexMetaData);
+        return builder.build();
     }
 
-    private IndexMetaData createIndexMetaData(String indexName, RolloverInfo rolloverInfo, ClusterState currentState) {
+    private IndexMetaData createIndexMetaData(String indexName, RolloverInfo rolloverInfo, DiscoveryNodes nodes, MetaData metaData) {
         List<IndexTemplateMetaData> templates =
-            Collections.unmodifiableList(MetaDataIndexTemplateService.findTemplates(currentState.metaData(), indexName));
+            Collections.unmodifiableList(MetaDataIndexTemplateService.findTemplates(metaData, indexName));
 
         Settings.Builder indexSettingsBuilder = Settings.builder();
         // apply templates, here, in reverse order, since first ones are better matching
@@ -198,7 +201,6 @@ public class Autoscaler {
             indexSettingsBuilder.put(templates.get(i).settings());
         }
         if (indexSettingsBuilder.get(IndexMetaData.SETTING_INDEX_VERSION_CREATED.getKey()) == null) {
-            final DiscoveryNodes nodes = currentState.nodes();
             final Version createdVersion = Version.min(Version.CURRENT, nodes.getSmallestNonClientNodeVersion());
             indexSettingsBuilder.put(IndexMetaData.SETTING_INDEX_VERSION_CREATED.getKey(), createdVersion);
         }
@@ -324,8 +326,14 @@ public class Autoscaler {
             if (request.isDryRun()) {
                 listener.onResponse(new RolloverResponse(null, null, Map.of("ok", true), true, false, true, true));
             } else {
-                clusterStateUpdater.accept(state -> ClusterState.builder(state).metaData(
-                    MetaData.builder(state.metaData()).put(simulateRollover(request.getAlias(), state), false)).build());
+                clusterStateUpdater.accept(state -> {
+                    RoutingTable.Builder routingTableBuilder = RoutingTable.builder(state.routingTable());
+                    MetaData metaData = simulateRollover(request.getAlias(), state.metaData(), state.nodes(), routingTableBuilder);
+                    return ClusterState.builder(state)
+                        .metaData(metaData)
+                        .routingTable(routingTableBuilder.build())
+                        .build();
+                });
                 listener.onResponse(new RolloverResponse(null, null, null, false, true, true, true));
             }
         }
