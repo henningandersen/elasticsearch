@@ -37,32 +37,39 @@ class GeoBoundsAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSou
 
     private final boolean wrapLongitude;
 
-    GeoBoundsAggregatorFactory(String name,
-                                ValuesSourceConfig<ValuesSource.GeoPoint> config,
-                                boolean wrapLongitude,
-                                QueryShardContext queryShardContext,
-                                AggregatorFactory parent,
-                                AggregatorFactories.Builder subFactoriesBuilder,
-                                Map<String, Object> metaData) throws IOException {
+    GeoBoundsAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource.GeoPoint> config,
+        boolean wrapLongitude,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.wrapLongitude = wrapLongitude;
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return new GeoBoundsAggregator(name, searchContext, parent, null, wrapLongitude, pipelineAggregators, metaData);
     }
 
     @Override
-    protected Aggregator doCreateInternal(ValuesSource.GeoPoint valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator doCreateInternal(
+        ValuesSource.GeoPoint valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return new GeoBoundsAggregator(name, searchContext, parent, valuesSource, wrapLongitude, pipelineAggregators, metaData);
     }
 }

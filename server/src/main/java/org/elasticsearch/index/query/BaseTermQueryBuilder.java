@@ -164,7 +164,6 @@ public abstract class BaseTermQueryBuilder<QB extends BaseTermQueryBuilder<QB>> 
 
     @Override
     protected final boolean doEquals(QB other) {
-        return Objects.equals(fieldName, other.fieldName) &&
-               Objects.equals(value, other.value);
+        return Objects.equals(fieldName, other.fieldName) && Objects.equals(value, other.value);
     }
 }

@@ -68,8 +68,7 @@ public class ExternalMetadataMapper extends MetadataFieldMapper {
     }
 
     @Override
-    public void preParse(ParseContext context) throws IOException {
-    }
+    public void preParse(ParseContext context) throws IOException {}
 
     @Override
     public void postParse(ParseContext context) throws IOException {
@@ -92,8 +91,8 @@ public class ExternalMetadataMapper extends MetadataFieldMapper {
     public static class TypeParser implements MetadataFieldMapper.TypeParser {
 
         @Override
-        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node,
-                                                       ParserContext parserContext) throws MapperParsingException {
+        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             return new Builder();
         }
 

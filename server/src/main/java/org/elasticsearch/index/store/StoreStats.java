@@ -51,7 +51,6 @@ public class StoreStats implements Writeable, ToXContentFragment {
         sizeInBytes += stats.sizeInBytes;
     }
 
-
     public long sizeInBytes() {
         return sizeInBytes;
     }

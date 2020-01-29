@@ -210,10 +210,10 @@ public class RangeAggregator extends BucketsAggregator {
             }
             Range other = (Range) obj;
             return Objects.equals(key, other.key)
-                    && Objects.equals(from, other.from)
-                    && Objects.equals(fromAsStr, other.fromAsStr)
-                    && Objects.equals(to, other.to)
-                    && Objects.equals(toAsStr, other.toAsStr);
+                && Objects.equals(from, other.from)
+                && Objects.equals(fromAsStr, other.fromAsStr)
+                && Objects.equals(to, other.to)
+                && Objects.equals(toAsStr, other.toAsStr);
         }
     }
 
@@ -225,9 +225,20 @@ public class RangeAggregator extends BucketsAggregator {
 
     final double[] maxTo;
 
-    public RangeAggregator(String name, AggregatorFactories factories, ValuesSource.Numeric valuesSource, DocValueFormat format,
-            InternalRange.Factory rangeFactory, Range[] ranges, boolean keyed, SearchContext context,
-            Aggregator parent, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    public RangeAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource.Numeric valuesSource,
+        DocValueFormat format,
+        InternalRange.Factory rangeFactory,
+        Range[] ranges,
+        boolean keyed,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
 
         super(name, factories, context, parent, pipelineAggregators, metaData);
         assert valuesSource != null;
@@ -241,7 +252,7 @@ public class RangeAggregator extends BucketsAggregator {
         maxTo = new double[this.ranges.length];
         maxTo[0] = this.ranges[0].to;
         for (int i = 1; i < this.ranges.length; ++i) {
-            maxTo[i] = Math.max(this.ranges[i].to,maxTo[i-1]);
+            maxTo[i] = Math.max(this.ranges[i].to, maxTo[i - 1]);
         }
 
     }
@@ -255,8 +266,7 @@ public class RangeAggregator extends BucketsAggregator {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         final SortedNumericDoubleValues values = valuesSource.doubleValues(ctx);
         return new LeafBucketCollectorBase(sub, values) {
             @Override
@@ -270,54 +280,54 @@ public class RangeAggregator extends BucketsAggregator {
                 }
             }
 
-    private int collect(int doc, double value, long owningBucketOrdinal, int lowBound) throws IOException {
-        int lo = lowBound, hi = ranges.length - 1; // all candidates are between these indexes
-        int mid = (lo + hi) >>> 1;
-        while (lo <= hi) {
-            if (value < ranges[mid].from) {
-                hi = mid - 1;
-            } else if (value >= maxTo[mid]) {
-                lo = mid + 1;
-            } else {
-                break;
-            }
-            mid = (lo + hi) >>> 1;
-        }
-        if (lo > hi) return lo; // no potential candidate
+            private int collect(int doc, double value, long owningBucketOrdinal, int lowBound) throws IOException {
+                int lo = lowBound, hi = ranges.length - 1; // all candidates are between these indexes
+                int mid = (lo + hi) >>> 1;
+                while (lo <= hi) {
+                    if (value < ranges[mid].from) {
+                        hi = mid - 1;
+                    } else if (value >= maxTo[mid]) {
+                        lo = mid + 1;
+                    } else {
+                        break;
+                    }
+                    mid = (lo + hi) >>> 1;
+                }
+                if (lo > hi) return lo; // no potential candidate
 
-        // binary search the lower bound
-        int startLo = lo, startHi = mid;
-        while (startLo <= startHi) {
-            final int startMid = (startLo + startHi) >>> 1;
-            if (value >= maxTo[startMid]) {
-                startLo = startMid + 1;
-            } else {
-                startHi = startMid - 1;
-            }
-        }
+                // binary search the lower bound
+                int startLo = lo, startHi = mid;
+                while (startLo <= startHi) {
+                    final int startMid = (startLo + startHi) >>> 1;
+                    if (value >= maxTo[startMid]) {
+                        startLo = startMid + 1;
+                    } else {
+                        startHi = startMid - 1;
+                    }
+                }
 
-        // binary search the upper bound
-        int endLo = mid, endHi = hi;
-        while (endLo <= endHi) {
-            final int endMid = (endLo + endHi) >>> 1;
-            if (value < ranges[endMid].from) {
-                endHi = endMid - 1;
-            } else {
-                endLo = endMid + 1;
-            }
-        }
+                // binary search the upper bound
+                int endLo = mid, endHi = hi;
+                while (endLo <= endHi) {
+                    final int endMid = (endLo + endHi) >>> 1;
+                    if (value < ranges[endMid].from) {
+                        endHi = endMid - 1;
+                    } else {
+                        endLo = endMid + 1;
+                    }
+                }
 
-        assert startLo == lowBound || value >= maxTo[startLo - 1];
-        assert endHi == ranges.length - 1 || value < ranges[endHi + 1].from;
+                assert startLo == lowBound || value >= maxTo[startLo - 1];
+                assert endHi == ranges.length - 1 || value < ranges[endHi + 1].from;
 
-        for (int i = startLo; i <= endHi; ++i) {
-            if (ranges[i].matches(value)) {
+                for (int i = startLo; i <= endHi; ++i) {
+                    if (ranges[i].matches(value)) {
                         collectBucket(sub, doc, subBucketOrdinal(owningBucketOrdinal, i));
-            }
-        }
+                    }
+                }
 
-        return endHi + 1;
-    }
+                return endHi + 1;
+            }
         };
     }
 
@@ -332,9 +342,15 @@ public class RangeAggregator extends BucketsAggregator {
         for (int i = 0; i < ranges.length; i++) {
             Range range = ranges[i];
             final long bucketOrd = subBucketOrdinal(owningBucketOrdinal, i);
-            org.elasticsearch.search.aggregations.bucket.range.Range.Bucket bucket =
-                    rangeFactory.createBucket(range.key, range.from, range.to, bucketDocCount(bucketOrd),
-                            bucketAggregations(bucketOrd), keyed, format);
+            org.elasticsearch.search.aggregations.bucket.range.Range.Bucket bucket = rangeFactory.createBucket(
+                range.key,
+                range.from,
+                range.to,
+                bucketDocCount(bucketOrd),
+                bucketAggregations(bucketOrd),
+                keyed,
+                format
+            );
             buckets.add(bucket);
         }
         // value source can be null in the case of unmapped fields
@@ -347,8 +363,15 @@ public class RangeAggregator extends BucketsAggregator {
         List<org.elasticsearch.search.aggregations.bucket.range.Range.Bucket> buckets = new ArrayList<>(ranges.length);
         for (int i = 0; i < ranges.length; i++) {
             Range range = ranges[i];
-            org.elasticsearch.search.aggregations.bucket.range.Range.Bucket bucket =
-                    rangeFactory.createBucket(range.key, range.from, range.to, 0, subAggs, keyed, format);
+            org.elasticsearch.search.aggregations.bucket.range.Range.Bucket bucket = rangeFactory.createBucket(
+                range.key,
+                range.from,
+                range.to,
+                0,
+                subAggs,
+                keyed,
+                format
+            );
             buckets.add(bucket);
         }
         // value source can be null in the case of unmapped fields
@@ -362,9 +385,18 @@ public class RangeAggregator extends BucketsAggregator {
         private final InternalRange.Factory factory;
         private final DocValueFormat format;
 
-        public Unmapped(String name, R[] ranges, boolean keyed, DocValueFormat format, SearchContext context, Aggregator parent,
-                InternalRange.Factory factory, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData)
-                throws IOException {
+        public Unmapped(
+            String name,
+            R[] ranges,
+            boolean keyed,
+            DocValueFormat format,
+            SearchContext context,
+            Aggregator parent,
+            InternalRange.Factory factory,
+            List<PipelineAggregator> pipelineAggregators,
+            Map<String, Object> metaData
+        )
+            throws IOException {
 
             super(name, context, parent, pipelineAggregators, metaData);
             this.ranges = ranges;

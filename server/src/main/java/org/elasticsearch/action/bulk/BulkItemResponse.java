@@ -176,15 +176,11 @@ public class BulkItemResponse implements Writeable, StatusToXContentObject {
         private final long term;
         private final boolean aborted;
 
-        public static final ConstructingObjectParser<Failure, Void> PARSER =
-            new ConstructingObjectParser<>(
-                "bulk_failures",
-                true,
-                a ->
-                    new Failure(
-                        (String)a[0], (String)a[1], (Exception)a[2], RestStatus.fromCode((int)a[3])
-                    )
-            );
+        public static final ConstructingObjectParser<Failure, Void> PARSER = new ConstructingObjectParser<>(
+            "bulk_failures",
+            true,
+            a -> new Failure((String) a[0], (String) a[1], (Exception) a[2], RestStatus.fromCode((int) a[3]))
+        );
         static {
             PARSER.declareString(constructorArg(), new ParseField(INDEX_FIELD));
             PARSER.declareString(optionalConstructorArg(), new ParseField(ID_FIELD));
@@ -199,13 +195,27 @@ public class BulkItemResponse implements Writeable, StatusToXContentObject {
          * to record operation sequence no with failure
          */
         public Failure(String index, String id, Exception cause) {
-            this(index, id, cause, ExceptionsHelper.status(cause), SequenceNumbers.UNASSIGNED_SEQ_NO,
-                SequenceNumbers.UNASSIGNED_PRIMARY_TERM, false);
+            this(
+                index,
+                id,
+                cause,
+                ExceptionsHelper.status(cause),
+                SequenceNumbers.UNASSIGNED_SEQ_NO,
+                SequenceNumbers.UNASSIGNED_PRIMARY_TERM,
+                false
+            );
         }
 
         public Failure(String index, String id, Exception cause, boolean aborted) {
-            this(index, id, cause, ExceptionsHelper.status(cause), SequenceNumbers.UNASSIGNED_SEQ_NO,
-                SequenceNumbers.UNASSIGNED_PRIMARY_TERM, aborted);
+            this(
+                index,
+                id,
+                cause,
+                ExceptionsHelper.status(cause),
+                SequenceNumbers.UNASSIGNED_SEQ_NO,
+                SequenceNumbers.UNASSIGNED_PRIMARY_TERM,
+                aborted
+            );
         }
 
         public Failure(String index, String id, Exception cause, RestStatus status) {

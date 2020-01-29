@@ -55,6 +55,7 @@ public class NaNSortingIT extends ESIntegTestCase {
                 factory.field("numeric_field");
                 return factory;
             }
+
             @Override
             public double getValue(Aggregation aggregation) {
                 return ((Avg) aggregation).getValue();
@@ -67,26 +68,30 @@ public class NaNSortingIT extends ESIntegTestCase {
                 factory.field("numeric_field");
                 return factory;
             }
+
             @Override
             public String sortKey() {
                 return name + ".variance";
             }
+
             @Override
             public double getValue(Aggregation aggregation) {
                 return ((ExtendedStats) aggregation).getVariance();
             }
         },
-        STD_DEVIATION("std_deviation"){
+        STD_DEVIATION("std_deviation") {
             @Override
             public ExtendedStatsAggregationBuilder builder() {
                 ExtendedStatsAggregationBuilder factory = extendedStats(name);
                 factory.field("numeric_field");
                 return factory;
             }
+
             @Override
             public String sortKey() {
                 return name + ".std_deviation";
             }
+
             @Override
             public double getValue(Aggregation aggregation) {
                 return ((ExtendedStats) aggregation).getStdDeviation();
@@ -99,8 +104,11 @@ public class NaNSortingIT extends ESIntegTestCase {
 
         public String name;
 
-        public abstract ValuesSourceAggregationBuilder.LeafOnly<ValuesSource.Numeric,
-                ? extends ValuesSourceAggregationBuilder.LeafOnly<ValuesSource.Numeric, ?>> builder();
+        public abstract
+            ValuesSourceAggregationBuilder.LeafOnly<
+                ValuesSource.Numeric,
+                ? extends ValuesSourceAggregationBuilder.LeafOnly<ValuesSource.Numeric, ?>>
+            builder();
 
         public String sortKey() {
             return name;
@@ -111,13 +119,14 @@ public class NaNSortingIT extends ESIntegTestCase {
 
     @Override
     public void setupSuiteScopeCluster() throws Exception {
-        assertAcked(client().admin().indices().prepareCreate("idx")
-                .setMapping("string_value", "type=keyword").get());
+        assertAcked(client().admin().indices().prepareCreate("idx").setMapping("string_value", "type=keyword").get());
         final int numDocs = randomIntBetween(2, 10);
         for (int i = 0; i < numDocs; ++i) {
             final long value = randomInt(5);
-            XContentBuilder source = jsonBuilder().startObject().field("long_value", value).field("double_value", value + 0.05)
-                    .field("string_value", "str_" + value);
+            XContentBuilder source = jsonBuilder().startObject()
+                .field("long_value", value)
+                .field("double_value", value + 0.05)
+                .field("string_value", "str_" + value);
             if (randomBoolean()) {
                 source.field("numeric_value", randomDouble());
             }
@@ -153,9 +162,13 @@ public class NaNSortingIT extends ESIntegTestCase {
         final boolean asc = randomBoolean();
         SubAggregation agg = randomFrom(SubAggregation.values());
         SearchResponse response = client().prepareSearch("idx")
-                .addAggregation(terms("terms").field(fieldName).collectMode(randomFrom(SubAggCollectionMode.values()))
-                        .subAggregation(agg.builder()).order(BucketOrder.aggregation(agg.sortKey(), asc)))
-                .get();
+            .addAggregation(
+                terms("terms").field(fieldName)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .subAggregation(agg.builder())
+                    .order(BucketOrder.aggregation(agg.sortKey(), asc))
+            )
+            .get();
 
         assertSearchResponse(response);
         final Terms terms = response.getAggregations().get("terms");
@@ -178,10 +191,13 @@ public class NaNSortingIT extends ESIntegTestCase {
         final boolean asc = randomBoolean();
         SubAggregation agg = randomFrom(SubAggregation.values());
         SearchResponse response = client().prepareSearch("idx")
-                .addAggregation(histogram("histo")
-                        .field("long_value").interval(randomIntBetween(1, 2))
-                        .subAggregation(agg.builder()).order(BucketOrder.aggregation(agg.sortKey(), asc)))
-                .get();
+            .addAggregation(
+                histogram("histo").field("long_value")
+                    .interval(randomIntBetween(1, 2))
+                    .subAggregation(agg.builder())
+                    .order(BucketOrder.aggregation(agg.sortKey(), asc))
+            )
+            .get();
 
         assertSearchResponse(response);
         final Histogram histo = response.getAggregations().get("histo");

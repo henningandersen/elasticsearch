@@ -84,19 +84,27 @@ public class IndicesShardStoresResponse extends ActionResponse implements ToXCon
 
             private static AllocationStatus fromId(byte id) {
                 switch (id) {
-                    case 0: return PRIMARY;
-                    case 1: return REPLICA;
-                    case 2: return UNUSED;
-                    default: throw new IllegalArgumentException("unknown id for allocation status [" + id + "]");
+                    case 0:
+                        return PRIMARY;
+                    case 1:
+                        return REPLICA;
+                    case 2:
+                        return UNUSED;
+                    default:
+                        throw new IllegalArgumentException("unknown id for allocation status [" + id + "]");
                 }
             }
 
             public String value() {
                 switch (id) {
-                    case 0: return "primary";
-                    case 1: return "replica";
-                    case 2: return "unused";
-                    default: throw new IllegalArgumentException("unknown id for allocation status [" + id + "]");
+                    case 0:
+                        return "primary";
+                    case 1:
+                        return "replica";
+                    case 2:
+                        return "unused";
+                    default:
+                        throw new IllegalArgumentException("unknown id for allocation status [" + id + "]");
                 }
             }
 
@@ -259,8 +267,10 @@ public class IndicesShardStoresResponse extends ActionResponse implements ToXCon
     private ImmutableOpenMap<String, ImmutableOpenIntMap<List<StoreStatus>>> storeStatuses;
     private List<Failure> failures;
 
-    public IndicesShardStoresResponse(ImmutableOpenMap<String, ImmutableOpenIntMap<List<StoreStatus>>> storeStatuses,
-                                      List<Failure> failures) {
+    public IndicesShardStoresResponse(
+        ImmutableOpenMap<String, ImmutableOpenIntMap<List<StoreStatus>>> storeStatuses,
+        List<Failure> failures
+    ) {
         this.storeStatuses = storeStatuses;
         this.failures = failures;
     }

@@ -46,22 +46,30 @@ public class BinaryDVIndexFieldData extends DocValuesIndexFieldData implements I
     }
 
     @Override
-    public SortField sortField(@Nullable Object missingValue, MultiValueMode sortMode, XFieldComparatorSource.Nested nested,
-            boolean reverse) {
+    public SortField sortField(
+        @Nullable Object missingValue,
+        MultiValueMode sortMode,
+        XFieldComparatorSource.Nested nested,
+        boolean reverse
+    ) {
         XFieldComparatorSource source = new BytesRefFieldComparatorSource(this, missingValue, sortMode, nested);
         /**
          * Check if we can use a simple {@link SortedSetSortField} compatible with index sorting and
          * returns a custom sort field otherwise.
          */
-        if (nested != null ||
-                (sortMode != MultiValueMode.MAX && sortMode != MultiValueMode.MIN) ||
-                (source.sortMissingFirst(missingValue) == false && source.sortMissingLast(missingValue) == false)) {
+        if (nested != null
+            || (sortMode != MultiValueMode.MAX && sortMode != MultiValueMode.MIN)
+            || (source.sortMissingFirst(missingValue) == false && source.sortMissingLast(missingValue) == false)) {
             return new SortField(getFieldName(), source, reverse);
         }
-        SortField sortField = new SortedSetSortField(fieldName, reverse,
-            sortMode == MultiValueMode.MAX ? SortedSetSelector.Type.MAX : SortedSetSelector.Type.MIN);
-        sortField.setMissingValue(source.sortMissingLast(missingValue) ^ reverse ?
-            SortedSetSortField.STRING_LAST : SortedSetSortField.STRING_FIRST);
+        SortField sortField = new SortedSetSortField(
+            fieldName,
+            reverse,
+            sortMode == MultiValueMode.MAX ? SortedSetSelector.Type.MAX : SortedSetSelector.Type.MIN
+        );
+        sortField.setMissingValue(
+            source.sortMissingLast(missingValue) ^ reverse ? SortedSetSortField.STRING_LAST : SortedSetSortField.STRING_FIRST
+        );
         return sortField;
     }
 }

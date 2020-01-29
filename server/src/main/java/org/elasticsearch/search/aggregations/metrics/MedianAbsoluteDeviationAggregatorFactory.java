@@ -37,23 +37,28 @@ public class MedianAbsoluteDeviationAggregatorFactory extends ValuesSourceAggreg
 
     private final double compression;
 
-    MedianAbsoluteDeviationAggregatorFactory(String name,
-                                                    ValuesSourceConfig<ValuesSource.Numeric> config,
-                                                    QueryShardContext queryShardContext,
-                                                    AggregatorFactory parent,
-                                                    AggregatorFactories.Builder subFactoriesBuilder,
-                                                    Map<String, Object> metaData,
-                                                    double compression) throws IOException {
+    MedianAbsoluteDeviationAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource.Numeric> config,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData,
+        double compression
+    )
+        throws IOException {
 
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.compression = compression;
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
 
         return new MedianAbsoluteDeviationAggregator(
             name,
@@ -68,12 +73,14 @@ public class MedianAbsoluteDeviationAggregatorFactory extends ValuesSourceAggreg
     }
 
     @Override
-    protected Aggregator doCreateInternal(ValuesSource.Numeric valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator doCreateInternal(
+        ValuesSource.Numeric valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
 
         return new MedianAbsoluteDeviationAggregator(
             name,

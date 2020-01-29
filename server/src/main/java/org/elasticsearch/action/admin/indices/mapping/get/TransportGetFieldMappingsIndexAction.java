@@ -58,8 +58,9 @@ import static java.util.Collections.singletonMap;
 /**
  * Transport action used to retrieve the mappings related to fields that belong to a specific index
  */
-public class TransportGetFieldMappingsIndexAction
-        extends TransportSingleShardAction<GetFieldMappingsIndexRequest, GetFieldMappingsResponse> {
+public class TransportGetFieldMappingsIndexAction extends TransportSingleShardAction<
+    GetFieldMappingsIndexRequest,
+    GetFieldMappingsResponse> {
 
     private static final String ACTION_NAME = GetFieldMappingsAction.NAME + "[index]";
     public static final ActionType<GetFieldMappingsResponse> TYPE = new ActionType<>(ACTION_NAME, GetFieldMappingsResponse::new);
@@ -68,18 +69,31 @@ public class TransportGetFieldMappingsIndexAction
     private final IndicesService indicesService;
 
     @Inject
-    public TransportGetFieldMappingsIndexAction(ClusterService clusterService, TransportService transportService,
-                                                IndicesService indicesService, ThreadPool threadPool, ActionFilters actionFilters,
-                                                IndexNameExpressionResolver indexNameExpressionResolver) {
-        super(ACTION_NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                GetFieldMappingsIndexRequest::new, ThreadPool.Names.MANAGEMENT);
+    public TransportGetFieldMappingsIndexAction(
+        ClusterService clusterService,
+        TransportService transportService,
+        IndicesService indicesService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver
+    ) {
+        super(
+            ACTION_NAME,
+            threadPool,
+            clusterService,
+            transportService,
+            actionFilters,
+            indexNameExpressionResolver,
+            GetFieldMappingsIndexRequest::new,
+            ThreadPool.Names.MANAGEMENT
+        );
         this.clusterService = clusterService;
         this.indicesService = indicesService;
     }
 
     @Override
     protected boolean resolveIndex(GetFieldMappingsIndexRequest request) {
-        //internal action, index already resolved
+        // internal action, index already resolved
         return false;
     }
 
@@ -149,9 +163,11 @@ public class TransportGetFieldMappingsIndexAction
         }
     };
 
-    private static Map<String, FieldMappingMetaData> findFieldMappings(Predicate<String> fieldPredicate,
-                                                                             DocumentMapper documentMapper,
-                                                                             GetFieldMappingsIndexRequest request) {
+    private static Map<String, FieldMappingMetaData> findFieldMappings(
+        Predicate<String> fieldPredicate,
+        DocumentMapper documentMapper,
+        GetFieldMappingsIndexRequest request
+    ) {
         if (documentMapper == null) {
             return Collections.emptyMap();
         }
@@ -165,8 +181,7 @@ public class TransportGetFieldMappingsIndexAction
             } else if (Regex.isSimpleMatchPattern(field)) {
                 for (Mapper fieldMapper : allFieldMappers) {
                     if (Regex.simpleMatch(field, fieldMapper.name())) {
-                        addFieldMapper(fieldPredicate,  fieldMapper.name(),
-                                fieldMapper, fieldMappings, request.includeDefaults());
+                        addFieldMapper(fieldPredicate, fieldMapper.name(), fieldMapper, fieldMappings, request.includeDefaults());
                     }
                 }
             } else {
@@ -180,16 +195,24 @@ public class TransportGetFieldMappingsIndexAction
         return Collections.unmodifiableMap(fieldMappings);
     }
 
-    private static void addFieldMapper(Predicate<String> fieldPredicate,
-                                       String field, Mapper fieldMapper, Map<String, FieldMappingMetaData> fieldMappings,
-                                       boolean includeDefaults) {
+    private static void addFieldMapper(
+        Predicate<String> fieldPredicate,
+        String field,
+        Mapper fieldMapper,
+        Map<String, FieldMappingMetaData> fieldMappings,
+        boolean includeDefaults
+    ) {
         if (fieldMappings.containsKey(field)) {
             return;
         }
         if (fieldPredicate.test(field)) {
             try {
-                BytesReference bytes = XContentHelper.toXContent(fieldMapper, XContentType.JSON,
-                        includeDefaults ? includeDefaultsParams : ToXContent.EMPTY_PARAMS, false);
+                BytesReference bytes = XContentHelper.toXContent(
+                    fieldMapper,
+                    XContentType.JSON,
+                    includeDefaults ? includeDefaultsParams : ToXContent.EMPTY_PARAMS,
+                    false
+                );
                 fieldMappings.put(field, new FieldMappingMetaData(fieldMapper.name(), bytes));
             } catch (IOException e) {
                 throw new ElasticsearchException("failed to serialize XContent of field [" + field + "]", e);

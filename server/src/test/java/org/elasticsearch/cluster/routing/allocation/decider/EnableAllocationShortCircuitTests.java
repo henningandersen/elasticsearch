@@ -64,17 +64,23 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
         final MetaData.Builder metadataBuilder = MetaData.builder();
         final RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         for (int i = randomIntBetween(1, 10); i >= 0; i--) {
-            final IndexMetaData indexMetaData = IndexMetaData.builder("test" + i).settings(settings(Version.CURRENT))
-                .numberOfShards(1).numberOfReplicas(randomIntBetween(0, numberOfNodes - 1)).build();
+            final IndexMetaData indexMetaData = IndexMetaData.builder("test" + i)
+                .settings(settings(Version.CURRENT))
+                .numberOfShards(1)
+                .numberOfReplicas(randomIntBetween(0, numberOfNodes - 1))
+                .build();
             metadataBuilder.put(indexMetaData, true);
             routingTableBuilder.addAsNew(indexMetaData);
         }
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.get(Settings.EMPTY))
-            .nodes(discoveryNodesBuilder).metaData(metadataBuilder).routingTable(routingTableBuilder.build()).build();
+            .nodes(discoveryNodesBuilder)
+            .metaData(metadataBuilder)
+            .routingTable(routingTableBuilder.build())
+            .build();
 
         while (clusterState.getRoutingNodes().hasUnassignedShards()
-               || clusterState.getRoutingNodes().shardsWithState(ShardRoutingState.INITIALIZING).isEmpty() == false) {
+            || clusterState.getRoutingNodes().shardsWithState(ShardRoutingState.INITIALIZING).isEmpty() == false) {
             clusterState = startInitializingShardsAndReroute(allocationService, clusterState);
         }
 
@@ -85,12 +91,18 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
         ClusterState clusterState = createClusterStateWithAllShardsAssigned();
 
         final RebalanceShortCircuitPlugin plugin = new RebalanceShortCircuitPlugin();
-        AllocationService allocationService = createAllocationService(Settings.builder()
-                .put(CLUSTER_ROUTING_REBALANCE_ENABLE_SETTING.getKey(),
-                    randomFrom(EnableAllocationDecider.Rebalance.ALL,
+        AllocationService allocationService = createAllocationService(
+            Settings.builder()
+                .put(
+                    CLUSTER_ROUTING_REBALANCE_ENABLE_SETTING.getKey(),
+                    randomFrom(
+                        EnableAllocationDecider.Rebalance.ALL,
                         EnableAllocationDecider.Rebalance.PRIMARIES,
-                        EnableAllocationDecider.Rebalance.REPLICAS).name()),
-            plugin);
+                        EnableAllocationDecider.Rebalance.REPLICAS
+                    ).name()
+                ),
+            plugin
+        );
         allocationService.reroute(clusterState, "reroute").routingTable();
         assertThat(plugin.rebalanceAttempts, greaterThan(0));
     }
@@ -99,9 +111,10 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
         ClusterState clusterState = createClusterStateWithAllShardsAssigned();
 
         final RebalanceShortCircuitPlugin plugin = new RebalanceShortCircuitPlugin();
-        AllocationService allocationService = createAllocationService(Settings.builder()
-                .put(CLUSTER_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Allocation.NONE.name()),
-            plugin);
+        AllocationService allocationService = createAllocationService(
+            Settings.builder().put(CLUSTER_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Allocation.NONE.name()),
+            plugin
+        );
         allocationService.reroute(clusterState, "reroute").routingTable();
         assertThat(plugin.rebalanceAttempts, equalTo(0));
     }
@@ -109,14 +122,26 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
     public void testRebalancingSkippedIfDisabledIncludingOnSpecificIndices() {
         ClusterState clusterState = createClusterStateWithAllShardsAssigned();
         final IndexMetaData indexMetaData = randomFrom(clusterState.metaData().indices().values().toArray(IndexMetaData.class));
-        clusterState = ClusterState.builder(clusterState).metaData(MetaData.builder(clusterState.metaData())
-            .put(IndexMetaData.builder(indexMetaData).settings(Settings.builder().put(indexMetaData.getSettings())
-                .put(INDEX_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Rebalance.NONE.name()))).build()).build();
+        clusterState = ClusterState.builder(clusterState)
+            .metaData(
+                MetaData.builder(clusterState.metaData())
+                    .put(
+                        IndexMetaData.builder(indexMetaData)
+                            .settings(
+                                Settings.builder()
+                                    .put(indexMetaData.getSettings())
+                                    .put(INDEX_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Rebalance.NONE.name())
+                            )
+                    )
+                    .build()
+            )
+            .build();
 
         final RebalanceShortCircuitPlugin plugin = new RebalanceShortCircuitPlugin();
-        AllocationService allocationService = createAllocationService(Settings.builder()
-                .put(CLUSTER_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Rebalance.NONE.name()),
-            plugin);
+        AllocationService allocationService = createAllocationService(
+            Settings.builder().put(CLUSTER_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Rebalance.NONE.name()),
+            plugin
+        );
         allocationService.reroute(clusterState, "reroute").routingTable();
         assertThat(plugin.rebalanceAttempts, equalTo(0));
     }
@@ -124,37 +149,55 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
     public void testRebalancingAttemptedIfDisabledButOverridenOnSpecificIndices() {
         ClusterState clusterState = createClusterStateWithAllShardsAssigned();
         final IndexMetaData indexMetaData = randomFrom(clusterState.metaData().indices().values().toArray(IndexMetaData.class));
-        clusterState = ClusterState.builder(clusterState).metaData(MetaData.builder(clusterState.metaData())
-            .put(IndexMetaData.builder(indexMetaData).settings(Settings.builder().put(indexMetaData.getSettings())
-                .put(INDEX_ROUTING_REBALANCE_ENABLE_SETTING.getKey(),
-                    randomFrom(EnableAllocationDecider.Rebalance.ALL,
-                        EnableAllocationDecider.Rebalance.PRIMARIES,
-                        EnableAllocationDecider.Rebalance.REPLICAS).name()))).build()).build();
+        clusterState = ClusterState.builder(clusterState)
+            .metaData(
+                MetaData.builder(clusterState.metaData())
+                    .put(
+                        IndexMetaData.builder(indexMetaData)
+                            .settings(
+                                Settings.builder()
+                                    .put(indexMetaData.getSettings())
+                                    .put(
+                                        INDEX_ROUTING_REBALANCE_ENABLE_SETTING.getKey(),
+                                        randomFrom(
+                                            EnableAllocationDecider.Rebalance.ALL,
+                                            EnableAllocationDecider.Rebalance.PRIMARIES,
+                                            EnableAllocationDecider.Rebalance.REPLICAS
+                                        ).name()
+                                    )
+                            )
+                    )
+                    .build()
+            )
+            .build();
 
         final RebalanceShortCircuitPlugin plugin = new RebalanceShortCircuitPlugin();
-        AllocationService allocationService = createAllocationService(Settings.builder()
-                .put(CLUSTER_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Rebalance.NONE.name()),
-            plugin);
+        AllocationService allocationService = createAllocationService(
+            Settings.builder().put(CLUSTER_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Rebalance.NONE.name()),
+            plugin
+        );
         allocationService.reroute(clusterState, "reroute").routingTable();
         assertThat(plugin.rebalanceAttempts, greaterThan(0));
     }
 
     public void testAllocationSkippedIfDisabled() {
         final AllocateShortCircuitPlugin plugin = new AllocateShortCircuitPlugin();
-        AllocationService allocationService = createAllocationService(Settings.builder()
-                .put(CLUSTER_ROUTING_ALLOCATION_ENABLE_SETTING.getKey(), EnableAllocationDecider.Allocation.NONE.name()),
-            plugin);
+        AllocationService allocationService = createAllocationService(
+            Settings.builder().put(CLUSTER_ROUTING_ALLOCATION_ENABLE_SETTING.getKey(), EnableAllocationDecider.Allocation.NONE.name()),
+            plugin
+        );
 
         MetaData metaData = MetaData.builder()
             .put(IndexMetaData.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metaData.index("test"))
-            .build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metaData.index("test")).build();
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
-            .metaData(metaData).routingTable(routingTable).nodes(DiscoveryNodes.builder().add(newNode("node1"))).build();
+            .metaData(metaData)
+            .routingTable(routingTable)
+            .nodes(DiscoveryNodes.builder().add(newNode("node1")))
+            .build();
 
         allocationService.reroute(clusterState, "reroute").routingTable();
         assertThat(plugin.canAllocateAttempts, equalTo(0));
@@ -162,11 +205,15 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
 
     private static AllocationService createAllocationService(Settings.Builder settings, ClusterPlugin plugin) {
         final ClusterSettings emptyClusterSettings = new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS);
-        List<AllocationDecider> deciders = new ArrayList<>(ClusterModule.createAllocationDeciders(settings.build(), emptyClusterSettings,
-                Collections.singletonList(plugin)));
+        List<AllocationDecider> deciders = new ArrayList<>(
+            ClusterModule.createAllocationDeciders(settings.build(), emptyClusterSettings, Collections.singletonList(plugin))
+        );
         return new MockAllocationService(
             new AllocationDeciders(deciders),
-            new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), EmptyClusterInfoService.INSTANCE);
+            new TestGatewayAllocator(),
+            new BalancedShardsAllocator(Settings.EMPTY),
+            EmptyClusterInfoService.INSTANCE
+        );
     }
 
     private static class RebalanceShortCircuitPlugin implements ClusterPlugin {

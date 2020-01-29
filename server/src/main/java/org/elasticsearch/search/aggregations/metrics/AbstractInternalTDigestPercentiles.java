@@ -38,9 +38,15 @@ abstract class AbstractInternalTDigestPercentiles extends InternalNumericMetrics
     protected final TDigestState state;
     final boolean keyed;
 
-    AbstractInternalTDigestPercentiles(String name, double[] keys, TDigestState state, boolean keyed, DocValueFormat formatter,
-            List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    AbstractInternalTDigestPercentiles(
+        String name,
+        double[] keys,
+        TDigestState state,
+        boolean keyed,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.keys = keys;
         this.state = state;
@@ -99,14 +105,20 @@ abstract class AbstractInternalTDigestPercentiles extends InternalNumericMetrics
         return createReduced(getName(), keys, merged, keyed, pipelineAggregators(), getMetaData());
     }
 
-    protected abstract AbstractInternalTDigestPercentiles createReduced(String name, double[] keys, TDigestState merged, boolean keyed,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData);
+    protected abstract AbstractInternalTDigestPercentiles createReduced(
+        String name,
+        double[] keys,
+        TDigestState merged,
+        boolean keyed,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    );
 
     @Override
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         if (keyed) {
             builder.startObject(CommonFields.VALUES.getPreferredName());
-            for(int i = 0; i < keys.length; ++i) {
+            for (int i = 0; i < keys.length; ++i) {
                 String key = String.valueOf(keys[i]);
                 double value = value(keys[i]);
                 builder.field(key, state.size() == 0 ? null : value);
@@ -139,9 +151,7 @@ abstract class AbstractInternalTDigestPercentiles extends InternalNumericMetrics
         if (super.equals(obj) == false) return false;
 
         AbstractInternalTDigestPercentiles that = (AbstractInternalTDigestPercentiles) obj;
-        return keyed == that.keyed
-                && Arrays.equals(keys, that.keys)
-                && Objects.equals(state, that.state);
+        return keyed == that.keyed && Arrays.equals(keys, that.keys) && Objects.equals(state, that.state);
     }
 
     @Override

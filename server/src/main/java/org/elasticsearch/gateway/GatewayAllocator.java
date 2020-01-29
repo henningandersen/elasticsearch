@@ -63,10 +63,10 @@ public class GatewayAllocator {
     private final PrimaryShardAllocator primaryShardAllocator;
     private final ReplicaShardAllocator replicaShardAllocator;
 
-    private final ConcurrentMap<ShardId, AsyncShardFetch<NodeGatewayStartedShards>>
-        asyncFetchStarted = ConcurrentCollections.newConcurrentMap();
-    private final ConcurrentMap<ShardId, AsyncShardFetch<NodeStoreFilesMetaData>>
-        asyncFetchStore = ConcurrentCollections.newConcurrentMap();
+    private final ConcurrentMap<ShardId, AsyncShardFetch<NodeGatewayStartedShards>> asyncFetchStarted = ConcurrentCollections
+        .newConcurrentMap();
+    private final ConcurrentMap<ShardId, AsyncShardFetch<NodeStoreFilesMetaData>> asyncFetchStore = ConcurrentCollections
+        .newConcurrentMap();
     private Set<String> lastSeenEphemeralIds = Collections.emptySet();
 
     @Inject
@@ -123,9 +123,11 @@ public class GatewayAllocator {
     }
 
     // allow for testing infra to change shard allocators implementation
-    protected static void innerAllocatedUnassigned(RoutingAllocation allocation,
-                                                   PrimaryShardAllocator primaryShardAllocator,
-                                                   ReplicaShardAllocator replicaShardAllocator) {
+    protected static void innerAllocatedUnassigned(
+        RoutingAllocation allocation,
+        PrimaryShardAllocator primaryShardAllocator,
+        ReplicaShardAllocator replicaShardAllocator
+    ) {
         RoutingNodes.UnassignedShards unassigned = allocation.routingNodes().unassigned();
         unassigned.sort(PriorityComparator.getAllocationComparator(allocation)); // sort for priority ordering
 
@@ -158,21 +160,28 @@ public class GatewayAllocator {
         DiscoveryNodes nodes = allocation.nodes();
         if (hasNewNodes(nodes)) {
             final Set<String> newEphemeralIds = StreamSupport.stream(nodes.getDataNodes().spliterator(), false)
-                .map(node -> node.value.getEphemeralId()).collect(Collectors.toSet());
+                .map(node -> node.value.getEphemeralId())
+                .collect(Collectors.toSet());
             // Invalidate the cache if a data node has been added to the cluster. This ensures that we do not cancel a recovery if a node
             // drops out, we fetch the shard data, then some indexing happens and then the node rejoins the cluster again. There are other
             // ways we could decide to cancel a recovery based on stale data (e.g. changing allocation filters or a primary failure) but
             // making the wrong decision here is not catastrophic so we only need to cover the common case.
-            logger.trace(() -> new ParameterizedMessage(
-                "new nodes {} found, clearing primary async-fetch-store cache", Sets.difference(newEphemeralIds, lastSeenEphemeralIds)));
+            logger.trace(
+                () -> new ParameterizedMessage(
+                    "new nodes {} found, clearing primary async-fetch-store cache",
+                    Sets.difference(newEphemeralIds, lastSeenEphemeralIds)
+                )
+            );
             asyncFetchStore.values().forEach(fetch -> clearCacheForPrimary(fetch, allocation));
             // recalc to also (lazily) clear out old nodes.
             this.lastSeenEphemeralIds = newEphemeralIds;
         }
     }
 
-    private static void clearCacheForPrimary(AsyncShardFetch<TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData> fetch,
-                                             RoutingAllocation allocation) {
+    private static void clearCacheForPrimary(
+        AsyncShardFetch<TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData> fetch,
+        RoutingAllocation allocation
+    ) {
         ShardRouting primary = allocation.routingNodes().activePrimary(fetch.shardId);
         if (primary != null) {
             fetch.clearCacheForNode(primary.currentNodeId());
@@ -190,8 +199,13 @@ public class GatewayAllocator {
 
     class InternalAsyncFetch<T extends BaseNodeResponse> extends AsyncShardFetch<T> {
 
-        InternalAsyncFetch(Logger logger, String type, ShardId shardId, String customDataPath,
-                           Lister<? extends BaseNodesResponse<T>, T> action) {
+        InternalAsyncFetch(
+            Logger logger,
+            String type,
+            ShardId shardId,
+            String customDataPath,
+            Lister<? extends BaseNodesResponse<T>, T> action
+        ) {
             super(logger, type, shardId, customDataPath, action);
         }
 
@@ -199,9 +213,14 @@ public class GatewayAllocator {
         protected void reroute(ShardId shardId, String reason) {
             logger.trace("{} scheduling reroute for {}", shardId, reason);
             assert rerouteService != null;
-            rerouteService.reroute("async_shard_fetch", Priority.HIGH, ActionListener.wrap(
-                r -> logger.trace("{} scheduled reroute completed for {}", shardId, reason),
-                e -> logger.debug(new ParameterizedMessage("{} scheduled reroute failed for {}", shardId, reason), e)));
+            rerouteService.reroute(
+                "async_shard_fetch",
+                Priority.HIGH,
+                ActionListener.wrap(
+                    r -> logger.trace("{} scheduled reroute completed for {}", shardId, reason),
+                    e -> logger.debug(new ParameterizedMessage("{} scheduled reroute failed for {}", shardId, reason), e)
+                )
+            );
         }
     }
 
@@ -217,13 +236,20 @@ public class GatewayAllocator {
         protected AsyncShardFetch.FetchResult<NodeGatewayStartedShards> fetchData(ShardRouting shard, RoutingAllocation allocation) {
             // explicitely type lister, some IDEs (Eclipse) are not able to correctly infer the function type
             Lister<BaseNodesResponse<NodeGatewayStartedShards>, NodeGatewayStartedShards> lister = this::listStartedShards;
-            AsyncShardFetch<NodeGatewayStartedShards> fetch =
-                asyncFetchStarted.computeIfAbsent(shard.shardId(),
-                            shardId -> new InternalAsyncFetch<>(logger, "shard_started", shardId,
-                                IndexMetaData.INDEX_DATA_PATH_SETTING.get(allocation.metaData().index(shard.index()).getSettings()),
-                                lister));
-            AsyncShardFetch.FetchResult<NodeGatewayStartedShards> shardState =
-                    fetch.fetchData(allocation.nodes(), allocation.getIgnoreNodes(shard.shardId()));
+            AsyncShardFetch<NodeGatewayStartedShards> fetch = asyncFetchStarted.computeIfAbsent(
+                shard.shardId(),
+                shardId -> new InternalAsyncFetch<>(
+                    logger,
+                    "shard_started",
+                    shardId,
+                    IndexMetaData.INDEX_DATA_PATH_SETTING.get(allocation.metaData().index(shard.index()).getSettings()),
+                    lister
+                )
+            );
+            AsyncShardFetch.FetchResult<NodeGatewayStartedShards> shardState = fetch.fetchData(
+                allocation.nodes(),
+                allocation.getIgnoreNodes(shard.shardId())
+            );
 
             if (shardState.hasData()) {
                 shardState.processAllocation(allocation);
@@ -231,11 +257,18 @@ public class GatewayAllocator {
             return shardState;
         }
 
-        private void listStartedShards(ShardId shardId, String customDataPath, DiscoveryNode[] nodes,
-                                       ActionListener<BaseNodesResponse<NodeGatewayStartedShards>> listener) {
+        private void listStartedShards(
+            ShardId shardId,
+            String customDataPath,
+            DiscoveryNode[] nodes,
+            ActionListener<BaseNodesResponse<NodeGatewayStartedShards>> listener
+        ) {
             var request = new TransportNodesListGatewayStartedShards.Request(shardId, customDataPath, nodes);
-            client.executeLocally(TransportNodesListGatewayStartedShards.TYPE, request,
-                ActionListener.wrap(listener::onResponse, listener::onFailure));
+            client.executeLocally(
+                TransportNodesListGatewayStartedShards.TYPE,
+                request,
+                ActionListener.wrap(listener::onResponse, listener::onFailure)
+            );
         }
     }
 
@@ -251,22 +284,38 @@ public class GatewayAllocator {
         protected AsyncShardFetch.FetchResult<NodeStoreFilesMetaData> fetchData(ShardRouting shard, RoutingAllocation allocation) {
             // explicitely type lister, some IDEs (Eclipse) are not able to correctly infer the function type
             Lister<BaseNodesResponse<NodeStoreFilesMetaData>, NodeStoreFilesMetaData> lister = this::listStoreFilesMetaData;
-            AsyncShardFetch<NodeStoreFilesMetaData> fetch = asyncFetchStore.computeIfAbsent(shard.shardId(),
-                    shardId -> new InternalAsyncFetch<>(logger, "shard_store", shard.shardId(),
-                        IndexMetaData.INDEX_DATA_PATH_SETTING.get(allocation.metaData().index(shard.index()).getSettings()), lister));
-            AsyncShardFetch.FetchResult<NodeStoreFilesMetaData> shardStores =
-                    fetch.fetchData(allocation.nodes(), allocation.getIgnoreNodes(shard.shardId()));
+            AsyncShardFetch<NodeStoreFilesMetaData> fetch = asyncFetchStore.computeIfAbsent(
+                shard.shardId(),
+                shardId -> new InternalAsyncFetch<>(
+                    logger,
+                    "shard_store",
+                    shard.shardId(),
+                    IndexMetaData.INDEX_DATA_PATH_SETTING.get(allocation.metaData().index(shard.index()).getSettings()),
+                    lister
+                )
+            );
+            AsyncShardFetch.FetchResult<NodeStoreFilesMetaData> shardStores = fetch.fetchData(
+                allocation.nodes(),
+                allocation.getIgnoreNodes(shard.shardId())
+            );
             if (shardStores.hasData()) {
                 shardStores.processAllocation(allocation);
             }
             return shardStores;
         }
 
-        private void listStoreFilesMetaData(ShardId shardId, String customDataPath, DiscoveryNode[] nodes,
-                                            ActionListener<BaseNodesResponse<NodeStoreFilesMetaData>> listener) {
+        private void listStoreFilesMetaData(
+            ShardId shardId,
+            String customDataPath,
+            DiscoveryNode[] nodes,
+            ActionListener<BaseNodesResponse<NodeStoreFilesMetaData>> listener
+        ) {
             var request = new TransportNodesListShardStoreMetaData.Request(shardId, customDataPath, nodes);
-            client.executeLocally(TransportNodesListShardStoreMetaData.TYPE, request,
-                ActionListener.wrap(listener::onResponse, listener::onFailure));
+            client.executeLocally(
+                TransportNodesListShardStoreMetaData.TYPE,
+                request,
+                ActionListener.wrap(listener::onResponse, listener::onFailure)
+            );
         }
 
         @Override

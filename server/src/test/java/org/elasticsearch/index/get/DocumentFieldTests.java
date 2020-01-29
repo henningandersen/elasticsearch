@@ -53,8 +53,11 @@ public class DocumentFieldTests extends ESTestCase {
     }
 
     public void testEqualsAndHashcode() {
-        checkEqualsAndHashCode(randomDocumentField(XContentType.JSON).v1(), DocumentFieldTests::copyDocumentField,
-                DocumentFieldTests::mutateDocumentField);
+        checkEqualsAndHashCode(
+            randomDocumentField(XContentType.JSON).v1(),
+            DocumentFieldTests::copyDocumentField,
+            DocumentFieldTests::mutateDocumentField
+        );
     }
 
     public void testToAndFromXContent() throws Exception {
@@ -64,10 +67,10 @@ public class DocumentFieldTests extends ESTestCase {
         DocumentField expectedDocumentField = tuple.v2();
         boolean humanReadable = randomBoolean();
         BytesReference originalBytes = toShuffledXContent(documentField, xContentType, ToXContent.EMPTY_PARAMS, humanReadable);
-        //test that we can parse what we print out
+        // test that we can parse what we print out
         DocumentField parsedDocumentField;
         try (XContentParser parser = createParser(xContentType.xContent(), originalBytes)) {
-            //we need to move to the next token, the start object one that we manually added is not expected
+            // we need to move to the next token, the start object one that we manually added is not expected
             assertEquals(XContentParser.Token.START_OBJECT, parser.nextToken());
             assertEquals(XContentParser.Token.FIELD_NAME, parser.nextToken());
             parsedDocumentField = DocumentField.fromXContent(parser);
@@ -102,9 +105,10 @@ public class DocumentFieldTests extends ESTestCase {
 
     public static Tuple<DocumentField, DocumentField> randomDocumentField(XContentType xContentType) {
         if (randomBoolean()) {
-            String metaField = randomValueOtherThanMany(field -> field.equals(TypeFieldMapper.NAME)
-                    || field.equals(IndexFieldMapper.NAME) || field.equals(IdFieldMapper.NAME),
-                () -> randomFrom(MapperService.getAllMetaFields()));
+            String metaField = randomValueOtherThanMany(
+                field -> field.equals(TypeFieldMapper.NAME) || field.equals(IndexFieldMapper.NAME) || field.equals(IdFieldMapper.NAME),
+                () -> randomFrom(MapperService.getAllMetaFields())
+            );
             DocumentField documentField;
             if (metaField.equals(IgnoredFieldMapper.NAME)) {
                 int numValues = randomIntBetween(1, 3);
@@ -114,7 +118,7 @@ public class DocumentFieldTests extends ESTestCase {
                 }
                 documentField = new DocumentField(metaField, ignoredFields);
             } else {
-                //meta fields are single value only, besides _ignored
+                // meta fields are single value only, besides _ignored
                 documentField = new DocumentField(metaField, Collections.singletonList(randomAlphaOfLengthBetween(3, 10)));
             }
             return Tuple.tuple(documentField, documentField);

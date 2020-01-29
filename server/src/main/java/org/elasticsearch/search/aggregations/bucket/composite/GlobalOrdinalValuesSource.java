@@ -52,9 +52,15 @@ class GlobalOrdinalValuesSource extends SingleDimensionValuesSource<BytesRef> {
     private long lastLookupOrd = -1;
     private BytesRef lastLookupValue;
 
-    GlobalOrdinalValuesSource(BigArrays bigArrays, MappedFieldType type,
-                              CheckedFunction<LeafReaderContext, SortedSetDocValues, IOException> docValuesFunc,
-                              DocValueFormat format, boolean missingBucket, int size, int reverseMul) {
+    GlobalOrdinalValuesSource(
+        BigArrays bigArrays,
+        MappedFieldType type,
+        CheckedFunction<LeafReaderContext, SortedSetDocValues, IOException> docValuesFunc,
+        DocValueFormat format,
+        boolean missingBucket,
+        int size,
+        int reverseMul
+    ) {
         super(bigArrays, format, type, missingBucket, size, reverseMul);
         this.docValuesFunc = docValuesFunc;
         this.values = bigArrays.newLongArray(Math.min(size, 100), false);
@@ -62,7 +68,7 @@ class GlobalOrdinalValuesSource extends SingleDimensionValuesSource<BytesRef> {
 
     @Override
     void copyCurrent(int slot) {
-        values = bigArrays.grow(values, slot+1);
+        values = bigArrays.grow(values, slot + 1);
         values.set(slot, currentValue);
     }
 
@@ -182,9 +188,9 @@ class GlobalOrdinalValuesSource extends SingleDimensionValuesSource<BytesRef> {
 
     @Override
     SortedDocsProducer createSortedDocsProducerOrNull(IndexReader reader, Query query) {
-        if (checkIfSortedDocsIsApplicable(reader, fieldType) == false ||
-                fieldType instanceof StringFieldType == false ||
-                    (query != null && query.getClass() != MatchAllDocsQuery.class)) {
+        if (checkIfSortedDocsIsApplicable(reader, fieldType) == false
+            || fieldType instanceof StringFieldType == false
+            || (query != null && query.getClass() != MatchAllDocsQuery.class)) {
             return null;
         }
         return new TermsSortedDocsProducer(fieldType.name());

@@ -33,8 +33,13 @@ import java.util.Objects;
 public class InternalMax extends InternalNumericMetricsAggregation.SingleValue implements Max {
     private final double max;
 
-    public InternalMax(String name, double max, DocValueFormat formatter,
-                       List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    public InternalMax(
+        String name,
+        double max,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.format = formatter;
         this.max = max;

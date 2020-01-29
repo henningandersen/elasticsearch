@@ -40,8 +40,7 @@ public class CompletionStats implements Writeable, ToXContentFragment {
     @Nullable
     private FieldMemoryStats fields;
 
-    public CompletionStats() {
-    }
+    public CompletionStats() {}
 
     public CompletionStats(StreamInput in) throws IOException {
         sizeInBytes = in.readVLong();

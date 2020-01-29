@@ -67,9 +67,7 @@ public final class BinaryRangeAggregator extends BucketsAggregator {
     };
 
     private static int compare(BytesRef a, BytesRef b, int m) {
-        return a == null
-                ? b == null ? 0 : -m
-                : b == null ? m : a.compareTo(b);
+        return a == null ? b == null ? 0 : -m : b == null ? m : a.compareTo(b);
     }
 
     final ValuesSource.Bytes valuesSource;
@@ -77,11 +75,19 @@ public final class BinaryRangeAggregator extends BucketsAggregator {
     final boolean keyed;
     final Range[] ranges;
 
-    public BinaryRangeAggregator(String name, AggregatorFactories factories,
-            ValuesSource.Bytes valuesSource, DocValueFormat format,
-            List<Range> ranges, boolean keyed, SearchContext context,
-            Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) throws IOException {
+    public BinaryRangeAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource.Bytes valuesSource,
+        DocValueFormat format,
+        List<Range> ranges,
+        boolean keyed,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.format = format;
@@ -116,8 +122,7 @@ public final class BinaryRangeAggregator extends BucketsAggregator {
             SortedBinaryDocValues values = valuesSource.bytesValues(ctx);
             return new SortedBinaryRangeLeafCollector(values, ranges, sub) {
                 @Override
-                protected void doCollect(LeafBucketCollector sub, int doc, long bucket)
-                        throws IOException {
+                protected void doCollect(LeafBucketCollector sub, int doc, long bucket) throws IOException {
                     collectBucket(sub, doc, bucket);
                 }
             };
@@ -130,11 +135,10 @@ public final class BinaryRangeAggregator extends BucketsAggregator {
         final SortedSetDocValues values;
         final LeafBucketCollector sub;
 
-        SortedSetRangeLeafCollector(SortedSetDocValues values,
-                Range[] ranges, LeafBucketCollector sub) throws IOException {
+        SortedSetRangeLeafCollector(SortedSetDocValues values, Range[] ranges, LeafBucketCollector sub) throws IOException {
             super(sub, values);
             for (int i = 1; i < ranges.length; ++i) {
-                if (RANGE_COMPARATOR.compare(ranges[i-1], ranges[i]) > 0) {
+                if (RANGE_COMPARATOR.compare(ranges[i - 1], ranges[i]) > 0) {
                     throw new IllegalArgumentException("Ranges must be sorted");
                 }
             }
@@ -165,7 +169,7 @@ public final class BinaryRangeAggregator extends BucketsAggregator {
             }
             maxTos[0] = tos[0];
             for (int i = 1; i < tos.length; ++i) {
-                maxTos[i] = Math.max(maxTos[i-1], tos[i]);
+                maxTos[i] = Math.max(maxTos[i - 1], tos[i]);
             }
         }
 
@@ -173,9 +177,7 @@ public final class BinaryRangeAggregator extends BucketsAggregator {
         public void collect(int doc, long bucket) throws IOException {
             if (values.advanceExact(doc)) {
                 int lo = 0;
-                for (long ord = values
-                        .nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = values
-                                .nextOrd()) {
+                for (long ord = values.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = values.nextOrd()) {
                     lo = collect(doc, ord, bucket, lo);
                 }
             }
@@ -240,11 +242,10 @@ public final class BinaryRangeAggregator extends BucketsAggregator {
         final SortedBinaryDocValues values;
         final LeafBucketCollector sub;
 
-        SortedBinaryRangeLeafCollector(SortedBinaryDocValues values,
-                Range[] ranges, LeafBucketCollector sub) {
+        SortedBinaryRangeLeafCollector(SortedBinaryDocValues values, Range[] ranges, LeafBucketCollector sub) {
             super(sub, values);
             for (int i = 1; i < ranges.length; ++i) {
-                if (RANGE_COMPARATOR.compare(ranges[i-1], ranges[i]) > 0) {
+                if (RANGE_COMPARATOR.compare(ranges[i - 1], ranges[i]) > 0) {
                     throw new IllegalArgumentException("Ranges must be sorted");
                 }
             }
@@ -256,10 +257,10 @@ public final class BinaryRangeAggregator extends BucketsAggregator {
                 maxTos[0] = ranges[0].to;
             }
             for (int i = 1; i < ranges.length; ++i) {
-                if (compare(ranges[i].to, maxTos[i-1], -1) >= 0) {
+                if (compare(ranges[i].to, maxTos[i - 1], -1) >= 0) {
                     maxTos[i] = ranges[i].to;
                 } else {
-                    maxTos[i] = maxTos[i-1];
+                    maxTos[i] = maxTos[i - 1];
                 }
             }
         }
@@ -333,9 +334,17 @@ public final class BinaryRangeAggregator extends BucketsAggregator {
         List<InternalBinaryRange.Bucket> buckets = new ArrayList<>(ranges.length);
         for (int i = 0; i < ranges.length; ++i) {
             long bucketOrd = bucket * ranges.length + i;
-            buckets.add(new InternalBinaryRange.Bucket(format, keyed,
-                    ranges[i].key, ranges[i].from, ranges[i].to,
-                    bucketDocCount(bucketOrd), bucketAggregations(bucketOrd)));
+            buckets.add(
+                new InternalBinaryRange.Bucket(
+                    format,
+                    keyed,
+                    ranges[i].key,
+                    ranges[i].from,
+                    ranges[i].to,
+                    bucketDocCount(bucketOrd),
+                    bucketAggregations(bucketOrd)
+                )
+            );
         }
         return new InternalBinaryRange(name, format, keyed, buckets, pipelineAggregators(), metaData());
     }

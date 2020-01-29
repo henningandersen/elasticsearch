@@ -42,36 +42,30 @@ public class SimulateProcessorResult implements Writeable, ToXContentObject {
     private final WriteableIngestDocument ingestDocument;
     private final Exception failure;
 
-    private static final ConstructingObjectParser<ElasticsearchException, Void> IGNORED_ERROR_PARSER =
-        new ConstructingObjectParser<>(
-            "ignored_error_parser",
-            true,
-            a -> (ElasticsearchException)a[0]
-        );
+    private static final ConstructingObjectParser<ElasticsearchException, Void> IGNORED_ERROR_PARSER = new ConstructingObjectParser<>(
+        "ignored_error_parser",
+        true,
+        a -> (ElasticsearchException) a[0]
+    );
     static {
-        IGNORED_ERROR_PARSER.declareObject(
-            constructorArg(),
-            (p, c) -> ElasticsearchException.fromXContent(p),
-            new ParseField("error")
-        );
+        IGNORED_ERROR_PARSER.declareObject(constructorArg(), (p, c) -> ElasticsearchException.fromXContent(p), new ParseField("error"));
     }
 
-    public static final ConstructingObjectParser<SimulateProcessorResult, Void> PARSER =
-        new ConstructingObjectParser<>(
-            "simulate_processor_result",
-            true,
-            a -> {
-                String processorTag = a[0] == null ? null : (String)a[0];
-                IngestDocument document = a[1] == null ? null : ((WriteableIngestDocument)a[1]).getIngestDocument();
-                Exception failure = null;
-                if (a[2] != null) {
-                    failure = (ElasticsearchException)a[2];
-                } else if (a[3] != null) {
-                    failure = (ElasticsearchException)a[3];
-                }
-                return new SimulateProcessorResult(processorTag, document, failure);
+    public static final ConstructingObjectParser<SimulateProcessorResult, Void> PARSER = new ConstructingObjectParser<>(
+        "simulate_processor_result",
+        true,
+        a -> {
+            String processorTag = a[0] == null ? null : (String) a[0];
+            IngestDocument document = a[1] == null ? null : ((WriteableIngestDocument) a[1]).getIngestDocument();
+            Exception failure = null;
+            if (a[2] != null) {
+                failure = (ElasticsearchException) a[2];
+            } else if (a[3] != null) {
+                failure = (ElasticsearchException) a[3];
             }
-        );
+            return new SimulateProcessorResult(processorTag, document, failure);
+        }
+    );
     static {
         PARSER.declareString(optionalConstructorArg(), new ParseField(ConfigurationUtils.TAG_KEY));
         PARSER.declareObject(
@@ -79,16 +73,8 @@ public class SimulateProcessorResult implements Writeable, ToXContentObject {
             WriteableIngestDocument.INGEST_DOC_PARSER,
             new ParseField(WriteableIngestDocument.DOC_FIELD)
         );
-        PARSER.declareObject(
-            optionalConstructorArg(),
-            IGNORED_ERROR_PARSER,
-            new ParseField(IGNORED_ERROR_FIELD)
-        );
-        PARSER.declareObject(
-            optionalConstructorArg(),
-            (p, c) -> ElasticsearchException.fromXContent(p),
-            new ParseField("error")
-        );
+        PARSER.declareObject(optionalConstructorArg(), IGNORED_ERROR_PARSER, new ParseField(IGNORED_ERROR_FIELD));
+        PARSER.declareObject(optionalConstructorArg(), (p, c) -> ElasticsearchException.fromXContent(p), new ParseField("error"));
     }
 
     public SimulateProcessorResult(String processorTag, IngestDocument ingestDocument, Exception failure) {

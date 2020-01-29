@@ -89,8 +89,10 @@ public class OsProbeTests extends ESTestCase {
         OsStats stats = osProbe.osStats();
         assertNotNull(stats);
         assertThat(stats.getTimestamp(), greaterThan(0L));
-        assertThat(stats.getCpu().getPercent(), anyOf(equalTo((short) -1),
-                is(both(greaterThanOrEqualTo((short) 0)).and(lessThanOrEqualTo((short) 100)))));
+        assertThat(
+            stats.getCpu().getPercent(),
+            anyOf(equalTo((short) -1), is(both(greaterThanOrEqualTo((short) 0)).and(lessThanOrEqualTo((short) 100))))
+        );
         double[] loadAverage = stats.getCpu().getLoadAverage();
         if (loadAverage != null) {
             assertThat(loadAverage.length, equalTo(3));
@@ -216,8 +218,7 @@ public class OsProbeTests extends ESTestCase {
         final String hierarchy = randomAlphaOfLength(16);
 
         // This cgroup data is missing a line about cpuacct
-        List<String> procSelfCgroupLines = getProcSelfGroupLines(hierarchy)
-            .stream()
+        List<String> procSelfCgroupLines = getProcSelfGroupLines(hierarchy).stream()
             .map(line -> line.replaceFirst(",cpuacct", ""))
             .collect(Collectors.toList());
 
@@ -234,11 +235,9 @@ public class OsProbeTests extends ESTestCase {
         final String hierarchy = randomAlphaOfLength(16);
 
         // This cgroup data is missing a line about cpu
-        List<String> procSelfCgroupLines = getProcSelfGroupLines(hierarchy)
-            .stream()
+        List<String> procSelfCgroupLines = getProcSelfGroupLines(hierarchy).stream()
             .map(line -> line.replaceFirst(":cpu,", ":"))
             .collect(Collectors.toList());
-
 
         final OsProbe probe = buildStubOsProbe(true, hierarchy, procSelfCgroupLines);
 
@@ -253,8 +252,7 @@ public class OsProbeTests extends ESTestCase {
         final String hierarchy = randomAlphaOfLength(16);
 
         // This cgroup data is missing a line about memory
-        List<String> procSelfCgroupLines = getProcSelfGroupLines(hierarchy)
-            .stream()
+        List<String> procSelfCgroupLines = getProcSelfGroupLines(hierarchy).stream()
             .filter(line -> !line.contains(":memory:"))
             .collect(Collectors.toList());
 
@@ -277,7 +275,8 @@ public class OsProbeTests extends ESTestCase {
             "3:perf_event:/",
             "2:cpu,cpuacct,cpuset:/" + hierarchy,
             "1:name=systemd:/user.slice/user-1000.slice/session-2359.scope",
-            "0::/cgroup2");
+            "0::/cgroup2"
+        );
     }
 
     private static OsProbe buildStubOsProbe(final boolean areCgroupStatsAvailable, final String hierarchy) {
@@ -326,10 +325,7 @@ public class OsProbeTests extends ESTestCase {
 
             @Override
             List<String> readSysFsCgroupCpuAcctCpuStat(String controlGroup) {
-                return Arrays.asList(
-                    "nr_periods 17992",
-                    "nr_throttled 1311",
-                    "throttled_time 139298645489");
+                return Arrays.asList("nr_periods 17992", "nr_throttled 1311", "throttled_time 139298645489");
             }
 
             @Override

@@ -26,7 +26,7 @@ import org.elasticsearch.test.AbstractSerializingTestCase;
 public class OpenIndexResponseTests extends AbstractSerializingTestCase<OpenIndexResponse> {
 
     @Override
-    protected OpenIndexResponse doParseInstance(XContentParser parser){
+    protected OpenIndexResponse doParseInstance(XContentParser parser) {
         return OpenIndexResponse.fromXContent(parser);
     }
 

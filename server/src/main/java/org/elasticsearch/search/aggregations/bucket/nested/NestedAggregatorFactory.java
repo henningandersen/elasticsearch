@@ -38,34 +38,55 @@ public class NestedAggregatorFactory extends AggregatorFactory {
     private final ObjectMapper parentObjectMapper;
     private final ObjectMapper childObjectMapper;
 
-    NestedAggregatorFactory(String name, ObjectMapper parentObjectMapper, ObjectMapper childObjectMapper,
-                            QueryShardContext queryShardContext, AggregatorFactory parent, AggregatorFactories.Builder subFactories,
-                            Map<String, Object> metaData) throws IOException {
+    NestedAggregatorFactory(
+        String name,
+        ObjectMapper parentObjectMapper,
+        ObjectMapper childObjectMapper,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactories,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, queryShardContext, parent, subFactories, metaData);
         this.parentObjectMapper = parentObjectMapper;
         this.childObjectMapper = childObjectMapper;
     }
 
     @Override
-    public Aggregator createInternal(SearchContext searchContext,
-                                        Aggregator parent,
-                                        boolean collectsFromSingleBucket,
-                                        List<PipelineAggregator> pipelineAggregators,
-                                        Map<String, Object> metaData) throws IOException {
+    public Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         if (childObjectMapper == null) {
             return new Unmapped(name, searchContext, parent, pipelineAggregators, metaData);
         }
-        return new NestedAggregator(name, factories, parentObjectMapper, childObjectMapper, searchContext, parent,
-            pipelineAggregators, metaData, collectsFromSingleBucket);
+        return new NestedAggregator(
+            name,
+            factories,
+            parentObjectMapper,
+            childObjectMapper,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData,
+            collectsFromSingleBucket
+        );
     }
 
     private static final class Unmapped extends NonCollectingAggregator {
 
-        Unmapped(String name,
-                    SearchContext context,
-                    Aggregator parent,
-                    List<PipelineAggregator> pipelineAggregators,
-                    Map<String, Object> metaData) throws IOException {
+        Unmapped(
+            String name,
+            SearchContext context,
+            Aggregator parent,
+            List<PipelineAggregator> pipelineAggregators,
+            Map<String, Object> metaData
+        )
+            throws IOException {
             super(name, context, parent, pipelineAggregators, metaData);
         }
 

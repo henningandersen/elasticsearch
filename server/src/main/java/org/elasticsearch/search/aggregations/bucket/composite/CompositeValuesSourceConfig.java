@@ -46,8 +46,15 @@ class CompositeValuesSourceConfig {
      * @param missingBucket If <code>true</code> an explicit <code>null</code> bucket will represent documents with missing values.
      * @param hasScript <code>true</code> if the source contains a script that can change the value.
      */
-    CompositeValuesSourceConfig(String name, @Nullable MappedFieldType fieldType, ValuesSource vs, DocValueFormat format,
-                                SortOrder order, boolean missingBucket, boolean hasScript) {
+    CompositeValuesSourceConfig(
+        String name,
+        @Nullable MappedFieldType fieldType,
+        ValuesSource vs,
+        DocValueFormat format,
+        SortOrder order,
+        boolean missingBucket,
+        boolean hasScript
+    ) {
         this.name = name;
         this.fieldType = fieldType;
         this.vs = vs;

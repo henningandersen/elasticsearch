@@ -63,8 +63,13 @@ public class BytesBinaryDVIndexFieldData extends DocValuesIndexFieldData impleme
     public static class Builder implements IndexFieldData.Builder {
 
         @Override
-        public IndexFieldData<?> build(IndexSettings indexSettings, MappedFieldType fieldType, IndexFieldDataCache cache,
-                                       CircuitBreakerService breakerService, MapperService mapperService) {
+        public IndexFieldData<?> build(
+            IndexSettings indexSettings,
+            MappedFieldType fieldType,
+            IndexFieldDataCache cache,
+            CircuitBreakerService breakerService,
+            MapperService mapperService
+        ) {
             // Ignore breaker
             final String fieldName = fieldType.name();
             return new BytesBinaryDVIndexFieldData(indexSettings.getIndex(), fieldName);

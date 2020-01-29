@@ -130,8 +130,7 @@ public class DelayedAllocationService extends AbstractLifecycleComponent impleme
     }
 
     @Inject
-    public DelayedAllocationService(ThreadPool threadPool, ClusterService clusterService,
-                                    AllocationService allocationService) {
+    public DelayedAllocationService(ThreadPool threadPool, ClusterService clusterService, AllocationService allocationService) {
         this.threadPool = threadPool;
         this.clusterService = clusterService;
         this.allocationService = allocationService;
@@ -139,12 +138,10 @@ public class DelayedAllocationService extends AbstractLifecycleComponent impleme
     }
 
     @Override
-    protected void doStart() {
-    }
+    protected void doStart() {}
 
     @Override
-    protected void doStop() {
-    }
+    protected void doStop() {}
 
     @Override
     protected void doClose() {
@@ -195,8 +192,10 @@ public class DelayedAllocationService extends AbstractLifecycleComponent impleme
                 earlierRerouteNeeded = true;
             } else if (newTask.scheduledTimeToRunInNanos() < existingTask.scheduledTimeToRunInNanos()) {
                 // we need an earlier delayed reroute
-                logger.trace("cancelling existing delayed reroute task as delayed reroute has to happen [{}] earlier",
-                    TimeValue.timeValueNanos(existingTask.scheduledTimeToRunInNanos() - newTask.scheduledTimeToRunInNanos()));
+                logger.trace(
+                    "cancelling existing delayed reroute task as delayed reroute has to happen [{}] earlier",
+                    TimeValue.timeValueNanos(existingTask.scheduledTimeToRunInNanos() - newTask.scheduledTimeToRunInNanos())
+                );
                 existingTask.cancelScheduling();
                 earlierRerouteNeeded = true;
             } else {
@@ -204,8 +203,11 @@ public class DelayedAllocationService extends AbstractLifecycleComponent impleme
             }
 
             if (earlierRerouteNeeded) {
-                logger.info("scheduling reroute for delayed shards in [{}] ({} delayed shards)", nextDelay,
-                    UnassignedInfo.getNumberOfDelayedUnassigned(state));
+                logger.info(
+                    "scheduling reroute for delayed shards in [{}] ({} delayed shards)",
+                    nextDelay,
+                    UnassignedInfo.getNumberOfDelayedUnassigned(state)
+                );
                 DelayedRerouteTask currentTask = delayedRerouteTask.getAndSet(newTask);
                 assert existingTask == currentTask || currentTask == null;
                 newTask.schedule();

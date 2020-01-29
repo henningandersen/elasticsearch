@@ -95,13 +95,13 @@ public abstract class StreamInput extends InputStream {
 
     static {
         final Map<Byte, TimeUnit> byteTimeUnitMap = new HashMap<>();
-        byteTimeUnitMap.put((byte)0, TimeUnit.NANOSECONDS);
-        byteTimeUnitMap.put((byte)1, TimeUnit.MICROSECONDS);
-        byteTimeUnitMap.put((byte)2, TimeUnit.MILLISECONDS);
-        byteTimeUnitMap.put((byte)3, TimeUnit.SECONDS);
-        byteTimeUnitMap.put((byte)4, TimeUnit.MINUTES);
-        byteTimeUnitMap.put((byte)5, TimeUnit.HOURS);
-        byteTimeUnitMap.put((byte)6, TimeUnit.DAYS);
+        byteTimeUnitMap.put((byte) 0, TimeUnit.NANOSECONDS);
+        byteTimeUnitMap.put((byte) 1, TimeUnit.MICROSECONDS);
+        byteTimeUnitMap.put((byte) 2, TimeUnit.MILLISECONDS);
+        byteTimeUnitMap.put((byte) 3, TimeUnit.SECONDS);
+        byteTimeUnitMap.put((byte) 4, TimeUnit.MINUTES);
+        byteTimeUnitMap.put((byte) 5, TimeUnit.HOURS);
+        byteTimeUnitMap.put((byte) 6, TimeUnit.DAYS);
 
         for (TimeUnit value : TimeUnit.values()) {
             assert byteTimeUnitMap.containsValue(value) : value;
@@ -202,8 +202,7 @@ public abstract class StreamInput extends InputStream {
      * Reads four bytes and returns an int.
      */
     public int readInt() throws IOException {
-        return ((readByte() & 0xFF) << 24) | ((readByte() & 0xFF) << 16)
-                | ((readByte() & 0xFF) << 8) | (readByte() & 0xFF);
+        return ((readByte() & 0xFF) << 24) | ((readByte() & 0xFF) << 16) | ((readByte() & 0xFF) << 8) | (readByte() & 0xFF);
     }
 
     /**
@@ -426,7 +425,7 @@ public abstract class StreamInput extends InputStream {
         int missingFromPartial = 0;
         final byte[] byteBuffer = stringReadBuffer.get();
         final char[] charBuffer = charsRef.chars;
-        for (; charsOffset < charCount; ) {
+        for (; charsOffset < charCount;) {
             final int charsLeft = charCount - charsOffset;
             int bufferFree = byteBuffer.length - sizeByteArray;
             // Determine the minimum amount of bytes that are left in the string
@@ -486,8 +485,8 @@ public abstract class StreamInput extends InputStream {
                         charBuffer[charsOffset++] = (char) ((c & 0x1F) << 6 | byteBuffer[++offsetByteArray] & 0x3F);
                         break;
                     case 14:
-                        charBuffer[charsOffset++] = (char) (
-                            (c & 0x0F) << 12 | (byteBuffer[++offsetByteArray] & 0x3F) << 6 | (byteBuffer[++offsetByteArray] & 0x3F));
+                        charBuffer[charsOffset++] = (char) ((c & 0x0F) << 12 | (byteBuffer[++offsetByteArray] & 0x3F) << 6
+                            | (byteBuffer[++offsetByteArray] & 0x3F));
                         break;
                     default:
                         throwOnBrokenChar(c);
@@ -647,7 +646,7 @@ public abstract class StreamInput extends InputStream {
      * @return Never {@code null}.
      */
     public <K, V> Map<K, List<V>> readMapOfLists(final Writeable.Reader<K> keyReader, final Writeable.Reader<V> valueReader)
-            throws IOException {
+        throws IOException {
         final int size = readArraySize();
         if (size == 0) {
             return Collections.emptyMap();
@@ -975,8 +974,9 @@ public abstract class StreamInput extends InputStream {
         if (readBoolean()) {
             T t = reader.read(this);
             if (t == null) {
-                throw new IOException("Writeable.Reader [" + reader
-                        + "] returned null which is not allowed and probably means it screwed up the stream.");
+                throw new IOException(
+                    "Writeable.Reader [" + reader + "] returned null which is not allowed and probably means it screwed up the stream."
+                );
             }
             return t;
         } else {
@@ -1107,8 +1107,10 @@ public abstract class StreamInput extends InputStream {
      * have a compelling reason to use this method instead.
      */
     @Nullable
-    public <C extends NamedWriteable> C readNamedWriteable(@SuppressWarnings("unused") Class<C> categoryClass,
-                                                           @SuppressWarnings("unused") String name) throws IOException {
+    public <C extends NamedWriteable> C readNamedWriteable(
+        @SuppressWarnings("unused") Class<C> categoryClass,
+        @SuppressWarnings("unused") String name
+    ) throws IOException {
         throw new UnsupportedOperationException("can't read named writeable from StreamInput");
     }
 
@@ -1155,15 +1157,14 @@ public abstract class StreamInput extends InputStream {
     /**
      * Reads a collection of objects
      */
-    private <T, C extends Collection<? super T>> C readCollection(Writeable.Reader<T> reader,
-                                                                  IntFunction<C> constructor,
-                                                                  C empty) throws IOException {
+    private <T, C extends Collection<? super T>> C readCollection(Writeable.Reader<T> reader, IntFunction<C> constructor, C empty)
+        throws IOException {
         int count = readArraySize();
         if (count == 0) {
             return empty;
         }
         C builder = constructor.apply(count);
-        for (int i=0; i<count; i++) {
+        for (int i = 0; i < count; i++) {
             builder.add(reader.read(this));
         }
         return builder;
@@ -1179,7 +1180,7 @@ public abstract class StreamInput extends InputStream {
             return Collections.emptyList();
         }
         List<T> builder = new ArrayList<>(count);
-        for (int i=0; i<count; i++) {
+        for (int i = 0; i < count; i++) {
             builder.add(readNamedWriteable(categoryClass));
         }
         return builder;
@@ -1203,7 +1204,7 @@ public abstract class StreamInput extends InputStream {
     public <E extends Enum<E>> EnumSet<E> readEnumSet(Class<E> enumClass) throws IOException {
         int size = readVInt();
         if (size == 0) {
-             return EnumSet.noneOf(enumClass);
+            return EnumSet.noneOf(enumClass);
         }
         Set<E> enums = new HashSet<>(size);
         for (int i = 0; i < size; i++) {
@@ -1227,7 +1228,7 @@ public abstract class StreamInput extends InputStream {
     private int readArraySize() throws IOException {
         final int arraySize = readVInt();
         if (arraySize > ArrayUtil.MAX_ARRAY_LENGTH) {
-            throw new IllegalStateException("array length must be <= to " + ArrayUtil.MAX_ARRAY_LENGTH  + " but was: " + arraySize);
+            throw new IllegalStateException("array length must be <= to " + ArrayUtil.MAX_ARRAY_LENGTH + " but was: " + arraySize);
         }
         if (arraySize < 0) {
             throw new NegativeArraySizeException("array size must be positive but was: " + arraySize);

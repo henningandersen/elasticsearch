@@ -57,7 +57,7 @@ public class MaxAgeCondition extends Condition<TimeValue> {
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        //TODO here we should just use TimeValue#writeTo and same for de-serialization in the constructor, we lose information this way
+        // TODO here we should just use TimeValue#writeTo and same for de-serialization in the constructor, we lose information this way
         out.writeLong(value.getMillis());
     }
 

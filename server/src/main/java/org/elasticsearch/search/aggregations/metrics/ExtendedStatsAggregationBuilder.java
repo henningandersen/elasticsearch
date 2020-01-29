@@ -40,8 +40,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
-public class ExtendedStatsAggregationBuilder
-        extends ValuesSourceAggregationBuilder.LeafOnly<ValuesSource.Numeric, ExtendedStatsAggregationBuilder> {
+public class ExtendedStatsAggregationBuilder extends ValuesSourceAggregationBuilder.LeafOnly<
+    ValuesSource.Numeric,
+    ExtendedStatsAggregationBuilder> {
     public static final String NAME = "extended_stats";
 
     private static final ObjectParser<ExtendedStatsAggregationBuilder, Void> PARSER;
@@ -61,8 +62,11 @@ public class ExtendedStatsAggregationBuilder
         super(name, CoreValuesSourceType.NUMERIC, ValueType.NUMERIC);
     }
 
-    protected ExtendedStatsAggregationBuilder(ExtendedStatsAggregationBuilder clone,
-                                              Builder factoriesBuilder, Map<String, Object> metaData) {
+    protected ExtendedStatsAggregationBuilder(
+        ExtendedStatsAggregationBuilder clone,
+        Builder factoriesBuilder,
+        Map<String, Object> metaData
+    ) {
         super(clone, factoriesBuilder, metaData);
         this.sigma = clone.sigma;
     }
@@ -98,8 +102,12 @@ public class ExtendedStatsAggregationBuilder
     }
 
     @Override
-    protected ExtendedStatsAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<Numeric> config,
-                                                        AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected ExtendedStatsAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<Numeric> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         return new ExtendedStatsAggregatorFactory(name, config, sigma, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 

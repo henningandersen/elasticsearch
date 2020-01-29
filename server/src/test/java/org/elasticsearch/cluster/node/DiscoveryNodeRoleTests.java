@@ -32,52 +32,51 @@ public class DiscoveryNodeRoleTests extends ESTestCase {
 
     public void testDiscoveryNodeSetPossibleRolesRejectsDuplicateRoleNames() {
         final IllegalStateException e = expectThrows(
-                IllegalStateException.class,
-                () -> DiscoveryNode.setPossibleRoles(Set.of(
-                        new DiscoveryNodeRole("foo", "f") {
+            IllegalStateException.class,
+            () -> DiscoveryNode.setPossibleRoles(Set.of(new DiscoveryNodeRole("foo", "f") {
 
-                            @Override
-                            protected Setting<Boolean> roleSetting() {
-                                return null;
-                            }
+                @Override
+                protected Setting<Boolean> roleSetting() {
+                    return null;
+                }
 
-                        },
-                        new DiscoveryNodeRole("foo", "f") {
+            }, new DiscoveryNodeRole("foo", "f") {
 
-                            @Override
-                            protected Setting<Boolean> roleSetting() {
-                                return null;
-                            }
+                @Override
+                protected Setting<Boolean> roleSetting() {
+                    return null;
+                }
 
-                        })));
+            }))
+        );
         assertThat(e, hasToString(containsString("Duplicate key")));
     }
 
     public void testDiscoveryNodeSetPossibleRolesRejectsDuplicateRoleNameAbbreviations() {
         final IllegalStateException e = expectThrows(
-                IllegalStateException.class,
-                () -> DiscoveryNode.setPossibleRoles(Set.of(
-                        new DiscoveryNodeRole("foo_1", "f") {
+            IllegalStateException.class,
+            () -> DiscoveryNode.setPossibleRoles(Set.of(new DiscoveryNodeRole("foo_1", "f") {
 
-                            @Override
-                            protected Setting<Boolean> roleSetting() {
-                                return null;
-                            }
+                @Override
+                protected Setting<Boolean> roleSetting() {
+                    return null;
+                }
 
-                        },
-                        new DiscoveryNodeRole("foo_2", "f") {
+            }, new DiscoveryNodeRole("foo_2", "f") {
 
-                            @Override
-                            protected Setting<Boolean> roleSetting() {
-                                return null;
-                            }
+                @Override
+                protected Setting<Boolean> roleSetting() {
+                    return null;
+                }
 
-                        })));
+            }))
+        );
         assertThat(e, hasToString(containsString("Duplicate key")));
     }
 
     public void testDiscoveryNodeRoleEqualsHashCode() {
-        EqualsHashCodeTestUtils.checkEqualsAndHashCode(new DiscoveryNodeRole.UnknownRole(randomAlphaOfLength(10), randomAlphaOfLength(1)),
+        EqualsHashCodeTestUtils.checkEqualsAndHashCode(
+            new DiscoveryNodeRole.UnknownRole(randomAlphaOfLength(10), randomAlphaOfLength(1)),
             r -> new DiscoveryNodeRole.UnknownRole(r.roleName(), r.roleNameAbbreviation()),
             r -> {
                 if (randomBoolean()) {
@@ -85,14 +84,17 @@ public class DiscoveryNodeRoleTests extends ESTestCase {
                 } else {
                     return new DiscoveryNodeRole.UnknownRole(r.roleName(), randomAlphaOfLength(3 - r.roleNameAbbreviation().length()));
                 }
-            });
+            }
+        );
 
     }
 
     public void testUnknownRoleIsDistinctFromKnownRoles() {
         for (DiscoveryNodeRole buildInRole : DiscoveryNodeRole.BUILT_IN_ROLES) {
-            final DiscoveryNodeRole.UnknownRole unknownDataRole
-                = new DiscoveryNodeRole.UnknownRole(buildInRole.roleName(), buildInRole.roleNameAbbreviation());
+            final DiscoveryNodeRole.UnknownRole unknownDataRole = new DiscoveryNodeRole.UnknownRole(
+                buildInRole.roleName(),
+                buildInRole.roleNameAbbreviation()
+            );
             assertNotEquals(buildInRole, unknownDataRole);
             assertNotEquals(buildInRole.toString(), unknownDataRole.toString());
         }

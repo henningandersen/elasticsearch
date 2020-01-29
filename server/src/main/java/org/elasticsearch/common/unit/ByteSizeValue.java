@@ -63,7 +63,8 @@ public class ByteSizeValue implements Writeable, Comparable<ByteSizeValue>, ToXC
         }
         if (size > Long.MAX_VALUE / unit.toBytes(1)) {
             throw new IllegalArgumentException(
-                    "Values greater than " + Long.MAX_VALUE + " bytes are not supported: " + size + unit.getSuffix());
+                "Values greater than " + Long.MAX_VALUE + " bytes are not supported: " + size + unit.getSuffix()
+            );
         }
         this.size = size;
         this.unit = unit;
@@ -176,7 +177,7 @@ public class ByteSizeValue implements Writeable, Comparable<ByteSizeValue>, ToXC
     }
 
     public static ByteSizeValue parseBytesSizeValue(String sValue, ByteSizeValue defaultValue, String settingName)
-            throws ElasticsearchParseException {
+        throws ElasticsearchParseException {
         settingName = Objects.requireNonNull(settingName);
         if (sValue == null) {
             return defaultValue;
@@ -213,13 +214,20 @@ public class ByteSizeValue implements Writeable, Comparable<ByteSizeValue>, ToXC
         } else {
             // Missing units:
             throw new ElasticsearchParseException(
-                    "failed to parse setting [{}] with value [{}] as a size in bytes: unit is missing or unrecognized", settingName,
-                    sValue);
+                "failed to parse setting [{}] with value [{}] as a size in bytes: unit is missing or unrecognized",
+                settingName,
+                sValue
+            );
         }
     }
 
-    private static ByteSizeValue parse(final String initialInput, final String normalized, final String suffix, ByteSizeUnit unit,
-            final String settingName) {
+    private static ByteSizeValue parse(
+        final String initialInput,
+        final String normalized,
+        final String suffix,
+        ByteSizeUnit unit,
+        final String settingName
+    ) {
         final String s = normalized.substring(0, normalized.length() - suffix.length()).trim();
         try {
             try {
@@ -228,16 +236,22 @@ public class ByteSizeValue implements Writeable, Comparable<ByteSizeValue>, ToXC
                 try {
                     final double doubleValue = Double.parseDouble(s);
                     deprecationLogger.deprecated(
-                            "Fractional bytes values are deprecated. Use non-fractional bytes values instead: [{}] found for setting [{}]",
-                            initialInput, settingName);
+                        "Fractional bytes values are deprecated. Use non-fractional bytes values instead: [{}] found for setting [{}]",
+                        initialInput,
+                        settingName
+                    );
                     return new ByteSizeValue((long) (doubleValue * unit.toBytes(1)));
                 } catch (final NumberFormatException ignored) {
                     throw new ElasticsearchParseException("failed to parse [{}]", e, initialInput);
                 }
             }
         } catch (IllegalArgumentException e) {
-            throw new ElasticsearchParseException("failed to parse setting [{}] with value [{}] as a size in bytes", e, settingName,
-                    initialInput);
+            throw new ElasticsearchParseException(
+                "failed to parse setting [{}] with value [{}] as a size in bytes",
+                e,
+                settingName,
+                initialInput
+            );
         }
     }
 

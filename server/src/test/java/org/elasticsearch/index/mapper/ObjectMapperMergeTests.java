@@ -48,8 +48,12 @@ public class ObjectMapperMergeTests extends ESTestCase {
         rootObjectMapper = null;
     }
 
-    private static RootObjectMapper createMapping(boolean disabledFieldEnabled, boolean fooFieldEnabled,
-                                                  boolean includeBarField, boolean includeBazField) {
+    private static RootObjectMapper createMapping(
+        boolean disabledFieldEnabled,
+        boolean fooFieldEnabled,
+        boolean includeBarField,
+        boolean includeBazField
+    ) {
         Map<String, Mapper> mappers = new HashMap<>();
         mappers.put("disabled", createObjectMapper("disabled", disabledFieldEnabled, emptyMap()));
         Map<String, Mapper> fooMappers = new HashMap<>();
@@ -59,7 +63,7 @@ public class ObjectMapperMergeTests extends ESTestCase {
         if (includeBazField) {
             fooMappers.put("baz", bazFieldMapper);
         }
-        mappers.put("foo", createObjectMapper("foo", fooFieldEnabled,  Collections.unmodifiableMap(fooMappers)));
+        mappers.put("foo", createObjectMapper("foo", fooFieldEnabled, Collections.unmodifiableMap(fooMappers)));
         return createRootObjectMapper("type1", true, Collections.unmodifiableMap(mappers));
     }
 

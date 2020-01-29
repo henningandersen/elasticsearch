@@ -98,8 +98,7 @@ import java.util.Map;
  */
 public class AggregationBuilders {
 
-    private AggregationBuilders() {
-    }
+    private AggregationBuilders() {}
 
     /**
      * Create a new {@link ValueCount} aggregation with the given name.
@@ -188,7 +187,7 @@ public class AggregationBuilders {
     /**
      * Create a new {@link AdjacencyMatrix} aggregation with the given name and separator
      */
-    public static AdjacencyMatrixAggregationBuilder adjacencyMatrix(String name, String separator,  Map<String, QueryBuilder> filters) {
+    public static AdjacencyMatrixAggregationBuilder adjacencyMatrix(String name, String separator, Map<String, QueryBuilder> filters) {
         return new AdjacencyMatrixAggregationBuilder(name, separator, filters);
     }
 
@@ -269,14 +268,12 @@ public class AggregationBuilders {
         return new SignificantTermsAggregationBuilder(name, null);
     }
 
-
     /**
      * Create a new {@link SignificantTextAggregationBuilder} aggregation with the given name and text field name
      */
     public static SignificantTextAggregationBuilder significantText(String name, String fieldName) {
         return new SignificantTextAggregationBuilder(name, fieldName);
     }
-
 
     /**
      * Create a new {@link DateHistogramAggregationBuilder} aggregation with the given

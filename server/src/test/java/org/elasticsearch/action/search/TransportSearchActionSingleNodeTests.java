@@ -46,8 +46,13 @@ public class TransportSearchActionSingleNodeTests extends ESSingleNodeTestCase {
         assertEquals(RestStatus.CREATED, indexResponse.status());
 
         {
-            SearchRequest searchRequest = SearchRequest.subSearchRequest(new SearchRequest(), Strings.EMPTY_ARRAY,
-                "local", nowInMillis, randomBoolean());
+            SearchRequest searchRequest = SearchRequest.subSearchRequest(
+                new SearchRequest(),
+                Strings.EMPTY_ARRAY,
+                "local",
+                nowInMillis,
+                randomBoolean()
+            );
             SearchResponse searchResponse = client().search(searchRequest).actionGet();
             assertEquals(1, searchResponse.getHits().getTotalHits().value);
             SearchHit[] hits = searchResponse.getHits().getHits();
@@ -58,8 +63,13 @@ public class TransportSearchActionSingleNodeTests extends ESSingleNodeTestCase {
             assertEquals("1", hit.getId());
         }
         {
-            SearchRequest searchRequest = SearchRequest.subSearchRequest(new SearchRequest(), Strings.EMPTY_ARRAY,
-                "", nowInMillis, randomBoolean());
+            SearchRequest searchRequest = SearchRequest.subSearchRequest(
+                new SearchRequest(),
+                Strings.EMPTY_ARRAY,
+                "",
+                nowInMillis,
+                randomBoolean()
+            );
             SearchResponse searchResponse = client().search(searchRequest).actionGet();
             assertEquals(1, searchResponse.getHits().getTotalHits().value);
             SearchHit[] hits = searchResponse.getHits().getHits();
@@ -100,22 +110,19 @@ public class TransportSearchActionSingleNodeTests extends ESSingleNodeTestCase {
             assertEquals(0, searchResponse.getTotalShards());
         }
         {
-            SearchRequest searchRequest = SearchRequest.subSearchRequest(new SearchRequest(),
-                Strings.EMPTY_ARRAY, "", 0, randomBoolean());
+            SearchRequest searchRequest = SearchRequest.subSearchRequest(new SearchRequest(), Strings.EMPTY_ARRAY, "", 0, randomBoolean());
             SearchResponse searchResponse = client().search(searchRequest).actionGet();
             assertEquals(2, searchResponse.getHits().getTotalHits().value);
         }
         {
-            SearchRequest searchRequest = SearchRequest.subSearchRequest(new SearchRequest(),
-                Strings.EMPTY_ARRAY, "", 0, randomBoolean());
+            SearchRequest searchRequest = SearchRequest.subSearchRequest(new SearchRequest(), Strings.EMPTY_ARRAY, "", 0, randomBoolean());
             searchRequest.indices("<test-{now/d}>");
             SearchResponse searchResponse = client().search(searchRequest).actionGet();
             assertEquals(1, searchResponse.getHits().getTotalHits().value);
             assertEquals("test-1970.01.01", searchResponse.getHits().getHits()[0].getIndex());
         }
         {
-            SearchRequest searchRequest = SearchRequest.subSearchRequest(new SearchRequest(),
-                Strings.EMPTY_ARRAY, "", 0, randomBoolean());
+            SearchRequest searchRequest = SearchRequest.subSearchRequest(new SearchRequest(), Strings.EMPTY_ARRAY, "", 0, randomBoolean());
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
             RangeQueryBuilder rangeQuery = new RangeQueryBuilder("date");
             rangeQuery.gte("1970-01-01");
@@ -128,7 +135,7 @@ public class TransportSearchActionSingleNodeTests extends ESSingleNodeTestCase {
         }
     }
 
-    public void testFinalReduce()  {
+    public void testFinalReduce() {
         long nowInMillis = randomLongBetween(0, Long.MAX_VALUE);
         {
             IndexRequest indexRequest = new IndexRequest("test");
@@ -156,8 +163,9 @@ public class TransportSearchActionSingleNodeTests extends ESSingleNodeTestCase {
         source.aggregation(terms);
 
         {
-            SearchRequest searchRequest = randomBoolean() ? originalRequest : SearchRequest.subSearchRequest(originalRequest,
-                Strings.EMPTY_ARRAY, "remote", nowInMillis, true);
+            SearchRequest searchRequest = randomBoolean()
+                ? originalRequest
+                : SearchRequest.subSearchRequest(originalRequest, Strings.EMPTY_ARRAY, "remote", nowInMillis, true);
             SearchResponse searchResponse = client().search(searchRequest).actionGet();
             assertEquals(2, searchResponse.getHits().getTotalHits().value);
             Aggregations aggregations = searchResponse.getAggregations();
@@ -165,8 +173,13 @@ public class TransportSearchActionSingleNodeTests extends ESSingleNodeTestCase {
             assertEquals(1, longTerms.getBuckets().size());
         }
         {
-            SearchRequest searchRequest = SearchRequest.subSearchRequest(originalRequest,
-                Strings.EMPTY_ARRAY, "remote", nowInMillis, false);
+            SearchRequest searchRequest = SearchRequest.subSearchRequest(
+                originalRequest,
+                Strings.EMPTY_ARRAY,
+                "remote",
+                nowInMillis,
+                false
+            );
             SearchResponse searchResponse = client().search(searchRequest).actionGet();
             assertEquals(2, searchResponse.getHits().getTotalHits().value);
             Aggregations aggregations = searchResponse.getAggregations();

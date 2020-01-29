@@ -97,7 +97,7 @@ public class DfsSearchResult extends SearchPhaseResult {
         return fieldStatistics;
     }
 
-  @Override
+    @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeLong(requestId);
         out.writeVInt(terms.length);
@@ -110,8 +110,8 @@ public class DfsSearchResult extends SearchPhaseResult {
         out.writeVInt(maxDoc);
     }
 
-    public static void writeFieldStats(StreamOutput out, ObjectObjectHashMap<String,
-            CollectionStatistics> fieldStatistics) throws IOException {
+    public static void writeFieldStats(StreamOutput out, ObjectObjectHashMap<String, CollectionStatistics> fieldStatistics)
+        throws IOException {
         out.writeVInt(fieldStatistics.size());
 
         for (ObjectObjectCursor<String, CollectionStatistics> c : fieldStatistics) {
@@ -133,7 +133,7 @@ public class DfsSearchResult extends SearchPhaseResult {
         }
     }
 
-    public  static void writeSingleTermStats(StreamOutput out, TermStatistics termStatistic) throws IOException {
+    public static void writeSingleTermStats(StreamOutput out, TermStatistics termStatistic) throws IOException {
         if (termStatistic != null) {
             assert termStatistic.docFreq() > 0;
             out.writeVLong(termStatistic.docFreq());

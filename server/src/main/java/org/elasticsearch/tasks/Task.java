@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.elasticsearch.tasks;
 
 import org.elasticsearch.action.ActionResponse;
@@ -65,8 +64,16 @@ public class Task {
         this(id, type, action, description, parentTask, System.currentTimeMillis(), System.nanoTime(), headers);
     }
 
-    public Task(long id, String type, String action, String description, TaskId parentTask, long startTime, long startTimeNanos,
-                Map<String, String> headers) {
+    public Task(
+        long id,
+        String type,
+        String action,
+        String description,
+        TaskId parentTask,
+        long startTime,
+        long startTimeNanos,
+        Map<String, String> headers
+    ) {
         this.id = id;
         this.type = type;
         this.action = action;
@@ -101,8 +108,18 @@ public class Task {
      * Build a proper {@link TaskInfo} for this task.
      */
     protected final TaskInfo taskInfo(String localNodeId, String description, Status status) {
-        return new TaskInfo(new TaskId(localNodeId, getId()), getType(), getAction(), description, status, startTime,
-                System.nanoTime() - startTimeNanos, this instanceof CancellableTask, parentTask, headers);
+        return new TaskInfo(
+            new TaskId(localNodeId, getId()),
+            getType(),
+            getAction(),
+            description,
+            status,
+            startTime,
+            System.nanoTime() - startTimeNanos,
+            this instanceof CancellableTask,
+            parentTask,
+            headers
+        );
     }
 
     /**

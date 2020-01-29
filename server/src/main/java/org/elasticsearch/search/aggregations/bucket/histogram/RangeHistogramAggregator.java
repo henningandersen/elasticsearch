@@ -58,11 +58,24 @@ public class RangeHistogramAggregator extends BucketsAggregator {
 
     private final LongHash bucketOrds;
 
-    RangeHistogramAggregator(String name, AggregatorFactories factories, double interval, double offset,
-                             BucketOrder order, boolean keyed, long minDocCount, double minBound, double maxBound,
-                             @Nullable ValuesSource.Range valuesSource, DocValueFormat formatter,
-                             SearchContext context, Aggregator parent,
-                             List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    RangeHistogramAggregator(
+        String name,
+        AggregatorFactories factories,
+        double interval,
+        double offset,
+        BucketOrder order,
+        boolean keyed,
+        long minDocCount,
+        double minBound,
+        double maxBound,
+        @Nullable ValuesSource.Range valuesSource,
+        DocValueFormat formatter,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
 
         super(name, factories, context, parent, pipelineAggregators, metaData);
         if (interval <= 0) {
@@ -110,7 +123,7 @@ public class RangeHistogramAggregator extends BucketsAggregator {
                             final Double to = rangeType.doubleValue(range.getTo());
                             final double startKey = Math.floor((from - offset) / interval);
                             final double endKey = Math.floor((to - offset) / interval);
-                            for (double  key = startKey > previousKey ? startKey : previousKey; key <= endKey; key++) {
+                            for (double key = startKey > previousKey ? startKey : previousKey; key <= endKey; key++) {
                                 if (key == previousKey) {
                                     continue;
                                 }
@@ -134,8 +147,8 @@ public class RangeHistogramAggregator extends BucketsAggregator {
         };
     }
 
-    // TODO: buildAggregation and buildEmptyAggregation are literally just copied out of NumericHistogramAggregator.  We could refactor
-    // this to an abstract super class, if we wanted to.  Might be overkill.
+    // TODO: buildAggregation and buildEmptyAggregation are literally just copied out of NumericHistogramAggregator. We could refactor
+    // this to an abstract super class, if we wanted to. Might be overkill.
     @Override
     public InternalAggregation buildAggregation(long bucket) throws IOException {
         assert bucket == 0;
@@ -154,8 +167,17 @@ public class RangeHistogramAggregator extends BucketsAggregator {
         if (minDocCount == 0) {
             emptyBucketInfo = new InternalHistogram.EmptyBucketInfo(interval, offset, minBound, maxBound, buildEmptySubAggregations());
         }
-        return new InternalHistogram(name, buckets, order, minDocCount, emptyBucketInfo, formatter, keyed, pipelineAggregators(),
-            metaData());
+        return new InternalHistogram(
+            name,
+            buckets,
+            order,
+            minDocCount,
+            emptyBucketInfo,
+            formatter,
+            keyed,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override
@@ -164,8 +186,17 @@ public class RangeHistogramAggregator extends BucketsAggregator {
         if (minDocCount == 0) {
             emptyBucketInfo = new InternalHistogram.EmptyBucketInfo(interval, offset, minBound, maxBound, buildEmptySubAggregations());
         }
-        return new InternalHistogram(name, Collections.emptyList(), order, minDocCount, emptyBucketInfo, formatter, keyed,
-            pipelineAggregators(), metaData());
+        return new InternalHistogram(
+            name,
+            Collections.emptyList(),
+            order,
+            minDocCount,
+            emptyBucketInfo,
+            formatter,
+            keyed,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override

@@ -112,28 +112,50 @@ public class GeoPointFieldMapper extends FieldMapper implements ArrayValueMapper
             return this;
         }
 
-        public GeoPointFieldMapper build(BuilderContext context, String simpleName, MappedFieldType fieldType,
-                                         MappedFieldType defaultFieldType, Settings indexSettings,
-                                         MultiFields multiFields, Explicit<Boolean> ignoreMalformed,
-                                         Explicit<Boolean> ignoreZValue, CopyTo copyTo) {
+        public GeoPointFieldMapper build(
+            BuilderContext context,
+            String simpleName,
+            MappedFieldType fieldType,
+            MappedFieldType defaultFieldType,
+            Settings indexSettings,
+            MultiFields multiFields,
+            Explicit<Boolean> ignoreMalformed,
+            Explicit<Boolean> ignoreZValue,
+            CopyTo copyTo
+        ) {
             setupFieldType(context);
-            return new GeoPointFieldMapper(simpleName, fieldType, defaultFieldType, indexSettings, multiFields,
-                ignoreMalformed, ignoreZValue, copyTo);
+            return new GeoPointFieldMapper(
+                simpleName,
+                fieldType,
+                defaultFieldType,
+                indexSettings,
+                multiFields,
+                ignoreMalformed,
+                ignoreZValue,
+                copyTo
+            );
         }
 
         @Override
         public GeoPointFieldMapper build(BuilderContext context) {
-            return build(context, name, fieldType, defaultFieldType, context.indexSettings(),
-                multiFieldsBuilder.build(this, context), ignoreMalformed(context),
-                ignoreZValue(context), copyTo);
+            return build(
+                context,
+                name,
+                fieldType,
+                defaultFieldType,
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                ignoreMalformed(context),
+                ignoreZValue(context),
+                copyTo
+            );
         }
     }
 
     public static class TypeParser implements Mapper.TypeParser {
         @Override
         @SuppressWarnings("rawtypes")
-        public Mapper.Builder parse(String name, Map<String, Object> node, ParserContext parserContext)
-                throws MapperParsingException {
+        public Mapper.Builder parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
             Builder builder = new GeoPointFieldMapper.Builder(name);
             parseField(builder, name, node, parserContext);
             Object nullValue = null;
@@ -146,8 +168,9 @@ public class GeoPointFieldMapper extends FieldMapper implements ArrayValueMapper
                     builder.ignoreMalformed(XContentMapValues.nodeBooleanValue(propNode, name + "." + Names.IGNORE_MALFORMED));
                     iterator.remove();
                 } else if (propName.equals(Names.IGNORE_Z_VALUE.getPreferredName())) {
-                    builder.ignoreZValue(XContentMapValues.nodeBooleanValue(propNode,
-                            name + "." + Names.IGNORE_Z_VALUE.getPreferredName()));
+                    builder.ignoreZValue(
+                        XContentMapValues.nodeBooleanValue(propNode, name + "." + Names.IGNORE_Z_VALUE.getPreferredName())
+                    );
                     iterator.remove();
                 } else if (propName.equals(Names.NULL_VALUE)) {
                     if (propNode == null) {
@@ -181,9 +204,16 @@ public class GeoPointFieldMapper extends FieldMapper implements ArrayValueMapper
     protected Explicit<Boolean> ignoreMalformed;
     protected Explicit<Boolean> ignoreZValue;
 
-    public GeoPointFieldMapper(String simpleName, MappedFieldType fieldType, MappedFieldType defaultFieldType,
-                               Settings indexSettings, MultiFields multiFields, Explicit<Boolean> ignoreMalformed,
-                               Explicit<Boolean> ignoreZValue, CopyTo copyTo) {
+    public GeoPointFieldMapper(
+        String simpleName,
+        MappedFieldType fieldType,
+        MappedFieldType defaultFieldType,
+        Settings indexSettings,
+        MultiFields multiFields,
+        Explicit<Boolean> ignoreMalformed,
+        Explicit<Boolean> ignoreZValue,
+        CopyTo copyTo
+    ) {
         super(simpleName, fieldType, defaultFieldType, indexSettings, multiFields, copyTo);
         this.ignoreMalformed = ignoreMalformed;
         this.ignoreZValue = ignoreZValue;
@@ -212,8 +242,7 @@ public class GeoPointFieldMapper extends FieldMapper implements ArrayValueMapper
     }
 
     public static class GeoPointFieldType extends MappedFieldType {
-        public GeoPointFieldType() {
-        }
+        public GeoPointFieldType() {}
 
         GeoPointFieldType(GeoPointFieldType ref) {
             super(ref);
@@ -246,8 +275,10 @@ public class GeoPointFieldMapper extends FieldMapper implements ArrayValueMapper
 
         @Override
         public Query termQuery(Object value, QueryShardContext context) {
-            throw new QueryShardException(context, "Geo fields do not support exact searching, use dedicated geo queries instead: ["
-                + name() + "]");
+            throw new QueryShardException(
+                context,
+                "Geo fields do not support exact searching, use dedicated geo queries instead: [" + name() + "]"
+            );
         }
     }
 

@@ -48,16 +48,21 @@ public class SystemIndexDescriptor {
     public SystemIndexDescriptor(String indexPattern, String description) {
         Objects.requireNonNull(indexPattern, "system index pattern must not be null");
         if (indexPattern.length() < 2) {
-            throw new IllegalArgumentException("system index pattern provided as [" + indexPattern +
-                "] but must at least 2 characters in length");
+            throw new IllegalArgumentException(
+                "system index pattern provided as [" + indexPattern + "] but must at least 2 characters in length"
+            );
         }
         if (indexPattern.charAt(0) != '.') {
-            throw new IllegalArgumentException("system index pattern provided as [" + indexPattern +
-                "] but must start with the character [.]");
+            throw new IllegalArgumentException(
+                "system index pattern provided as [" + indexPattern + "] but must start with the character [.]"
+            );
         }
         if (indexPattern.charAt(1) == '*') {
-            throw new IllegalArgumentException("system index pattern provided as [" + indexPattern +
-                "] but must not start with the character sequence [.*] to prevent conflicts");
+            throw new IllegalArgumentException(
+                "system index pattern provided as ["
+                    + indexPattern
+                    + "] but must not start with the character sequence [.*] to prevent conflicts"
+            );
         }
         this.indexPattern = indexPattern;
         this.indexPatternAutomaton = new CharacterRunAutomaton(Regex.simpleMatchToAutomaton(indexPattern));
@@ -100,7 +105,8 @@ public class SystemIndexDescriptor {
      * @throws IllegalStateException Thrown if any of the index patterns overlaps with another.
      */
     public static void checkForOverlappingPatterns(Map<String, Collection<SystemIndexDescriptor>> sourceToDescriptors) {
-        List<Tuple<String, SystemIndexDescriptor>> sourceDescriptorPair = sourceToDescriptors.entrySet().stream()
+        List<Tuple<String, SystemIndexDescriptor>> sourceDescriptorPair = sourceToDescriptors.entrySet()
+            .stream()
             .flatMap(entry -> entry.getValue().stream().map(descriptor -> new Tuple<>(entry.getKey(), descriptor)))
             .sorted(Comparator.comparing(d -> d.v1() + ":" + d.v2().getIndexPattern())) // Consistent ordering -> consistent error message
             .collect(Collectors.toList());
@@ -121,9 +127,11 @@ public class SystemIndexDescriptor {
                     .append("] from plugin [")
                     .append(descriptorToCheck.v1())
                     .append("] overlaps with other system index descriptors: [")
-                    .append(descriptorsMatchingThisPattern.stream()
-                        .map(descriptor -> descriptor.v2() + " from plugin [" + descriptor.v1() + "]")
-                        .collect(Collectors.joining(", ")));
+                    .append(
+                        descriptorsMatchingThisPattern.stream()
+                            .map(descriptor -> descriptor.v2() + " from plugin [" + descriptor.v1() + "]")
+                            .collect(Collectors.joining(", "))
+                    );
                 throw new IllegalStateException(errorMessage.toString());
             }
         });

@@ -68,15 +68,19 @@ public class FakeStringFieldMapper extends FieldMapper {
         public FakeStringFieldMapper build(BuilderContext context) {
             setupFieldType(context);
             return new FakeStringFieldMapper(
-                name, fieldType(), defaultFieldType,
-                context.indexSettings(), multiFieldsBuilder.build(this, context), copyTo);
+                name,
+                fieldType(),
+                defaultFieldType,
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                copyTo
+            );
         }
     }
 
     public static class TypeParser implements Mapper.TypeParser {
 
-        public TypeParser() {
-        }
+        public TypeParser() {}
 
         @Override
         public Mapper.Builder parse(String fieldName, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
@@ -88,9 +92,7 @@ public class FakeStringFieldMapper extends FieldMapper {
 
     public static final class FakeStringFieldType extends StringFieldType {
 
-
-        public FakeStringFieldType() {
-        }
+        public FakeStringFieldType() {}
 
         protected FakeStringFieldType(FakeStringFieldType ref) {
             super(ref);
@@ -115,8 +117,14 @@ public class FakeStringFieldMapper extends FieldMapper {
         }
     }
 
-    protected FakeStringFieldMapper(String simpleName, FakeStringFieldType fieldType, MappedFieldType defaultFieldType,
-                                    Settings indexSettings, MultiFields multiFields, CopyTo copyTo) {
+    protected FakeStringFieldMapper(
+        String simpleName,
+        FakeStringFieldType fieldType,
+        MappedFieldType defaultFieldType,
+        Settings indexSettings,
+        MultiFields multiFields,
+        CopyTo copyTo
+    ) {
         super(simpleName, fieldType, defaultFieldType, indexSettings, multiFields, copyTo);
     }
 

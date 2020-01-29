@@ -38,8 +38,16 @@ public final class TcpTransportChannel implements TransportChannel {
     private final long reservedBytes;
     private final boolean compressResponse;
 
-    TcpTransportChannel(OutboundHandler outboundHandler, TcpChannel channel, String action, long requestId, Version version,
-                        CircuitBreakerService breakerService, long reservedBytes, boolean compressResponse) {
+    TcpTransportChannel(
+        OutboundHandler outboundHandler,
+        TcpChannel channel,
+        String action,
+        long requestId,
+        Version version,
+        CircuitBreakerService breakerService,
+        long reservedBytes,
+        boolean compressResponse
+    ) {
         this.version = version;
         this.channel = channel;
         this.outboundHandler = outboundHandler;
@@ -101,4 +109,3 @@ public final class TcpTransportChannel implements TransportChannel {
     }
 
 }
-

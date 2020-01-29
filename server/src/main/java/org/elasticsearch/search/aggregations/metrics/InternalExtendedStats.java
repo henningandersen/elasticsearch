@@ -33,7 +33,16 @@ import java.util.Objects;
 public class InternalExtendedStats extends InternalStats implements ExtendedStats {
     enum Metrics {
 
-        count, sum, min, max, avg, sum_of_squares, variance, std_deviation, std_upper, std_lower;
+        count,
+        sum,
+        min,
+        max,
+        avg,
+        sum_of_squares,
+        variance,
+        std_deviation,
+        std_upper,
+        std_lower;
 
         public static Metrics resolve(String name) {
             return Metrics.valueOf(name);
@@ -43,8 +52,18 @@ public class InternalExtendedStats extends InternalStats implements ExtendedStat
     private final double sumOfSqrs;
     private final double sigma;
 
-    public InternalExtendedStats(String name, long count, double sum, double min, double max, double sumOfSqrs, double sigma,
-                                 DocValueFormat formatter, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    public InternalExtendedStats(
+        String name,
+        long count,
+        double sum,
+        double min,
+        double max,
+        double sumOfSqrs,
+        double sigma,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, count, sum, min, max, formatter, pipelineAggregators, metaData);
         this.sumOfSqrs = sumOfSqrs;
         this.sigma = sigma;
@@ -101,8 +120,8 @@ public class InternalExtendedStats extends InternalStats implements ExtendedStat
 
     @Override
     public double getVariance() {
-        double variance =  (sumOfSqrs - ((sum * sum) / count)) / count;
-        return variance < 0  ? 0 : variance;
+        double variance = (sumOfSqrs - ((sum * sum) / count)) / count;
+        return variance < 0 ? 0 : variance;
     }
 
     @Override
@@ -159,8 +178,18 @@ public class InternalExtendedStats extends InternalStats implements ExtendedStat
             }
         }
         final InternalStats stats = super.reduce(aggregations, reduceContext);
-        return new InternalExtendedStats(name, stats.getCount(), stats.getSum(), stats.getMin(), stats.getMax(), sumOfSqrs, sigma,
-            format, pipelineAggregators(), getMetaData());
+        return new InternalExtendedStats(
+            name,
+            stats.getCount(),
+            stats.getSum(),
+            stats.getMin(),
+            stats.getMax(),
+            sumOfSqrs,
+            sigma,
+            format,
+            pipelineAggregators(),
+            getMetaData()
+        );
     }
 
     static class Fields {
@@ -226,7 +255,6 @@ public class InternalExtendedStats extends InternalStats implements ExtendedStat
         if (super.equals(obj) == false) return false;
 
         InternalExtendedStats other = (InternalExtendedStats) obj;
-        return Double.compare(sumOfSqrs, other.sumOfSqrs) == 0 &&
-            Double.compare(sigma, other.sigma) == 0;
+        return Double.compare(sumOfSqrs, other.sumOfSqrs) == 0 && Double.compare(sigma, other.sigma) == 0;
     }
 }

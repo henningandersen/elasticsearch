@@ -48,7 +48,7 @@ public class ForceMergeRequest extends BroadcastRequest<ForceMergeRequest> {
         public static final boolean ONLY_EXPUNGE_DELETES = false;
         public static final boolean FLUSH = true;
     }
-    
+
     private int maxNumSegments = Defaults.MAX_NUM_SEGMENTS;
     private boolean onlyExpungeDeletes = Defaults.ONLY_EXPUNGE_DELETES;
     private boolean flush = Defaults.FLUSH;
@@ -120,10 +120,15 @@ public class ForceMergeRequest extends BroadcastRequest<ForceMergeRequest> {
 
     @Override
     public String getDescription() {
-        return "Force-merge indices " + Arrays.toString(indices()) +
-            ", maxSegments[" + maxNumSegments +
-            "], onlyExpungeDeletes[" + onlyExpungeDeletes +
-            "], flush[" + flush + "]";
+        return "Force-merge indices "
+            + Arrays.toString(indices())
+            + ", maxSegments["
+            + maxNumSegments
+            + "], onlyExpungeDeletes["
+            + onlyExpungeDeletes
+            + "], flush["
+            + flush
+            + "]";
     }
 
     @Override
@@ -138,18 +143,23 @@ public class ForceMergeRequest extends BroadcastRequest<ForceMergeRequest> {
     public ActionRequestValidationException validate() {
         ActionRequestValidationException validationError = super.validate();
         if (onlyExpungeDeletes && maxNumSegments != Defaults.MAX_NUM_SEGMENTS) {
-            validationError = addValidationError("cannot set only_expunge_deletes and max_num_segments at the same time, those two " +
-                "parameters are mutually exclusive", validationError);
+            validationError = addValidationError(
+                "cannot set only_expunge_deletes and max_num_segments at the same time, those two " + "parameters are mutually exclusive",
+                validationError
+            );
         }
         return validationError;
     }
 
     @Override
     public String toString() {
-        return "ForceMergeRequest{" +
-                "maxNumSegments=" + maxNumSegments +
-                ", onlyExpungeDeletes=" + onlyExpungeDeletes +
-                ", flush=" + flush +
-                '}';
+        return "ForceMergeRequest{"
+            + "maxNumSegments="
+            + maxNumSegments
+            + ", onlyExpungeDeletes="
+            + onlyExpungeDeletes
+            + ", flush="
+            + flush
+            + '}';
     }
 }

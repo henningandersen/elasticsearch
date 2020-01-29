@@ -57,8 +57,10 @@ import static org.hamcrest.Matchers.startsWith;
 
 public class ActionModuleTests extends ESTestCase {
     public void testSetupActionsContainsKnownBuiltin() {
-        assertThat(ActionModule.setupActions(emptyList()),
-                hasEntry(MainAction.INSTANCE.name(), new ActionHandler<>(MainAction.INSTANCE, TransportMainAction.class)));
+        assertThat(
+            ActionModule.setupActions(emptyList()),
+            hasEntry(MainAction.INSTANCE.name(), new ActionHandler<>(MainAction.INSTANCE, TransportMainAction.class))
+        );
     }
 
     public void testPluginCantOverwriteBuiltinAction() {
@@ -85,8 +87,7 @@ public class ActionModuleTests extends ESTestCase {
             }
 
             @Override
-            protected void doExecute(Task task, FakeRequest request, ActionListener<ActionResponse> listener) {
-            }
+            protected void doExecute(Task task, FakeRequest request, ActionListener<ActionResponse> listener) {}
         }
         class FakeAction extends ActionType<ActionResponse> {
             protected FakeAction() {
@@ -100,29 +101,49 @@ public class ActionModuleTests extends ESTestCase {
                 return singletonList(new ActionHandler<>(action, FakeTransportAction.class));
             }
         };
-        assertThat(ActionModule.setupActions(singletonList(registersFakeAction)),
-                hasEntry("fake", new ActionHandler<>(action, FakeTransportAction.class)));
+        assertThat(
+            ActionModule.setupActions(singletonList(registersFakeAction)),
+            hasEntry("fake", new ActionHandler<>(action, FakeTransportAction.class))
+        );
     }
 
     public void testSetupRestHandlerContainsKnownBuiltin() {
         SettingsModule settings = new SettingsModule(Settings.EMPTY);
         UsageService usageService = new UsageService();
-        ActionModule actionModule = new ActionModule(settings.getSettings(), new IndexNameExpressionResolver(),
-                settings.getIndexScopedSettings(), settings.getClusterSettings(), settings.getSettingsFilter(), null, emptyList(), null,
-                null, usageService, null);
+        ActionModule actionModule = new ActionModule(
+            settings.getSettings(),
+            new IndexNameExpressionResolver(),
+            settings.getIndexScopedSettings(),
+            settings.getClusterSettings(),
+            settings.getSettingsFilter(),
+            null,
+            emptyList(),
+            null,
+            null,
+            usageService,
+            null
+        );
         actionModule.initRestHandlers(null);
         // At this point the easiest way to confirm that a handler is loaded is to try to register another one on top of it and to fail
-        Exception e = expectThrows(IllegalArgumentException.class, () ->
-            actionModule.getRestController().registerHandler(Method.GET, "/", null));
+        Exception e = expectThrows(
+            IllegalArgumentException.class,
+            () -> actionModule.getRestController().registerHandler(Method.GET, "/", null)
+        );
         assertThat(e.getMessage(), startsWith("Cannot replace existing handler for [/] for method: GET"));
     }
 
     public void testPluginCantOverwriteBuiltinRestHandler() throws IOException {
         ActionPlugin dupsMainAction = new ActionPlugin() {
             @Override
-            public List<RestHandler> getRestHandlers(Settings settings, RestController restController, ClusterSettings clusterSettings,
-                    IndexScopedSettings indexScopedSettings, SettingsFilter settingsFilter,
-                    IndexNameExpressionResolver indexNameExpressionResolver, Supplier<DiscoveryNodes> nodesInCluster) {
+            public List<RestHandler> getRestHandlers(
+                Settings settings,
+                RestController restController,
+                ClusterSettings clusterSettings,
+                IndexScopedSettings indexScopedSettings,
+                SettingsFilter settingsFilter,
+                IndexNameExpressionResolver indexNameExpressionResolver,
+                Supplier<DiscoveryNodes> nodesInCluster
+            ) {
                 return singletonList(new RestMainAction(restController));
             }
         };
@@ -130,9 +151,19 @@ public class ActionModuleTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool(getTestName());
         try {
             UsageService usageService = new UsageService();
-            ActionModule actionModule = new ActionModule(settings.getSettings(), new IndexNameExpressionResolver(),
-                    settings.getIndexScopedSettings(), settings.getClusterSettings(), settings.getSettingsFilter(), threadPool,
-                    singletonList(dupsMainAction), null, null, usageService, null);
+            ActionModule actionModule = new ActionModule(
+                settings.getSettings(),
+                new IndexNameExpressionResolver(),
+                settings.getIndexScopedSettings(),
+                settings.getClusterSettings(),
+                settings.getSettingsFilter(),
+                threadPool,
+                singletonList(dupsMainAction),
+                null,
+                null,
+                usageService,
+                null
+            );
             Exception e = expectThrows(IllegalArgumentException.class, () -> actionModule.initRestHandlers(null));
             assertThat(e.getMessage(), startsWith("Cannot replace existing handler for [/] for method: GET"));
         } finally {
@@ -145,15 +176,21 @@ public class ActionModuleTests extends ESTestCase {
             FakeHandler(RestController restController) {
                 restController.registerHandler(Method.GET, "/_dummy", this);
             }
+
             @Override
-            public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
-            }
+            public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {}
         }
         ActionPlugin registersFakeHandler = new ActionPlugin() {
             @Override
-            public List<RestHandler> getRestHandlers(Settings settings, RestController restController, ClusterSettings clusterSettings,
-                    IndexScopedSettings indexScopedSettings, SettingsFilter settingsFilter,
-                    IndexNameExpressionResolver indexNameExpressionResolver, Supplier<DiscoveryNodes> nodesInCluster) {
+            public List<RestHandler> getRestHandlers(
+                Settings settings,
+                RestController restController,
+                ClusterSettings clusterSettings,
+                IndexScopedSettings indexScopedSettings,
+                SettingsFilter settingsFilter,
+                IndexNameExpressionResolver indexNameExpressionResolver,
+                Supplier<DiscoveryNodes> nodesInCluster
+            ) {
                 return singletonList(new FakeHandler(restController));
             }
         };
@@ -162,13 +199,25 @@ public class ActionModuleTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool(getTestName());
         try {
             UsageService usageService = new UsageService();
-            ActionModule actionModule = new ActionModule(settings.getSettings(), new IndexNameExpressionResolver(),
-                    settings.getIndexScopedSettings(), settings.getClusterSettings(), settings.getSettingsFilter(), threadPool,
-                    singletonList(registersFakeHandler), null, null, usageService, null);
+            ActionModule actionModule = new ActionModule(
+                settings.getSettings(),
+                new IndexNameExpressionResolver(),
+                settings.getIndexScopedSettings(),
+                settings.getClusterSettings(),
+                settings.getSettingsFilter(),
+                threadPool,
+                singletonList(registersFakeHandler),
+                null,
+                null,
+                usageService,
+                null
+            );
             actionModule.initRestHandlers(null);
             // At this point the easiest way to confirm that a handler is loaded is to try to register another one on top of it and to fail
-            Exception e = expectThrows(IllegalArgumentException.class, () ->
-                actionModule.getRestController().registerHandler(Method.GET, "/_dummy", null));
+            Exception e = expectThrows(
+                IllegalArgumentException.class,
+                () -> actionModule.getRestController().registerHandler(Method.GET, "/_dummy", null)
+            );
             assertThat(e.getMessage(), startsWith("Cannot replace existing handler for [/_dummy] for method: GET"));
         } finally {
             threadPool.shutdown();

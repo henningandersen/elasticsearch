@@ -29,7 +29,6 @@ import java.time.ZoneOffset;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
-
 public class JodaTests extends ESTestCase {
 
     public void testBasicTTimePattern() {

@@ -39,7 +39,10 @@ import java.util.List;
 import java.util.Set;
 
 public class MultiTermVectorsRequest extends ActionRequest
-        implements Iterable<TermVectorsRequest>, CompositeIndicesRequest, RealtimeRequest {
+    implements
+        Iterable<TermVectorsRequest>,
+        CompositeIndicesRequest,
+        RealtimeRequest {
 
     String preference;
     List<TermVectorsRequest> requests = new ArrayList<>();
@@ -78,8 +81,10 @@ public class MultiTermVectorsRequest extends ActionRequest
                 TermVectorsRequest termVectorsRequest = requests.get(i);
                 ActionRequestValidationException validationExceptionForDoc = termVectorsRequest.validate();
                 if (validationExceptionForDoc != null) {
-                    validationException = ValidateActions.addValidationError("at multi term vectors for doc " + i,
-                            validationExceptionForDoc);
+                    validationException = ValidateActions.addValidationError(
+                        "at multi term vectors for doc " + i,
+                        validationExceptionForDoc
+                    );
                 }
             }
         }

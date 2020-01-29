@@ -50,14 +50,26 @@ public class UnmappedSignificantTerms extends InternalSignificantTerms<UnmappedS
      * {@linkplain UnmappedTerms} doesn't ever need to build it because it never returns any buckets.
      */
     protected abstract static class Bucket extends InternalSignificantTerms.Bucket<Bucket> {
-        private Bucket(BytesRef term, long subsetDf, long subsetSize, long supersetDf, long supersetSize, InternalAggregations aggregations,
-                       DocValueFormat format) {
+        private Bucket(
+            BytesRef term,
+            long subsetDf,
+            long subsetSize,
+            long supersetDf,
+            long supersetSize,
+            InternalAggregations aggregations,
+            DocValueFormat format
+        ) {
             super(subsetDf, subsetSize, supersetDf, supersetSize, aggregations, format);
         }
     }
 
-    public UnmappedSignificantTerms(String name, int requiredSize, long minDocCount, List<PipelineAggregator> pipelineAggregators,
-                                    Map<String, Object> metaData) {
+    public UnmappedSignificantTerms(
+        String name,
+        int requiredSize,
+        long minDocCount,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, requiredSize, minDocCount, pipelineAggregators, metaData);
     }
 
@@ -99,8 +111,14 @@ public class UnmappedSignificantTerms extends InternalSignificantTerms<UnmappedS
     }
 
     @Override
-    Bucket createBucket(long subsetDf, long subsetSize, long supersetDf, long supersetSize,
-                        InternalAggregations aggregations, Bucket prototype) {
+    Bucket createBucket(
+        long subsetDf,
+        long subsetSize,
+        long supersetDf,
+        long supersetSize,
+        InternalAggregations aggregations,
+        Bucket prototype
+    ) {
         throw new UnsupportedOperationException("not supported for UnmappedSignificantTerms");
     }
 

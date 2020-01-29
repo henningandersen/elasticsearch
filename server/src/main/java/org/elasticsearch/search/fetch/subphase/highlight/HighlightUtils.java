@@ -35,7 +35,7 @@ import static java.util.Collections.singleton;
 
 public final class HighlightUtils {
 
-    //U+2029 PARAGRAPH SEPARATOR (PS): each value holds a discrete passage for highlighting (unified highlighter)
+    // U+2029 PARAGRAPH SEPARATOR (PS): each value holds a discrete passage for highlighting (unified highlighter)
     public static final char PARAGRAPH_SEPARATOR = 8233;
     public static final char NULL_SEPARATOR = '\u0000';
 
@@ -46,11 +46,13 @@ public final class HighlightUtils {
     /**
      * Load field values for highlighting.
      */
-    public static List<Object> loadFieldValues(MappedFieldType fieldType,
-                                               QueryShardContext context,
-                                               FetchSubPhase.HitContext hitContext,
-                                               boolean forceSource) throws IOException {
-        //percolator needs to always load from source, thus it sets the global force source to true
+    public static List<Object> loadFieldValues(
+        MappedFieldType fieldType,
+        QueryShardContext context,
+        FetchSubPhase.HitContext hitContext,
+        boolean forceSource
+    ) throws IOException {
+        // percolator needs to always load from source, thus it sets the global force source to true
         List<Object> textsToHighlight;
         if (forceSource == false && fieldType.stored()) {
             CustomFieldsVisitor fieldVisitor = new CustomFieldsVisitor(singleton(fieldType.name()), false);
@@ -73,5 +75,5 @@ public final class HighlightUtils {
         public static final Encoder DEFAULT = new DefaultEncoder();
         public static final Encoder HTML = new SimpleHTMLEncoder();
     }
-    
+
 }

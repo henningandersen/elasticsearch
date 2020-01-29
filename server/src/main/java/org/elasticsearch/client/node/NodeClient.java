@@ -65,8 +65,12 @@ public class NodeClient extends AbstractClient {
     }
 
     @SuppressWarnings("rawtypes")
-    public void initialize(Map<ActionType, TransportAction> actions, TaskManager taskManager, Supplier<String> localNodeId,
-                           RemoteClusterService remoteClusterService) {
+    public void initialize(
+        Map<ActionType, TransportAction> actions,
+        TaskManager taskManager,
+        Supplier<String> localNodeId,
+        RemoteClusterService remoteClusterService
+    ) {
         this.actions = actions;
         this.taskManager = taskManager;
         this.localNodeId = localNodeId;
@@ -79,8 +83,11 @@ public class NodeClient extends AbstractClient {
     }
 
     @Override
-    public <Request extends ActionRequest, Response extends ActionResponse>
-    void doExecute(ActionType<Response> action, Request request, ActionListener<Response> listener) {
+    public <Request extends ActionRequest, Response extends ActionResponse> void doExecute(
+        ActionType<Response> action,
+        Request request,
+        ActionListener<Response> listener
+    ) {
         // Discard the task because the Client interface doesn't use it.
         executeLocally(action, request, listener);
     }
@@ -90,22 +97,30 @@ public class NodeClient extends AbstractClient {
      * Prefer this method if you don't need access to the task when listening for the response. This is the method used to
      * implement the {@link Client} interface.
      */
-    public <    Request extends ActionRequest,
-                Response extends ActionResponse
-            > Task executeLocally(ActionType<Response> action, Request request, ActionListener<Response> listener) {
-        return taskManager.registerAndExecute("transport", transportAction(action), request,
-            (t, r) -> listener.onResponse(r), (t, e) -> listener.onFailure(e));
+    public <Request extends ActionRequest, Response extends ActionResponse> Task executeLocally(
+        ActionType<Response> action,
+        Request request,
+        ActionListener<Response> listener
+    ) {
+        return taskManager.registerAndExecute(
+            "transport",
+            transportAction(action),
+            request,
+            (t, r) -> listener.onResponse(r),
+            (t, e) -> listener.onFailure(e)
+        );
     }
 
     /**
      * Execute an {@link ActionType} locally, returning that {@link Task} used to track it, and linking an {@link TaskListener}.
      * Prefer this method if you need access to the task when listening for the response.
      */
-    public <    Request extends ActionRequest,
-                Response extends ActionResponse
-            > Task executeLocally(ActionType<Response> action, Request request, TaskListener<Response> listener) {
-        return taskManager.registerAndExecute("transport", transportAction(action), request,
-            listener::onResponse, listener::onFailure);
+    public <Request extends ActionRequest, Response extends ActionResponse> Task executeLocally(
+        ActionType<Response> action,
+        Request request,
+        TaskListener<Response> listener
+    ) {
+        return taskManager.registerAndExecute("transport", transportAction(action), request, listener::onResponse, listener::onFailure);
     }
 
     /**
@@ -152,9 +167,9 @@ public class NodeClient extends AbstractClient {
      * Get the {@link TransportAction} for an {@link ActionType}, throwing exceptions if the action isn't available.
      */
     @SuppressWarnings("unchecked")
-    private <    Request extends ActionRequest,
-                Response extends ActionResponse
-            > TransportAction<Request, Response> transportAction(ActionType<Response> action) {
+    private <Request extends ActionRequest, Response extends ActionResponse> TransportAction<Request, Response> transportAction(
+        ActionType<Response> action
+    ) {
         if (actions == null) {
             throw new IllegalStateException("NodeClient has not been initialized");
         }

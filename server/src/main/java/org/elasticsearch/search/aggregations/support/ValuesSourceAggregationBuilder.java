@@ -34,11 +34,11 @@ import java.time.ZoneId;
 import java.util.Map;
 import java.util.Objects;
 
-public abstract class ValuesSourceAggregationBuilder<VS extends ValuesSource, AB extends ValuesSourceAggregationBuilder<VS, AB>>
-        extends AbstractAggregationBuilder<AB> {
+public abstract class ValuesSourceAggregationBuilder<VS extends ValuesSource, AB extends ValuesSourceAggregationBuilder<VS, AB>> extends
+    AbstractAggregationBuilder<AB> {
 
-    public abstract static class LeafOnly<VS extends ValuesSource, AB extends ValuesSourceAggregationBuilder<VS, AB>>
-            extends ValuesSourceAggregationBuilder<VS, AB> {
+    public abstract static class LeafOnly<VS extends ValuesSource, AB extends ValuesSourceAggregationBuilder<VS, AB>> extends
+        ValuesSourceAggregationBuilder<VS, AB> {
 
         protected LeafOnly(String name, ValuesSourceType valuesSourceType, ValueType targetValueType) {
             super(name, valuesSourceType, targetValueType);
@@ -47,8 +47,9 @@ public abstract class ValuesSourceAggregationBuilder<VS extends ValuesSource, AB
         protected LeafOnly(LeafOnly<VS, AB> clone, Builder factoriesBuilder, Map<String, Object> metaData) {
             super(clone, factoriesBuilder, metaData);
             if (factoriesBuilder.count() > 0) {
-                throw new AggregationInitializationException("Aggregator [" + name + "] of type ["
-                    + getType() + "] cannot accept sub-aggregations");
+                throw new AggregationInitializationException(
+                    "Aggregator [" + name + "] of type [" + getType() + "] cannot accept sub-aggregations"
+                );
             }
         }
 
@@ -69,8 +70,9 @@ public abstract class ValuesSourceAggregationBuilder<VS extends ValuesSource, AB
 
         @Override
         public final AB subAggregations(Builder subFactories) {
-            throw new AggregationInitializationException("Aggregator [" + name + "] of type ["
-                    + getType() + "] cannot accept sub-aggregations");
+            throw new AggregationInitializationException(
+                "Aggregator [" + name + "] of type [" + getType() + "] cannot accept sub-aggregations"
+            );
         }
     }
 
@@ -93,8 +95,11 @@ public abstract class ValuesSourceAggregationBuilder<VS extends ValuesSource, AB
         this.targetValueType = targetValueType;
     }
 
-    protected ValuesSourceAggregationBuilder(ValuesSourceAggregationBuilder<VS, AB> clone,
-                                             Builder factoriesBuilder, Map<String, Object> metaData) {
+    protected ValuesSourceAggregationBuilder(
+        ValuesSourceAggregationBuilder<VS, AB> clone,
+        Builder factoriesBuilder,
+        Map<String, Object> metaData
+    ) {
         super(clone, factoriesBuilder, metaData);
         this.valuesSourceType = clone.valuesSourceType;
         this.targetValueType = clone.targetValueType;
@@ -114,7 +119,7 @@ public abstract class ValuesSourceAggregationBuilder<VS extends ValuesSource, AB
      * true only for versions that support the serialization.
      */
     protected ValuesSourceAggregationBuilder(StreamInput in, ValuesSourceType valuesSourceType, ValueType targetValueType)
-            throws IOException {
+        throws IOException {
         super(in);
         this.valuesSourceType = valuesSourceType;
         if (serializeTargetValueType(in.getVersion())) {
@@ -307,8 +312,11 @@ public abstract class ValuesSourceAggregationBuilder<VS extends ValuesSource, AB
     }
 
     @Override
-    protected final ValuesSourceAggregatorFactory<VS> doBuild(QueryShardContext queryShardContext, AggregatorFactory parent,
-                                                              Builder subFactoriesBuilder) throws IOException {
+    protected final ValuesSourceAggregatorFactory<VS> doBuild(
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         ValuesSourceConfig<VS> config = resolveConfig(queryShardContext);
         ValuesSourceAggregatorFactory<VS> factory = innerBuild(queryShardContext, config, parent, subFactoriesBuilder);
         return factory;
@@ -337,14 +345,15 @@ public abstract class ValuesSourceAggregationBuilder<VS extends ValuesSource, AB
 
     protected ValuesSourceConfig<VS> resolveConfig(QueryShardContext queryShardContext) {
         ValueType valueType = this.valueType != null ? this.valueType : targetValueType;
-        return ValuesSourceConfig.resolve(queryShardContext,
-                valueType, field, script, missing, timeZone, format, this::resolveScriptAny);
+        return ValuesSourceConfig.resolve(queryShardContext, valueType, field, script, missing, timeZone, format, this::resolveScriptAny);
     }
 
-    protected abstract ValuesSourceAggregatorFactory<VS> innerBuild(QueryShardContext queryShardContext,
-                                                                        ValuesSourceConfig<VS> config,
-                                                                        AggregatorFactory parent,
-                                                                        Builder subFactoriesBuilder) throws IOException;
+    protected abstract ValuesSourceAggregatorFactory<VS> innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<VS> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException;
 
     @Override
     public final XContentBuilder internalXContent(XContentBuilder builder, Params params) throws IOException {
@@ -376,8 +385,7 @@ public abstract class ValuesSourceAggregationBuilder<VS extends ValuesSource, AB
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), field, format, missing, script,
-            targetValueType, timeZone, valueType, valuesSourceType);
+        return Objects.hash(super.hashCode(), field, format, missing, script, targetValueType, timeZone, valueType, valuesSourceType);
     }
 
     @Override

@@ -45,9 +45,18 @@ public class DiversifiedOrdinalsSamplerAggregator extends SamplerAggregator {
     private ValuesSource.Bytes.WithOrdinals.FieldData valuesSource;
     private int maxDocsPerValue;
 
-    DiversifiedOrdinalsSamplerAggregator(String name, int shardSize, AggregatorFactories factories,
-            SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData,
-            ValuesSource.Bytes.WithOrdinals.FieldData valuesSource, int maxDocsPerValue) throws IOException {
+    DiversifiedOrdinalsSamplerAggregator(
+        String name,
+        int shardSize,
+        AggregatorFactories factories,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        ValuesSource.Bytes.WithOrdinals.FieldData valuesSource,
+        int maxDocsPerValue
+    )
+        throws IOException {
         super(name, shardSize, factories, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.maxDocsPerValue = maxDocsPerValue;
@@ -85,7 +94,6 @@ public class DiversifiedOrdinalsSamplerAggregator extends SamplerAggregator {
         // This class extends the DiversifiedTopDocsCollector and provides
         // a lookup from elasticsearch's ValuesSource
         class ValuesDiversifiedTopDocsCollector extends DiversifiedTopDocsCollector {
-
 
             ValuesDiversifiedTopDocsCollector(int numHits, int maxHitsPerKey) {
                 super(numHits, maxHitsPerKey);
@@ -125,8 +133,7 @@ public class DiversifiedOrdinalsSamplerAggregator extends SamplerAggregator {
                             // Check there isn't a second value for this
                             // document
                             if (globalOrds.nextOrd() != SortedSetDocValues.NO_MORE_ORDS) {
-                                throw new IllegalArgumentException(
-                                        "Sample diversifying key must be a single valued-field");
+                                throw new IllegalArgumentException("Sample diversifying key must be a single valued-field");
                             }
                             return true;
                         } else {

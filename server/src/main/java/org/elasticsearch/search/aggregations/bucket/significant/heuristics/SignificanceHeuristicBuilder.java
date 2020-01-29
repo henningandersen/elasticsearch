@@ -17,11 +17,8 @@
  * under the License.
  */
 
-
 package org.elasticsearch.search.aggregations.bucket.significant.heuristics;
 
 import org.elasticsearch.common.xcontent.ToXContentFragment;
 
-
-public interface SignificanceHeuristicBuilder extends ToXContentFragment {
-}
+public interface SignificanceHeuristicBuilder extends ToXContentFragment {}

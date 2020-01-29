@@ -61,9 +61,11 @@ public class BucketScriptAggregatorTests extends AggregatorTestCase {
 
     @Override
     protected ScriptService getMockScriptService() {
-        MockScriptEngine scriptEngine = new MockScriptEngine(MockScriptEngine.NAME,
+        MockScriptEngine scriptEngine = new MockScriptEngine(
+            MockScriptEngine.NAME,
             Collections.singletonMap(SCRIPT_NAME, script -> script.get("the_avg")),
-            Collections.emptyMap());
+            Collections.emptyMap()
+        );
         Map<String, ScriptEngine> engines = Collections.singletonMap(scriptEngine.getType(), scriptEngine);
 
         return new ScriptService(Settings.EMPTY, engines, ScriptModule.CORE_CONTEXTS);
@@ -77,13 +79,17 @@ public class BucketScriptAggregatorTests extends AggregatorTestCase {
         fieldType1.setName("the_field");
         fieldType1.setHasDocValues(true);
 
-        FiltersAggregationBuilder filters = new FiltersAggregationBuilder("placeholder", new MatchAllQueryBuilder())
-            .subAggregation(new TermsAggregationBuilder("the_terms", ValueType.STRING).field("the_field")
-                .subAggregation(new AvgAggregationBuilder("the_avg").field("number_field")))
-            .subAggregation(new BucketScriptPipelineAggregationBuilder("bucket_script",
-                Collections.singletonMap("the_avg", "the_terms['test1']>the_avg.value"),
-                new Script(ScriptType.INLINE, MockScriptEngine.NAME, SCRIPT_NAME, Collections.emptyMap())));
-
+        FiltersAggregationBuilder filters = new FiltersAggregationBuilder("placeholder", new MatchAllQueryBuilder()).subAggregation(
+            new TermsAggregationBuilder("the_terms", ValueType.STRING).field("the_field")
+                .subAggregation(new AvgAggregationBuilder("the_avg").field("number_field"))
+        )
+            .subAggregation(
+                new BucketScriptPipelineAggregationBuilder(
+                    "bucket_script",
+                    Collections.singletonMap("the_avg", "the_terms['test1']>the_avg.value"),
+                    new Script(ScriptType.INLINE, MockScriptEngine.NAME, SCRIPT_NAME, Collections.emptyMap())
+                )
+            );
 
         testCase(filters, new MatchAllDocsQuery(), iw -> {
             Document doc = new Document();
@@ -95,15 +101,22 @@ public class BucketScriptAggregatorTests extends AggregatorTestCase {
             doc.add(new SortedSetDocValuesField("the_field", new BytesRef("test2")));
             doc.add(new SortedNumericDocValuesField("number_field", 55));
             iw.addDocument(doc);
-        }, f -> {
-           assertThat(((InternalSimpleValue)(f.getBuckets().get(0).getAggregations().get("bucket_script"))).value,
-               equalTo(19.0));
-        }, fieldType, fieldType1);
+        },
+            f -> {
+                assertThat(((InternalSimpleValue) (f.getBuckets().get(0).getAggregations().get("bucket_script"))).value, equalTo(19.0));
+            },
+            fieldType,
+            fieldType1
+        );
     }
 
-    private void testCase(FiltersAggregationBuilder aggregationBuilder, Query query,
-                          CheckedConsumer<RandomIndexWriter, IOException> buildIndex,
-                          Consumer<InternalFilters> verify, MappedFieldType... fieldType) throws IOException {
+    private void testCase(
+        FiltersAggregationBuilder aggregationBuilder,
+        Query query,
+        CheckedConsumer<RandomIndexWriter, IOException> buildIndex,
+        Consumer<InternalFilters> verify,
+        MappedFieldType... fieldType
+    ) throws IOException {
 
         try (Directory directory = newDirectory()) {
             RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory);

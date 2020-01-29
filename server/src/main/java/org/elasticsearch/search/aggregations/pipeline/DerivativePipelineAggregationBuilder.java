@@ -152,13 +152,17 @@ public class DerivativePipelineAggregationBuilder extends AbstractPipelineAggreg
     }
 
     @Override
-    public void doValidate(AggregatorFactory parent, Collection<AggregationBuilder> aggFactories,
-            Collection<PipelineAggregationBuilder> pipelineAggregatoractories) {
+    public void doValidate(
+        AggregatorFactory parent,
+        Collection<AggregationBuilder> aggFactories,
+        Collection<PipelineAggregationBuilder> pipelineAggregatoractories
+    ) {
         if (bucketsPaths.length != 1) {
-            throw new IllegalStateException(PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
-                    + " must contain a single entry for aggregation [" + name + "]");
+            throw new IllegalStateException(
+                PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName() + " must contain a single entry for aggregation [" + name + "]"
+            );
         }
-        
+
         validateSequentiallyOrderedParentAggs(parent, NAME, name);
     }
 
@@ -197,8 +201,10 @@ public class DerivativePipelineAggregationBuilder extends AbstractPipelineAggreg
                 } else if (UNIT_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                     units = parser.text();
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + pipelineAggregatorName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + pipelineAggregatorName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else if (token == XContentParser.Token.START_ARRAY) {
                 if (BUCKETS_PATH_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
@@ -209,22 +215,31 @@ public class DerivativePipelineAggregationBuilder extends AbstractPipelineAggreg
                     }
                     bucketsPaths = paths.toArray(new String[paths.size()]);
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + pipelineAggregatorName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + pipelineAggregatorName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else {
-                throw new ParsingException(parser.getTokenLocation(),
-                        "Unexpected token " + token + " in [" + pipelineAggregatorName + "].");
+                throw new ParsingException(
+                    parser.getTokenLocation(),
+                    "Unexpected token " + token + " in [" + pipelineAggregatorName + "]."
+                );
             }
         }
 
         if (bucketsPaths == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Missing required field [" + BUCKETS_PATH_FIELD.getPreferredName()
-                    + "] for derivative aggregation [" + pipelineAggregatorName + "]");
+            throw new ParsingException(
+                parser.getTokenLocation(),
+                "Missing required field ["
+                    + BUCKETS_PATH_FIELD.getPreferredName()
+                    + "] for derivative aggregation ["
+                    + pipelineAggregatorName
+                    + "]"
+            );
         }
 
-        DerivativePipelineAggregationBuilder factory =
-                new DerivativePipelineAggregationBuilder(pipelineAggregatorName, bucketsPaths[0]);
+        DerivativePipelineAggregationBuilder factory = new DerivativePipelineAggregationBuilder(pipelineAggregatorName, bucketsPaths[0]);
         if (format != null) {
             factory.format(format);
         }
@@ -243,9 +258,7 @@ public class DerivativePipelineAggregationBuilder extends AbstractPipelineAggreg
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         DerivativePipelineAggregationBuilder other = (DerivativePipelineAggregationBuilder) obj;
-        return Objects.equals(format, other.format) &&
-            gapPolicy == other.gapPolicy &&
-            Objects.equals(units, other.units);
+        return Objects.equals(format, other.format) && gapPolicy == other.gapPolicy && Objects.equals(units, other.units);
     }
 
     @Override

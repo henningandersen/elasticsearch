@@ -98,8 +98,12 @@ public class GeoBoundsAggregationBuilder extends ValuesSourceAggregationBuilder<
     }
 
     @Override
-    protected GeoBoundsAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<ValuesSource.GeoPoint> config,
-                                                    AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected GeoBoundsAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource.GeoPoint> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         return new GeoBoundsAggregatorFactory(name, config, wrapLongitude, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 

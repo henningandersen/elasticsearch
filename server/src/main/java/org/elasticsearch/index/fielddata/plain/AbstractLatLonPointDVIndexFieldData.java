@@ -36,15 +36,18 @@ import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.indices.breaker.CircuitBreakerService;
 import org.elasticsearch.search.MultiValueMode;
 
-public abstract class AbstractLatLonPointDVIndexFieldData extends DocValuesIndexFieldData
-    implements IndexGeoPointFieldData {
+public abstract class AbstractLatLonPointDVIndexFieldData extends DocValuesIndexFieldData implements IndexGeoPointFieldData {
     AbstractLatLonPointDVIndexFieldData(Index index, String fieldName) {
         super(index, fieldName);
     }
 
     @Override
-    public SortField sortField(@Nullable Object missingValue, MultiValueMode sortMode, XFieldComparatorSource.Nested nested,
-            boolean reverse) {
+    public SortField sortField(
+        @Nullable Object missingValue,
+        MultiValueMode sortMode,
+        XFieldComparatorSource.Nested nested,
+        boolean reverse
+    ) {
         throw new IllegalArgumentException("can't sort on geo_point field without using specific sorting feature, like geo_distance");
     }
 
@@ -73,17 +76,28 @@ public abstract class AbstractLatLonPointDVIndexFieldData extends DocValuesIndex
             // dv properties could be "unset", if you e.g. used only StoredField with this same name in the segment.
             if (fieldInfo.getDocValuesType() != DocValuesType.NONE
                 && fieldInfo.getDocValuesType() != LatLonDocValuesField.TYPE.docValuesType()) {
-                throw new IllegalArgumentException("field=\"" + fieldInfo.name + "\" was indexed with docValuesType="
-                    + fieldInfo.getDocValuesType() + " but this type has docValuesType="
-                    + LatLonDocValuesField.TYPE.docValuesType() + ", is the field really a LatLonDocValuesField?");
+                throw new IllegalArgumentException(
+                    "field=\""
+                        + fieldInfo.name
+                        + "\" was indexed with docValuesType="
+                        + fieldInfo.getDocValuesType()
+                        + " but this type has docValuesType="
+                        + LatLonDocValuesField.TYPE.docValuesType()
+                        + ", is the field really a LatLonDocValuesField?"
+                );
             }
         }
     }
 
     public static class Builder implements IndexFieldData.Builder {
         @Override
-        public IndexFieldData<?> build(IndexSettings indexSettings, MappedFieldType fieldType, IndexFieldDataCache cache,
-                                       CircuitBreakerService breakerService, MapperService mapperService) {
+        public IndexFieldData<?> build(
+            IndexSettings indexSettings,
+            MappedFieldType fieldType,
+            IndexFieldDataCache cache,
+            CircuitBreakerService breakerService,
+            MapperService mapperService
+        ) {
             // ignore breaker
             return new LatLonPointDVIndexFieldData(indexSettings.getIndex(), fieldType.name());
         }

@@ -56,8 +56,7 @@ public class StatsAggregationBuilder extends ValuesSourceAggregationBuilder.Leaf
         super(name, CoreValuesSourceType.NUMERIC, ValueType.NUMERIC);
     }
 
-    protected StatsAggregationBuilder(StatsAggregationBuilder clone,
-                                      Builder factoriesBuilder, Map<String, Object> metaData) {
+    protected StatsAggregationBuilder(StatsAggregationBuilder clone, Builder factoriesBuilder, Map<String, Object> metaData) {
         super(clone, factoriesBuilder, metaData);
     }
 
@@ -79,8 +78,12 @@ public class StatsAggregationBuilder extends ValuesSourceAggregationBuilder.Leaf
     }
 
     @Override
-    protected StatsAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<Numeric> config,
-                                                AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected StatsAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<Numeric> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         return new StatsAggregatorFactory(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 

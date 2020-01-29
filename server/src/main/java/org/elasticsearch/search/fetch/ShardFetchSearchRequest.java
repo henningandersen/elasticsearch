@@ -73,4 +73,4 @@ public class ShardFetchSearchRequest extends ShardFetchRequest implements Indice
         return originalIndices.indicesOptions();
     }
 
-    }
+}

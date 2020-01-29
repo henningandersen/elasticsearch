@@ -53,8 +53,13 @@ public class SortedSetDVOrdinalsIndexFieldData extends DocValuesIndexFieldData i
     private final Function<SortedSetDocValues, ScriptDocValues<?>> scriptFunction;
     private static final Logger logger = LogManager.getLogger(SortedSetDVOrdinalsIndexFieldData.class);
 
-    public SortedSetDVOrdinalsIndexFieldData(IndexSettings indexSettings, IndexFieldDataCache cache, String fieldName,
-            CircuitBreakerService breakerService, Function<SortedSetDocValues, ScriptDocValues<?>> scriptFunction) {
+    public SortedSetDVOrdinalsIndexFieldData(
+        IndexSettings indexSettings,
+        IndexFieldDataCache cache,
+        String fieldName,
+        CircuitBreakerService breakerService,
+        Function<SortedSetDocValues, ScriptDocValues<?>> scriptFunction
+    ) {
         super(indexSettings.getIndex(), fieldName);
         this.indexSettings = indexSettings;
         this.cache = cache;
@@ -69,15 +74,19 @@ public class SortedSetDVOrdinalsIndexFieldData extends DocValuesIndexFieldData i
          * Check if we can use a simple {@link SortedSetSortField} compatible with index sorting and
          * returns a custom sort field otherwise.
          */
-        if (nested != null ||
-                (sortMode != MultiValueMode.MAX && sortMode != MultiValueMode.MIN) ||
-                (source.sortMissingLast(missingValue) == false && source.sortMissingFirst(missingValue) == false)) {
+        if (nested != null
+            || (sortMode != MultiValueMode.MAX && sortMode != MultiValueMode.MIN)
+            || (source.sortMissingLast(missingValue) == false && source.sortMissingFirst(missingValue) == false)) {
             return new SortField(getFieldName(), source, reverse);
         }
-        SortField sortField = new SortedSetSortField(fieldName, reverse,
-            sortMode == MultiValueMode.MAX ? SortedSetSelector.Type.MAX : SortedSetSelector.Type.MIN);
-        sortField.setMissingValue(source.sortMissingLast(missingValue) ^ reverse ?
-            SortedSetSortField.STRING_LAST : SortedSetSortField.STRING_FIRST);
+        SortField sortField = new SortedSetSortField(
+            fieldName,
+            reverse,
+            sortMode == MultiValueMode.MAX ? SortedSetSelector.Type.MAX : SortedSetSelector.Type.MIN
+        );
+        sortField.setMissingValue(
+            source.sortMissingLast(missingValue) ^ reverse ? SortedSetSortField.STRING_LAST : SortedSetSortField.STRING_FIRST
+        );
         return sortField;
     }
 

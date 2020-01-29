@@ -44,9 +44,18 @@ public class DiversifiedNumericSamplerAggregator extends SamplerAggregator {
     private ValuesSource.Numeric valuesSource;
     private int maxDocsPerValue;
 
-    DiversifiedNumericSamplerAggregator(String name, int shardSize, AggregatorFactories factories,
-            SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData,
-            ValuesSource.Numeric valuesSource, int maxDocsPerValue) throws IOException {
+    DiversifiedNumericSamplerAggregator(
+        String name,
+        int shardSize,
+        AggregatorFactories factories,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        ValuesSource.Numeric valuesSource,
+        int maxDocsPerValue
+    )
+        throws IOException {
         super(name, shardSize, factories, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.maxDocsPerValue = maxDocsPerValue;
@@ -103,8 +112,7 @@ public class DiversifiedNumericSamplerAggregator extends SamplerAggregator {
                     public boolean advanceExact(int target) throws IOException {
                         if (values.advanceExact(target)) {
                             if (values.docValueCount() > 1) {
-                                throw new IllegalArgumentException(
-                                        "Sample diversifying key must be a single valued-field");
+                                throw new IllegalArgumentException("Sample diversifying key must be a single valued-field");
                             }
                             return true;
                         } else {

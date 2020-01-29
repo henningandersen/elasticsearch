@@ -29,33 +29,52 @@ import org.elasticsearch.test.ESIntegTestCase.Scope;
 
 import static org.hamcrest.Matchers.equalTo;
 
-@ClusterScope(scope= Scope.TEST, numDataNodes =0)
+@ClusterScope(scope = Scope.TEST, numDataNodes = 0)
 public class UpdateSettingsValidationIT extends ESIntegTestCase {
     public void testUpdateSettingsValidation() throws Exception {
         internalCluster().startNodes(
-                Settings.builder().put(Node.NODE_DATA_SETTING.getKey(), false).build(),
-                Settings.builder().put(Node.NODE_MASTER_SETTING.getKey(), false).build(),
-                Settings.builder().put(Node.NODE_MASTER_SETTING.getKey(), false).build()
+            Settings.builder().put(Node.NODE_DATA_SETTING.getKey(), false).build(),
+            Settings.builder().put(Node.NODE_MASTER_SETTING.getKey(), false).build(),
+            Settings.builder().put(Node.NODE_MASTER_SETTING.getKey(), false).build()
         );
 
         createIndex("test");
         NumShards test = getNumShards("test");
 
-        ClusterHealthResponse healthResponse = client().admin().cluster().prepareHealth("test")
-            .setWaitForEvents(Priority.LANGUID).setWaitForNodes("3").setWaitForGreenStatus().execute().actionGet();
+        ClusterHealthResponse healthResponse = client().admin()
+            .cluster()
+            .prepareHealth("test")
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForNodes("3")
+            .setWaitForGreenStatus()
+            .execute()
+            .actionGet();
         assertThat(healthResponse.isTimedOut(), equalTo(false));
         assertThat(healthResponse.getIndices().get("test").getActiveShards(), equalTo(test.totalNumShards));
 
-        client().admin().indices().prepareUpdateSettings("test")
-            .setSettings(Settings.builder().put("index.number_of_replicas", 0)).execute().actionGet();
-        healthResponse = client().admin().cluster().prepareHealth("test")
-            .setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus().execute().actionGet();
+        client().admin()
+            .indices()
+            .prepareUpdateSettings("test")
+            .setSettings(Settings.builder().put("index.number_of_replicas", 0))
+            .execute()
+            .actionGet();
+        healthResponse = client().admin()
+            .cluster()
+            .prepareHealth("test")
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForGreenStatus()
+            .execute()
+            .actionGet();
         assertThat(healthResponse.isTimedOut(), equalTo(false));
         assertThat(healthResponse.getIndices().get("test").getActiveShards(), equalTo(test.numPrimaries));
 
         try {
-            client().admin().indices().prepareUpdateSettings("test")
-                .setSettings(Settings.builder().put("index.refresh_interval", "")).execute().actionGet();
+            client().admin()
+                .indices()
+                .prepareUpdateSettings("test")
+                .setSettings(Settings.builder().put("index.refresh_interval", ""))
+                .execute()
+                .actionGet();
             fail();
         } catch (IllegalArgumentException ex) {
             logger.info("Error message: [{}]", ex.getMessage());

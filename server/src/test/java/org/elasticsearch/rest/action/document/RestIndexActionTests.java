@@ -73,20 +73,22 @@ public class RestIndexActionTests extends RestActionTestCase {
     }
 
     public void testAutoIdDefaultsToOptypeIndexForOlderVersions() {
-        checkAutoIdOpType(VersionUtils.randomVersionBetween(random(), null,
-            VersionUtils.getPreviousVersion(Version.V_7_5_0)), DocWriteRequest.OpType.INDEX);
+        checkAutoIdOpType(
+            VersionUtils.randomVersionBetween(random(), null, VersionUtils.getPreviousVersion(Version.V_7_5_0)),
+            DocWriteRequest.OpType.INDEX
+        );
     }
 
     private void checkAutoIdOpType(Version minClusterVersion, DocWriteRequest.OpType expectedOpType) {
-        RestRequest autoIdRequest = new FakeRestRequest.Builder(xContentRegistry())
-            .withMethod(RestRequest.Method.POST)
+        RestRequest autoIdRequest = new FakeRestRequest.Builder(xContentRegistry()).withMethod(RestRequest.Method.POST)
             .withPath("/some_index/_doc")
             .withContent(new BytesArray("{}"), XContentType.JSON)
             .build();
-        clusterStateSupplier.set(ClusterState.builder(ClusterName.DEFAULT)
-            .nodes(DiscoveryNodes.builder()
-                .add(new DiscoveryNode("test", buildNewFakeTransportAddress(), minClusterVersion))
-                .build()).build());
+        clusterStateSupplier.set(
+            ClusterState.builder(ClusterName.DEFAULT)
+                .nodes(DiscoveryNodes.builder().add(new DiscoveryNode("test", buildNewFakeTransportAddress(), minClusterVersion)).build())
+                .build()
+        );
         dispatchRequest(autoIdRequest);
         ArgumentCaptor<IndexRequest> argumentCaptor = ArgumentCaptor.forClass(IndexRequest.class);
         verify(nodeClient).index(argumentCaptor.capture(), any(ActionListener.class));

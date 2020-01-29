@@ -34,14 +34,19 @@ import java.util.Map;
 
 public class GlobalAggregator extends BucketsAggregator implements SingleBucketAggregator {
 
-    public GlobalAggregator(String name, AggregatorFactories subFactories, SearchContext aggregationContext,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    public GlobalAggregator(
+        String name,
+        AggregatorFactories subFactories,
+        SearchContext aggregationContext,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, subFactories, aggregationContext, null, pipelineAggregators, metaData);
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         return new LeafBucketCollectorBase(sub, null) {
             @Override
             public void collect(int doc, long bucket) throws IOException {
@@ -54,13 +59,19 @@ public class GlobalAggregator extends BucketsAggregator implements SingleBucketA
     @Override
     public InternalAggregation buildAggregation(long owningBucketOrdinal) throws IOException {
         assert owningBucketOrdinal == 0 : "global aggregator can only be a top level aggregator";
-        return new InternalGlobal(name, bucketDocCount(owningBucketOrdinal), bucketAggregations(owningBucketOrdinal), pipelineAggregators(),
-                metaData());
+        return new InternalGlobal(
+            name,
+            bucketDocCount(owningBucketOrdinal),
+            bucketAggregations(owningBucketOrdinal),
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override
     public InternalAggregation buildEmptyAggregation() {
         throw new UnsupportedOperationException(
-                "global aggregations cannot serve as sub-aggregations, hence should never be called on #buildEmptyAggregations");
+            "global aggregations cannot serve as sub-aggregations, hence should never be called on #buildEmptyAggregations"
+        );
     }
 }

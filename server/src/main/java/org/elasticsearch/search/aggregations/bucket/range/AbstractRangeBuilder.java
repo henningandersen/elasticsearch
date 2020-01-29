@@ -37,8 +37,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-public abstract class AbstractRangeBuilder<AB extends AbstractRangeBuilder<AB, R>, R extends Range>
-        extends ValuesSourceAggregationBuilder<ValuesSource.Numeric, AB> implements MultiBucketAggregationBuilder {
+public abstract class AbstractRangeBuilder<AB extends AbstractRangeBuilder<AB, R>, R extends Range> extends ValuesSourceAggregationBuilder<
+    ValuesSource.Numeric,
+    AB> implements MultiBucketAggregationBuilder {
 
     protected final InternalRange.Factory<?, ?> rangeFactory;
     protected List<R> ranges = new ArrayList<>();
@@ -49,8 +50,11 @@ public abstract class AbstractRangeBuilder<AB extends AbstractRangeBuilder<AB, R
         this.rangeFactory = rangeFactory;
     }
 
-    protected AbstractRangeBuilder(AbstractRangeBuilder<AB, R> clone,
-                                   AggregatorFactories.Builder factoriesBuilder, Map<String, Object> metaData) {
+    protected AbstractRangeBuilder(
+        AbstractRangeBuilder<AB, R> clone,
+        AggregatorFactories.Builder factoriesBuilder,
+        Map<String, Object> metaData
+    ) {
         super(clone, factoriesBuilder, metaData);
         this.rangeFactory = clone.rangeFactory;
         this.ranges = new ArrayList<>(clone.ranges);
@@ -61,7 +65,7 @@ public abstract class AbstractRangeBuilder<AB extends AbstractRangeBuilder<AB, R
      * Read from a stream.
      */
     protected AbstractRangeBuilder(StreamInput in, InternalRange.Factory<?, ?> rangeFactory, Writeable.Reader<R> rangeReader)
-            throws IOException {
+        throws IOException {
         super(in, rangeFactory.getValueSourceType(), rangeFactory.getValueType());
         this.rangeFactory = rangeFactory;
         ranges = in.readList(rangeReader);
@@ -150,7 +154,6 @@ public abstract class AbstractRangeBuilder<AB extends AbstractRangeBuilder<AB, R
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         AbstractRangeBuilder<AB, R> other = (AbstractRangeBuilder<AB, R>) obj;
-        return Objects.equals(ranges, other.ranges)
-                && Objects.equals(keyed, other.keyed);
+        return Objects.equals(ranges, other.ranges) && Objects.equals(keyed, other.keyed);
     }
 }

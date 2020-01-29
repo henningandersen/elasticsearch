@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-
 public class DocumentMapper implements ToXContentFragment {
 
     public static class Builder {
@@ -74,13 +73,14 @@ public class DocumentMapper implements ToXContentFragment {
             final String type = rootObjectMapper.name();
             final DocumentMapper existingMapper = mapperService.documentMapper();
             final Version indexCreatedVersion = mapperService.getIndexSettings().getIndexVersionCreated();
-            final Map<String, TypeParser> metadataMapperParsers =
-                mapperService.mapperRegistry.getMetadataMapperParsers(indexCreatedVersion);
+            final Map<String, TypeParser> metadataMapperParsers = mapperService.mapperRegistry.getMetadataMapperParsers(
+                indexCreatedVersion
+            );
             for (Map.Entry<String, MetadataFieldMapper.TypeParser> entry : metadataMapperParsers.entrySet()) {
                 final String name = entry.getKey();
                 final MetadataFieldMapper existingMetadataMapper = existingMapper == null
-                        ? null
-                        : (MetadataFieldMapper) existingMapper.mappers().getMapper(name);
+                    ? null
+                    : (MetadataFieldMapper) existingMapper.mappers().getMapper(name);
                 final MetadataFieldMapper metadataMapper;
                 if (existingMetadataMapper == null) {
                     final TypeParser parser = entry.getValue();
@@ -106,10 +106,11 @@ public class DocumentMapper implements ToXContentFragment {
         public DocumentMapper build(MapperService mapperService) {
             Objects.requireNonNull(rootObjectMapper, "Mapper builder must have the root object mapper set");
             Mapping mapping = new Mapping(
-                    mapperService.getIndexSettings().getIndexVersionCreated(),
-                    rootObjectMapper,
-                    metadataMappers.values().toArray(new MetadataFieldMapper[metadataMappers.values().size()]),
-                    meta);
+                mapperService.getIndexSettings().getIndexVersionCreated(),
+                rootObjectMapper,
+                metadataMappers.values().toArray(new MetadataFieldMapper[metadataMappers.values().size()]),
+                meta
+            );
             return new DocumentMapper(mapperService, mapping);
         }
     }
@@ -150,15 +151,16 @@ public class DocumentMapper implements ToXContentFragment {
                 newFieldMappers.add(metadataMapper);
             }
         }
-        MapperUtils.collect(this.mapping.root,
-            newObjectMappers, newFieldMappers, newFieldAliasMappers);
+        MapperUtils.collect(this.mapping.root, newObjectMappers, newFieldMappers, newFieldAliasMappers);
 
         final IndexAnalyzers indexAnalyzers = mapperService.getIndexAnalyzers();
-        this.fieldMappers = new DocumentFieldMappers(newFieldMappers,
-                newFieldAliasMappers,
-                indexAnalyzers.getDefaultIndexAnalyzer(),
-                indexAnalyzers.getDefaultSearchAnalyzer(),
-                indexAnalyzers.getDefaultSearchQuoteAnalyzer());
+        this.fieldMappers = new DocumentFieldMappers(
+            newFieldMappers,
+            newFieldAliasMappers,
+            indexAnalyzers.getDefaultIndexAnalyzer(),
+            indexAnalyzers.getDefaultSearchAnalyzer(),
+            indexAnalyzers.getDefaultSearchQuoteAnalyzer()
+        );
 
         Map<String, ObjectMapper> builder = new HashMap<>();
         for (ObjectMapper objectMapper : newObjectMappers) {
@@ -183,14 +185,26 @@ public class DocumentMapper implements ToXContentFragment {
             throw new ElasticsearchGenerationException("failed to serialize source for type [" + type + "]", e);
         }
 
-        final Collection<String> deleteTombstoneMetadataFields = Arrays.asList(VersionFieldMapper.NAME, IdFieldMapper.NAME,
-            TypeFieldMapper.NAME, SeqNoFieldMapper.NAME, SeqNoFieldMapper.PRIMARY_TERM_NAME, SeqNoFieldMapper.TOMBSTONE_NAME);
+        final Collection<String> deleteTombstoneMetadataFields = Arrays.asList(
+            VersionFieldMapper.NAME,
+            IdFieldMapper.NAME,
+            TypeFieldMapper.NAME,
+            SeqNoFieldMapper.NAME,
+            SeqNoFieldMapper.PRIMARY_TERM_NAME,
+            SeqNoFieldMapper.TOMBSTONE_NAME
+        );
         this.deleteTombstoneMetadataFieldMappers = Stream.of(mapping.metadataMappers)
-            .filter(field -> deleteTombstoneMetadataFields.contains(field.name())).toArray(MetadataFieldMapper[]::new);
+            .filter(field -> deleteTombstoneMetadataFields.contains(field.name()))
+            .toArray(MetadataFieldMapper[]::new);
         final Collection<String> noopTombstoneMetadataFields = Arrays.asList(
-            VersionFieldMapper.NAME, SeqNoFieldMapper.NAME, SeqNoFieldMapper.PRIMARY_TERM_NAME, SeqNoFieldMapper.TOMBSTONE_NAME);
+            VersionFieldMapper.NAME,
+            SeqNoFieldMapper.NAME,
+            SeqNoFieldMapper.PRIMARY_TERM_NAME,
+            SeqNoFieldMapper.TOMBSTONE_NAME
+        );
         this.noopTombstoneMetadataFieldMappers = Stream.of(mapping.metadataMappers)
-            .filter(field -> noopTombstoneMetadataFields.contains(field.name())).toArray(MetadataFieldMapper[]::new);
+            .filter(field -> noopTombstoneMetadataFields.contains(field.name()))
+            .toArray(MetadataFieldMapper[]::new);
     }
 
     public Mapping mapping() {

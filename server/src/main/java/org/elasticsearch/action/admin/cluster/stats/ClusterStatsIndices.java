@@ -151,8 +151,7 @@ public class ClusterStatsIndices implements ToXContentFragment {
         double totalIndexReplication = 0;
         double maxIndexReplication = -1;
 
-        public ShardStats() {
-        }
+        public ShardStats() {}
 
         /**
          * number of indices in the cluster

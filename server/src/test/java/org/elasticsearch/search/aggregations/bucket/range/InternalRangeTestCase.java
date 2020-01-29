@@ -42,32 +42,38 @@ public abstract class InternalRangeTestCase<T extends InternalAggregation & Rang
     }
 
     @Override
-    protected T createTestInstance(String name,
-                                   List<PipelineAggregator> pipelineAggregators,
-                                   Map<String, Object> metaData,
-                                   InternalAggregations aggregations) {
+    protected T createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        InternalAggregations aggregations
+    ) {
         return createTestInstance(name, pipelineAggregators, metaData, aggregations, keyed);
     }
 
-    protected abstract T createTestInstance(String name,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData,
-                                            InternalAggregations aggregations,
-                                            boolean keyed);
+    protected abstract T createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        InternalAggregations aggregations,
+        boolean keyed
+    );
+
     @Override
     protected void assertReduced(T reduced, List<T> inputs) {
         final Map<String, Long> expectedCounts = new TreeMap<>();
         for (T input : inputs) {
             for (Range.Bucket bucket : input.getBuckets()) {
-                expectedCounts.compute(bucket.getKeyAsString(),
-                        (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount());
+                expectedCounts.compute(
+                    bucket.getKeyAsString(),
+                    (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount()
+                );
 
             }
         }
         final Map<String, Long> actualCounts = new TreeMap<>();
         for (Range.Bucket bucket : reduced.getBuckets()) {
-            actualCounts.compute(bucket.getKeyAsString(),
-                    (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount());
+            actualCounts.compute(bucket.getKeyAsString(), (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount());
         }
         assertEquals(expectedCounts, actualCounts);
     }

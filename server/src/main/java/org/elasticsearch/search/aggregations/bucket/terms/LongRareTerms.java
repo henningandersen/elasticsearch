@@ -18,7 +18,6 @@
  */
 package org.elasticsearch.search.aggregations.bucket.terms;
 
-
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.util.SetBackedScalingCuckooFilter;
@@ -100,9 +99,16 @@ public class LongRareTerms extends InternalMappedRareTerms<LongRareTerms, LongRa
         }
     }
 
-    LongRareTerms(String name, BucketOrder order, List<PipelineAggregator> pipelineAggregators,
-                  Map<String, Object> metaData, DocValueFormat format,
-                  List<LongRareTerms.Bucket> buckets, long maxDocCount, SetBackedScalingCuckooFilter filter) {
+    LongRareTerms(
+        String name,
+        BucketOrder order,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        DocValueFormat format,
+        List<LongRareTerms.Bucket> buckets,
+        long maxDocCount,
+        SetBackedScalingCuckooFilter filter
+    ) {
         super(name, order, pipelineAggregators, metaData, format, buckets, maxDocCount, filter);
     }
 
@@ -130,8 +136,7 @@ public class LongRareTerms extends InternalMappedRareTerms<LongRareTerms, LongRa
 
     @Override
     protected LongRareTerms createWithFilter(String name, List<LongRareTerms.Bucket> buckets, SetBackedScalingCuckooFilter filter) {
-        return new LongRareTerms(name, order, pipelineAggregators(), getMetaData(), format,
-            buckets, maxDocCount, filter);
+        return new LongRareTerms(name, order, pipelineAggregators(), getMetaData(), format, buckets, maxDocCount, filter);
     }
 
     @Override

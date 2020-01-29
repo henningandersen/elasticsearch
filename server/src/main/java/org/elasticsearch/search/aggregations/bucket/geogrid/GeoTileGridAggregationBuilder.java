@@ -60,15 +60,36 @@ public class GeoTileGridAggregationBuilder extends GeoGridAggregationBuilder {
 
     @Override
     protected ValuesSourceAggregatorFactory<ValuesSource.GeoPoint> createFactory(
-            String name, ValuesSourceConfig<ValuesSource.GeoPoint> config, int precision, int requiredSize, int shardSize,
-            GeoBoundingBox geoBoundingBox, QueryShardContext queryShardContext, AggregatorFactory parent,
-            AggregatorFactories.Builder subFactoriesBuilder, Map<String, Object> metaData ) throws IOException {
-        return new GeoTileGridAggregatorFactory(name, config, precision, requiredSize, shardSize, geoBoundingBox,
-            queryShardContext, parent, subFactoriesBuilder, metaData);
+        String name,
+        ValuesSourceConfig<ValuesSource.GeoPoint> config,
+        int precision,
+        int requiredSize,
+        int shardSize,
+        GeoBoundingBox geoBoundingBox,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new GeoTileGridAggregatorFactory(
+            name,
+            config,
+            precision,
+            requiredSize,
+            shardSize,
+            geoBoundingBox,
+            queryShardContext,
+            parent,
+            subFactoriesBuilder,
+            metaData
+        );
     }
 
-    private GeoTileGridAggregationBuilder(GeoTileGridAggregationBuilder clone, AggregatorFactories.Builder factoriesBuilder,
-                                          Map<String, Object> metaData) {
+    private GeoTileGridAggregationBuilder(
+        GeoTileGridAggregationBuilder clone,
+        AggregatorFactories.Builder factoriesBuilder,
+        Map<String, Object> metaData
+    ) {
         super(clone, factoriesBuilder, metaData);
     }
 

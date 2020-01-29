@@ -44,8 +44,13 @@ public class IndicesSegmentResponseTests extends ESTestCase {
         segment.segmentSort = new Sort(sortField);
 
         ShardSegments shardSegments = new ShardSegments(shardRouting, Collections.singletonList(segment));
-        IndicesSegmentResponse response =
-            new IndicesSegmentResponse(new ShardSegments[] { shardSegments }, 1, 1, 0, Collections.emptyList());
+        IndicesSegmentResponse response = new IndicesSegmentResponse(
+            new ShardSegments[] { shardSegments },
+            1,
+            1,
+            0,
+            Collections.emptyList()
+        );
         try (XContentBuilder builder = jsonBuilder()) {
             response.toXContent(builder, ToXContent.EMPTY_PARAMS);
         }

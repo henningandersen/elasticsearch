@@ -35,26 +35,37 @@ import java.util.Map;
 
 class ValueCountAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSource> {
 
-    ValueCountAggregatorFactory(String name, ValuesSourceConfig<ValuesSource> config, QueryShardContext queryShardContext,
-            AggregatorFactory parent, AggregatorFactories.Builder subFactoriesBuilder, Map<String, Object> metaData) throws IOException {
+    ValueCountAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource> config,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return new ValueCountAggregator(name, null, searchContext, parent, pipelineAggregators, metaData);
     }
 
     @Override
-    protected Aggregator doCreateInternal(ValuesSource valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator doCreateInternal(
+        ValuesSource valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return new ValueCountAggregator(name, valuesSource, searchContext, parent, pipelineAggregators, metaData);
     }
 }

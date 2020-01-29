@@ -74,10 +74,19 @@ public class KeywordFieldTypeTests extends FieldTypeTestCase {
     public void testIsFieldWithinQuery() throws IOException {
         KeywordFieldType ft = new KeywordFieldType();
         // current impl ignores args and shourd always return INTERSECTS
-        assertEquals(Relation.INTERSECTS, ft.isFieldWithinQuery(null,
+        assertEquals(
+            Relation.INTERSECTS,
+            ft.isFieldWithinQuery(
+                null,
                 RandomStrings.randomAsciiOfLengthBetween(random(), 0, 5),
                 RandomStrings.randomAsciiOfLengthBetween(random(), 0, 5),
-                randomBoolean(), randomBoolean(), null, null, null));
+                randomBoolean(),
+                randomBoolean(),
+                null,
+                null,
+                null
+            )
+        );
     }
 
     public void testTermQuery() {
@@ -87,8 +96,7 @@ public class KeywordFieldTypeTests extends FieldTypeTestCase {
         assertEquals(new TermQuery(new Term("field", "foo")), ft.termQuery("foo", null));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.termQuery("bar", null));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> ft.termQuery("bar", null));
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 
@@ -103,6 +111,7 @@ public class KeywordFieldTypeTests extends FieldTypeTestCase {
                 TokenFilter out = new LowerCaseFilter(in);
                 return new TokenStreamComponents(in, out);
             }
+
             @Override
             protected TokenStream normalize(String fieldName, TokenStream in) {
                 return new LowerCaseFilter(in);
@@ -112,8 +121,7 @@ public class KeywordFieldTypeTests extends FieldTypeTestCase {
         assertEquals(new TermQuery(new Term("field", "foo bar")), ft.termQuery("fOo BaR", null));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.termQuery("bar", null));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> ft.termQuery("bar", null));
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 
@@ -124,12 +132,10 @@ public class KeywordFieldTypeTests extends FieldTypeTestCase {
         List<BytesRef> terms = new ArrayList<>();
         terms.add(new BytesRef("foo"));
         terms.add(new BytesRef("bar"));
-        assertEquals(new TermInSetQuery("field", terms),
-                ft.termsQuery(Arrays.asList("foo", "bar"), null));
+        assertEquals(new TermInSetQuery("field", terms), ft.termsQuery(Arrays.asList("foo", "bar"), null));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.termsQuery(Arrays.asList("foo", "bar"), null));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> ft.termsQuery(Arrays.asList("foo", "bar"), null));
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 
@@ -154,12 +160,10 @@ public class KeywordFieldTypeTests extends FieldTypeTestCase {
         MappedFieldType ft = createDefaultFieldType();
         ft.setName("field");
         ft.setIndexOptions(IndexOptions.DOCS);
-        assertEquals(new RegexpQuery(new Term("field","foo.*")),
-                ft.regexpQuery("foo.*", 0, 10, null, null));
+        assertEquals(new RegexpQuery(new Term("field", "foo.*")), ft.regexpQuery("foo.*", 0, 10, null, null));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.regexpQuery("foo.*", 0, 10, null, null));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> ft.regexpQuery("foo.*", 0, 10, null, null));
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 
@@ -167,12 +171,13 @@ public class KeywordFieldTypeTests extends FieldTypeTestCase {
         MappedFieldType ft = createDefaultFieldType();
         ft.setName("field");
         ft.setIndexOptions(IndexOptions.DOCS);
-        assertEquals(new FuzzyQuery(new Term("field","foo"), 2, 1, 50, true),
-                ft.fuzzyQuery("foo", Fuzziness.fromEdits(2), 1, 50, true));
+        assertEquals(new FuzzyQuery(new Term("field", "foo"), 2, 1, 50, true), ft.fuzzyQuery("foo", Fuzziness.fromEdits(2), 1, 50, true));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.fuzzyQuery("foo", Fuzziness.fromEdits(2), 1, 50, true));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> ft.fuzzyQuery("foo", Fuzziness.fromEdits(2), 1, 50, true)
+        );
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 

@@ -46,16 +46,17 @@ public class ExtendedStatsBucketTests extends AbstractBucketMetricsTestCase<Exte
     public void testSigmaFromInt() throws Exception {
         XContentBuilder content = XContentFactory.jsonBuilder()
             .startObject()
-                .startObject("name")
-                    .startObject("extended_stats_bucket")
-                        .field("sigma", 5)
-                        .field("buckets_path", "test")
-                    .endObject()
-                .endObject()
+            .startObject("name")
+            .startObject("extended_stats_bucket")
+            .field("sigma", 5)
+            .field("buckets_path", "test")
+            .endObject()
+            .endObject()
             .endObject();
 
         ExtendedStatsBucketPipelineAggregationBuilder builder = (ExtendedStatsBucketPipelineAggregationBuilder) parse(
-                createParser(content));
+            createParser(content)
+        );
 
         assertThat(builder.sigma(), equalTo(5.0));
     }
@@ -68,19 +69,31 @@ public class ExtendedStatsBucketTests extends AbstractBucketMetricsTestCase<Exte
         aggBuilders.add(multiBucketAgg);
 
         // First try to point to a non-existent agg
-        final ExtendedStatsBucketPipelineAggregationBuilder builder = new ExtendedStatsBucketPipelineAggregationBuilder("name",
-                "invalid_agg>metric");
-        IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-                () -> builder.validate(null, aggBuilders, Collections.emptySet()));
-        assertEquals(PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
-                + " aggregation does not exist for aggregation [name]: invalid_agg>metric", ex.getMessage());
+        final ExtendedStatsBucketPipelineAggregationBuilder builder = new ExtendedStatsBucketPipelineAggregationBuilder(
+            "name",
+            "invalid_agg>metric"
+        );
+        IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> builder.validate(null, aggBuilders, Collections.emptySet())
+        );
+        assertEquals(
+            PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
+                + " aggregation does not exist for aggregation [name]: invalid_agg>metric",
+            ex.getMessage()
+        );
 
         // Now try to point to a single bucket agg
         ExtendedStatsBucketPipelineAggregationBuilder builder2 = new ExtendedStatsBucketPipelineAggregationBuilder("name", "global>metric");
         ex = expectThrows(IllegalArgumentException.class, () -> builder2.validate(null, aggBuilders, Collections.emptySet()));
-        assertEquals("The first aggregation in " + PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
-                + " must be a multi-bucket aggregation for aggregation [name] found :" + GlobalAggregationBuilder.class.getName()
-                + " for buckets path: global>metric", ex.getMessage());
+        assertEquals(
+            "The first aggregation in "
+                + PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
+                + " must be a multi-bucket aggregation for aggregation [name] found :"
+                + GlobalAggregationBuilder.class.getName()
+                + " for buckets path: global>metric",
+            ex.getMessage()
+        );
 
         // Now try to point to a valid multi-bucket agg (no exception should be
         // thrown)

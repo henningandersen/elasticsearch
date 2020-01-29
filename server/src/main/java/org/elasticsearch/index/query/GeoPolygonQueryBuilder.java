@@ -176,12 +176,20 @@ public class GeoPolygonQueryBuilder extends AbstractQueryBuilder<GeoPolygonQuery
         if (!GeoValidationMethod.isIgnoreMalformed(validationMethod)) {
             for (GeoPoint point : shell) {
                 if (!GeoUtils.isValidLatitude(point.lat())) {
-                    throw new QueryShardException(context, "illegal latitude value [{}] for [{}]", point.lat(),
-                            GeoPolygonQueryBuilder.NAME);
+                    throw new QueryShardException(
+                        context,
+                        "illegal latitude value [{}] for [{}]",
+                        point.lat(),
+                        GeoPolygonQueryBuilder.NAME
+                    );
                 }
                 if (!GeoUtils.isValidLongitude(point.lon())) {
-                    throw new QueryShardException(context, "illegal longitude value [{}] for [{}]", point.lon(),
-                            GeoPolygonQueryBuilder.NAME);
+                    throw new QueryShardException(
+                        context,
+                        "illegal longitude value [{}] for [{}]",
+                        point.lon(),
+                        GeoPolygonQueryBuilder.NAME
+                    );
                 }
             }
         }
@@ -195,7 +203,7 @@ public class GeoPolygonQueryBuilder extends AbstractQueryBuilder<GeoPolygonQuery
         double[] lats = new double[shellSize];
         double[] lons = new double[shellSize];
         GeoPoint p;
-        for (int i=0; i<shellSize; ++i) {
+        for (int i = 0; i < shellSize; ++i) {
             p = shell.get(i);
             lats[i] = p.lat();
             lons[i] = p.lon();
@@ -257,12 +265,16 @@ public class GeoPolygonQueryBuilder extends AbstractQueryBuilder<GeoPolygonQuery
                                 shell.add(GeoUtils.parseGeoPoint(parser));
                             }
                         } else {
-                            throw new ParsingException(parser.getTokenLocation(),
-                                    "[geo_polygon] query does not support [" + currentFieldName + "]");
+                            throw new ParsingException(
+                                parser.getTokenLocation(),
+                                "[geo_polygon] query does not support [" + currentFieldName + "]"
+                            );
                         }
                     } else {
-                        throw new ParsingException(parser.getTokenLocation(),
-                                "[geo_polygon] query does not support token type [" + token.name() + "] under [" + currentFieldName + "]");
+                        throw new ParsingException(
+                            parser.getTokenLocation(),
+                            "[geo_polygon] query does not support token type [" + token.name() + "] under [" + currentFieldName + "]"
+                        );
                     }
                 }
             } else if (token.isValue()) {
@@ -275,8 +287,10 @@ public class GeoPolygonQueryBuilder extends AbstractQueryBuilder<GeoPolygonQuery
                 } else if (VALIDATION_METHOD.match(currentFieldName, parser.getDeprecationHandler())) {
                     validationMethod = GeoValidationMethod.fromString(parser.text());
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "[geo_polygon] query does not support [" + currentFieldName + "]");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "[geo_polygon] query does not support [" + currentFieldName + "]"
+                    );
                 }
             } else {
                 throw new ParsingException(parser.getTokenLocation(), "[geo_polygon] unexpected token type [" + token.name() + "]");
@@ -301,9 +315,9 @@ public class GeoPolygonQueryBuilder extends AbstractQueryBuilder<GeoPolygonQuery
     @Override
     protected boolean doEquals(GeoPolygonQueryBuilder other) {
         return Objects.equals(validationMethod, other.validationMethod)
-                && Objects.equals(fieldName, other.fieldName)
-                && Objects.equals(shell, other.shell)
-                && Objects.equals(ignoreUnmapped, other.ignoreUnmapped);
+            && Objects.equals(fieldName, other.fieldName)
+            && Objects.equals(shell, other.shell)
+            && Objects.equals(ignoreUnmapped, other.ignoreUnmapped);
     }
 
     @Override

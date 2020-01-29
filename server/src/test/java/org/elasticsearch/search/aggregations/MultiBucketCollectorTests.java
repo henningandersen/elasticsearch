@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MultiBucketCollectorTests  extends ESTestCase {
+public class MultiBucketCollectorTests extends ESTestCase {
     private static class ScoreAndDoc extends Scorable {
         float score;
         int doc = -1;
@@ -101,8 +101,7 @@ public class MultiBucketCollectorTests  extends ESTestCase {
 
         private int count = 0;
 
-        TotalHitCountBucketCollector() {
-        }
+        TotalHitCountBucketCollector() {}
 
         @Override
         public LeafBucketCollector getLeafCollector(LeafReaderContext context) {
@@ -228,9 +227,7 @@ public class MultiBucketCollectorTests  extends ESTestCase {
         assertFalse(setScorerCalled1.get());
         assertTrue(setScorerCalled2.get());
 
-        expectThrows(CollectionTerminatedException.class, () -> {
-            leafCollector.collect(1);
-        });
+        expectThrows(CollectionTerminatedException.class, () -> { leafCollector.collect(1); });
 
         setScorerCalled1.set(false);
         setScorerCalled2.set(false);

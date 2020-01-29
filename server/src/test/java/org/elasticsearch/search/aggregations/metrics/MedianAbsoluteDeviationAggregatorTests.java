@@ -58,8 +58,9 @@ public class MedianAbsoluteDeviationAggregatorTests extends AggregatorTestCase {
     private static final int SAMPLE_MAX = 1000000;
 
     private static <T extends IndexableField> CheckedConsumer<RandomIndexWriter, IOException> randomSample(
-            int size,
-            Function<Long, Iterable<T>> field) {
+        int size,
+        Function<Long, Iterable<T>> field
+    ) {
 
         return writer -> {
             for (int i = 0; i < size; i++) {
@@ -79,87 +80,69 @@ public class MedianAbsoluteDeviationAggregatorTests extends AggregatorTestCase {
     }
 
     public void testNoMatchingField() throws IOException {
-        testCase(
-            new MatchAllDocsQuery(),
-            writer -> {
-                writer.addDocument(singleton(new SortedNumericDocValuesField("wrong_number", 1)));
-                writer.addDocument(singleton(new SortedNumericDocValuesField("wrong_number", 2)));
-            },
-            agg -> {
-                assertThat(agg.getMedianAbsoluteDeviation(), equalTo(Double.NaN));
-                assertFalse(AggregationInspectionHelper.hasValue(agg));
-            }
-        );
+        testCase(new MatchAllDocsQuery(), writer -> {
+            writer.addDocument(singleton(new SortedNumericDocValuesField("wrong_number", 1)));
+            writer.addDocument(singleton(new SortedNumericDocValuesField("wrong_number", 2)));
+        }, agg -> {
+            assertThat(agg.getMedianAbsoluteDeviation(), equalTo(Double.NaN));
+            assertFalse(AggregationInspectionHelper.hasValue(agg));
+        });
     }
 
     public void testSomeMatchesSortedNumericDocValues() throws IOException {
         final int size = randomIntBetween(100, 1000);
         final List<Long> sample = new ArrayList<>(size);
-        testCase(
-            new DocValuesFieldExistsQuery("number"),
-            randomSample(size, point -> {
-                sample.add(point);
-                return singleton(new SortedNumericDocValuesField("number", point));
-            }),
-            agg -> {
-                assertThat(agg.getMedianAbsoluteDeviation(), closeToRelative(calculateMAD(sample)));
-                assertTrue(AggregationInspectionHelper.hasValue(agg));
-            }
-        );
+        testCase(new DocValuesFieldExistsQuery("number"), randomSample(size, point -> {
+            sample.add(point);
+            return singleton(new SortedNumericDocValuesField("number", point));
+        }), agg -> {
+            assertThat(agg.getMedianAbsoluteDeviation(), closeToRelative(calculateMAD(sample)));
+            assertTrue(AggregationInspectionHelper.hasValue(agg));
+        });
     }
 
     public void testSomeMatchesNumericDocValues() throws IOException {
         final int size = randomIntBetween(100, 1000);
         final List<Long> sample = new ArrayList<>(size);
-        testCase(
-            new DocValuesFieldExistsQuery("number"),
-            randomSample(size, point -> {
-                sample.add(point);
-                return singleton(new NumericDocValuesField("number", point));
-            }),
-            agg -> {
-                assertThat(agg.getMedianAbsoluteDeviation(), closeToRelative(calculateMAD(sample)));
-                assertTrue(AggregationInspectionHelper.hasValue(agg));
-            }
-        );
+        testCase(new DocValuesFieldExistsQuery("number"), randomSample(size, point -> {
+            sample.add(point);
+            return singleton(new NumericDocValuesField("number", point));
+        }), agg -> {
+            assertThat(agg.getMedianAbsoluteDeviation(), closeToRelative(calculateMAD(sample)));
+            assertTrue(AggregationInspectionHelper.hasValue(agg));
+        });
     }
 
     public void testQueryFiltering() throws IOException {
         final int lowerRange = 1;
         final int upperRange = 500;
         final int[] sample = IntStream.rangeClosed(1, 1000).toArray();
-        final int[] filteredSample = Arrays.stream(sample).filter(point -> point  >= lowerRange && point <= upperRange).toArray();
-        testCase(
-            IntPoint.newRangeQuery("number", lowerRange, upperRange),
-            writer -> {
-                for (int point : sample) {
-                    writer.addDocument(Arrays.asList(new IntPoint("number", point), new SortedNumericDocValuesField("number", point)));
-                }
-            },
-            agg -> {
-                assertThat(agg.getMedianAbsoluteDeviation(), closeToRelative(calculateMAD(filteredSample)));
-                assertTrue(AggregationInspectionHelper.hasValue(agg));
+        final int[] filteredSample = Arrays.stream(sample).filter(point -> point >= lowerRange && point <= upperRange).toArray();
+        testCase(IntPoint.newRangeQuery("number", lowerRange, upperRange), writer -> {
+            for (int point : sample) {
+                writer.addDocument(Arrays.asList(new IntPoint("number", point), new SortedNumericDocValuesField("number", point)));
             }
-        );
+        }, agg -> {
+            assertThat(agg.getMedianAbsoluteDeviation(), closeToRelative(calculateMAD(filteredSample)));
+            assertTrue(AggregationInspectionHelper.hasValue(agg));
+        });
     }
 
     public void testQueryFiltersAll() throws IOException {
-        testCase(
-            IntPoint.newRangeQuery("number", -1, 0),
-            writer -> {
-                writer.addDocument(Arrays.asList(new IntPoint("number", 1), new SortedNumericDocValuesField("number", 1)));
-                writer.addDocument(Arrays.asList(new IntPoint("number", 2), new SortedNumericDocValuesField("number", 2)));
-            },
-            agg -> {
-                assertThat(agg.getMedianAbsoluteDeviation(), equalTo(Double.NaN));
-                assertFalse(AggregationInspectionHelper.hasValue(agg));
-            }
-        );
+        testCase(IntPoint.newRangeQuery("number", -1, 0), writer -> {
+            writer.addDocument(Arrays.asList(new IntPoint("number", 1), new SortedNumericDocValuesField("number", 1)));
+            writer.addDocument(Arrays.asList(new IntPoint("number", 2), new SortedNumericDocValuesField("number", 2)));
+        }, agg -> {
+            assertThat(agg.getMedianAbsoluteDeviation(), equalTo(Double.NaN));
+            assertFalse(AggregationInspectionHelper.hasValue(agg));
+        });
     }
 
-    private void testCase(Query query,
-                          CheckedConsumer<RandomIndexWriter, IOException> buildIndex,
-                          Consumer<InternalMedianAbsoluteDeviation> verify) throws IOException {
+    private void testCase(
+        Query query,
+        CheckedConsumer<RandomIndexWriter, IOException> buildIndex,
+        Consumer<InternalMedianAbsoluteDeviation> verify
+    ) throws IOException {
 
         try (Directory directory = newDirectory()) {
             try (RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory)) {
@@ -169,8 +152,7 @@ public class MedianAbsoluteDeviationAggregatorTests extends AggregatorTestCase {
             try (IndexReader indexReader = DirectoryReader.open(directory)) {
                 IndexSearcher indexSearcher = newSearcher(indexReader, true, true);
 
-                MedianAbsoluteDeviationAggregationBuilder builder = new MedianAbsoluteDeviationAggregationBuilder("mad")
-                    .field("number")
+                MedianAbsoluteDeviationAggregationBuilder builder = new MedianAbsoluteDeviationAggregationBuilder("mad").field("number")
                     .compression(randomDoubleBetween(20, 1000, true));
 
                 MappedFieldType fieldType = new NumberFieldMapper.NumberFieldType(NumberFieldMapper.NumberType.LONG);
@@ -206,11 +188,7 @@ public class MedianAbsoluteDeviationAggregatorTests extends AggregatorTestCase {
 
         @Override
         public void describeTo(Description description) {
-            description
-                .appendText("within ")
-                .appendValue(error * 100)
-                .appendText(" percent of ")
-                .appendValue(expected);
+            description.appendText("within ").appendValue(error * 100).appendText(" percent of ").appendValue(expected);
         }
 
         public static IsCloseToRelative closeToRelative(double expected, double error) {
@@ -229,29 +207,21 @@ public class MedianAbsoluteDeviationAggregatorTests extends AggregatorTestCase {
     public static class ExactMedianAbsoluteDeviation {
 
         public static double calculateMAD(int[] sample) {
-            return calculateMAD(Arrays.stream(sample)
-                .mapToDouble(point -> (double) point)
-                .toArray());
+            return calculateMAD(Arrays.stream(sample).mapToDouble(point -> (double) point).toArray());
         }
 
         public static double calculateMAD(long[] sample) {
-            return calculateMAD(Arrays.stream(sample)
-                .mapToDouble(point -> (double) point)
-                .toArray());
+            return calculateMAD(Arrays.stream(sample).mapToDouble(point -> (double) point).toArray());
         }
 
         public static double calculateMAD(List<Long> sample) {
-            return calculateMAD(sample.stream()
-                .mapToDouble(Long::doubleValue)
-                .toArray());
+            return calculateMAD(sample.stream().mapToDouble(Long::doubleValue).toArray());
         }
 
         public static double calculateMAD(double[] sample) {
             final double median = calculateMedian(sample);
 
-            final double[] deviations = Arrays.stream(sample)
-                .map(point -> Math.abs(median - point))
-                .toArray();
+            final double[] deviations = Arrays.stream(sample).map(point -> Math.abs(median - point)).toArray();
 
             final double mad = calculateMedian(deviations);
             return mad;

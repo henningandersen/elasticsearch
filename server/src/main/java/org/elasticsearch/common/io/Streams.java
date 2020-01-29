@@ -51,11 +51,9 @@ public abstract class Streams {
 
     public static final int BUFFER_SIZE = 1024 * 8;
 
-
-    //---------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // Copy methods for java.io.InputStream / java.io.OutputStream
-    //---------------------------------------------------------------------
-
+    // ---------------------------------------------------------------------
 
     public static long copy(InputStream in, OutputStream out) throws IOException {
         return copy(in, out, new byte[BUFFER_SIZE]);
@@ -107,10 +105,9 @@ public abstract class Streams {
         }
     }
 
-
-    //---------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // Copy methods for java.io.Reader / java.io.Writer
-    //---------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     /**
      * Copy the contents of the given Reader to the given Writer.

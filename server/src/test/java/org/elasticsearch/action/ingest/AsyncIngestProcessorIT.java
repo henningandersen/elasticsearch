@@ -72,11 +72,7 @@ public class AsyncIngestProcessorIT extends ESSingleNodeTestCase {
         BulkRequest bulkRequest = new BulkRequest();
         int numDocs = randomIntBetween(8, 256);
         for (int i = 0; i < numDocs; i++) {
-            bulkRequest.add(new IndexRequest("foobar")
-                .id(Integer.toString(i))
-                .source("{}", XContentType.JSON)
-                .setPipeline("_id")
-            );
+            bulkRequest.add(new IndexRequest("foobar").id(Integer.toString(i)).source("{}", XContentType.JSON).setPipeline("_id"));
         }
         BulkResponse bulkResponse = client().bulk(bulkRequest).actionGet();
         assertThat(bulkResponse.getItems().length, equalTo(numDocs));
@@ -96,63 +92,67 @@ public class AsyncIngestProcessorIT extends ESSingleNodeTestCase {
         private ThreadPool threadPool;
 
         @Override
-        public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
-                                                   ResourceWatcherService resourceWatcherService, ScriptService scriptService,
-                                                   NamedXContentRegistry xContentRegistry, Environment environment,
-                                                   NodeEnvironment nodeEnvironment, NamedWriteableRegistry namedWriteableRegistry) {
+        public Collection<Object> createComponents(
+            Client client,
+            ClusterService clusterService,
+            ThreadPool threadPool,
+            ResourceWatcherService resourceWatcherService,
+            ScriptService scriptService,
+            NamedXContentRegistry xContentRegistry,
+            Environment environment,
+            NodeEnvironment nodeEnvironment,
+            NamedWriteableRegistry namedWriteableRegistry
+        ) {
             this.threadPool = threadPool;
             return List.of();
         }
 
         @Override
         public Map<String, Processor.Factory> getProcessors(Processor.Parameters parameters) {
-            return Map.of(
-                "test-async", (factories, tag, config) -> {
-                    return new AbstractProcessor(tag) {
+            return Map.of("test-async", (factories, tag, config) -> {
+                return new AbstractProcessor(tag) {
 
-                        @Override
-                        public void execute(IngestDocument ingestDocument, BiConsumer<IngestDocument, Exception> handler) {
-                            threadPool.generic().execute(() -> {
-                                String id = (String) ingestDocument.getSourceAndMetadata().get("_id");
-                                if (usually()) {
-                                    try {
-                                        Thread.sleep(10);
-                                    } catch (InterruptedException e) {
-                                        // ignore
-                                    }
-                                }
-                                ingestDocument.setFieldValue("foo", "bar-" + id);
-                                handler.accept(ingestDocument, null);
-                            });
-                        }
-
-                        @Override
-                        public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
-                            throw new UnsupportedOperationException();
-                        }
-
-                        @Override
-                        public String getType() {
-                            return "test-async";
-                        }
-                    };
-                },
-                "test", (processorFactories, tag, config) -> {
-                    return new AbstractProcessor(tag) {
-                        @Override
-                        public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
+                    @Override
+                    public void execute(IngestDocument ingestDocument, BiConsumer<IngestDocument, Exception> handler) {
+                        threadPool.generic().execute(() -> {
                             String id = (String) ingestDocument.getSourceAndMetadata().get("_id");
-                            ingestDocument.setFieldValue("bar", "baz-" + id);
-                            return ingestDocument;
-                        }
+                            if (usually()) {
+                                try {
+                                    Thread.sleep(10);
+                                } catch (InterruptedException e) {
+                                    // ignore
+                                }
+                            }
+                            ingestDocument.setFieldValue("foo", "bar-" + id);
+                            handler.accept(ingestDocument, null);
+                        });
+                    }
 
-                        @Override
-                        public String getType() {
-                            return "test";
-                        }
-                    };
-                }
-            );
+                    @Override
+                    public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public String getType() {
+                        return "test-async";
+                    }
+                };
+            }, "test", (processorFactories, tag, config) -> {
+                return new AbstractProcessor(tag) {
+                    @Override
+                    public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
+                        String id = (String) ingestDocument.getSourceAndMetadata().get("_id");
+                        ingestDocument.setFieldValue("bar", "baz-" + id);
+                        return ingestDocument;
+                    }
+
+                    @Override
+                    public String getType() {
+                        return "test";
+                    }
+                };
+            });
         }
     }
 

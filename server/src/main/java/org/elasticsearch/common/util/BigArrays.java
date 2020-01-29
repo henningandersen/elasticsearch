@@ -58,7 +58,7 @@ public class BigArrays {
 
         long newSize;
         if (minTargetSize < pageSize) {
-            newSize = ArrayUtil.oversize((int)minTargetSize, bytesPerElement);
+            newSize = ArrayUtil.oversize((int) minTargetSize, bytesPerElement);
         } else {
             newSize = minTargetSize + (minTargetSize >>> 3);
         }
@@ -334,8 +334,9 @@ public class BigArrays {
 
         @Override
         public long ramBytesUsed() {
-            return SHALLOW_SIZE + RamUsageEstimator.alignObjectSize(RamUsageEstimator.NUM_BYTES_ARRAY_HEADER +
-                RamUsageEstimator.NUM_BYTES_OBJECT_REF * size());
+            return SHALLOW_SIZE + RamUsageEstimator.alignObjectSize(
+                RamUsageEstimator.NUM_BYTES_ARRAY_HEADER + RamUsageEstimator.NUM_BYTES_OBJECT_REF * size()
+            );
         }
 
         @SuppressWarnings("unchecked")
@@ -367,8 +368,12 @@ public class BigArrays {
         this(recycler, breakerService, breakerName, false);
     }
 
-    protected BigArrays(PageCacheRecycler recycler, @Nullable final CircuitBreakerService breakerService, String breakerName,
-                        boolean checkBreaker) {
+    protected BigArrays(
+        PageCacheRecycler recycler,
+        @Nullable final CircuitBreakerService breakerService,
+        String breakerName,
+        boolean checkBreaker
+    ) {
         this.checkBreaker = checkBreaker;
         this.recycler = recycler;
         this.breakerService = breakerService;
@@ -432,9 +437,12 @@ public class BigArrays {
     private <T extends AbstractBigArray> T resizeInPlace(T array, long newSize) {
         final long oldMemSize = array.ramBytesUsed();
         final long oldSize = array.size();
-        assert oldMemSize == array.ramBytesEstimated(oldSize) :
-            "ram bytes used should equal that which was previously estimated: ramBytesUsed=" +
-            oldMemSize + ", ramBytesEstimated=" + array.ramBytesEstimated(oldSize);
+        assert oldMemSize == array.ramBytesEstimated(
+            oldSize
+        ) : "ram bytes used should equal that which was previously estimated: ramBytesUsed="
+            + oldMemSize
+            + ", ramBytesEstimated="
+            + array.ramBytesEstimated(oldSize);
         final long estimatedIncreaseInBytes = array.ramBytesEstimated(newSize) - oldMemSize;
         adjustBreaker(estimatedIncreaseInBytes, false);
         array.resize(newSize);

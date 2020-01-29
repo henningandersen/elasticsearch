@@ -37,18 +37,21 @@ public class IdFieldTypeTests extends FieldTypeTestCase {
     public void testRangeQuery() {
         MappedFieldType ft = createDefaultFieldType();
         ft.setName("_id");
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.rangeQuery(null, null, randomBoolean(), randomBoolean(), null, null, null, null));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> ft.rangeQuery(null, null, randomBoolean(), randomBoolean(), null, null, null, null)
+        );
         assertEquals("Field [_id] of type [_id] does not support range queries", e.getMessage());
     }
 
     public void testTermsQuery() throws Exception {
         QueryShardContext context = Mockito.mock(QueryShardContext.class);
         Settings indexSettings = Settings.builder()
-                .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-                .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
-                .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-                .put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID()).build();
+            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
+            .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+            .put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())
+            .build();
         IndexMetaData indexMetaData = IndexMetaData.builder(IndexMetaData.INDEX_UUID_NA_VALUE).settings(indexSettings).build();
         IndexSettings mockSettings = new IndexSettings(indexMetaData, Settings.EMPTY);
         Mockito.when(context.getIndexSettings()).thenReturn(mockSettings);

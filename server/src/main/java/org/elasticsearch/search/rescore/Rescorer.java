@@ -31,7 +31,7 @@ import java.io.IOException;
  *
  * Subclasses should borrow heavily from {@link QueryRescorer} because it is
  * fairly well behaved and documents that tradeoffs that it is making. There
- * is also an {@code ExampleRescorer} that is worth looking at. 
+ * is also an {@code ExampleRescorer} that is worth looking at.
  */
 public interface Rescorer {
     /**
@@ -55,7 +55,7 @@ public interface Rescorer {
      * @return the explain for the given top level document ID.
      * @throws IOException if an {@link IOException} occurs
      */
-    Explanation explain(int topLevelDocId, IndexSearcher searcher, RescoreContext rescoreContext,
-                        Explanation sourceExplanation) throws IOException;
+    Explanation explain(int topLevelDocId, IndexSearcher searcher, RescoreContext rescoreContext, Explanation sourceExplanation)
+        throws IOException;
 
 }

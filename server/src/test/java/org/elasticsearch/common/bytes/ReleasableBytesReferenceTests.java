@@ -66,7 +66,7 @@ public class ReleasableBytesReferenceTests extends AbstractBytesReferenceTestCas
         } else {
             assert composite.equals(type);
             List<BytesReference> referenceList = new ArrayList<>();
-            for (int i = 0; i < length; ) {
+            for (int i = 0; i < length;) {
                 int remaining = length - i;
                 int sliceLength = randomIntBetween(1, remaining);
                 ReleasableBytesStreamOutput out = new ReleasableBytesStreamOutput(sliceLength, bigarrays);
@@ -81,8 +81,7 @@ public class ReleasableBytesReferenceTests extends AbstractBytesReferenceTestCas
             assertThat(length, equalTo(ref.length()));
             delegate = ref;
         }
-        return new ReleasableBytesReference(delegate, () -> {
-        });
+        return new ReleasableBytesReference(delegate, () -> {});
     }
 
     @Override

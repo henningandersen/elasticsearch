@@ -63,8 +63,11 @@ public class ResizeResponseTests extends AbstractSerializingTestCase<ResizeRespo
                 return new ResizeResponse(acknowledged, shardsAcknowledged, response.index());
             }
         } else {
-            return new ResizeResponse(response.isAcknowledged(), response.isShardsAcknowledged(),
-                    response.index() + randomAlphaOfLengthBetween(2, 5));
+            return new ResizeResponse(
+                response.isAcknowledged(),
+                response.isShardsAcknowledged(),
+                response.index() + randomAlphaOfLengthBetween(2, 5)
+            );
         }
     }
 }

@@ -41,14 +41,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public abstract class InternalTerms<A extends InternalTerms<A, B>, B extends InternalTerms.Bucket<B>>
-        extends InternalMultiBucketAggregation<A, B> implements Terms {
+public abstract class InternalTerms<A extends InternalTerms<A, B>, B extends InternalTerms.Bucket<B>> extends
+    InternalMultiBucketAggregation<A, B>
+    implements
+        Terms {
 
     protected static final ParseField DOC_COUNT_ERROR_UPPER_BOUND_FIELD_NAME = new ParseField("doc_count_error_upper_bound");
     protected static final ParseField SUM_OF_OTHER_DOC_COUNTS = new ParseField("sum_other_doc_count");
 
     public abstract static class Bucket<B extends Bucket<B>> extends InternalMultiBucketAggregation.InternalBucket
-        implements Terms.Bucket, KeyComparable<B> {
+        implements
+            Terms.Bucket,
+            KeyComparable<B> {
         /**
          * Reads a bucket. Should be a constructor reference.
          */
@@ -65,8 +69,13 @@ public abstract class InternalTerms<A extends InternalTerms<A, B>, B extends Int
         protected final boolean showDocCountError;
         protected final DocValueFormat format;
 
-        protected Bucket(long docCount, InternalAggregations aggregations, boolean showDocCountError, long docCountError,
-                DocValueFormat formatter) {
+        protected Bucket(
+            long docCount,
+            InternalAggregations aggregations,
+            boolean showDocCountError,
+            long docCountError,
+            DocValueFormat formatter
+        ) {
             this.showDocCountError = showDocCountError;
             this.format = formatter;
             this.docCount = docCount;
@@ -143,8 +152,8 @@ public abstract class InternalTerms<A extends InternalTerms<A, B>, B extends Int
             // of the parent terms aggregation object that are only copied here
             // for serialization purposes
             return Objects.equals(docCount, that.docCount)
-                    && Objects.equals(docCountError, that.docCountError)
-                    && Objects.equals(aggregations, that.aggregations);
+                && Objects.equals(docCountError, that.docCountError)
+                && Objects.equals(aggregations, that.aggregations);
         }
 
         @Override
@@ -157,8 +166,14 @@ public abstract class InternalTerms<A extends InternalTerms<A, B>, B extends Int
     protected final int requiredSize;
     protected final long minDocCount;
 
-    protected InternalTerms(String name, BucketOrder order, int requiredSize, long minDocCount,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    protected InternalTerms(
+        String name,
+        BucketOrder order,
+        int requiredSize,
+        long minDocCount,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.order = order;
         this.requiredSize = requiredSize;
@@ -169,10 +184,10 @@ public abstract class InternalTerms<A extends InternalTerms<A, B>, B extends Int
      * Read from a stream.
      */
     protected InternalTerms(StreamInput in) throws IOException {
-       super(in);
-       order = InternalOrder.Streams.readOrder(in);
-       requiredSize = readSize(in);
-       minDocCount = in.readVLong();
+        super(in);
+        order = InternalOrder.Streams.readOrder(in);
+        requiredSize = readSize(in);
+        minDocCount = in.readVLong();
     }
 
     @Override
@@ -203,14 +218,17 @@ public abstract class InternalTerms<A extends InternalTerms<A, B>, B extends Int
             if (referenceTerms == null && !aggregation.getClass().equals(UnmappedTerms.class)) {
                 referenceTerms = terms;
             }
-            if (referenceTerms != null &&
-                    !referenceTerms.getClass().equals(terms.getClass()) &&
-                    !terms.getClass().equals(UnmappedTerms.class)) {
+            if (referenceTerms != null
+                && !referenceTerms.getClass().equals(terms.getClass())
+                && !terms.getClass().equals(UnmappedTerms.class)) {
                 // control gets into this loop when the same field name against which the query is executed
                 // is of different types in different indices.
-                throw new AggregationExecutionException("Merging/Reducing the aggregations failed when computing the aggregation ["
-                        + referenceTerms.getName() + "] because the field you gave in the aggregation query existed as two different "
-                        + "types in two different indices");
+                throw new AggregationExecutionException(
+                    "Merging/Reducing the aggregations failed when computing the aggregation ["
+                        + referenceTerms.getName()
+                        + "] because the field you gave in the aggregation query existed as two different "
+                        + "types in two different indices"
+                );
             }
             otherDocCount += terms.getSumOfOtherDocCounts();
             final long thisAggDocCountError;
@@ -333,10 +351,10 @@ public abstract class InternalTerms<A extends InternalTerms<A, B>, B extends Int
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
 
-        InternalTerms<?,?> that = (InternalTerms<?,?>) obj;
+        InternalTerms<?, ?> that = (InternalTerms<?, ?>) obj;
         return Objects.equals(minDocCount, that.minDocCount)
-                && Objects.equals(order, that.order)
-                && Objects.equals(requiredSize, that.requiredSize);
+            && Objects.equals(order, that.order)
+            && Objects.equals(requiredSize, that.requiredSize);
     }
 
     @Override
@@ -344,8 +362,13 @@ public abstract class InternalTerms<A extends InternalTerms<A, B>, B extends Int
         return Objects.hash(super.hashCode(), minDocCount, order, requiredSize);
     }
 
-    protected static XContentBuilder doXContentCommon(XContentBuilder builder, Params params,
-                                               long docCountError, long otherDocCount, List<? extends Bucket> buckets) throws IOException {
+    protected static XContentBuilder doXContentCommon(
+        XContentBuilder builder,
+        Params params,
+        long docCountError,
+        long otherDocCount,
+        List<? extends Bucket> buckets
+    ) throws IOException {
         builder.field(DOC_COUNT_ERROR_UPPER_BOUND_FIELD_NAME.getPreferredName(), docCountError);
         builder.field(SUM_OF_OTHER_DOC_COUNTS.getPreferredName(), otherDocCount);
         builder.startArray(CommonFields.BUCKETS.getPreferredName());

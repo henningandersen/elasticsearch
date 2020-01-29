@@ -57,4 +57,3 @@ public class RestRecoveryAction extends BaseRestHandler {
         return channel -> client.admin().indices().recoveries(recoveryRequest, new RestToXContentListener<>(channel));
     }
 }
-

@@ -33,8 +33,7 @@ import java.io.IOException;
  */
 public class RescorePhase implements SearchPhase {
     @Override
-    public void preProcess(SearchContext context) {
-    }
+    public void preProcess(SearchContext context) {}
 
     @Override
     public void execute(SearchContext context) {
@@ -47,10 +46,10 @@ public class RescorePhase implements SearchPhase {
                 topDocs = ctx.rescorer().rescore(topDocs, context.searcher(), ctx);
                 // It is the responsibility of the rescorer to sort the resulted top docs,
                 // here we only assert that this condition is met.
-                assert context.sort() == null && topDocsSortedByScore(topDocs): "topdocs should be sorted after rescore";
+                assert context.sort() == null && topDocsSortedByScore(topDocs) : "topdocs should be sorted after rescore";
             }
-            context.queryResult().topDocs(new TopDocsAndMaxScore(topDocs, topDocs.scoreDocs[0].score),
-                    context.queryResult().sortValueFormats());
+            context.queryResult()
+                .topDocs(new TopDocsAndMaxScore(topDocs, topDocs.scoreDocs[0].score), context.queryResult().sortValueFormats());
         } catch (IOException e) {
             throw new ElasticsearchException("Rescore Phase Failed", e);
         }

@@ -49,10 +49,12 @@ final class DfsQueryPhase extends SearchPhase {
     private final SearchTransportService searchTransportService;
     private final SearchProgressListener progressListener;
 
-    DfsQueryPhase(AtomicArray<DfsSearchResult> dfsSearchResults,
-                  SearchPhaseController searchPhaseController,
-                  Function<ArraySearchPhaseResults<SearchPhaseResult>, SearchPhase> nextPhaseFactory,
-                  SearchPhaseContext context) {
+    DfsQueryPhase(
+        AtomicArray<DfsSearchResult> dfsSearchResults,
+        SearchPhaseController searchPhaseController,
+        Function<ArraySearchPhaseResults<SearchPhaseResult>, SearchPhase> nextPhaseFactory,
+        SearchPhaseContext context
+    ) {
         super("dfs_query");
         this.progressListener = context.getTask().getProgressListener();
         this.queryResult = searchPhaseController.newSearchPhaseResults(progressListener, context.getRequest(), context.getNumShards());
@@ -69,18 +71,27 @@ final class DfsQueryPhase extends SearchPhase {
         // to free up memory early
         final List<DfsSearchResult> resultList = dfsSearchResults.asList();
         final AggregatedDfs dfs = searchPhaseController.aggregateDfs(resultList);
-        final CountedCollector<SearchPhaseResult> counter = new CountedCollector<>(queryResult::consumeResult,
+        final CountedCollector<SearchPhaseResult> counter = new CountedCollector<>(
+            queryResult::consumeResult,
             resultList.size(),
-            () -> context.executeNextPhase(this, nextPhaseFactory.apply(queryResult)), context);
+            () -> context.executeNextPhase(this, nextPhaseFactory.apply(queryResult)),
+            context
+        );
         final SearchSourceBuilder sourceBuilder = context.getRequest().source();
         progressListener.notifyListShards(progressListener.searchShards(resultList), sourceBuilder == null || sourceBuilder.size() != 0);
         for (final DfsSearchResult dfsResult : resultList) {
             final SearchShardTarget searchShardTarget = dfsResult.getSearchShardTarget();
             Transport.Connection connection = context.getConnection(searchShardTarget.getClusterAlias(), searchShardTarget.getNodeId());
-            QuerySearchRequest querySearchRequest = new QuerySearchRequest(searchShardTarget.getOriginalIndices(),
-                    dfsResult.getRequestId(), dfs);
+            QuerySearchRequest querySearchRequest = new QuerySearchRequest(
+                searchShardTarget.getOriginalIndices(),
+                dfsResult.getRequestId(),
+                dfs
+            );
             final int shardIndex = dfsResult.getShardIndex();
-            searchTransportService.sendExecuteQuery(connection, querySearchRequest, context.getTask(),
+            searchTransportService.sendExecuteQuery(
+                connection,
+                querySearchRequest,
+                context.getTask(),
                 new SearchActionListener<QuerySearchResult>(searchShardTarget, shardIndex) {
 
                     @Override
@@ -95,8 +106,11 @@ final class DfsQueryPhase extends SearchPhase {
                     @Override
                     public void onFailure(Exception exception) {
                         try {
-                            context.getLogger().debug(() -> new ParameterizedMessage("[{}] Failed to execute query phase",
-                                querySearchRequest.id()), exception);
+                            context.getLogger()
+                                .debug(
+                                    () -> new ParameterizedMessage("[{}] Failed to execute query phase", querySearchRequest.id()),
+                                    exception
+                                );
                             progressListener.notifyQueryFailure(shardIndex, exception);
                             counter.onFailure(shardIndex, searchShardTarget, exception);
                         } finally {
@@ -106,7 +120,8 @@ final class DfsQueryPhase extends SearchPhase {
                             context.sendReleaseSearchContext(querySearchRequest.id(), connection, searchShardTarget.getOriginalIndices());
                         }
                     }
-                });
+                }
+            );
         }
     }
 }

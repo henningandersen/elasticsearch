@@ -32,21 +32,25 @@ import org.elasticsearch.tasks.TaskInfo;
 import java.io.IOException;
 import java.util.List;
 
-
 /**
  * Returns the list of tasks that were cancelled
  */
 public class CancelTasksResponse extends ListTasksResponse {
 
-    private static final ConstructingObjectParser<CancelTasksResponse, Void> PARSER =
-        setupParser("cancel_tasks_response", CancelTasksResponse::new);
+    private static final ConstructingObjectParser<CancelTasksResponse, Void> PARSER = setupParser(
+        "cancel_tasks_response",
+        CancelTasksResponse::new
+    );
 
     public CancelTasksResponse(StreamInput in) throws IOException {
         super(in);
     }
 
-    public CancelTasksResponse(List<TaskInfo> tasks, List<TaskOperationFailure> taskFailures, List<? extends ElasticsearchException>
-        nodeFailures) {
+    public CancelTasksResponse(
+        List<TaskInfo> tasks,
+        List<TaskOperationFailure> taskFailures,
+        List<? extends ElasticsearchException> nodeFailures
+    ) {
         super(tasks, taskFailures, nodeFailures);
     }
 

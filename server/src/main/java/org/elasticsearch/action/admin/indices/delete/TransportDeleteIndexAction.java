@@ -56,12 +56,24 @@ public class TransportDeleteIndexAction extends TransportMasterNodeAction<Delete
     private final DestructiveOperations destructiveOperations;
 
     @Inject
-    public TransportDeleteIndexAction(TransportService transportService, ClusterService clusterService, ThreadPool threadPool,
-                                      MetaDataDeleteIndexService deleteIndexService, ActionFilters actionFilters,
-                                      IndexNameExpressionResolver indexNameExpressionResolver,
-                                      DestructiveOperations destructiveOperations) {
-        super(DeleteIndexAction.NAME, transportService, clusterService, threadPool, actionFilters, DeleteIndexRequest::new,
-            indexNameExpressionResolver );
+    public TransportDeleteIndexAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        MetaDataDeleteIndexService deleteIndexService,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        DestructiveOperations destructiveOperations
+    ) {
+        super(
+            DeleteIndexAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            DeleteIndexRequest::new,
+            indexNameExpressionResolver
+        );
         this.deleteIndexService = deleteIndexService;
         this.destructiveOperations = destructiveOperations;
     }
@@ -88,16 +100,20 @@ public class TransportDeleteIndexAction extends TransportMasterNodeAction<Delete
     }
 
     @Override
-    protected void masterOperation(Task task, final DeleteIndexRequest request, final ClusterState state,
-                                   final ActionListener<AcknowledgedResponse> listener) {
+    protected void masterOperation(
+        Task task,
+        final DeleteIndexRequest request,
+        final ClusterState state,
+        final ActionListener<AcknowledgedResponse> listener
+    ) {
         final Set<Index> concreteIndices = new HashSet<>(Arrays.asList(indexNameExpressionResolver.concreteIndices(state, request)));
         if (concreteIndices.isEmpty()) {
             listener.onResponse(new AcknowledgedResponse(true));
             return;
         }
 
-        DeleteIndexClusterStateUpdateRequest deleteRequest = new DeleteIndexClusterStateUpdateRequest()
-            .ackTimeout(request.timeout()).masterNodeTimeout(request.masterNodeTimeout())
+        DeleteIndexClusterStateUpdateRequest deleteRequest = new DeleteIndexClusterStateUpdateRequest().ackTimeout(request.timeout())
+            .masterNodeTimeout(request.masterNodeTimeout())
             .indices(concreteIndices.toArray(new Index[concreteIndices.size()]));
 
         deleteIndexService.deleteIndices(deleteRequest, new ActionListener<ClusterStateUpdateResponse>() {

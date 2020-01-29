@@ -53,8 +53,11 @@ public class Retry {
      * @param bulkRequest The bulk request that should be executed.
      * @param listener A listener that is invoked when the bulk request finishes or completes with an exception. The listener is not
      */
-    public void withBackoff(BiConsumer<BulkRequest, ActionListener<BulkResponse>> consumer, BulkRequest bulkRequest,
-                            ActionListener<BulkResponse> listener) {
+    public void withBackoff(
+        BiConsumer<BulkRequest, ActionListener<BulkResponse>> consumer,
+        BulkRequest bulkRequest,
+        ActionListener<BulkResponse> listener
+    ) {
         RetryHandler r = new RetryHandler(backoffPolicy, consumer, listener, scheduler);
         r.execute(bulkRequest);
     }
@@ -67,8 +70,10 @@ public class Retry {
      * @param bulkRequest The bulk request that should be executed.
      * @return a future representing the bulk response returned by the client.
      */
-    public PlainActionFuture<BulkResponse> withBackoff(BiConsumer<BulkRequest, ActionListener<BulkResponse>> consumer,
-                                                       BulkRequest bulkRequest) {
+    public PlainActionFuture<BulkResponse> withBackoff(
+        BiConsumer<BulkRequest, ActionListener<BulkResponse>> consumer,
+        BulkRequest bulkRequest
+    ) {
         PlainActionFuture<BulkResponse> future = PlainActionFuture.newFuture();
         withBackoff(consumer, bulkRequest, future);
         return future;
@@ -90,8 +95,12 @@ public class Retry {
         private volatile BulkRequest currentBulkRequest;
         private volatile Scheduler.Cancellable retryCancellable;
 
-        RetryHandler(BackoffPolicy backoffPolicy, BiConsumer<BulkRequest, ActionListener<BulkResponse>> consumer,
-                     ActionListener<BulkResponse> listener, Scheduler scheduler) {
+        RetryHandler(
+            BackoffPolicy backoffPolicy,
+            BiConsumer<BulkRequest, ActionListener<BulkResponse>> consumer,
+            ActionListener<BulkResponse> listener,
+            Scheduler scheduler
+        ) {
             this.backoff = backoffPolicy.iterator();
             this.consumer = consumer;
             this.listener = listener;

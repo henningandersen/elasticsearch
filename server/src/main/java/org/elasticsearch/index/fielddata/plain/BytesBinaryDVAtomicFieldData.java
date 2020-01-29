@@ -98,5 +98,4 @@ final class BytesBinaryDVAtomicFieldData implements AtomicFieldData {
         // no-op
     }
 
-
 }

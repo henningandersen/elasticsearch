@@ -34,8 +34,14 @@ public class InternalWeightedAvg extends InternalNumericMetricsAggregation.Singl
     private final double sum;
     private final double weight;
 
-    InternalWeightedAvg(String name, double sum, double weight, DocValueFormat format, List<PipelineAggregator> pipelineAggregators,
-                            Map<String, Object> metaData) {
+    InternalWeightedAvg(
+        String name,
+        double sum,
+        double weight,
+        DocValueFormat format,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.sum = sum;
         this.weight = weight;
@@ -99,8 +105,14 @@ public class InternalWeightedAvg extends InternalNumericMetricsAggregation.Singl
             sumCompensation.add(avg.sum);
         }
 
-        return new InternalWeightedAvg(getName(), sumCompensation.value(), weightCompensation.value(),
-            format, pipelineAggregators(), getMetaData());
+        return new InternalWeightedAvg(
+            getName(),
+            sumCompensation.value(),
+            weightCompensation.value(),
+            format,
+            pipelineAggregators(),
+            getMetaData()
+        );
     }
 
     @Override
@@ -123,8 +135,8 @@ public class InternalWeightedAvg extends InternalNumericMetricsAggregation.Singl
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         InternalWeightedAvg other = (InternalWeightedAvg) obj;
-        return Objects.equals(sum, other.sum) &&
-                Objects.equals(weight, other.weight) &&
-                Objects.equals(format.getWriteableName(), other.format.getWriteableName());
+        return Objects.equals(sum, other.sum)
+            && Objects.equals(weight, other.weight)
+            && Objects.equals(format.getWriteableName(), other.format.getWriteableName());
     }
 }

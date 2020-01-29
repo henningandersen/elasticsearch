@@ -78,8 +78,12 @@ public class MaxAggregationBuilder extends ValuesSourceAggregationBuilder.LeafOn
     }
 
     @Override
-    protected MaxAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<Numeric> config,
-                                              AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected MaxAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<Numeric> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         return new MaxAggregatorFactory(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 

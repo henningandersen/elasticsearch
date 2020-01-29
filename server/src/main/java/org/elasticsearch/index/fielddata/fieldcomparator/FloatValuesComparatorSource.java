@@ -41,8 +41,12 @@ public class FloatValuesComparatorSource extends IndexFieldData.XFieldComparator
 
     private final IndexNumericFieldData indexFieldData;
 
-    public FloatValuesComparatorSource(IndexNumericFieldData indexFieldData, @Nullable Object missingValue, MultiValueMode sortMode,
-            Nested nested) {
+    public FloatValuesComparatorSource(
+        IndexNumericFieldData indexFieldData,
+        @Nullable Object missingValue,
+        MultiValueMode sortMode,
+        Nested nested
+    ) {
         super(missingValue, sortMode, nested);
         this.indexFieldData = indexFieldData;
     }

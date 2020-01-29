@@ -73,13 +73,14 @@ public final class InternalAggregations extends Aggregations implements Writeabl
     public InternalAggregations(StreamInput in) throws IOException {
         super(in.readList(stream -> in.readNamedWriteable(InternalAggregation.class)));
         this.topLevelPipelineAggregators = in.readList(
-            stream -> (SiblingPipelineAggregator)in.readNamedWriteable(PipelineAggregator.class));
+            stream -> (SiblingPipelineAggregator) in.readNamedWriteable(PipelineAggregator.class)
+        );
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public void writeTo(StreamOutput out) throws IOException {
-        out.writeNamedWriteableList((List<InternalAggregation>)aggregations);
+        out.writeNamedWriteableList((List<InternalAggregation>) aggregations);
         out.writeNamedWriteableList(topLevelPipelineAggregators);
     }
 
@@ -113,14 +114,11 @@ public final class InternalAggregations extends Aggregations implements Writeabl
 
         if (context.isFinalReduce()) {
             List<InternalAggregation> reducedInternalAggs = reduced.getInternalAggregations();
-            reducedInternalAggs = reducedInternalAggs.stream()
-                .map(agg -> agg.reducePipelines(agg, context))
-                .collect(Collectors.toList());
+            reducedInternalAggs = reducedInternalAggs.stream().map(agg -> agg.reducePipelines(agg, context)).collect(Collectors.toList());
 
             List<SiblingPipelineAggregator> topLevelPipelineAggregators = aggregationsList.get(0).getTopLevelPipelineAggregators();
             for (SiblingPipelineAggregator pipelineAggregator : topLevelPipelineAggregators) {
-                InternalAggregation newAgg
-                    = pipelineAggregator.doReduce(new InternalAggregations(reducedInternalAggs), context);
+                InternalAggregation newAgg = pipelineAggregator.doReduce(new InternalAggregations(reducedInternalAggs), context);
                 reducedInternalAggs.add(newAgg);
             }
             return new InternalAggregations(reducedInternalAggs);
@@ -145,8 +143,10 @@ public final class InternalAggregations extends Aggregations implements Writeabl
         for (InternalAggregations aggregations : aggregationsList) {
             for (Aggregation aggregation : aggregations.aggregations) {
                 List<InternalAggregation> aggs = aggByName.computeIfAbsent(
-                        aggregation.getName(), k -> new ArrayList<>(aggregationsList.size()));
-                aggs.add((InternalAggregation)aggregation);
+                    aggregation.getName(),
+                    k -> new ArrayList<>(aggregationsList.size())
+                );
+                aggs.add((InternalAggregation) aggregation);
             }
         }
 

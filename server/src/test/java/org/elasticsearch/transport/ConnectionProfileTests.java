@@ -60,8 +60,10 @@ public class ConnectionProfileTests extends ESTestCase {
         IllegalStateException illegalStateException = expectThrows(IllegalStateException.class, builder::build);
         assertEquals("not all types are added for this connection profile - missing types: [REG]", illegalStateException.getMessage());
 
-        IllegalArgumentException illegalArgumentException = expectThrows(IllegalArgumentException.class,
-            () -> builder.addConnections(4, TransportRequestOptions.Type.REG, TransportRequestOptions.Type.PING));
+        IllegalArgumentException illegalArgumentException = expectThrows(
+            IllegalArgumentException.class,
+            () -> builder.addConnections(4, TransportRequestOptions.Type.REG, TransportRequestOptions.Type.PING)
+        );
         assertEquals("type [PING] is already registered", illegalArgumentException.getMessage());
         builder.addConnections(4, TransportRequestOptions.Type.REG);
         ConnectionProfile build = builder.build();
@@ -109,8 +111,10 @@ public class ConnectionProfileTests extends ESTestCase {
 
         assertEquals(1, build.getHandles().get(1).offset);
         assertEquals(2, build.getHandles().get(1).length);
-        assertEquals(EnumSet.of(TransportRequestOptions.Type.STATE, TransportRequestOptions.Type.RECOVERY),
-            build.getHandles().get(1).getTypes());
+        assertEquals(
+            EnumSet.of(TransportRequestOptions.Type.STATE, TransportRequestOptions.Type.RECOVERY),
+            build.getHandles().get(1).getTypes()
+        );
         channel = build.getHandles().get(1).getChannel(list);
         for (int i = 0; i < numIters; i++) {
             assertThat(channel, Matchers.anyOf(Matchers.is(1), Matchers.is(2)));
@@ -141,10 +145,13 @@ public class ConnectionProfileTests extends ESTestCase {
 
     public void testNoChannels() {
         ConnectionProfile.Builder builder = new ConnectionProfile.Builder();
-        builder.addConnections(1, TransportRequestOptions.Type.BULK,
+        builder.addConnections(
+            1,
+            TransportRequestOptions.Type.BULK,
             TransportRequestOptions.Type.STATE,
             TransportRequestOptions.Type.RECOVERY,
-            TransportRequestOptions.Type.REG);
+            TransportRequestOptions.Type.REG
+        );
         builder.addConnections(0, TransportRequestOptions.Type.PING);
         ConnectionProfile build = builder.build();
         List<Integer> array = Collections.singletonList(0);
@@ -186,14 +193,19 @@ public class ConnectionProfileTests extends ESTestCase {
         assertThat(resolved.getNumConnections(), equalTo(profile.getNumConnections()));
         assertThat(resolved.getHandles(), equalTo(profile.getHandles()));
 
-        assertThat(resolved.getConnectTimeout(),
-            equalTo(connectionTimeoutSet ? profile.getConnectTimeout() : defaultProfile.getConnectTimeout()));
-        assertThat(resolved.getHandshakeTimeout(),
-            equalTo(connectionHandshakeSet ? profile.getHandshakeTimeout() : defaultProfile.getHandshakeTimeout()));
-        assertThat(resolved.getPingInterval(),
-            equalTo(pingIntervalSet ? profile.getPingInterval() : defaultProfile.getPingInterval()));
-        assertThat(resolved.getCompressionEnabled(),
-            equalTo(connectionCompressSet ? profile.getCompressionEnabled() : defaultProfile.getCompressionEnabled()));
+        assertThat(
+            resolved.getConnectTimeout(),
+            equalTo(connectionTimeoutSet ? profile.getConnectTimeout() : defaultProfile.getConnectTimeout())
+        );
+        assertThat(
+            resolved.getHandshakeTimeout(),
+            equalTo(connectionHandshakeSet ? profile.getHandshakeTimeout() : defaultProfile.getHandshakeTimeout())
+        );
+        assertThat(resolved.getPingInterval(), equalTo(pingIntervalSet ? profile.getPingInterval() : defaultProfile.getPingInterval()));
+        assertThat(
+            resolved.getCompressionEnabled(),
+            equalTo(connectionCompressSet ? profile.getCompressionEnabled() : defaultProfile.getCompressionEnabled())
+        );
     }
 
     public void testDefaultConnectionProfile() {
@@ -225,8 +237,9 @@ public class ConnectionProfileTests extends ESTestCase {
         assertEquals(0, profile.getNumConnectionsPerType(TransportRequestOptions.Type.RECOVERY));
         assertEquals(3, profile.getNumConnectionsPerType(TransportRequestOptions.Type.BULK));
 
-        profile = ConnectionProfile.buildDefaultConnectionProfile(Settings.builder().put("node.data", false)
-            .put("node.master", false).build());
+        profile = ConnectionProfile.buildDefaultConnectionProfile(
+            Settings.builder().put("node.data", false).put("node.master", false).build()
+        );
         assertEquals(10, profile.getNumConnections());
         assertEquals(1, profile.getNumConnectionsPerType(TransportRequestOptions.Type.PING));
         assertEquals(6, profile.getNumConnectionsPerType(TransportRequestOptions.Type.REG));

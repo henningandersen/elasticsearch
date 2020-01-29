@@ -176,7 +176,8 @@ public class TermVectorsUnitTests extends ESTestCase {
 
     public void testRestRequestParsing() throws Exception {
         BytesReference inputBytes = new BytesArray(
-                " {\"fields\" : [\"a\",  \"b\",\"c\"], \"offsets\":false, \"positions\":false, \"payloads\":true}");
+            " {\"fields\" : [\"a\",  \"b\",\"c\"], \"offsets\":false, \"positions\":false, \"payloads\":true}"
+        );
 
         TermVectorsRequest tvr = new TermVectorsRequest(null, null);
         XContentParser parser = createParser(JsonXContent.jsonXContent, inputBytes);
@@ -213,7 +214,8 @@ public class TermVectorsUnitTests extends ESTestCase {
 
     public void testRequestParsingThrowsException() throws Exception {
         BytesReference inputBytes = new BytesArray(
-                " {\"fields\" : \"a,  b,c   \", \"offsets\":false, \"positions\":false, \"payloads\":true, \"meaningless_term\":2}");
+            " {\"fields\" : \"a,  b,c   \", \"offsets\":false, \"positions\":false, \"payloads\":true, \"meaningless_term\":2}"
+        );
         TermVectorsRequest tvr = new TermVectorsRequest(null, null);
         boolean threwException = false;
         try {
@@ -321,8 +323,11 @@ public class TermVectorsUnitTests extends ESTestCase {
         } catch (MapperParsingException e) {
             exceptionThrown = true;
         }
-        assertThat("TypeParsers.parseTermVector should accept string with_positions_payloads but does not.",
-            exceptionThrown, equalTo(false));
+        assertThat(
+            "TypeParsers.parseTermVector should accept string with_positions_payloads but does not.",
+            exceptionThrown,
+            equalTo(false)
+        );
     }
 
     public void testTermVectorStringGenerationWithoutPositions() throws Exception {
@@ -365,7 +370,7 @@ public class TermVectorsUnitTests extends ESTestCase {
             assertThat(singleRequest.offsets(), equalTo(false));
             assertThat(singleRequest.termStatistics(), equalTo(true));
             assertThat(singleRequest.fieldStatistics(), equalTo(false));
-            assertThat(singleRequest.id(),Matchers.anyOf(Matchers.equalTo("1"), Matchers.equalTo("2")));
+            assertThat(singleRequest.id(), Matchers.anyOf(Matchers.equalTo("1"), Matchers.equalTo("2")));
             assertThat(singleRequest.selectedFields(), equalTo(fields));
         }
     }

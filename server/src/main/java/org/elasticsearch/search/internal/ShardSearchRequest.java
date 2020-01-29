@@ -75,20 +75,23 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
     private final String preference;
     private final OriginalIndices originalIndices;
 
-    //these are the only two mutable fields, as they are subject to rewriting
+    // these are the only two mutable fields, as they are subject to rewriting
     private AliasFilter aliasFilter;
     private SearchSourceBuilder source;
 
-    public ShardSearchRequest(OriginalIndices originalIndices,
-                              SearchRequest searchRequest,
-                              ShardId shardId,
-                              int numberOfShards,
-                              AliasFilter aliasFilter,
-                              float indexBoost,
-                              long nowInMillis,
-                              @Nullable String clusterAlias,
-                              String[] indexRoutings) {
-        this(originalIndices,
+    public ShardSearchRequest(
+        OriginalIndices originalIndices,
+        SearchRequest searchRequest,
+        ShardId shardId,
+        int numberOfShards,
+        AliasFilter aliasFilter,
+        float indexBoost,
+        long nowInMillis,
+        @Nullable String clusterAlias,
+        String[] indexRoutings
+    ) {
+        this(
+            originalIndices,
             shardId,
             numberOfShards,
             searchRequest.searchType(),
@@ -101,33 +104,48 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
             searchRequest.preference(),
             searchRequest.scroll(),
             nowInMillis,
-            clusterAlias);
+            clusterAlias
+        );
         // If allowPartialSearchResults is unset (ie null), the cluster-level default should have been substituted
         // at this stage. Any NPEs in the above are therefore an error in request preparation logic.
         assert searchRequest.allowPartialSearchResults() != null;
     }
 
-    public ShardSearchRequest(ShardId shardId,
-                              long nowInMillis,
-                              AliasFilter aliasFilter) {
-        this(OriginalIndices.NONE, shardId, -1, null, null, null,
-            aliasFilter, 1.0f, false, Strings.EMPTY_ARRAY, null, null, nowInMillis, null);
+    public ShardSearchRequest(ShardId shardId, long nowInMillis, AliasFilter aliasFilter) {
+        this(
+            OriginalIndices.NONE,
+            shardId,
+            -1,
+            null,
+            null,
+            null,
+            aliasFilter,
+            1.0f,
+            false,
+            Strings.EMPTY_ARRAY,
+            null,
+            null,
+            nowInMillis,
+            null
+        );
     }
 
-    private ShardSearchRequest(OriginalIndices originalIndices,
-                               ShardId shardId,
-                               int numberOfShards,
-                               SearchType searchType,
-                               SearchSourceBuilder source,
-                               Boolean requestCache,
-                               AliasFilter aliasFilter,
-                               float indexBoost,
-                               boolean allowPartialSearchResults,
-                               String[] indexRoutings,
-                               String preference,
-                               Scroll scroll,
-                               long nowInMillis,
-                               @Nullable String clusterAlias) {
+    private ShardSearchRequest(
+        OriginalIndices originalIndices,
+        ShardId shardId,
+        int numberOfShards,
+        SearchType searchType,
+        SearchSourceBuilder source,
+        Boolean requestCache,
+        AliasFilter aliasFilter,
+        float indexBoost,
+        boolean allowPartialSearchResults,
+        String[] indexRoutings,
+        String preference,
+        Scroll scroll,
+        long nowInMillis,
+        @Nullable String clusterAlias
+    ) {
         this.shardId = shardId;
         this.numberOfShards = numberOfShards;
         this.searchType = searchType;
@@ -156,7 +174,8 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
             String[] types = in.readStringArray();
             if (types.length > 0) {
                 throw new IllegalStateException(
-                        "types are no longer supported in search requests but found [" + Arrays.toString(types) + "]");
+                    "types are no longer supported in search requests but found [" + Arrays.toString(types) + "]"
+                );
             }
         }
         aliasFilter = new AliasFilter(in);
@@ -335,8 +354,11 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
      * The list of filtering aliases should be obtained by calling MetaData.filteringAliases.
      * Returns {@code null} if no filtering is required.</p>
      */
-    public static QueryBuilder parseAliasFilter(CheckedFunction<byte[], QueryBuilder, IOException> filterParser,
-                                                IndexMetaData metaData, String... aliasNames) {
+    public static QueryBuilder parseAliasFilter(
+        CheckedFunction<byte[], QueryBuilder, IOException> filterParser,
+        IndexMetaData metaData,
+        String... aliasNames
+    ) {
         if (aliasNames == null || aliasNames.length == 0) {
             return null;
         }
@@ -366,8 +388,7 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
                 AliasMetaData alias = aliases.get(aliasName);
                 if (alias == null) {
                     // This shouldn't happen unless alias disappeared after filteringAliases was called.
-                    throw new InvalidAliasNameException(index, aliasNames[0],
-                        "Unknown alias name was passed to alias Filter");
+                    throw new InvalidAliasNameException(index, aliasNames[0], "Unknown alias name was passed to alias Filter");
                 }
                 QueryBuilder parsedFilter = parserFunction.apply(alias);
                 if (parsedFilter != null) {

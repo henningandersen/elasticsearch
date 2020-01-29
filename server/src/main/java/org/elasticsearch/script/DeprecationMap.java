@@ -28,8 +28,7 @@ import java.util.Set;
 
 public final class DeprecationMap implements Map<String, Object> {
 
-    private static final DeprecationLogger deprecationLogger =
-        new DeprecationLogger(LogManager.getLogger(DeprecationMap.class));
+    private static final DeprecationLogger deprecationLogger = new DeprecationLogger(LogManager.getLogger(DeprecationMap.class));
 
     private final Map<String, Object> delegate;
 

@@ -70,12 +70,21 @@ public class ResourceWatcherService extends AbstractLifecycleComponent {
     }
 
     public static final Setting<Boolean> ENABLED = Setting.boolSetting("resource.reload.enabled", true, Property.NodeScope);
-    public static final Setting<TimeValue> RELOAD_INTERVAL_HIGH =
-        Setting.timeSetting("resource.reload.interval.high", Frequency.HIGH.interval, Property.NodeScope);
-    public static final Setting<TimeValue> RELOAD_INTERVAL_MEDIUM = Setting.timeSetting("resource.reload.interval.medium",
-        Setting.timeSetting("resource.reload.interval", Frequency.MEDIUM.interval), Property.NodeScope);
-    public static final Setting<TimeValue> RELOAD_INTERVAL_LOW =
-        Setting.timeSetting("resource.reload.interval.low", Frequency.LOW.interval, Property.NodeScope);
+    public static final Setting<TimeValue> RELOAD_INTERVAL_HIGH = Setting.timeSetting(
+        "resource.reload.interval.high",
+        Frequency.HIGH.interval,
+        Property.NodeScope
+    );
+    public static final Setting<TimeValue> RELOAD_INTERVAL_MEDIUM = Setting.timeSetting(
+        "resource.reload.interval.medium",
+        Setting.timeSetting("resource.reload.interval", Frequency.MEDIUM.interval),
+        Property.NodeScope
+    );
+    public static final Setting<TimeValue> RELOAD_INTERVAL_LOW = Setting.timeSetting(
+        "resource.reload.interval.low",
+        Frequency.LOW.interval,
+        Property.NodeScope
+    );
 
     private final boolean enabled;
     private final ThreadPool threadPool;
@@ -122,8 +131,7 @@ public class ResourceWatcherService extends AbstractLifecycleComponent {
     }
 
     @Override
-    protected void doClose() {
-    }
+    protected void doClose() {}
 
     /**
      * Register new resource watcher that will be checked in default {@link Frequency#MEDIUM MEDIUM} frequency
@@ -188,7 +196,7 @@ public class ResourceWatcherService extends AbstractLifecycleComponent {
 
         @Override
         public synchronized void run() {
-            for(ResourceWatcher watcher : watchers) {
+            for (ResourceWatcher watcher : watchers) {
                 try {
                     watcher.checkAndNotify();
                 } catch (IOException e) {

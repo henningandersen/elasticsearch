@@ -39,8 +39,10 @@ public final class RandomShardRoutingMutator {
                 if (shardRouting.unassigned() == false && shardRouting.primary() == false) {
                     shardRouting = shardRouting.moveToUnassigned(new UnassignedInfo(randomReason(), randomAlphaOfLength(10)));
                 } else if (shardRouting.unassignedInfo() != null) {
-                    shardRouting = shardRouting.updateUnassigned(new UnassignedInfo(randomReason(), randomAlphaOfLength(10)),
-                        shardRouting.recoverySource());
+                    shardRouting = shardRouting.updateUnassigned(
+                        new UnassignedInfo(randomReason(), randomAlphaOfLength(10)),
+                        shardRouting.recoverySource()
+                    );
                 }
                 break;
             case 1:
@@ -56,7 +58,6 @@ public final class RandomShardRoutingMutator {
         }
         return shardRouting;
     }
-
 
     public static UnassignedInfo.Reason randomReason() {
         switch (randomInt(9)) {

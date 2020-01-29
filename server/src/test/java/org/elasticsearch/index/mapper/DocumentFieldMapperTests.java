@@ -113,8 +113,7 @@ public class DocumentFieldMapperTests extends LuceneTestCase {
         }
 
         @Override
-        protected void parseCreateField(ParseContext context, List<IndexableField> fields) throws IOException {
-        }
+        protected void parseCreateField(ParseContext context, List<IndexableField> fields) throws IOException {}
 
         @Override
         protected String contentType() {
@@ -144,7 +143,8 @@ public class DocumentFieldMapperTests extends LuceneTestCase {
             Collections.emptyList(),
             defaultIndex,
             defaultSearch,
-            defaultSearchQuote);
+            defaultSearchQuote
+        );
 
         assertAnalyzes(documentFieldMappers.indexAnalyzer(), "field1", "index");
 

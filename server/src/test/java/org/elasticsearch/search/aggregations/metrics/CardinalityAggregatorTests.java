@@ -65,7 +65,7 @@ public class CardinalityAggregatorTests extends AggregatorTestCase {
         MappedFieldType fieldType = new RangeFieldMapper.Builder(fieldName, rangeType).fieldType();
         fieldType.setName(fieldName);
         final CardinalityAggregationBuilder aggregationBuilder = new CardinalityAggregationBuilder("_name", null).field(fieldName);
-        testCase(aggregationBuilder,  new MatchAllDocsQuery(), iw -> {
+        testCase(aggregationBuilder, new MatchAllDocsQuery(), iw -> {
             iw.addDocument(singleton(new BinaryDocValuesField(fieldName, rangeType.encodeRanges(singleton(range1)))));
             iw.addDocument(singleton(new BinaryDocValuesField(fieldName, rangeType.encodeRanges(singleton(range1)))));
             iw.addDocument(singleton(new BinaryDocValuesField(fieldName, rangeType.encodeRanges(singleton(range2)))));
@@ -108,10 +108,8 @@ public class CardinalityAggregatorTests extends AggregatorTestCase {
 
     public void testQueryFiltering() throws IOException {
         testCase(IntPoint.newRangeQuery("number", 0, 5), iw -> {
-            iw.addDocument(Arrays.asList(new IntPoint("number", 7),
-                    new SortedNumericDocValuesField("number", 7)));
-            iw.addDocument(Arrays.asList(new IntPoint("number", 1),
-                    new SortedNumericDocValuesField("number", 1)));
+            iw.addDocument(Arrays.asList(new IntPoint("number", 7), new SortedNumericDocValuesField("number", 7)));
+            iw.addDocument(Arrays.asList(new IntPoint("number", 1), new SortedNumericDocValuesField("number", 1)));
         }, card -> {
             assertEquals(1, card.getValue(), 0);
             assertTrue(AggregationInspectionHelper.hasValue(card));
@@ -120,10 +118,8 @@ public class CardinalityAggregatorTests extends AggregatorTestCase {
 
     public void testQueryFiltersAll() throws IOException {
         testCase(IntPoint.newRangeQuery("number", -1, 0), iw -> {
-            iw.addDocument(Arrays.asList(new IntPoint("number", 7),
-                    new SortedNumericDocValuesField("number", 7)));
-            iw.addDocument(Arrays.asList(new IntPoint("number", 1),
-                    new SortedNumericDocValuesField("number", 1)));
+            iw.addDocument(Arrays.asList(new IntPoint("number", 7), new SortedNumericDocValuesField("number", 7)));
+            iw.addDocument(Arrays.asList(new IntPoint("number", 1), new SortedNumericDocValuesField("number", 1)));
         }, card -> {
             assertEquals(0.0, card.getValue(), 0);
             assertFalse(AggregationInspectionHelper.hasValue(card));
@@ -131,8 +127,8 @@ public class CardinalityAggregatorTests extends AggregatorTestCase {
     }
 
     public void testUnmappedMissingString() throws IOException {
-        CardinalityAggregationBuilder aggregationBuilder = new CardinalityAggregationBuilder("name", null)
-            .field("number").missing("🍌🍌🍌");
+        CardinalityAggregationBuilder aggregationBuilder = new CardinalityAggregationBuilder("name", null).field("number")
+            .missing("🍌🍌🍌");
 
         testCase(aggregationBuilder, new MatchAllDocsQuery(), iw -> {
             iw.addDocument(singleton(new NumericDocValuesField("unrelatedField", 7)));
@@ -145,8 +141,7 @@ public class CardinalityAggregatorTests extends AggregatorTestCase {
     }
 
     public void testUnmappedMissingNumber() throws IOException {
-        CardinalityAggregationBuilder aggregationBuilder = new CardinalityAggregationBuilder("name", null)
-            .field("number").missing(1234);
+        CardinalityAggregationBuilder aggregationBuilder = new CardinalityAggregationBuilder("name", null).field("number").missing(1234);
 
         testCase(aggregationBuilder, new MatchAllDocsQuery(), iw -> {
             iw.addDocument(singleton(new NumericDocValuesField("unrelatedField", 7)));
@@ -159,8 +154,8 @@ public class CardinalityAggregatorTests extends AggregatorTestCase {
     }
 
     public void testUnmappedMissingGeoPoint() throws IOException {
-        CardinalityAggregationBuilder aggregationBuilder = new CardinalityAggregationBuilder("name", null)
-            .field("number").missing(new GeoPoint(42.39561, -71.13051));
+        CardinalityAggregationBuilder aggregationBuilder = new CardinalityAggregationBuilder("name", null).field("number")
+            .missing(new GeoPoint(42.39561, -71.13051));
 
         testCase(aggregationBuilder, new MatchAllDocsQuery(), iw -> {
             iw.addDocument(singleton(new NumericDocValuesField("unrelatedField", 7)));
@@ -172,18 +167,21 @@ public class CardinalityAggregatorTests extends AggregatorTestCase {
         }, null);
     }
 
-    private void testCase(Query query, CheckedConsumer<RandomIndexWriter, IOException> buildIndex,
-                          Consumer<InternalCardinality> verify) throws IOException {
-        MappedFieldType fieldType = new NumberFieldMapper.NumberFieldType(
-            NumberFieldMapper.NumberType.LONG);
+    private void testCase(Query query, CheckedConsumer<RandomIndexWriter, IOException> buildIndex, Consumer<InternalCardinality> verify)
+        throws IOException {
+        MappedFieldType fieldType = new NumberFieldMapper.NumberFieldType(NumberFieldMapper.NumberType.LONG);
         fieldType.setName("number");
         final CardinalityAggregationBuilder aggregationBuilder = new CardinalityAggregationBuilder("_name", null).field("number");
         testCase(aggregationBuilder, query, buildIndex, verify, fieldType);
     }
 
-    private void testCase(CardinalityAggregationBuilder aggregationBuilder, Query query,
-                          CheckedConsumer<RandomIndexWriter, IOException> buildIndex, Consumer<InternalCardinality> verify,
-                          MappedFieldType fieldType) throws IOException {
+    private void testCase(
+        CardinalityAggregationBuilder aggregationBuilder,
+        Query query,
+        CheckedConsumer<RandomIndexWriter, IOException> buildIndex,
+        Consumer<InternalCardinality> verify,
+        MappedFieldType fieldType
+    ) throws IOException {
         Directory directory = newDirectory();
         RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory);
         buildIndex.accept(indexWriter);
@@ -192,8 +190,7 @@ public class CardinalityAggregatorTests extends AggregatorTestCase {
         IndexReader indexReader = DirectoryReader.open(directory);
         IndexSearcher indexSearcher = newSearcher(indexReader, true, true);
 
-        CardinalityAggregator aggregator = createAggregator(aggregationBuilder, indexSearcher,
-            fieldType);
+        CardinalityAggregator aggregator = createAggregator(aggregationBuilder, indexSearcher, fieldType);
         aggregator.preCollection();
         indexSearcher.search(query, aggregator);
         aggregator.postCollection();

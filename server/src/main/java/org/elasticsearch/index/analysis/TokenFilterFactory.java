@@ -57,9 +57,12 @@ public interface TokenFilterFactory {
      * @param previousTokenFilters  a list of TokenFilterFactories in the preceding chain
      * @param allFilters            access to previously defined TokenFilterFactories
      */
-    default TokenFilterFactory getChainAwareTokenFilterFactory(TokenizerFactory tokenizer, List<CharFilterFactory> charFilters,
-                                                               List<TokenFilterFactory> previousTokenFilters,
-                                                               Function<String, TokenFilterFactory> allFilters) {
+    default TokenFilterFactory getChainAwareTokenFilterFactory(
+        TokenizerFactory tokenizer,
+        List<CharFilterFactory> charFilters,
+        List<TokenFilterFactory> previousTokenFilters,
+        Function<String, TokenFilterFactory> allFilters
+    ) {
         return this;
     }
 

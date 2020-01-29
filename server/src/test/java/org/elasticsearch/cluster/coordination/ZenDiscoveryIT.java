@@ -57,19 +57,17 @@ import static org.hamcrest.Matchers.notNullValue;
 public class ZenDiscoveryIT extends ESIntegTestCase {
 
     public void testNoShardRelocationsOccurWhenElectedMasterNodeFails() throws Exception {
-        Settings masterNodeSettings = Settings.builder()
-                .put(Node.NODE_DATA_SETTING.getKey(), false)
-                .build();
+        Settings masterNodeSettings = Settings.builder().put(Node.NODE_DATA_SETTING.getKey(), false).build();
         internalCluster().startNodes(2, masterNodeSettings);
-        Settings dateNodeSettings = Settings.builder()
-                .put(Node.NODE_MASTER_SETTING.getKey(), false)
-                .build();
+        Settings dateNodeSettings = Settings.builder().put(Node.NODE_MASTER_SETTING.getKey(), false).build();
         internalCluster().startNodes(2, dateNodeSettings);
-        ClusterHealthResponse clusterHealthResponse = client().admin().cluster().prepareHealth()
-                .setWaitForEvents(Priority.LANGUID)
-                .setWaitForNodes("4")
-                .setWaitForNoRelocatingShards(true)
-                .get();
+        ClusterHealthResponse clusterHealthResponse = client().admin()
+            .cluster()
+            .prepareHealth()
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForNodes("4")
+            .setWaitForNoRelocatingShards(true)
+            .get();
         assertThat(clusterHealthResponse.isTimedOut(), is(false));
 
         createIndex("test");
@@ -91,8 +89,7 @@ public class ZenDiscoveryIT extends ESIntegTestCase {
         assertThat(numRecoveriesAfterNewMaster, equalTo(numRecoveriesBeforeNewMaster));
     }
 
-    public void testHandleNodeJoin_incompatibleClusterState()
-            throws InterruptedException, ExecutionException, TimeoutException {
+    public void testHandleNodeJoin_incompatibleClusterState() throws InterruptedException, ExecutionException, TimeoutException {
         String masterNode = internalCluster().startMasterOnlyNode();
         String node1 = internalCluster().startNode();
         ClusterService clusterService = internalCluster().getInstance(ClusterService.class, node1);
@@ -105,18 +102,21 @@ public class ZenDiscoveryIT extends ESIntegTestCase {
         final CompletableFuture<Throwable> future = new CompletableFuture<>();
         DiscoveryNode node = state.nodes().getLocalNode();
 
-        coordinator.sendValidateJoinRequest(stateWithCustomMetaData, new JoinRequest(node, Optional.empty()),
-                new JoinHelper.JoinCallback() {
-            @Override
-            public void onSuccess() {
-                future.completeExceptionally(new AssertionError("onSuccess should not be called"));
-            }
+        coordinator.sendValidateJoinRequest(
+            stateWithCustomMetaData,
+            new JoinRequest(node, Optional.empty()),
+            new JoinHelper.JoinCallback() {
+                @Override
+                public void onSuccess() {
+                    future.completeExceptionally(new AssertionError("onSuccess should not be called"));
+                }
 
-            @Override
-            public void onFailure(Exception e) {
-                future.complete(e);
+                @Override
+                public void onFailure(Exception e) {
+                    future.complete(e);
+                }
             }
-        });
+        );
 
         Throwable t = future.get(10, TimeUnit.SECONDS);
 
@@ -152,9 +152,12 @@ public class ZenDiscoveryIT extends ESIntegTestCase {
     public void testDiscoveryStats() throws Exception {
         internalCluster().startNode();
         ensureGreen(); // ensures that all events are processed (in particular state recovery fully completed)
-        assertBusy(() ->
-            assertThat(internalCluster().clusterService(internalCluster().getMasterName()).getMasterService().numberOfPendingTasks(),
-                equalTo(0))); // see https://github.com/elastic/elasticsearch/issues/24388
+        assertBusy(
+            () -> assertThat(
+                internalCluster().clusterService(internalCluster().getMasterName()).getMasterService().numberOfPendingTasks(),
+                equalTo(0)
+            )
+        ); // see https://github.com/elastic/elasticsearch/issues/24388
 
         logger.info("--> request node discovery stats");
         NodesStatsResponse statsResponse = client().admin().cluster().prepareNodesStats().clear().setDiscovery(true).get();

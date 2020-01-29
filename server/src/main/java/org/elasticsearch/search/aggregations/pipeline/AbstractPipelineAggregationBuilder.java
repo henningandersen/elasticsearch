@@ -38,8 +38,8 @@ import java.util.Objects;
 /**
  * Base implementation of a {@link PipelineAggregationBuilder}.
  */
-public abstract class AbstractPipelineAggregationBuilder<PAB extends AbstractPipelineAggregationBuilder<PAB>>
-        extends PipelineAggregationBuilder {
+public abstract class AbstractPipelineAggregationBuilder<PAB extends AbstractPipelineAggregationBuilder<PAB>> extends
+    PipelineAggregationBuilder {
 
     /**
      * Field shared by many parsers.
@@ -84,8 +84,11 @@ public abstract class AbstractPipelineAggregationBuilder<PAB extends AbstractPip
      * configured)
      */
     @Override
-    public final void validate(AggregatorFactory parent, Collection<AggregationBuilder> factories,
-            Collection<PipelineAggregationBuilder> pipelineAggregatorFactories) {
+    public final void validate(
+        AggregatorFactory parent,
+        Collection<AggregationBuilder> factories,
+        Collection<PipelineAggregationBuilder> pipelineAggregatorFactories
+    ) {
         doValidate(parent, factories, pipelineAggregatorFactories);
     }
 
@@ -102,18 +105,22 @@ public abstract class AbstractPipelineAggregationBuilder<PAB extends AbstractPip
         return aggregator;
     }
 
-    public void doValidate(AggregatorFactory parent, Collection<AggregationBuilder> factories,
-            Collection<PipelineAggregationBuilder> pipelineAggregatorFactories) {
-    }
+    public void doValidate(
+        AggregatorFactory parent,
+        Collection<AggregationBuilder> factories,
+        Collection<PipelineAggregationBuilder> pipelineAggregatorFactories
+    ) {}
 
     /**
      * Validates pipeline aggregations that need sequentially ordered data.
      */
     public static void validateSequentiallyOrderedParentAggs(AggregatorFactory parent, String type, String name) {
-        if ((parent instanceof HistogramAggregatorFactory || parent instanceof DateHistogramAggregatorFactory
-                || parent instanceof AutoDateHistogramAggregatorFactory) == false) {
+        if ((parent instanceof HistogramAggregatorFactory
+            || parent instanceof DateHistogramAggregatorFactory
+            || parent instanceof AutoDateHistogramAggregatorFactory) == false) {
             throw new IllegalStateException(
-                    type + " aggregation [" + name + "] must have a histogram, date_histogram or auto_date_histogram as parent");
+                type + " aggregation [" + name + "] must have a histogram, date_histogram or auto_date_histogram as parent"
+            );
         }
         if (parent instanceof HistogramAggregatorFactory) {
             HistogramAggregatorFactory histoParent = (HistogramAggregatorFactory) parent;

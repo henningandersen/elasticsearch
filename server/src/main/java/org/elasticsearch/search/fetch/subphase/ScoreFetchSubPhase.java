@@ -39,8 +39,8 @@ public class ScoreFetchSubPhase implements FetchSubPhase {
     @Override
     public void hitsExecute(SearchContext context, SearchHit[] hits) throws IOException {
         if (context.trackScores() == false || hits.length == 0 ||
-                // scores were already computed since they are needed on the coordinated node to merge top hits
-                context.sort() == null) {
+        // scores were already computed since they are needed on the coordinated node to merge top hits
+            context.sort() == null) {
             return;
         }
 

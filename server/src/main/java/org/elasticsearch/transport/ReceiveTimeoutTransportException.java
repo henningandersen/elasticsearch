@@ -34,7 +34,7 @@ public class ReceiveTimeoutTransportException extends ActionTransportException {
         super(in);
     }
 
-//    @Override public Throwable fillInStackTrace() {
-//        return fillStack();
-//    }
+    // @Override public Throwable fillInStackTrace() {
+    // return fillStack();
+    // }
 }

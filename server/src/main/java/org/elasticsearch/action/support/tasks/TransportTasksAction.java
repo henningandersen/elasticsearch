@@ -62,11 +62,10 @@ import static java.util.Collections.emptyList;
  * The base class for transport actions that are interacting with currently running tasks.
  */
 public abstract class TransportTasksAction<
-        OperationTask extends Task,
-        TasksRequest extends BaseTasksRequest<TasksRequest>,
-        TasksResponse extends BaseTasksResponse,
-        TaskResponse extends Writeable
-    > extends HandledTransportAction<TasksRequest, TasksResponse> {
+    OperationTask extends Task,
+    TasksRequest extends BaseTasksRequest<TasksRequest>,
+    TasksResponse extends BaseTasksResponse,
+    TaskResponse extends Writeable> extends HandledTransportAction<TasksRequest, TasksResponse> {
 
     protected final ClusterService clusterService;
     protected final TransportService transportService;
@@ -76,10 +75,16 @@ public abstract class TransportTasksAction<
 
     protected final String transportNodeAction;
 
-    protected TransportTasksAction(String actionName, ClusterService clusterService, TransportService transportService,
-                                   ActionFilters actionFilters, Writeable.Reader<TasksRequest> requestReader,
-                                   Writeable.Reader<TasksResponse> responsesReader, Writeable.Reader<TaskResponse> responseReader,
-                                   String nodeExecutor) {
+    protected TransportTasksAction(
+        String actionName,
+        ClusterService clusterService,
+        TransportService transportService,
+        ActionFilters actionFilters,
+        Writeable.Reader<TasksRequest> requestReader,
+        Writeable.Reader<TasksResponse> responsesReader,
+        Writeable.Reader<TaskResponse> responseReader,
+        String nodeExecutor
+    ) {
         super(actionName, transportService, actionFilters, requestReader);
         this.clusterService = clusterService;
         this.transportService = transportService;
@@ -130,8 +135,9 @@ public abstract class TransportTasksAction<
                     for (Tuple<TaskResponse, Exception> response : responses.asList()) {
                         if (response.v1() == null) {
                             assert response.v2() != null;
-                            exceptions.add(new TaskOperationFailure(clusterService.localNode().getId(), tasks.get(taskIndex).getId(),
-                                    response.v2()));
+                            exceptions.add(
+                                new TaskOperationFailure(clusterService.localNode().getId(), tasks.get(taskIndex).getId(), response.v2())
+                            );
                         } else {
                             assert response.v2() == null;
                             results.add(response.v1());
@@ -154,7 +160,7 @@ public abstract class TransportTasksAction<
 
     protected String[] resolveNodes(TasksRequest request, ClusterState clusterState) {
         if (request.getTaskId().isSet()) {
-            return new String[]{request.getTaskId().getNodeId()};
+            return new String[] { request.getTaskId().getNodeId() };
         } else {
             return clusterState.nodes().resolveNodes(request.getNodes());
         }
@@ -182,8 +188,12 @@ public abstract class TransportTasksAction<
         }
     }
 
-    protected abstract TasksResponse newResponse(TasksRequest request, List<TaskResponse> tasks, List<TaskOperationFailure>
-        taskOperationFailures, List<FailedNodeException> failedNodeExceptions);
+    protected abstract TasksResponse newResponse(
+        TasksRequest request,
+        List<TaskResponse> tasks,
+        List<TaskOperationFailure> taskOperationFailures,
+        List<FailedNodeException> failedNodeExceptions
+    );
 
     @SuppressWarnings("unchecked")
     protected TasksResponse newResponse(TasksRequest request, AtomicReferenceArray responses) {
@@ -261,7 +271,11 @@ public abstract class TransportTasksAction<
                         } else {
                             NodeTaskRequest nodeRequest = new NodeTaskRequest(request);
                             nodeRequest.setParentTask(clusterService.localNode().getId(), task.getId());
-                            transportService.sendRequest(node, transportNodeAction, nodeRequest, builder.build(),
+                            transportService.sendRequest(
+                                node,
+                                transportNodeAction,
+                                nodeRequest,
+                                builder.build(),
                                 new TransportResponseHandler<NodeTasksResponse>() {
                                     @Override
                                     public NodeTasksResponse read(StreamInput in) throws IOException {
@@ -282,7 +296,8 @@ public abstract class TransportTasksAction<
                                     public String executor() {
                                         return ThreadPool.Names.SAME;
                                     }
-                                });
+                                }
+                            );
                         }
                     } catch (Exception e) {
                         onFailure(idx, nodeId, e);
@@ -327,16 +342,14 @@ public abstract class TransportTasksAction<
 
         @Override
         public void messageReceived(final NodeTaskRequest request, final TransportChannel channel, Task task) throws Exception {
-            nodeOperation(request, ActionListener.wrap(channel::sendResponse,
-                e -> {
-                    try {
-                        channel.sendResponse(e);
-                    } catch (IOException e1) {
-                        e1.addSuppressed(e);
-                        logger.warn("Failed to send failure", e1);
-                    }
+            nodeOperation(request, ActionListener.wrap(channel::sendResponse, e -> {
+                try {
+                    channel.sendResponse(e);
+                } catch (IOException e1) {
+                    e1.addSuppressed(e);
+                    logger.warn("Failed to send failure", e1);
                 }
-            ));
+            }));
         }
     }
 
@@ -386,9 +399,7 @@ public abstract class TransportTasksAction<
             }
         }
 
-        NodeTasksResponse(String nodeId,
-                                 List<TaskResponse> results,
-                                 List<TaskOperationFailure> exceptions) {
+        NodeTasksResponse(String nodeId, List<TaskResponse> results, List<TaskOperationFailure> exceptions) {
             this.nodeId = nodeId;
             this.results = results;
             this.exceptions = exceptions;

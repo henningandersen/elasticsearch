@@ -69,8 +69,11 @@ public class RepositoryMetaData {
         this.settings = settings;
         this.generation = generation;
         this.pendingGeneration = pendingGeneration;
-        assert generation <= pendingGeneration :
-            "Pending generation [" + pendingGeneration + "] must be greater or equal to generation [" + generation + "]";
+        assert generation <= pendingGeneration : "Pending generation ["
+            + pendingGeneration
+            + "] must be greater or equal to generation ["
+            + generation
+            + "]";
     }
 
     /**

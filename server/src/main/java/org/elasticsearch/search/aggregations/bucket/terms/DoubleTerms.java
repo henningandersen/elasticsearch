@@ -42,8 +42,14 @@ public class DoubleTerms extends InternalMappedTerms<DoubleTerms, DoubleTerms.Bu
     static class Bucket extends InternalTerms.Bucket<Bucket> {
         private final double term;
 
-        Bucket(double term, long docCount, InternalAggregations aggregations, boolean showDocCountError, long docCountError,
-                DocValueFormat format) {
+        Bucket(
+            double term,
+            long docCount,
+            InternalAggregations aggregations,
+            boolean showDocCountError,
+            long docCountError,
+            DocValueFormat format
+        ) {
             super(docCount, aggregations, showDocCountError, docCountError, format);
             this.term = term;
         }
@@ -101,11 +107,34 @@ public class DoubleTerms extends InternalMappedTerms<DoubleTerms, DoubleTerms.Bu
         }
     }
 
-    public DoubleTerms(String name, BucketOrder order, int requiredSize, long minDocCount, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData, DocValueFormat format, int shardSize, boolean showTermDocCountError, long otherDocCount,
-            List<Bucket> buckets, long docCountError) {
-        super(name, order, requiredSize, minDocCount, pipelineAggregators, metaData, format, shardSize, showTermDocCountError,
-                otherDocCount, buckets, docCountError);
+    public DoubleTerms(
+        String name,
+        BucketOrder order,
+        int requiredSize,
+        long minDocCount,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        DocValueFormat format,
+        int shardSize,
+        boolean showTermDocCountError,
+        long otherDocCount,
+        List<Bucket> buckets,
+        long docCountError
+    ) {
+        super(
+            name,
+            order,
+            requiredSize,
+            minDocCount,
+            pipelineAggregators,
+            metaData,
+            format,
+            shardSize,
+            showTermDocCountError,
+            otherDocCount,
+            buckets,
+            docCountError
+        );
     }
 
     /**
@@ -122,20 +151,50 @@ public class DoubleTerms extends InternalMappedTerms<DoubleTerms, DoubleTerms.Bu
 
     @Override
     public DoubleTerms create(List<Bucket> buckets) {
-        return new DoubleTerms(name, order, requiredSize, minDocCount, this.pipelineAggregators(), metaData, format, shardSize,
-                showTermDocCountError, otherDocCount, buckets, docCountError);
+        return new DoubleTerms(
+            name,
+            order,
+            requiredSize,
+            minDocCount,
+            this.pipelineAggregators(),
+            metaData,
+            format,
+            shardSize,
+            showTermDocCountError,
+            otherDocCount,
+            buckets,
+            docCountError
+        );
     }
 
     @Override
     public Bucket createBucket(InternalAggregations aggregations, Bucket prototype) {
-        return new Bucket(prototype.term, prototype.docCount, aggregations, prototype.showDocCountError, prototype.docCountError,
-                prototype.format);
+        return new Bucket(
+            prototype.term,
+            prototype.docCount,
+            aggregations,
+            prototype.showDocCountError,
+            prototype.docCountError,
+            prototype.format
+        );
     }
 
     @Override
     protected DoubleTerms create(String name, List<Bucket> buckets, long docCountError, long otherDocCount) {
-        return new DoubleTerms(name, order, requiredSize, minDocCount, pipelineAggregators(), getMetaData(), format,
-                shardSize, showTermDocCountError, otherDocCount, buckets, docCountError);
+        return new DoubleTerms(
+            name,
+            order,
+            requiredSize,
+            minDocCount,
+            pipelineAggregators(),
+            getMetaData(),
+            format,
+            shardSize,
+            showTermDocCountError,
+            otherDocCount,
+            buckets,
+            docCountError
+        );
     }
 
     @Override

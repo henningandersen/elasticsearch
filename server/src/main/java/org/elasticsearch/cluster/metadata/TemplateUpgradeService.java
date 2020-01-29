@@ -78,8 +78,12 @@ public class TemplateUpgradeService implements ClusterStateListener {
 
     private ImmutableOpenMap<String, IndexTemplateMetaData> lastTemplateMetaData;
 
-    public TemplateUpgradeService(Client client, ClusterService clusterService, ThreadPool threadPool,
-                                  Collection<UnaryOperator<Map<String, IndexTemplateMetaData>>> indexTemplateMetaDataUpgraders) {
+    public TemplateUpgradeService(
+        Client client,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        Collection<UnaryOperator<Map<String, IndexTemplateMetaData>>> indexTemplateMetaDataUpgraders
+    ) {
         this.client = client;
         this.clusterService = clusterService;
         this.threadPool = threadPool;
@@ -124,10 +128,12 @@ public class TemplateUpgradeService implements ClusterStateListener {
         Optional<Tuple<Map<String, BytesReference>, Set<String>>> changes = calculateTemplateChanges(templates);
         if (changes.isPresent()) {
             if (upgradesInProgress.compareAndSet(0, changes.get().v1().size() + changes.get().v2().size() + 1)) {
-                logger.info("Starting template upgrade to version {}, {} templates will be updated and {} will be removed",
+                logger.info(
+                    "Starting template upgrade to version {}, {} templates will be updated and {} will be removed",
                     Version.CURRENT,
                     changes.get().v1().size(),
-                    changes.get().v2().size());
+                    changes.get().v2().size()
+                );
 
                 final ThreadContext threadContext = threadPool.getThreadContext();
                 try (ThreadContext.StoredContext ignore = threadContext.stashContext()) {
@@ -145,8 +151,7 @@ public class TemplateUpgradeService implements ClusterStateListener {
         }
 
         for (Map.Entry<String, BytesReference> change : changes.entrySet()) {
-            PutIndexTemplateRequest request =
-                new PutIndexTemplateRequest(change.getKey()).source(change.getValue(), XContentType.JSON);
+            PutIndexTemplateRequest request = new PutIndexTemplateRequest(change.getKey()).source(change.getValue(), XContentType.JSON);
             request.masterNodeTimeout(TimeValue.timeValueMinutes(1));
             client.admin().indices().putTemplate(request, new ActionListener<AcknowledgedResponse>() {
                 @Override
@@ -207,8 +212,9 @@ public class TemplateUpgradeService implements ClusterStateListener {
                 // Check upgraders are satisfied after the update completed. If they still
                 // report that changes are required, this might indicate a bug or that something
                 // else tinkering with the templates during the upgrade.
-                final ImmutableOpenMap<String, IndexTemplateMetaData> upgradedTemplates =
-                        clusterService.state().getMetaData().getTemplates();
+                final ImmutableOpenMap<String, IndexTemplateMetaData> upgradedTemplates = clusterService.state()
+                    .getMetaData()
+                    .getTemplates();
                 final boolean changesRequired = calculateTemplateChanges(upgradedTemplates).isPresent();
                 if (changesRequired) {
                     logger.warn("Templates are still reported as out of date after the upgrade. The template upgrade will be retried.");
@@ -221,7 +227,8 @@ public class TemplateUpgradeService implements ClusterStateListener {
     }
 
     Optional<Tuple<Map<String, BytesReference>, Set<String>>> calculateTemplateChanges(
-        ImmutableOpenMap<String, IndexTemplateMetaData> templates) {
+        ImmutableOpenMap<String, IndexTemplateMetaData> templates
+    ) {
         // collect current templates
         Map<String, IndexTemplateMetaData> existingMap = new HashMap<>();
         for (ObjectObjectCursor<String, IndexTemplateMetaData> customCursor : templates) {

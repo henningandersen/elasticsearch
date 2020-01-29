@@ -41,51 +41,50 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-
 public class MissingAggregatorTests extends AggregatorTestCase {
     public void testMatchNoDocs() throws IOException {
         int numDocs = randomIntBetween(10, 200);
-        testBothCases(numDocs,
+        testBothCases(
+            numDocs,
             "field",
             Queries.newMatchAllQuery(),
             doc -> doc.add(new SortedNumericDocValuesField("field", randomLong())),
             internalMissing -> {
                 assertEquals(internalMissing.getDocCount(), 0);
                 assertFalse(AggregationInspectionHelper.hasValue(internalMissing));
-            });
+            }
+        );
     }
 
     public void testMatchAllDocs() throws IOException {
         int numDocs = randomIntBetween(10, 200);
-        testBothCases(numDocs,
+        testBothCases(
+            numDocs,
             "field",
             Queries.newMatchAllQuery(),
             doc -> doc.add(new SortedNumericDocValuesField("another_field", randomLong())),
             internalMissing -> {
                 assertEquals(internalMissing.getDocCount(), numDocs);
                 assertTrue(AggregationInspectionHelper.hasValue(internalMissing));
-            });
+            }
+        );
     }
 
     public void testMatchSparse() throws IOException {
         int numDocs = randomIntBetween(100, 200);
         final AtomicInteger count = new AtomicInteger();
-        testBothCases(numDocs,
-            "field",
-            Queries.newMatchAllQuery(),
-            doc -> {
-                if (randomBoolean()) {
-                    doc.add(new SortedNumericDocValuesField("another_field", randomLong()));
-                    count.incrementAndGet();
-                } else {
-                    doc.add(new SortedNumericDocValuesField("field", randomLong()));
-                }
-            },
-            internalMissing -> {
-                assertEquals(internalMissing.getDocCount(), count.get());
-                count.set(0);
-                assertTrue(AggregationInspectionHelper.hasValue(internalMissing));
-            });
+        testBothCases(numDocs, "field", Queries.newMatchAllQuery(), doc -> {
+            if (randomBoolean()) {
+                doc.add(new SortedNumericDocValuesField("another_field", randomLong()));
+                count.incrementAndGet();
+            } else {
+                doc.add(new SortedNumericDocValuesField("field", randomLong()));
+            }
+        }, internalMissing -> {
+            assertEquals(internalMissing.getDocCount(), count.get());
+            count.set(0);
+            assertTrue(AggregationInspectionHelper.hasValue(internalMissing));
+        });
     }
 
     public void testMatchSparseRangeField() throws IOException {
@@ -93,74 +92,71 @@ public class MissingAggregatorTests extends AggregatorTestCase {
         final AtomicInteger count = new AtomicInteger();
         final String fieldName = "field";
         RangeType rangeType = RangeType.DOUBLE;
-        final BinaryDocValuesField field = new BinaryDocValuesField(fieldName, rangeType.encodeRanges(Collections.singleton(
-            new RangeFieldMapper.Range(rangeType, 1.0D, 5.0D, true, true))));
+        final BinaryDocValuesField field = new BinaryDocValuesField(
+            fieldName,
+            rangeType.encodeRanges(Collections.singleton(new RangeFieldMapper.Range(rangeType, 1.0D, 5.0D, true, true)))
+        );
         MappedFieldType fieldType = new RangeFieldMapper.Builder(fieldName, rangeType).fieldType();
         fieldType.setName(fieldName);
-        testBothCases(numDocs,
-            fieldName,
-            Queries.newMatchAllQuery(),
-            doc -> {
-                if (randomBoolean()) {
-                    doc.add(new SortedNumericDocValuesField("another_field", randomLong()));
-                    count.incrementAndGet();
-                } else {
-                    doc.add(field);
-                }
-            },
-            internalMissing -> {
-                assertEquals(internalMissing.getDocCount(), count.get());
-                count.set(0);
-                assertTrue(AggregationInspectionHelper.hasValue(internalMissing));
-            }, fieldType);
+        testBothCases(numDocs, fieldName, Queries.newMatchAllQuery(), doc -> {
+            if (randomBoolean()) {
+                doc.add(new SortedNumericDocValuesField("another_field", randomLong()));
+                count.incrementAndGet();
+            } else {
+                doc.add(field);
+            }
+        }, internalMissing -> {
+            assertEquals(internalMissing.getDocCount(), count.get());
+            count.set(0);
+            assertTrue(AggregationInspectionHelper.hasValue(internalMissing));
+        }, fieldType);
     }
-
 
     public void testMissingField() throws IOException {
         int numDocs = randomIntBetween(10, 20);
-        testBothCases(numDocs,
+        testBothCases(
+            numDocs,
             "unknown_field",
             Queries.newMatchAllQuery(),
-            doc -> {
-                doc.add(new SortedNumericDocValuesField("field", randomLong()));
-            },
+            doc -> { doc.add(new SortedNumericDocValuesField("field", randomLong())); },
             internalMissing -> {
                 assertEquals(internalMissing.getDocCount(), numDocs);
                 assertTrue(AggregationInspectionHelper.hasValue(internalMissing));
-            });
+            }
+        );
     }
 
-    private void testBothCases(int numDocs,
-                               String fieldName,
-                               Query query,
-                               Consumer<Document> consumer,
-                               Consumer<InternalMissing> verify) throws IOException {
-        NumberFieldMapper.Builder mapperBuilder = new NumberFieldMapper.Builder("_name",
-            NumberFieldMapper.NumberType.LONG);
+    private void testBothCases(int numDocs, String fieldName, Query query, Consumer<Document> consumer, Consumer<InternalMissing> verify)
+        throws IOException {
+        NumberFieldMapper.Builder mapperBuilder = new NumberFieldMapper.Builder("_name", NumberFieldMapper.NumberType.LONG);
         final MappedFieldType fieldType = mapperBuilder.fieldType();
         fieldType.setHasDocValues(true);
         fieldType.setName(fieldName);
         testBothCases(numDocs, fieldName, query, consumer, verify, fieldType);
     }
 
-    private void testBothCases(int numDocs,
-                               String fieldName,
-                               Query query,
-                               Consumer<Document> consumer,
-                               Consumer<InternalMissing> verify,
-                               MappedFieldType fieldType) throws IOException {
+    private void testBothCases(
+        int numDocs,
+        String fieldName,
+        Query query,
+        Consumer<Document> consumer,
+        Consumer<InternalMissing> verify,
+        MappedFieldType fieldType
+    ) throws IOException {
         executeTestCase(numDocs, fieldName, query, consumer, verify, false, fieldType);
         executeTestCase(numDocs, fieldName, query, consumer, verify, true, fieldType);
 
     }
 
-    private void executeTestCase(int numDocs,
-                                 String fieldName,
-                                 Query query,
-                                 Consumer<Document> consumer,
-                                 Consumer<InternalMissing> verify,
-                                 boolean reduced,
-                                 MappedFieldType fieldType) throws IOException {
+    private void executeTestCase(
+        int numDocs,
+        String fieldName,
+        Query query,
+        Consumer<Document> consumer,
+        Consumer<InternalMissing> verify,
+        boolean reduced,
+        MappedFieldType fieldType
+    ) throws IOException {
         try (Directory directory = newDirectory()) {
             try (RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory)) {
                 Document document = new Document();
@@ -175,8 +171,7 @@ public class MissingAggregatorTests extends AggregatorTestCase {
             }
 
             try (IndexReader indexReader = DirectoryReader.open(directory)) {
-                IndexSearcher indexSearcher =
-                    newSearcher(indexReader, true, true);
+                IndexSearcher indexSearcher = newSearcher(indexReader, true, true);
                 MissingAggregationBuilder builder = new MissingAggregationBuilder("_name", null);
                 builder.field(fieldName);
 

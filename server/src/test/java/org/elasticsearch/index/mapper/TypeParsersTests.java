@@ -59,8 +59,10 @@ import org.hamcrest.Matchers;
 public class TypeParsersTests extends ESTestCase {
 
     private static final IndexMetaData EMPTY_INDEX_METADATA = IndexMetaData.builder("")
-            .settings(Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT))
-            .numberOfShards(1).numberOfReplicas(0).build();
+        .settings(Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT))
+        .numberOfShards(1)
+        .numberOfReplicas(0)
+        .build();
     private static final IndexSettings indexSettings = new IndexSettings(EMPTY_INDEX_METADATA, Settings.EMPTY);
 
     public void testParseTextFieldCheckAnalyzerAnalysisMode() {
@@ -71,8 +73,10 @@ public class TypeParsersTests extends ESTestCase {
 
         // check AnalysisMode.ALL works
         Map<String, NamedAnalyzer> analyzers = defaultAnalyzers();
-        analyzers.put("my_analyzer",
-                new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", AnalysisMode.ALL)));
+        analyzers.put(
+            "my_analyzer",
+            new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", AnalysisMode.ALL))
+        );
 
         IndexAnalyzers indexAnalyzers = new IndexAnalyzers(analyzers, Collections.emptyMap(), Collections.emptyMap());
         when(parserContext.getIndexAnalyzers()).thenReturn(indexAnalyzers);
@@ -81,14 +85,20 @@ public class TypeParsersTests extends ESTestCase {
         // check that "analyzer" set to something that only supports AnalysisMode.SEARCH_TIME or AnalysisMode.INDEX_TIME is blocked
         AnalysisMode mode = randomFrom(AnalysisMode.SEARCH_TIME, AnalysisMode.INDEX_TIME);
         analyzers = defaultAnalyzers();
-        analyzers.put("my_analyzer", new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX,
-                createAnalyzerWithMode("my_analyzer", mode)));
+        analyzers.put(
+            "my_analyzer",
+            new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", mode))
+        );
         indexAnalyzers = new IndexAnalyzers(analyzers, Collections.emptyMap(), Collections.emptyMap());
         when(parserContext.getIndexAnalyzers()).thenReturn(indexAnalyzers);
-        MapperException ex = expectThrows(MapperException.class,
-                () -> TypeParsers.parseTextField(builder, "name", new HashMap<>(fieldNode), parserContext));
-        assertEquals("analyzer [my_named_analyzer] contains filters [my_analyzer] that are not allowed to run in all mode.",
-                ex.getMessage());
+        MapperException ex = expectThrows(
+            MapperException.class,
+            () -> TypeParsers.parseTextField(builder, "name", new HashMap<>(fieldNode), parserContext)
+        );
+        assertEquals(
+            "analyzer [my_named_analyzer] contains filters [my_analyzer] that are not allowed to run in all mode.",
+            ex.getMessage()
+        );
     }
 
     private static Map<String, NamedAnalyzer> defaultAnalyzers() {
@@ -113,8 +123,10 @@ public class TypeParsersTests extends ESTestCase {
             // check AnalysisMode.ALL and AnalysisMode.SEARCH_TIME works
             Map<String, NamedAnalyzer> analyzers = defaultAnalyzers();
             AnalysisMode mode = randomFrom(AnalysisMode.ALL, AnalysisMode.SEARCH_TIME);
-            analyzers.put("my_analyzer",
-                    new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", mode)));
+            analyzers.put(
+                "my_analyzer",
+                new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", mode))
+            );
             analyzers.put("standard", new NamedAnalyzer("standard", AnalyzerScope.INDEX, new StandardAnalyzer()));
 
             IndexAnalyzers indexAnalyzers = new IndexAnalyzers(analyzers, Collections.emptyMap(), Collections.emptyMap());
@@ -124,15 +136,21 @@ public class TypeParsersTests extends ESTestCase {
             // check that "analyzer" set to AnalysisMode.INDEX_TIME is blocked
             mode = AnalysisMode.INDEX_TIME;
             analyzers = defaultAnalyzers();
-            analyzers.put("my_analyzer",
-                    new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", mode)));
+            analyzers.put(
+                "my_analyzer",
+                new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", mode))
+            );
             analyzers.put("standard", new NamedAnalyzer("standard", AnalyzerScope.INDEX, new StandardAnalyzer()));
             indexAnalyzers = new IndexAnalyzers(analyzers, Collections.emptyMap(), Collections.emptyMap());
             when(parserContext.getIndexAnalyzers()).thenReturn(indexAnalyzers);
-            MapperException ex = expectThrows(MapperException.class,
-                    () -> TypeParsers.parseTextField(builder, "name", new HashMap<>(fieldNode), parserContext));
-            assertEquals("analyzer [my_named_analyzer] contains filters [my_analyzer] that are not allowed to run in search time mode.",
-                    ex.getMessage());
+            MapperException ex = expectThrows(
+                MapperException.class,
+                () -> TypeParsers.parseTextField(builder, "name", new HashMap<>(fieldNode), parserContext)
+            );
+            assertEquals(
+                "analyzer [my_named_analyzer] contains filters [my_analyzer] that are not allowed to run in search time mode.",
+                ex.getMessage()
+            );
         }
     }
 
@@ -145,21 +163,29 @@ public class TypeParsersTests extends ESTestCase {
         // check that "analyzer" set to AnalysisMode.INDEX_TIME is blocked if there is no search analyzer
         AnalysisMode mode = AnalysisMode.INDEX_TIME;
         Map<String, NamedAnalyzer> analyzers = defaultAnalyzers();
-        analyzers.put("my_analyzer",
-                new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", mode)));
+        analyzers.put(
+            "my_analyzer",
+            new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", mode))
+        );
         IndexAnalyzers indexAnalyzers = new IndexAnalyzers(analyzers, Collections.emptyMap(), Collections.emptyMap());
         when(parserContext.getIndexAnalyzers()).thenReturn(indexAnalyzers);
-        MapperException ex = expectThrows(MapperException.class,
-                () -> TypeParsers.parseTextField(builder, "name", new HashMap<>(fieldNode), parserContext));
-        assertEquals("analyzer [my_named_analyzer] contains filters [my_analyzer] that are not allowed to run in all mode.",
-                ex.getMessage());
+        MapperException ex = expectThrows(
+            MapperException.class,
+            () -> TypeParsers.parseTextField(builder, "name", new HashMap<>(fieldNode), parserContext)
+        );
+        assertEquals(
+            "analyzer [my_named_analyzer] contains filters [my_analyzer] that are not allowed to run in all mode.",
+            ex.getMessage()
+        );
 
         // check AnalysisMode.INDEX_TIME is okay if search analyzer is also set
         fieldNode.put("search_analyzer", "standard");
         analyzers = defaultAnalyzers();
         mode = randomFrom(AnalysisMode.ALL, AnalysisMode.INDEX_TIME);
-        analyzers.put("my_analyzer",
-                new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", mode)));
+        analyzers.put(
+            "my_analyzer",
+            new NamedAnalyzer("my_named_analyzer", AnalyzerScope.INDEX, createAnalyzerWithMode("my_analyzer", mode))
+        );
         analyzers.put("standard", new NamedAnalyzer("standard", AnalyzerScope.INDEX, new StandardAnalyzer()));
 
         indexAnalyzers = new IndexAnalyzers(analyzers, Collections.emptyMap(), Collections.emptyMap());
@@ -170,49 +196,61 @@ public class TypeParsersTests extends ESTestCase {
     public void testMultiFieldWithinMultiField() throws IOException {
         TextFieldMapper.Builder builder = new TextFieldMapper.Builder("textField");
 
-        XContentBuilder mapping = XContentFactory.jsonBuilder().startObject()
+        XContentBuilder mapping = XContentFactory.jsonBuilder()
+            .startObject()
             .field("type", "keyword")
             .startObject("fields")
-                .startObject("sub-field")
-                    .field("type", "keyword")
-                    .startObject("fields")
-                        .startObject("sub-sub-field")
-                            .field("type", "keyword")
-                        .endObject()
-                    .endObject()
-                .endObject()
+            .startObject("sub-field")
+            .field("type", "keyword")
+            .startObject("fields")
+            .startObject("sub-sub-field")
+            .field("type", "keyword")
             .endObject()
-        .endObject();
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject();
 
         Mapper.TypeParser typeParser = new KeywordFieldMapper.TypeParser();
 
         // For indices created prior to 8.0, we should only emit a warning and not fail parsing.
-        Map<String, Object> fieldNode = XContentHelper.convertToMap(
-            BytesReference.bytes(mapping), true, mapping.contentType()).v2();
+        Map<String, Object> fieldNode = XContentHelper.convertToMap(BytesReference.bytes(mapping), true, mapping.contentType()).v2();
 
         Version olderVersion = VersionUtils.randomPreviousCompatibleVersion(random(), Version.V_8_0_0);
         Mapper.TypeParser.ParserContext olderContext = new Mapper.TypeParser.ParserContext(
-            null, null, type -> typeParser, olderVersion, null);
+            null,
+            null,
+            type -> typeParser,
+            olderVersion,
+            null
+        );
 
         TypeParsers.parseField(builder, "some-field", fieldNode, olderContext);
-        assertWarnings("At least one multi-field, [sub-field], " +
-            "was encountered that itself contains a multi-field. Defining multi-fields within a multi-field is deprecated " +
-            "and is not supported for indices created in 8.0 and later. To migrate the mappings, all instances of [fields] " +
-            "that occur within a [fields] block should be removed from the mappings, either by flattening the chained " +
-            "[fields] blocks into a single level, or switching to [copy_to] if appropriate.");
+        assertWarnings(
+            "At least one multi-field, [sub-field], "
+                + "was encountered that itself contains a multi-field. Defining multi-fields within a multi-field is deprecated "
+                + "and is not supported for indices created in 8.0 and later. To migrate the mappings, all instances of [fields] "
+                + "that occur within a [fields] block should be removed from the mappings, either by flattening the chained "
+                + "[fields] blocks into a single level, or switching to [copy_to] if appropriate."
+        );
 
         // For indices created in 8.0 or later, we should throw an error.
-        Map<String, Object> fieldNodeCopy = XContentHelper.convertToMap(
-            BytesReference.bytes(mapping), true, mapping.contentType()).v2();
+        Map<String, Object> fieldNodeCopy = XContentHelper.convertToMap(BytesReference.bytes(mapping), true, mapping.contentType()).v2();
 
         Version version = VersionUtils.randomVersionBetween(random(), Version.V_8_0_0, Version.CURRENT);
-        Mapper.TypeParser.ParserContext context = new Mapper.TypeParser.ParserContext(
-            null, null, type -> typeParser, version, null);
+        Mapper.TypeParser.ParserContext context = new Mapper.TypeParser.ParserContext(null, null, type -> typeParser, version, null);
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-            () -> TypeParsers.parseField(builder, "some-field", fieldNodeCopy, context));
-        assertThat(e.getMessage(), equalTo("Encountered a multi-field [sub-field] which itself contains a " +
-            "multi-field. Defining chained multi-fields is not supported."));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> TypeParsers.parseField(builder, "some-field", fieldNodeCopy, context)
+        );
+        assertThat(
+            e.getMessage(),
+            equalTo(
+                "Encountered a multi-field [sub-field] which itself contains a "
+                    + "multi-field. Defining chained multi-fields is not supported."
+            )
+        );
     }
 
     private Analyzer createAnalyzerWithMode(String name, AnalysisMode mode) {
@@ -227,8 +265,7 @@ public class TypeParsersTests extends ESTestCase {
                 return null;
             }
         };
-        return new CustomAnalyzer(null, new CharFilterFactory[0],
-                new TokenFilterFactory[] { tokenFilter  });
+        return new CustomAnalyzer(null, new CharFilterFactory[0], new TokenFilterFactory[] { tokenFilter });
     }
 
     public void testParseMeta() {
@@ -237,61 +274,69 @@ public class TypeParsersTests extends ESTestCase {
 
         {
             Map<String, Object> mapping = new HashMap<>(Map.of("meta", 3));
-            MapperParsingException e = expectThrows(MapperParsingException.class,
-                    () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext));
+            MapperParsingException e = expectThrows(
+                MapperParsingException.class,
+                () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext)
+            );
             assertEquals("[meta] must be an object, got Integer[3] for field [foo]", e.getMessage());
         }
 
         {
             Map<String, Object> mapping = new HashMap<>(Map.of("meta", Map.of("veryloooooooooooongkey", 3L)));
-            MapperParsingException e = expectThrows(MapperParsingException.class,
-                    () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext));
-            assertEquals("[meta] keys can't be longer than 20 chars, but got [veryloooooooooooongkey] for field [foo]",
-                    e.getMessage());
+            MapperParsingException e = expectThrows(
+                MapperParsingException.class,
+                () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext)
+            );
+            assertEquals("[meta] keys can't be longer than 20 chars, but got [veryloooooooooooongkey] for field [foo]", e.getMessage());
         }
 
         {
-            Map<String, Object> mapping = new HashMap<>(Map.of("meta", Map.of(
-                    "foo1", 3L, "foo2", 4L, "foo3", 5L, "foo4", 6L, "foo5", 7L, "foo6", 8L)));
-            MapperParsingException e = expectThrows(MapperParsingException.class,
-                    () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext));
-            assertEquals("[meta] can't have more than 5 entries, but got 6 on field [foo]",
-                    e.getMessage());
+            Map<String, Object> mapping = new HashMap<>(
+                Map.of("meta", Map.of("foo1", 3L, "foo2", 4L, "foo3", 5L, "foo4", 6L, "foo5", 7L, "foo6", 8L))
+            );
+            MapperParsingException e = expectThrows(
+                MapperParsingException.class,
+                () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext)
+            );
+            assertEquals("[meta] can't have more than 5 entries, but got 6 on field [foo]", e.getMessage());
         }
 
         {
             Map<String, Object> mapping = new HashMap<>(Map.of("meta", Map.of("foo", Map.of("bar", "baz"))));
-            MapperParsingException e = expectThrows(MapperParsingException.class,
-                    () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext));
-            assertEquals("[meta] values can only be strings, but got Map1[{bar=baz}] for field [foo]",
-                    e.getMessage());
+            MapperParsingException e = expectThrows(
+                MapperParsingException.class,
+                () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext)
+            );
+            assertEquals("[meta] values can only be strings, but got Map1[{bar=baz}] for field [foo]", e.getMessage());
         }
 
         {
             Map<String, Object> mapping = new HashMap<>(Map.of("meta", Map.of("bar", "baz", "foo", 3)));
-            MapperParsingException e = expectThrows(MapperParsingException.class,
-                    () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext));
-            assertEquals("[meta] values can only be strings, but got Integer[3] for field [foo]",
-                    e.getMessage());
+            MapperParsingException e = expectThrows(
+                MapperParsingException.class,
+                () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext)
+            );
+            assertEquals("[meta] values can only be strings, but got Integer[3] for field [foo]", e.getMessage());
         }
 
         {
             Map<String, String> meta = new HashMap<>();
             meta.put("foo", null);
             Map<String, Object> mapping = new HashMap<>(Map.of("meta", meta));
-            MapperParsingException e = expectThrows(MapperParsingException.class,
-                    () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext));
-            assertEquals("[meta] values can't be null (field [foo])",
-                    e.getMessage());
+            MapperParsingException e = expectThrows(
+                MapperParsingException.class,
+                () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext)
+            );
+            assertEquals("[meta] values can't be null (field [foo])", e.getMessage());
         }
 
         {
-            String longString = IntStream.range(0, 51)
-                    .mapToObj(Integer::toString)
-                    .collect(Collectors.joining());
+            String longString = IntStream.range(0, 51).mapToObj(Integer::toString).collect(Collectors.joining());
             Map<String, Object> mapping = new HashMap<>(Map.of("meta", Map.of("foo", longString)));
-            MapperParsingException e = expectThrows(MapperParsingException.class,
-                    () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext));
+            MapperParsingException e = expectThrows(
+                MapperParsingException.class,
+                () -> TypeParsers.parseField(builder, builder.name, mapping, parserContext)
+            );
             assertThat(e.getMessage(), Matchers.startsWith("[meta] values can't be longer than 50 chars"));
         }
     }

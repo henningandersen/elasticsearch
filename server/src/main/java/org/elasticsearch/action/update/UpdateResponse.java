@@ -53,8 +53,7 @@ public class UpdateResponse extends DocWriteResponse {
         this(new ShardInfo(0, 0), shardId, id, seqNo, primaryTerm, version, result);
     }
 
-    public UpdateResponse(
-            ShardInfo shardInfo, ShardId shardId, String id, long seqNo, long primaryTerm, long version, Result result) {
+    public UpdateResponse(ShardInfo shardInfo, ShardId shardId, String id, long seqNo, long primaryTerm, long version, Result result) {
         super(shardId, id, seqNo, primaryTerm, version, result);
         setShardInfo(shardInfo);
     }
@@ -156,10 +155,19 @@ public class UpdateResponse extends DocWriteResponse {
                 update = new UpdateResponse(shardId, id, seqNo, primaryTerm, version, result);
             }
             if (getResult != null) {
-                update.setGetResult(new GetResult(update.getIndex(), update.getId(),
-                    getResult.getSeqNo(), getResult.getPrimaryTerm(), update.getVersion(),
-                    getResult.isExists(), getResult.internalSourceRef(), getResult.getDocumentFields(),
-                    getResult.getMetadataFields()));
+                update.setGetResult(
+                    new GetResult(
+                        update.getIndex(),
+                        update.getId(),
+                        getResult.getSeqNo(),
+                        getResult.getPrimaryTerm(),
+                        update.getVersion(),
+                        getResult.isExists(),
+                        getResult.internalSourceRef(),
+                        getResult.getDocumentFields(),
+                        getResult.getMetadataFields()
+                    )
+                );
             }
             update.setForcedRefresh(forcedRefresh);
             return update;

@@ -121,9 +121,8 @@ public class GetFieldMappingsResponse extends ActionResponse implements ToXConte
         return builder;
     }
 
-    private void addFieldMappingsToBuilder(XContentBuilder builder,
-                                           Params params,
-                                           Map<String, FieldMappingMetaData> mappings) throws IOException {
+    private void addFieldMappingsToBuilder(XContentBuilder builder, Params params, Map<String, FieldMappingMetaData> mappings)
+        throws IOException {
         for (Map.Entry<String, FieldMappingMetaData> fieldEntry : mappings.entrySet()) {
             builder.startObject(fieldEntry.getKey());
             fieldEntry.getValue().toXContent(builder, params);
@@ -136,10 +135,11 @@ public class GetFieldMappingsResponse extends ActionResponse implements ToXConte
         private static final ParseField FULL_NAME = new ParseField("full_name");
         private static final ParseField MAPPING = new ParseField("mapping");
 
-        private static final ConstructingObjectParser<FieldMappingMetaData, String> PARSER =
-            new ConstructingObjectParser<>("field_mapping_meta_data", true,
-                a -> new FieldMappingMetaData((String)a[0], (BytesReference)a[1])
-            );
+        private static final ConstructingObjectParser<FieldMappingMetaData, String> PARSER = new ConstructingObjectParser<>(
+            "field_mapping_meta_data",
+            true,
+            a -> new FieldMappingMetaData((String) a[0], (BytesReference) a[1])
+        );
 
         private String fullName;
         private BytesReference source;
@@ -158,7 +158,7 @@ public class GetFieldMappingsResponse extends ActionResponse implements ToXConte
             return XContentHelper.convertToMap(source, true, XContentType.JSON).v2();
         }
 
-        //pkg-private for testing
+        // pkg-private for testing
         BytesReference getSource() {
             return source;
         }
@@ -186,8 +186,7 @@ public class GetFieldMappingsResponse extends ActionResponse implements ToXConte
             if (this == o) return true;
             if (!(o instanceof FieldMappingMetaData)) return false;
             FieldMappingMetaData that = (FieldMappingMetaData) o;
-            return Objects.equals(fullName, that.fullName) &&
-                Objects.equals(source, that.source);
+            return Objects.equals(fullName, that.fullName) && Objects.equals(source, that.source);
         }
 
         @Override
@@ -217,9 +216,7 @@ public class GetFieldMappingsResponse extends ActionResponse implements ToXConte
 
     @Override
     public String toString() {
-        return "GetFieldMappingsResponse{" +
-            "mappings=" + mappings +
-            '}';
+        return "GetFieldMappingsResponse{" + "mappings=" + mappings + '}';
     }
 
     @Override

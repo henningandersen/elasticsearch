@@ -61,10 +61,7 @@ public class PublishResponse implements Writeable {
 
     @Override
     public String toString() {
-        return "PublishResponse{" +
-            "term=" + term +
-            ", version=" + version +
-            '}';
+        return "PublishResponse{" + "term=" + term + ", version=" + version + '}';
     }
 
     @Override

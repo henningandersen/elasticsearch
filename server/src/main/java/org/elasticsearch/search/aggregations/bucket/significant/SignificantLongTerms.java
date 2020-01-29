@@ -41,8 +41,16 @@ public class SignificantLongTerms extends InternalMappedSignificantTerms<Signifi
 
         long term;
 
-        Bucket(long subsetDf, long subsetSize, long supersetDf, long supersetSize, long term, InternalAggregations aggregations,
-                DocValueFormat format, double score) {
+        Bucket(
+            long subsetDf,
+            long subsetSize,
+            long supersetDf,
+            long supersetSize,
+            long term,
+            InternalAggregations aggregations,
+            DocValueFormat format,
+            double score
+        ) {
             super(subsetDf, subsetSize, supersetDf, supersetSize, aggregations, format);
             this.term = term;
             this.score = score;
@@ -101,11 +109,30 @@ public class SignificantLongTerms extends InternalMappedSignificantTerms<Signifi
         }
     }
 
-    public SignificantLongTerms(String name, int requiredSize, long minDocCount, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData, DocValueFormat format, long subsetSize, long supersetSize,
-            SignificanceHeuristic significanceHeuristic, List<Bucket> buckets) {
-        super(name, requiredSize, minDocCount, pipelineAggregators, metaData, format, subsetSize, supersetSize, significanceHeuristic,
-                buckets);
+    public SignificantLongTerms(
+        String name,
+        int requiredSize,
+        long minDocCount,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        DocValueFormat format,
+        long subsetSize,
+        long supersetSize,
+        SignificanceHeuristic significanceHeuristic,
+        List<Bucket> buckets
+    ) {
+        super(
+            name,
+            requiredSize,
+            minDocCount,
+            pipelineAggregators,
+            metaData,
+            format,
+            subsetSize,
+            supersetSize,
+            significanceHeuristic,
+            buckets
+        );
     }
 
     /**
@@ -122,20 +149,48 @@ public class SignificantLongTerms extends InternalMappedSignificantTerms<Signifi
 
     @Override
     public SignificantLongTerms create(List<SignificantLongTerms.Bucket> buckets) {
-        return new SignificantLongTerms(name, requiredSize, minDocCount, pipelineAggregators(), metaData, format, subsetSize, supersetSize,
-                significanceHeuristic, buckets);
+        return new SignificantLongTerms(
+            name,
+            requiredSize,
+            minDocCount,
+            pipelineAggregators(),
+            metaData,
+            format,
+            subsetSize,
+            supersetSize,
+            significanceHeuristic,
+            buckets
+        );
     }
 
     @Override
     public Bucket createBucket(InternalAggregations aggregations, SignificantLongTerms.Bucket prototype) {
-        return new Bucket(prototype.subsetDf, prototype.subsetSize, prototype.supersetDf, prototype.supersetSize, prototype.term,
-                aggregations, prototype.format, prototype.score);
+        return new Bucket(
+            prototype.subsetDf,
+            prototype.subsetSize,
+            prototype.supersetDf,
+            prototype.supersetSize,
+            prototype.term,
+            aggregations,
+            prototype.format,
+            prototype.score
+        );
     }
 
     @Override
     protected SignificantLongTerms create(long subsetSize, long supersetSize, List<Bucket> buckets) {
-        return new SignificantLongTerms(getName(), requiredSize, minDocCount, pipelineAggregators(), getMetaData(), format, subsetSize,
-                supersetSize, significanceHeuristic, buckets);
+        return new SignificantLongTerms(
+            getName(),
+            requiredSize,
+            minDocCount,
+            pipelineAggregators(),
+            getMetaData(),
+            format,
+            subsetSize,
+            supersetSize,
+            significanceHeuristic,
+            buckets
+        );
     }
 
     @Override
@@ -144,8 +199,14 @@ public class SignificantLongTerms extends InternalMappedSignificantTerms<Signifi
     }
 
     @Override
-    Bucket createBucket(long subsetDf, long subsetSize, long supersetDf, long supersetSize,
-                        InternalAggregations aggregations, SignificantLongTerms.Bucket prototype) {
+    Bucket createBucket(
+        long subsetDf,
+        long subsetSize,
+        long supersetDf,
+        long supersetSize,
+        InternalAggregations aggregations,
+        SignificantLongTerms.Bucket prototype
+    ) {
         return new Bucket(subsetDf, subsetSize, supersetDf, supersetSize, prototype.term, aggregations, format, prototype.score);
     }
 }

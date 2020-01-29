@@ -62,8 +62,10 @@ public abstract class SiblingPipelineAggregator extends PipelineAggregator {
                     .map((p) -> (InternalAggregation) p)
                     .collect(Collectors.toList());
                 aggs.add(aggToAdd);
-                InternalMultiBucketAggregation.InternalBucket newBucket = multiBucketsAgg.createBucket(new InternalAggregations(aggs),
-                    bucket);
+                InternalMultiBucketAggregation.InternalBucket newBucket = multiBucketsAgg.createBucket(
+                    new InternalAggregations(aggs),
+                    bucket
+                );
                 newBuckets.add(newBucket);
             }
 
@@ -77,8 +79,9 @@ public abstract class SiblingPipelineAggregator extends PipelineAggregator {
             aggs.add(aggToAdd);
             return singleBucketAgg.create(new InternalAggregations(aggs));
         } else {
-            throw new IllegalStateException("Aggregation [" + aggregation.getName() + "] must be a bucket aggregation ["
-                    + aggregation.getWriteableName() + "]");
+            throw new IllegalStateException(
+                "Aggregation [" + aggregation.getName() + "] must be a bucket aggregation [" + aggregation.getWriteableName() + "]"
+            );
         }
     }
 

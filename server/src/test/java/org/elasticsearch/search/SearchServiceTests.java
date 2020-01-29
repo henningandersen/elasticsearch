@@ -116,8 +116,12 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return pluginList(FailOnRewriteQueryPlugin.class, CustomScriptPlugin.class,
-            ReaderWrapperCountPlugin.class, InternalOrPrivateSettingsPlugin.class);
+        return pluginList(
+            FailOnRewriteQueryPlugin.class,
+            CustomScriptPlugin.class,
+            ReaderWrapperCountPlugin.class,
+            InternalOrPrivateSettingsPlugin.class
+        );
     }
 
     public static class ReaderWrapperCountPlugin extends Plugin {
@@ -133,10 +137,10 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
     }
 
     private static AtomicInteger numWrapInvocations = new AtomicInteger(0);
+
     private static DirectoryReader apply(DirectoryReader directoryReader) throws IOException {
         numWrapInvocations.incrementAndGet();
-        return new FilterDirectoryReader(directoryReader,
-            new FilterDirectoryReader.SubReaderWrapper() {
+        return new FilterDirectoryReader(directoryReader, new FilterDirectoryReader.SubReaderWrapper() {
             @Override
             public LeafReader wrap(LeafReader reader) {
                 return reader;
@@ -249,8 +253,10 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
 
         final int activeContexts = service.getActiveContexts();
         final int activeRefs = indexShard.store().refCount();
-        expectThrows(SearchPhaseExecutionException.class, () ->
-                client().prepareSearch("index").setQuery(new FailOnRewriteQueryBuilder()).get());
+        expectThrows(
+            SearchPhaseExecutionException.class,
+            () -> client().prepareSearch("index").setQuery(new FailOnRewriteQueryBuilder()).get()
+        );
         assertEquals(activeContexts, service.getActiveContexts());
         assertEquals(activeRefs, indexShard.store().refCount());
     }
@@ -271,7 +277,7 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
             @Override
             public void run() {
                 startGun.countDown();
-                while(running.get()) {
+                while (running.get()) {
                     service.afterIndexRemoved(indexService.index(), indexService.getIndexSettings(), DELETED);
                     if (randomBoolean()) {
                         // here we trigger some refreshes to ensure the IR go out of scope such that we hit ACE if we access a search
@@ -281,18 +287,20 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
                         } catch (InterruptedException e) {
                             throw new AssertionError(e);
                         }
-                        client().prepareIndex("index").setSource("field", "value")
-                            .setRefreshPolicy(randomFrom(WriteRequest.RefreshPolicy.values())).execute(new ActionListener<IndexResponse>() {
-                            @Override
-                            public void onResponse(IndexResponse indexResponse) {
-                                semaphore.release();
-                            }
+                        client().prepareIndex("index")
+                            .setSource("field", "value")
+                            .setRefreshPolicy(randomFrom(WriteRequest.RefreshPolicy.values()))
+                            .execute(new ActionListener<IndexResponse>() {
+                                @Override
+                                public void onResponse(IndexResponse indexResponse) {
+                                    semaphore.release();
+                                }
 
-                            @Override
-                            public void onFailure(Exception e) {
-                                semaphore.release();
-                            }
-                        });
+                                @Override
+                                public void onFailure(Exception e) {
+                                    semaphore.release();
+                                }
+                            });
                     }
                 }
             }
@@ -310,10 +318,20 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
                         PlainActionFuture<SearchPhaseResult> result = new PlainActionFuture<>();
                         final boolean useScroll = randomBoolean();
                         service.executeQueryPhase(
-                            new ShardSearchRequest(OriginalIndices.NONE, useScroll ? scrollSearchRequest : searchRequest,
-                                indexShard.shardId(), 1,
-                                new AliasFilter(null, Strings.EMPTY_ARRAY), 1.0f, -1, null, null),
-                            new SearchShardTask(123L, "", "", "", null, Collections.emptyMap()), result);
+                            new ShardSearchRequest(
+                                OriginalIndices.NONE,
+                                useScroll ? scrollSearchRequest : searchRequest,
+                                indexShard.shardId(),
+                                1,
+                                new AliasFilter(null, Strings.EMPTY_ARRAY),
+                                1.0f,
+                                -1,
+                                null,
+                                null
+                            ),
+                            new SearchShardTask(123L, "", "", "", null, Collections.emptyMap()),
+                            result
+                        );
                         SearchPhaseResult searchPhaseResult = result.get();
                         IntArrayList intCursors = new IntArrayList(1);
                         intCursors.add(0);
@@ -326,7 +344,7 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
                         }
                     } catch (ExecutionException ex) {
                         assertThat(ex.getCause(), instanceOf(RuntimeException.class));
-                        throw ((RuntimeException)ex.getCause());
+                        throw ((RuntimeException) ex.getCause());
                     }
                 } catch (AlreadyClosedException ex) {
                     throw ex;
@@ -358,13 +376,17 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         final IndexShard indexShard = indexService.getShard(0);
         SearchRequest searchRequest = new SearchRequest().allowPartialSearchResults(true);
         final SearchContext contextWithDefaultTimeout = service.createContext(
-                new ShardSearchRequest(
-                        OriginalIndices.NONE,
-                        searchRequest,
-                        indexShard.shardId(),
-                        1,
-                        new AliasFilter(null, Strings.EMPTY_ARRAY),
-                        1.0f, -1, null, null)
+            new ShardSearchRequest(
+                OriginalIndices.NONE,
+                searchRequest,
+                indexShard.shardId(),
+                1,
+                new AliasFilter(null, Strings.EMPTY_ARRAY),
+                1.0f,
+                -1,
+                null,
+                null
+            )
         );
         try {
             // the search context should inherit the default timeout
@@ -377,13 +399,17 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         final long seconds = randomIntBetween(6, 10);
         searchRequest.source(new SearchSourceBuilder().timeout(TimeValue.timeValueSeconds(seconds)));
         final SearchContext context = service.createContext(
-                new ShardSearchRequest(
-                        OriginalIndices.NONE,
-                        searchRequest,
-                        indexShard.shardId(),
-                        1,
-                        new AliasFilter(null, Strings.EMPTY_ARRAY),
-                        1.0f, -1, null, null)
+            new ShardSearchRequest(
+                OriginalIndices.NONE,
+                searchRequest,
+                indexShard.shardId(),
+                1,
+                new AliasFilter(null, Strings.EMPTY_ARRAY),
+                1.0f,
+                -1,
+                null,
+                null
+            )
         );
         try {
             // the search context should inherit the query timeout
@@ -412,19 +438,44 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         for (int i = 0; i < indexService.getIndexSettings().getMaxDocvalueFields(); i++) {
             searchSourceBuilder.docValueField("field" + i);
         }
-        try (SearchContext context = service.createContext(
-            new ShardSearchRequest(OriginalIndices.NONE, searchRequest, indexShard.shardId(), 1,
-                new AliasFilter(null, Strings.EMPTY_ARRAY), 1.0f, -1, null, null))
+        try (
+            SearchContext context = service.createContext(
+                new ShardSearchRequest(
+                    OriginalIndices.NONE,
+                    searchRequest,
+                    indexShard.shardId(),
+                    1,
+                    new AliasFilter(null, Strings.EMPTY_ARRAY),
+                    1.0f,
+                    -1,
+                    null,
+                    null
+                )
+            )
         ) {
             assertNotNull(context);
             searchSourceBuilder.docValueField("one_field_too_much");
-            IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-                    () -> service.createContext(new ShardSearchRequest(OriginalIndices.NONE, searchRequest, indexShard.shardId(), 1,
-                        new AliasFilter(null, Strings.EMPTY_ARRAY), 1.0f, -1, null, null)));
+            IllegalArgumentException ex = expectThrows(
+                IllegalArgumentException.class,
+                () -> service.createContext(
+                    new ShardSearchRequest(
+                        OriginalIndices.NONE,
+                        searchRequest,
+                        indexShard.shardId(),
+                        1,
+                        new AliasFilter(null, Strings.EMPTY_ARRAY),
+                        1.0f,
+                        -1,
+                        null,
+                        null
+                    )
+                )
+            );
             assertEquals(
-                    "Trying to retrieve too many docvalue_fields. Must be less than or equal to: [100] but was [101]. "
-                            + "This limit can be set by changing the [index.max_docvalue_fields_search] index level setting.",
-                    ex.getMessage());
+                "Trying to retrieve too many docvalue_fields. Must be less than or equal to: [100] but was [101]. "
+                    + "This limit can be set by changing the [index.max_docvalue_fields_search] index level setting.",
+                ex.getMessage()
+            );
         }
     }
 
@@ -444,23 +495,55 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         // adding the maximum allowed number of script_fields to retrieve
         int maxScriptFields = indexService.getIndexSettings().getMaxScriptFields();
         for (int i = 0; i < maxScriptFields; i++) {
-            searchSourceBuilder.scriptField("field" + i,
-                    new Script(ScriptType.INLINE, MockScriptEngine.NAME, CustomScriptPlugin.DUMMY_SCRIPT, Collections.emptyMap()));
+            searchSourceBuilder.scriptField(
+                "field" + i,
+                new Script(ScriptType.INLINE, MockScriptEngine.NAME, CustomScriptPlugin.DUMMY_SCRIPT, Collections.emptyMap())
+            );
         }
-        try (SearchContext context = service.createContext(new ShardSearchRequest(OriginalIndices.NONE, searchRequest,
-                indexShard.shardId(), 1, new AliasFilter(null, Strings.EMPTY_ARRAY),
-                1.0f, -1, null, null))) {
+        try (
+            SearchContext context = service.createContext(
+                new ShardSearchRequest(
+                    OriginalIndices.NONE,
+                    searchRequest,
+                    indexShard.shardId(),
+                    1,
+                    new AliasFilter(null, Strings.EMPTY_ARRAY),
+                    1.0f,
+                    -1,
+                    null,
+                    null
+                )
+            )
+        ) {
             assertNotNull(context);
-            searchSourceBuilder.scriptField("anotherScriptField",
-                    new Script(ScriptType.INLINE, MockScriptEngine.NAME, CustomScriptPlugin.DUMMY_SCRIPT, Collections.emptyMap()));
-            IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-                    () -> service.createContext(new ShardSearchRequest(OriginalIndices.NONE, searchRequest, indexShard.shardId(), 1,
-                        new AliasFilter(null, Strings.EMPTY_ARRAY), 1.0f, -1, null, null)));
+            searchSourceBuilder.scriptField(
+                "anotherScriptField",
+                new Script(ScriptType.INLINE, MockScriptEngine.NAME, CustomScriptPlugin.DUMMY_SCRIPT, Collections.emptyMap())
+            );
+            IllegalArgumentException ex = expectThrows(
+                IllegalArgumentException.class,
+                () -> service.createContext(
+                    new ShardSearchRequest(
+                        OriginalIndices.NONE,
+                        searchRequest,
+                        indexShard.shardId(),
+                        1,
+                        new AliasFilter(null, Strings.EMPTY_ARRAY),
+                        1.0f,
+                        -1,
+                        null,
+                        null
+                    )
+                )
+            );
             assertEquals(
-                    "Trying to retrieve too many script_fields. Must be less than or equal to: [" + maxScriptFields + "] but was ["
-                            + (maxScriptFields + 1)
-                            + "]. This limit can be set by changing the [index.max_script_fields] index level setting.",
-                    ex.getMessage());
+                "Trying to retrieve too many script_fields. Must be less than or equal to: ["
+                    + maxScriptFields
+                    + "] but was ["
+                    + (maxScriptFields + 1)
+                    + "]. This limit can be set by changing the [index.max_script_fields] index level setting.",
+                ex.getMessage()
+            );
         }
     }
 
@@ -474,13 +557,27 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         SearchRequest searchRequest = new SearchRequest().allowPartialSearchResults(true);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchRequest.source(searchSourceBuilder);
-        searchSourceBuilder.scriptField("field" + 0,
-                new Script(ScriptType.INLINE, MockScriptEngine.NAME, CustomScriptPlugin.DUMMY_SCRIPT, Collections.emptyMap()));
+        searchSourceBuilder.scriptField(
+            "field" + 0,
+            new Script(ScriptType.INLINE, MockScriptEngine.NAME, CustomScriptPlugin.DUMMY_SCRIPT, Collections.emptyMap())
+        );
         searchSourceBuilder.size(0);
-        try (SearchContext context = service.createContext(new ShardSearchRequest(OriginalIndices.NONE,
-            searchRequest, indexShard.shardId(), 1, new AliasFilter(null, Strings.EMPTY_ARRAY),
-                1.0f, -1, null, null))) {
-                assertEquals(0, context.scriptFields().fields().size());
+        try (
+            SearchContext context = service.createContext(
+                new ShardSearchRequest(
+                    OriginalIndices.NONE,
+                    searchRequest,
+                    indexShard.shardId(),
+                    1,
+                    new AliasFilter(null, Strings.EMPTY_ARRAY),
+                    1.0f,
+                    -1,
+                    null,
+                    null
+                )
+            )
+        ) {
+            assertEquals(0, context.scriptFields().fields().size());
         }
     }
 
@@ -513,21 +610,29 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
             client().prepareSearch("index").setSize(1).setScroll("1m").get();
         }
 
-        ElasticsearchException ex = expectThrows(ElasticsearchException.class,
-            () -> service.createAndPutContext(new ShardScrollRequestTest(indexShard.shardId())));
+        ElasticsearchException ex = expectThrows(
+            ElasticsearchException.class,
+            () -> service.createAndPutContext(new ShardScrollRequestTest(indexShard.shardId()))
+        );
         assertEquals(
-            "Trying to create too many scroll contexts. Must be less than or equal to: [" +
-                SearchService.MAX_OPEN_SCROLL_CONTEXT.get(Settings.EMPTY) + "]. " +
-                "This limit can be set by changing the [search.max_open_scroll_context] setting.",
-            ex.getMessage());
+            "Trying to create too many scroll contexts. Must be less than or equal to: ["
+                + SearchService.MAX_OPEN_SCROLL_CONTEXT.get(Settings.EMPTY)
+                + "]. "
+                + "This limit can be set by changing the [search.max_open_scroll_context] setting.",
+            ex.getMessage()
+        );
     }
 
     public static class FailOnRewriteQueryPlugin extends Plugin implements SearchPlugin {
         @Override
         public List<QuerySpec<?>> getQueries() {
-            return singletonList(new QuerySpec<>("fail_on_rewrite_query", FailOnRewriteQueryBuilder::new, parseContext -> {
-                throw new UnsupportedOperationException("No query parser for this plugin");
-            }));
+            return singletonList(
+                new QuerySpec<>(
+                    "fail_on_rewrite_query",
+                    FailOnRewriteQueryBuilder::new,
+                    parseContext -> { throw new UnsupportedOperationException("No query parser for this plugin"); }
+                )
+            );
         }
     }
 
@@ -537,8 +642,7 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
             super(in);
         }
 
-        public FailOnRewriteQueryBuilder() {
-        }
+        public FailOnRewriteQueryBuilder() {}
 
         @Override
         protected QueryBuilder doRewrite(QueryRewriteContext queryRewriteContext) {
@@ -549,12 +653,10 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         }
 
         @Override
-        protected void doWriteTo(StreamOutput out) {
-        }
+        protected void doWriteTo(StreamOutput out) {}
 
         @Override
-        protected void doXContent(XContentBuilder builder, Params params) {
-        }
+        protected void doXContent(XContentBuilder builder, Params params) {}
 
         @Override
         protected Query doToQuery(QueryShardContext context) {
@@ -581,8 +683,17 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         private Scroll scroll;
 
         ShardScrollRequestTest(ShardId shardId) {
-            super(OriginalIndices.NONE, new SearchRequest().allowPartialSearchResults(true),
-                shardId, 1, new AliasFilter(null, Strings.EMPTY_ARRAY), 1f, -1, null, null);
+            super(
+                OriginalIndices.NONE,
+                new SearchRequest().allowPartialSearchResults(true),
+                shardId,
+                1,
+                new AliasFilter(null, Strings.EMPTY_ARRAY),
+                1f,
+                -1,
+                null,
+                null
+            );
             this.scroll = new Scroll(TimeValue.timeValueMinutes(1));
         }
 
@@ -600,85 +711,215 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         final IndexShard indexShard = indexService.getShard(0);
         SearchRequest searchRequest = new SearchRequest().allowPartialSearchResults(true);
         int numWrapReader = numWrapInvocations.get();
-        assertTrue(service.canMatch(new ShardSearchRequest(OriginalIndices.NONE, searchRequest, indexShard.shardId(), 1,
-            new AliasFilter(null, Strings.EMPTY_ARRAY), 1f, -1, null, null)).canMatch());
+        assertTrue(
+            service.canMatch(
+                new ShardSearchRequest(
+                    OriginalIndices.NONE,
+                    searchRequest,
+                    indexShard.shardId(),
+                    1,
+                    new AliasFilter(null, Strings.EMPTY_ARRAY),
+                    1f,
+                    -1,
+                    null,
+                    null
+                )
+            ).canMatch()
+        );
 
         searchRequest.source(new SearchSourceBuilder());
-        assertTrue(service.canMatch(new ShardSearchRequest(OriginalIndices.NONE, searchRequest, indexShard.shardId(), 1,
-            new AliasFilter(null, Strings.EMPTY_ARRAY), 1f, -1, null, null)).canMatch());
+        assertTrue(
+            service.canMatch(
+                new ShardSearchRequest(
+                    OriginalIndices.NONE,
+                    searchRequest,
+                    indexShard.shardId(),
+                    1,
+                    new AliasFilter(null, Strings.EMPTY_ARRAY),
+                    1f,
+                    -1,
+                    null,
+                    null
+                )
+            ).canMatch()
+        );
 
         searchRequest.source(new SearchSourceBuilder().query(new MatchAllQueryBuilder()));
-        assertTrue(service.canMatch(new ShardSearchRequest(OriginalIndices.NONE, searchRequest, indexShard.shardId(), 1,
-            new AliasFilter(null, Strings.EMPTY_ARRAY), 1f, -1, null, null)).canMatch());
+        assertTrue(
+            service.canMatch(
+                new ShardSearchRequest(
+                    OriginalIndices.NONE,
+                    searchRequest,
+                    indexShard.shardId(),
+                    1,
+                    new AliasFilter(null, Strings.EMPTY_ARRAY),
+                    1f,
+                    -1,
+                    null,
+                    null
+                )
+            ).canMatch()
+        );
 
-        searchRequest.source(new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
-            .aggregation(new TermsAggregationBuilder("test", ValueType.STRING).minDocCount(0)));
-        assertTrue(service.canMatch(new ShardSearchRequest(OriginalIndices.NONE, searchRequest, indexShard.shardId(), 1,
-            new AliasFilter(null, Strings.EMPTY_ARRAY), 1f, -1,  null, null)).canMatch());
-        searchRequest.source(new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
-            .aggregation(new GlobalAggregationBuilder("test")));
-        assertTrue(service.canMatch(new ShardSearchRequest(OriginalIndices.NONE, searchRequest, indexShard.shardId(), 1,
-            new AliasFilter(null, Strings.EMPTY_ARRAY), 1f, -1, null, null)).canMatch());
+        searchRequest.source(
+            new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
+                .aggregation(new TermsAggregationBuilder("test", ValueType.STRING).minDocCount(0))
+        );
+        assertTrue(
+            service.canMatch(
+                new ShardSearchRequest(
+                    OriginalIndices.NONE,
+                    searchRequest,
+                    indexShard.shardId(),
+                    1,
+                    new AliasFilter(null, Strings.EMPTY_ARRAY),
+                    1f,
+                    -1,
+                    null,
+                    null
+                )
+            ).canMatch()
+        );
+        searchRequest.source(
+            new SearchSourceBuilder().query(new MatchNoneQueryBuilder()).aggregation(new GlobalAggregationBuilder("test"))
+        );
+        assertTrue(
+            service.canMatch(
+                new ShardSearchRequest(
+                    OriginalIndices.NONE,
+                    searchRequest,
+                    indexShard.shardId(),
+                    1,
+                    new AliasFilter(null, Strings.EMPTY_ARRAY),
+                    1f,
+                    -1,
+                    null,
+                    null
+                )
+            ).canMatch()
+        );
 
         searchRequest.source(new SearchSourceBuilder().query(new MatchNoneQueryBuilder()));
-        assertFalse(service.canMatch(new ShardSearchRequest(OriginalIndices.NONE, searchRequest, indexShard.shardId(), 1,
-            new AliasFilter(null, Strings.EMPTY_ARRAY), 1f, -1, null, null)).canMatch());
+        assertFalse(
+            service.canMatch(
+                new ShardSearchRequest(
+                    OriginalIndices.NONE,
+                    searchRequest,
+                    indexShard.shardId(),
+                    1,
+                    new AliasFilter(null, Strings.EMPTY_ARRAY),
+                    1f,
+                    -1,
+                    null,
+                    null
+                )
+            ).canMatch()
+        );
         assertEquals(numWrapReader, numWrapInvocations.get());
 
         // make sure that the wrapper is called when the context is actually created
-        service.createContext(new ShardSearchRequest(OriginalIndices.NONE, searchRequest,
-            indexShard.shardId(), 1, new AliasFilter(null, Strings.EMPTY_ARRAY),
-            1f, -1, null, null)).close();
-        assertEquals(numWrapReader+1, numWrapInvocations.get());
+        service.createContext(
+            new ShardSearchRequest(
+                OriginalIndices.NONE,
+                searchRequest,
+                indexShard.shardId(),
+                1,
+                new AliasFilter(null, Strings.EMPTY_ARRAY),
+                1f,
+                -1,
+                null,
+                null
+            )
+        ).close();
+        assertEquals(numWrapReader + 1, numWrapInvocations.get());
     }
 
     public void testCanRewriteToMatchNone() {
-        assertFalse(SearchService.canRewriteToMatchNone(new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
-            .aggregation(new GlobalAggregationBuilder("test"))));
+        assertFalse(
+            SearchService.canRewriteToMatchNone(
+                new SearchSourceBuilder().query(new MatchNoneQueryBuilder()).aggregation(new GlobalAggregationBuilder("test"))
+            )
+        );
         assertFalse(SearchService.canRewriteToMatchNone(new SearchSourceBuilder()));
         assertFalse(SearchService.canRewriteToMatchNone(null));
-        assertFalse(SearchService.canRewriteToMatchNone(new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
-            .aggregation(new TermsAggregationBuilder("test", ValueType.STRING).minDocCount(0))));
+        assertFalse(
+            SearchService.canRewriteToMatchNone(
+                new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
+                    .aggregation(new TermsAggregationBuilder("test", ValueType.STRING).minDocCount(0))
+            )
+        );
         assertTrue(SearchService.canRewriteToMatchNone(new SearchSourceBuilder().query(new TermQueryBuilder("foo", "bar"))));
-        assertTrue(SearchService.canRewriteToMatchNone(new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
-            .aggregation(new TermsAggregationBuilder("test", ValueType.STRING).minDocCount(1))));
-        assertFalse(SearchService.canRewriteToMatchNone(new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
-            .aggregation(new TermsAggregationBuilder("test", ValueType.STRING).minDocCount(1))
-            .suggest(new SuggestBuilder())));
-        assertFalse(SearchService.canRewriteToMatchNone(new SearchSourceBuilder().query(new TermQueryBuilder("foo", "bar"))
-            .suggest(new SuggestBuilder())));
+        assertTrue(
+            SearchService.canRewriteToMatchNone(
+                new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
+                    .aggregation(new TermsAggregationBuilder("test", ValueType.STRING).minDocCount(1))
+            )
+        );
+        assertFalse(
+            SearchService.canRewriteToMatchNone(
+                new SearchSourceBuilder().query(new MatchNoneQueryBuilder())
+                    .aggregation(new TermsAggregationBuilder("test", ValueType.STRING).minDocCount(1))
+                    .suggest(new SuggestBuilder())
+            )
+        );
+        assertFalse(
+            SearchService.canRewriteToMatchNone(
+                new SearchSourceBuilder().query(new TermQueryBuilder("foo", "bar")).suggest(new SuggestBuilder())
+            )
+        );
     }
 
     public void testSetSearchThrottled() {
         createIndex("throttled_threadpool_index");
         client().execute(
             InternalOrPrivateSettingsPlugin.UpdateInternalOrPrivateAction.INSTANCE,
-            new InternalOrPrivateSettingsPlugin.UpdateInternalOrPrivateAction.Request("throttled_threadpool_index",
-                IndexSettings.INDEX_SEARCH_THROTTLED.getKey(), "true"))
-            .actionGet();
+            new InternalOrPrivateSettingsPlugin.UpdateInternalOrPrivateAction.Request(
+                "throttled_threadpool_index",
+                IndexSettings.INDEX_SEARCH_THROTTLED.getKey(),
+                "true"
+            )
+        ).actionGet();
         final SearchService service = getInstanceFromNode(SearchService.class);
         Index index = resolveIndex("throttled_threadpool_index");
         assertTrue(service.getIndicesService().indexServiceSafe(index).getIndexSettings().isSearchThrottled());
         client().prepareIndex("throttled_threadpool_index").setId("1").setSource("field", "value").setRefreshPolicy(IMMEDIATE).get();
         SearchResponse searchResponse = client().prepareSearch("throttled_threadpool_index")
-            .setIndicesOptions(IndicesOptions.STRICT_EXPAND_OPEN_FORBID_CLOSED).setSize(1).get();
+            .setIndicesOptions(IndicesOptions.STRICT_EXPAND_OPEN_FORBID_CLOSED)
+            .setSize(1)
+            .get();
         assertSearchHits(searchResponse, "1");
         // we add a search action listener in a plugin above to assert that this is actually used
         client().execute(
             InternalOrPrivateSettingsPlugin.UpdateInternalOrPrivateAction.INSTANCE,
-            new InternalOrPrivateSettingsPlugin.UpdateInternalOrPrivateAction.Request("throttled_threadpool_index",
-                IndexSettings.INDEX_SEARCH_THROTTLED.getKey(), "false"))
-            .actionGet();
+            new InternalOrPrivateSettingsPlugin.UpdateInternalOrPrivateAction.Request(
+                "throttled_threadpool_index",
+                IndexSettings.INDEX_SEARCH_THROTTLED.getKey(),
+                "false"
+            )
+        ).actionGet();
 
-        IllegalArgumentException iae = expectThrows(IllegalArgumentException.class, () ->
-            client().admin().indices().prepareUpdateSettings("throttled_threadpool_index").setSettings(Settings.builder().put(IndexSettings
-                .INDEX_SEARCH_THROTTLED.getKey(), false)).get());
-        assertEquals("can not update private setting [index.search.throttled]; this setting is managed by Elasticsearch",
-            iae.getMessage());
+        IllegalArgumentException iae = expectThrows(
+            IllegalArgumentException.class,
+            () -> client().admin()
+                .indices()
+                .prepareUpdateSettings("throttled_threadpool_index")
+                .setSettings(Settings.builder().put(IndexSettings.INDEX_SEARCH_THROTTLED.getKey(), false))
+                .get()
+        );
+        assertEquals("can not update private setting [index.search.throttled]; this setting is managed by Elasticsearch", iae.getMessage());
         assertFalse(service.getIndicesService().indexServiceSafe(index).getIndexSettings().isSearchThrottled());
         SearchRequest searchRequest = new SearchRequest().allowPartialSearchResults(false);
-        ShardSearchRequest req = new ShardSearchRequest(OriginalIndices.NONE, searchRequest, new ShardId(index, 0), 1,
-            new AliasFilter(null, Strings.EMPTY_ARRAY), 1f, -1, null, null);
+        ShardSearchRequest req = new ShardSearchRequest(
+            OriginalIndices.NONE,
+            searchRequest,
+            new ShardId(index, 0),
+            1,
+            new AliasFilter(null, Strings.EMPTY_ARRAY),
+            1f,
+            -1,
+            null,
+            null
+        );
         Thread currentThread = Thread.currentThread();
         // we still make sure can match is executed on the network thread
         service.canMatch(req, ActionListener.wrap(r -> assertSame(Thread.currentThread(), currentThread), e -> fail("unexpected")));
@@ -688,9 +929,12 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         createIndex("throttled_threadpool_index");
         client().execute(
             InternalOrPrivateSettingsPlugin.UpdateInternalOrPrivateAction.INSTANCE,
-            new InternalOrPrivateSettingsPlugin.UpdateInternalOrPrivateAction.Request("throttled_threadpool_index",
-                IndexSettings.INDEX_SEARCH_THROTTLED.getKey(), "true"))
-            .actionGet();
+            new InternalOrPrivateSettingsPlugin.UpdateInternalOrPrivateAction.Request(
+                "throttled_threadpool_index",
+                IndexSettings.INDEX_SEARCH_THROTTLED.getKey(),
+                "true"
+            )
+        ).actionGet();
 
         client().prepareIndex("throttled_threadpool_index").setId("1").setSource("field", "value").setRefreshPolicy(IMMEDIATE).get();
         assertHitCount(client().prepareSearch().get(), 0L);
@@ -701,8 +945,10 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         final SearchService service = getInstanceFromNode(SearchService.class);
         {
             InternalAggregation.ReduceContext reduceContext = service.createReduceContext(true);
-            expectThrows(MultiBucketConsumerService.TooManyBucketsException.class,
-                () -> reduceContext.consumeBucketsAndMaybeBreak(MultiBucketConsumerService.DEFAULT_MAX_BUCKETS + 1));
+            expectThrows(
+                MultiBucketConsumerService.TooManyBucketsException.class,
+                () -> reduceContext.consumeBucketsAndMaybeBreak(MultiBucketConsumerService.DEFAULT_MAX_BUCKETS + 1)
+            );
         }
         {
             InternalAggregation.ReduceContext reduceContext = service.createReduceContext(false);
@@ -719,8 +965,17 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         String clusterAlias = randomBoolean() ? null : randomAlphaOfLengthBetween(3, 10);
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.allowPartialSearchResults(randomBoolean());
-        ShardSearchRequest request = new ShardSearchRequest(OriginalIndices.NONE, searchRequest, shardId,
-            indexService.numberOfShards(), AliasFilter.EMPTY, 1f, nowInMillis, clusterAlias, Strings.EMPTY_ARRAY);
+        ShardSearchRequest request = new ShardSearchRequest(
+            OriginalIndices.NONE,
+            searchRequest,
+            shardId,
+            indexService.numberOfShards(),
+            AliasFilter.EMPTY,
+            1f,
+            nowInMillis,
+            clusterAlias,
+            Strings.EMPTY_ARRAY
+        );
         try (DefaultSearchContext searchContext = service.createSearchContext(request, new TimeValue(System.currentTimeMillis()))) {
             SearchShardTarget searchShardTarget = searchContext.shardTarget();
             QueryShardContext queryShardContext = searchContext.getQueryShardContext();
@@ -745,16 +1000,16 @@ public class SearchServiceTests extends ESSingleNodeTestCase {
         final SearchService service = getInstanceFromNode(SearchService.class);
         final ShardId shardId = new ShardId(indexService.index(), 0);
 
-        NullPointerException e = expectThrows(NullPointerException.class,
-            () -> service.createContext(
-                new ShardSearchRequest(shardId, 0, null) {
-                    @Override
-                    public SearchType searchType() {
-                        // induce an artificial NPE
-                        throw new NullPointerException("expected");
-                    }
+        NullPointerException e = expectThrows(
+            NullPointerException.class,
+            () -> service.createContext(new ShardSearchRequest(shardId, 0, null) {
+                @Override
+                public SearchType searchType() {
+                    // induce an artificial NPE
+                    throw new NullPointerException("expected");
                 }
-            ));
+            })
+        );
         assertEquals("expected", e.getMessage());
         assertEquals("should have 2 store refs (IndexService + InternalEngine)", 2, indexService.getShard(0).store().refCount());
     }

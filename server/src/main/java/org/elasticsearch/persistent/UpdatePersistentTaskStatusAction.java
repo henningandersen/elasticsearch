@@ -121,8 +121,10 @@ public class UpdatePersistentTaskStatusAction extends ActionType<PersistentTaskR
         }
     }
 
-    public static class RequestBuilder extends MasterNodeOperationRequestBuilder<UpdatePersistentTaskStatusAction.Request,
-            PersistentTaskResponse, UpdatePersistentTaskStatusAction.RequestBuilder> {
+    public static class RequestBuilder extends MasterNodeOperationRequestBuilder<
+        UpdatePersistentTaskStatusAction.Request,
+        PersistentTaskResponse,
+        UpdatePersistentTaskStatusAction.RequestBuilder> {
 
         protected RequestBuilder(ElasticsearchClient client, UpdatePersistentTaskStatusAction action) {
             super(client, action, new Request());
@@ -144,12 +146,23 @@ public class UpdatePersistentTaskStatusAction extends ActionType<PersistentTaskR
         private final PersistentTasksClusterService persistentTasksClusterService;
 
         @Inject
-        public TransportAction(TransportService transportService, ClusterService clusterService,
-                               ThreadPool threadPool, ActionFilters actionFilters,
-                               PersistentTasksClusterService persistentTasksClusterService,
-                               IndexNameExpressionResolver indexNameExpressionResolver) {
-            super(UpdatePersistentTaskStatusAction.NAME, transportService, clusterService, threadPool, actionFilters,
-                Request::new, indexNameExpressionResolver);
+        public TransportAction(
+            TransportService transportService,
+            ClusterService clusterService,
+            ThreadPool threadPool,
+            ActionFilters actionFilters,
+            PersistentTasksClusterService persistentTasksClusterService,
+            IndexNameExpressionResolver indexNameExpressionResolver
+        ) {
+            super(
+                UpdatePersistentTaskStatusAction.NAME,
+                transportService,
+                clusterService,
+                threadPool,
+                actionFilters,
+                Request::new,
+                indexNameExpressionResolver
+            );
             this.persistentTasksClusterService = persistentTasksClusterService;
         }
 
@@ -170,12 +183,21 @@ public class UpdatePersistentTaskStatusAction extends ActionType<PersistentTaskR
         }
 
         @Override
-        protected final void masterOperation(Task ignoredTask, final Request request,
-                                             final ClusterState state,
-                                             final ActionListener<PersistentTaskResponse> listener) {
-            persistentTasksClusterService.updatePersistentTaskState(request.taskId, request.allocationId, request.state,
-                ActionListener.delegateFailure(listener,
-                    (delegatedListener, task) -> delegatedListener.onResponse(new PersistentTaskResponse(task))));
+        protected final void masterOperation(
+            Task ignoredTask,
+            final Request request,
+            final ClusterState state,
+            final ActionListener<PersistentTaskResponse> listener
+        ) {
+            persistentTasksClusterService.updatePersistentTaskState(
+                request.taskId,
+                request.allocationId,
+                request.state,
+                ActionListener.delegateFailure(
+                    listener,
+                    (delegatedListener, task) -> delegatedListener.onResponse(new PersistentTaskResponse(task))
+                )
+            );
         }
     }
 }

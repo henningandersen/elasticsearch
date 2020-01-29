@@ -64,8 +64,10 @@ public class NodeEnvironmentTests extends ESTestCase {
         List<String> dataPaths = Environment.PATH_DATA_SETTING.get(settings);
 
         // Reuse the same location and attempt to lock again
-        IllegalStateException ex = expectThrows(IllegalStateException.class, () ->
-                new NodeEnvironment(settings, TestEnvironment.newEnvironment(settings)));
+        IllegalStateException ex = expectThrows(
+            IllegalStateException.class,
+            () -> new NodeEnvironment(settings, TestEnvironment.newEnvironment(settings))
+        );
         assertThat(ex.getMessage(), containsString("failed to obtain node lock"));
 
         // Close the environment that holds the lock and make sure we can get the lock after release
@@ -88,12 +90,14 @@ public class NodeEnvironmentTests extends ESTestCase {
         try {
             // False means don't hook up std out
             NodeEnvironment.applySegmentInfosTrace(
-                    Settings.builder().put(NodeEnvironment.ENABLE_LUCENE_SEGMENT_INFOS_TRACE_SETTING.getKey(), false).build());
+                Settings.builder().put(NodeEnvironment.ENABLE_LUCENE_SEGMENT_INFOS_TRACE_SETTING.getKey(), false).build()
+            );
             assertNull(SegmentInfos.getInfoStream());
 
             // But true means hook std out up statically
             NodeEnvironment.applySegmentInfosTrace(
-                    Settings.builder().put(NodeEnvironment.ENABLE_LUCENE_SEGMENT_INFOS_TRACE_SETTING.getKey(), true).build());
+                Settings.builder().put(NodeEnvironment.ENABLE_LUCENE_SEGMENT_INFOS_TRACE_SETTING.getKey(), true).build()
+            );
             assertEquals(System.out, SegmentInfos.getInfoStream());
         } finally {
             // Clean up after ourselves
@@ -323,8 +327,13 @@ public class NodeEnvironmentTests extends ESTestCase {
                     for (int i = 0; i < iters; i++) {
                         int shard = randomIntBetween(0, counts.length - 1);
                         try {
-                            try (ShardLock autoCloses = env.shardLock(new ShardId("foo", "fooUUID", shard), "1",
-                                    scaledRandomIntBetween(0, 10))) {
+                            try (
+                                ShardLock autoCloses = env.shardLock(
+                                    new ShardId("foo", "fooUUID", shard),
+                                    "1",
+                                    scaledRandomIntBetween(0, 10)
+                                )
+                            ) {
                                 counts[shard].value++;
                                 countsAtomic[shard].incrementAndGet();
                                 assertEquals(flipFlop[shard].incrementAndGet(), 1);
@@ -360,36 +369,49 @@ public class NodeEnvironmentTests extends ESTestCase {
         ShardId sid = new ShardId(index, 0);
 
         assertThat(env.availableShardPaths(sid), equalTo(env.availableShardPaths(sid)));
-        assertThat(env.resolveCustomLocation("/tmp/foo", sid).toAbsolutePath(),
-            equalTo(PathUtils.get("/tmp/foo/0/" + index.getUUID() + "/0").toAbsolutePath()));
+        assertThat(
+            env.resolveCustomLocation("/tmp/foo", sid).toAbsolutePath(),
+            equalTo(PathUtils.get("/tmp/foo/0/" + index.getUUID() + "/0").toAbsolutePath())
+        );
 
-        assertThat("shard paths with a custom data_path should contain only regular paths",
-                env.availableShardPaths(sid),
-                equalTo(stringsToPaths(dataPaths, "indices/" + index.getUUID() + "/0")));
+        assertThat(
+            "shard paths with a custom data_path should contain only regular paths",
+            env.availableShardPaths(sid),
+            equalTo(stringsToPaths(dataPaths, "indices/" + index.getUUID() + "/0"))
+        );
 
-        assertThat("index paths uses the regular template",
-                env.indexPaths(index), equalTo(stringsToPaths(dataPaths, "indices/" + index.getUUID())));
+        assertThat(
+            "index paths uses the regular template",
+            env.indexPaths(index),
+            equalTo(stringsToPaths(dataPaths, "indices/" + index.getUUID()))
+        );
 
         assertThat(env.availableShardPaths(sid), equalTo(env.availableShardPaths(sid)));
-        assertThat(env.resolveCustomLocation("/tmp/foo", sid).toAbsolutePath(),
-            equalTo(PathUtils.get("/tmp/foo/0/" + index.getUUID() + "/0").toAbsolutePath()));
+        assertThat(
+            env.resolveCustomLocation("/tmp/foo", sid).toAbsolutePath(),
+            equalTo(PathUtils.get("/tmp/foo/0/" + index.getUUID() + "/0").toAbsolutePath())
+        );
 
-        assertThat("shard paths with a custom data_path should contain only regular paths",
-                env.availableShardPaths(sid),
-                equalTo(stringsToPaths(dataPaths, "indices/" + index.getUUID() + "/0")));
+        assertThat(
+            "shard paths with a custom data_path should contain only regular paths",
+            env.availableShardPaths(sid),
+            equalTo(stringsToPaths(dataPaths, "indices/" + index.getUUID() + "/0"))
+        );
 
-        assertThat("index paths uses the regular template",
-                env.indexPaths(index), equalTo(stringsToPaths(dataPaths, "indices/" + index.getUUID())));
+        assertThat(
+            "index paths uses the regular template",
+            env.indexPaths(index),
+            equalTo(stringsToPaths(dataPaths, "indices/" + index.getUUID()))
+        );
 
         env.close();
     }
 
     public void testNodeIdNotPersistedAtInitialization() throws IOException {
-        NodeEnvironment env = newNodeEnvironment(new String[0], Settings.builder()
-            .put("node.local_storage", false)
-            .put("node.master", false)
-            .put("node.data", false)
-            .build());
+        NodeEnvironment env = newNodeEnvironment(
+            new String[0],
+            Settings.builder().put("node.local_storage", false).put("node.master", false).put("node.data", false).build()
+        );
         String nodeID = env.nodeId();
         env.close();
         final String[] paths = tmpPaths();
@@ -423,7 +445,7 @@ public class NodeEnvironmentTests extends ESTestCase {
         env.close();
 
         // check we clean up
-        for (String path: paths) {
+        for (String path : paths) {
             final Path nodePath = PathUtils.get(path);
             final Path tempFile = nodePath.resolve(NodeEnvironment.TEMP_FILE_NAME);
             assertFalse(tempFile + " should have been cleaned", Files.exists(tempFile));
@@ -459,9 +481,7 @@ public class NodeEnvironmentTests extends ESTestCase {
         verifyFailsOnMetaData(noDataNoMasterSettings, indexPath);
 
         // build settings using same path.data as original but with node.data=false
-        Settings noDataSettings = Settings.builder()
-            .put(settings)
-            .put(Node.NODE_DATA_SETTING.getKey(), false).build();
+        Settings noDataSettings = Settings.builder().put(settings).put(Node.NODE_DATA_SETTING.getKey(), false).build();
 
         String shardDataDirName = Integer.toString(randomInt(10));
 
@@ -478,10 +498,7 @@ public class NodeEnvironmentTests extends ESTestCase {
         verifyFailsOnMetaData(noDataNoMasterSettings, indexPath);
 
         // build settings using same path.data as original but with node.master=false
-        Settings noMasterSettings = Settings.builder()
-            .put(settings)
-            .put(Node.NODE_MASTER_SETTING.getKey(), false)
-            .build();
+        Settings noMasterSettings = Settings.builder().put(settings).put(Node.NODE_MASTER_SETTING.getKey(), false).build();
 
         // test that we can create master=false env regardless of data.
         newNodeEnvironment(noMasterSettings).close();
@@ -499,31 +516,34 @@ public class NodeEnvironmentTests extends ESTestCase {
     }
 
     private void verifyFailsOnShardData(Settings settings, Path indexPath, String shardDataDirName) {
-        IllegalStateException ex = expectThrows(IllegalStateException.class,
+        IllegalStateException ex = expectThrows(
+            IllegalStateException.class,
             "Must fail creating NodeEnvironment on a data path that has shard data if node.data=false",
-            () -> newNodeEnvironment(settings).close());
+            () -> newNodeEnvironment(settings).close()
+        );
 
-        assertThat(ex.getMessage(),
-            containsString(indexPath.resolve(shardDataDirName).toAbsolutePath().toString()));
-        assertThat(ex.getMessage(),
-            startsWith("Node is started with "
-                + Node.NODE_DATA_SETTING.getKey()
-                + "=false, but has shard data"));
+        assertThat(ex.getMessage(), containsString(indexPath.resolve(shardDataDirName).toAbsolutePath().toString()));
+        assertThat(ex.getMessage(), startsWith("Node is started with " + Node.NODE_DATA_SETTING.getKey() + "=false, but has shard data"));
     }
 
     private void verifyFailsOnMetaData(Settings settings, Path indexPath) {
-        IllegalStateException ex = expectThrows(IllegalStateException.class,
+        IllegalStateException ex = expectThrows(
+            IllegalStateException.class,
             "Must fail creating NodeEnvironment on a data path that has index meta-data if node.data=false and node.master=false",
-            () -> newNodeEnvironment(settings).close());
+            () -> newNodeEnvironment(settings).close()
+        );
 
-        assertThat(ex.getMessage(),
-            containsString(indexPath.resolve(MetaDataStateFormat.STATE_DIR_NAME).toAbsolutePath().toString()));
-        assertThat(ex.getMessage(),
-            startsWith("Node is started with "
-                + Node.NODE_DATA_SETTING.getKey()
-                + "=false and "
-                + Node.NODE_MASTER_SETTING.getKey()
-                + "=false, but has index metadata"));
+        assertThat(ex.getMessage(), containsString(indexPath.resolve(MetaDataStateFormat.STATE_DIR_NAME).toAbsolutePath().toString()));
+        assertThat(
+            ex.getMessage(),
+            startsWith(
+                "Node is started with "
+                    + Node.NODE_DATA_SETTING.getKey()
+                    + "=false and "
+                    + Node.NODE_MASTER_SETTING.getKey()
+                    + "=false, but has index metadata"
+            )
+        );
     }
 
     /** Converts an array of Strings to an array of Paths, adding an additional child if specified */
@@ -558,25 +578,28 @@ public class NodeEnvironmentTests extends ESTestCase {
 
     public Settings buildEnvSettings(Settings settings) {
         return Settings.builder()
-                    .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
-                    .putList(Environment.PATH_DATA_SETTING.getKey(), tmpPaths())
-                    .put(settings).build();
+            .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
+            .putList(Environment.PATH_DATA_SETTING.getKey(), tmpPaths())
+            .put(settings)
+            .build();
     }
 
     public NodeEnvironment newNodeEnvironment(String[] dataPaths, Settings settings) throws IOException {
         Settings build = Settings.builder()
-                .put(settings)
-                .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
-                .putList(Environment.PATH_DATA_SETTING.getKey(), dataPaths).build();
+            .put(settings)
+            .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
+            .putList(Environment.PATH_DATA_SETTING.getKey(), dataPaths)
+            .build();
         return new NodeEnvironment(build, TestEnvironment.newEnvironment(build));
     }
 
     public NodeEnvironment newNodeEnvironment(String[] dataPaths, String sharedDataPath, Settings settings) throws IOException {
         Settings build = Settings.builder()
-                .put(settings)
-                .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
-                .put(Environment.PATH_SHARED_DATA_SETTING.getKey(), sharedDataPath)
-                .putList(Environment.PATH_DATA_SETTING.getKey(), dataPaths).build();
+            .put(settings)
+            .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
+            .put(Environment.PATH_SHARED_DATA_SETTING.getKey(), sharedDataPath)
+            .putList(Environment.PATH_DATA_SETTING.getKey(), dataPaths)
+            .build();
         return new NodeEnvironment(build, TestEnvironment.newEnvironment(build));
     }
 }

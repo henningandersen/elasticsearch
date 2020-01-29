@@ -85,10 +85,17 @@ public abstract class Plugin implements Closeable {
      * @param nodeEnvironment the node environment used coordinate access to the data paths
      * @param namedWriteableRegistry the registry for {@link NamedWriteable} object parsing
      */
-    public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
-                                               ResourceWatcherService resourceWatcherService, ScriptService scriptService,
-                                               NamedXContentRegistry xContentRegistry, Environment environment,
-                                               NodeEnvironment nodeEnvironment, NamedWriteableRegistry namedWriteableRegistry) {
+    public Collection<Object> createComponents(
+        Client client,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        ResourceWatcherService resourceWatcherService,
+        ScriptService scriptService,
+        NamedXContentRegistry xContentRegistry,
+        Environment environment,
+        NodeEnvironment nodeEnvironment,
+        NamedWriteableRegistry namedWriteableRegistry
+    ) {
         return Collections.emptyList();
     }
 
@@ -125,12 +132,16 @@ public abstract class Plugin implements Closeable {
     /**
      * Returns a list of additional {@link Setting} definitions for this plugin.
      */
-    public List<Setting<?>> getSettings() { return Collections.emptyList(); }
+    public List<Setting<?>> getSettings() {
+        return Collections.emptyList();
+    }
 
     /**
      * Returns a list of additional settings filter for this plugin
      */
-    public List<String> getSettingsFilter() { return Collections.emptyList(); }
+    public List<String> getSettingsFilter() {
+        return Collections.emptyList();
+    }
 
     /**
      * Get the setting upgraders provided by this plugin.
@@ -174,7 +185,9 @@ public abstract class Plugin implements Closeable {
      * to provide a better out of the box experience by pre-configuring otherwise (in production) mandatory settings or to enforce certain
      * configurations like OS settings or 3rd party resources.
      */
-    public List<BootstrapCheck> getBootstrapChecks() { return Collections.emptyList(); }
+    public List<BootstrapCheck> getBootstrapChecks() {
+        return Collections.emptyList();
+    }
 
     public Set<DiscoveryNodeRole> getRoles() {
         return Set.of();

@@ -110,8 +110,7 @@ public class PutIndexTemplateRequest extends MasterNodeRequest<PutIndexTemplateR
         version = in.readOptionalVInt();
     }
 
-    public PutIndexTemplateRequest() {
-    }
+    public PutIndexTemplateRequest() {}
 
     /**
      * Constructs a new put index template request with the provided name.
@@ -338,7 +337,7 @@ public class PutIndexTemplateRequest extends MasterNodeRequest<PutIndexTemplateR
                 if ((entry.getValue() instanceof Integer) == false) {
                     throw new IllegalArgumentException("Malformed [version] value, should be an integer");
                 }
-                version((Integer)entry.getValue());
+                version((Integer) entry.getValue());
             } else if (name.equals("settings")) {
                 if ((entry.getValue() instanceof Map) == false) {
                     throw new IllegalArgumentException("Malformed [settings] section, should include an inner object");
@@ -349,8 +348,10 @@ public class PutIndexTemplateRequest extends MasterNodeRequest<PutIndexTemplateR
                 for (Map.Entry<String, Object> entry1 : mappings.entrySet()) {
                     if (!(entry1.getValue() instanceof Map)) {
                         throw new IllegalArgumentException(
-                            "Malformed [mappings] section for type [" + entry1.getKey() +
-                                "], should include an inner object describing the mapping");
+                            "Malformed [mappings] section for type ["
+                                + entry1.getKey()
+                                + "], should include an inner object describing the mapping"
+                        );
                     }
                     mapping((Map<String, Object>) entry1.getValue());
                 }
@@ -427,15 +428,14 @@ public class PutIndexTemplateRequest extends MasterNodeRequest<PutIndexTemplateR
      */
     public PutIndexTemplateRequest aliases(BytesReference source) {
         // EMPTY is safe here because we never call namedObject
-        try (XContentParser parser = XContentHelper
-                .createParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE, source)) {
-            //move to the first alias
+        try (XContentParser parser = XContentHelper.createParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE, source)) {
+            // move to the first alias
             parser.nextToken();
             while ((parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 alias(Alias.fromXContent(parser));
             }
             return this;
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw new ElasticsearchParseException("Failed to parse aliases", e);
         }
     }

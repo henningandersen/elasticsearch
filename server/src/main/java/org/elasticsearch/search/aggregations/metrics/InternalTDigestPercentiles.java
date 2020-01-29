@@ -30,8 +30,15 @@ import java.util.Map;
 public class InternalTDigestPercentiles extends AbstractInternalTDigestPercentiles implements Percentiles {
     public static final String NAME = "tdigest_percentiles";
 
-    InternalTDigestPercentiles(String name, double[] percents, TDigestState state, boolean keyed, DocValueFormat formatter,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    InternalTDigestPercentiles(
+        String name,
+        double[] percents,
+        TDigestState state,
+        boolean keyed,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, percents, state, keyed, formatter, pipelineAggregators, metaData);
     }
 
@@ -68,8 +75,14 @@ public class InternalTDigestPercentiles extends AbstractInternalTDigestPercentil
     }
 
     @Override
-    protected AbstractInternalTDigestPercentiles createReduced(String name, double[] keys, TDigestState merged, boolean keyed,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    protected AbstractInternalTDigestPercentiles createReduced(
+        String name,
+        double[] keys,
+        TDigestState merged,
+        boolean keyed,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         return new InternalTDigestPercentiles(name, keys, merged, keyed, format, pipelineAggregators, metaData);
     }
 

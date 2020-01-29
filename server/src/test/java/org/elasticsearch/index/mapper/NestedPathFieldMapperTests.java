@@ -43,8 +43,11 @@ public class NestedPathFieldMapperTests extends ESSingleNodeTestCase {
     public void testDefaults() throws IOException {
         Settings indexSettings = Settings.EMPTY;
         MapperService mapperService = createIndex("test", indexSettings).mapperService();
-        DocumentMapper mapper = mapperService.merge("_doc",
-            new CompressedXContent("{\"_doc\":{}}"), MapperService.MergeReason.MAPPING_UPDATE);
+        DocumentMapper mapper = mapperService.merge(
+            "_doc",
+            new CompressedXContent("{\"_doc\":{}}"),
+            MapperService.MergeReason.MAPPING_UPDATE
+        );
         ParsedDocument document = mapper.parse(new SourceToParse("index", "id", new BytesArray("{}"), XContentType.JSON));
         assertEquals(Collections.<IndexableField>emptyList(), Arrays.asList(document.rootDoc().getFields(NestedPathFieldMapper.NAME)));
     }

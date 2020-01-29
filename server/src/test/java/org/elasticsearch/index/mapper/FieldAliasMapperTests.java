@@ -41,92 +41,110 @@ public class FieldAliasMapperTests extends ESSingleNodeTestCase {
     }
 
     public void testParsing() throws IOException {
-        String mapping = Strings.toString(XContentFactory.jsonBuilder()
-            .startObject()
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .startObject("type")
-                    .startObject("properties")
-                        .startObject("alias-field")
-                            .field("type", "alias")
-                            .field("path", "concrete-field")
-                        .endObject()
-                        .startObject("concrete-field")
-                            .field("type", "keyword")
-                        .endObject()
-                    .endObject()
+                .startObject("properties")
+                .startObject("alias-field")
+                .field("type", "alias")
+                .field("path", "concrete-field")
                 .endObject()
-            .endObject());
+                .startObject("concrete-field")
+                .field("type", "keyword")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+        );
         DocumentMapper mapper = parser.parse("type", new CompressedXContent(mapping));
         assertEquals(mapping, mapper.mappingSource().toString());
     }
 
     public void testParsingWithMissingPath() throws IOException {
-        String mapping = Strings.toString(XContentFactory.jsonBuilder()
-            .startObject()
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .startObject("type")
-                    .startObject("properties")
-                        .startObject("alias-field")
-                            .field("type", "alias")
-                        .endObject()
-                    .endObject()
+                .startObject("properties")
+                .startObject("alias-field")
+                .field("type", "alias")
                 .endObject()
-            .endObject());
-        MapperParsingException exception = expectThrows(MapperParsingException.class,
-            () -> parser.parse("type", new CompressedXContent(mapping)));
+                .endObject()
+                .endObject()
+                .endObject()
+        );
+        MapperParsingException exception = expectThrows(
+            MapperParsingException.class,
+            () -> parser.parse("type", new CompressedXContent(mapping))
+        );
         assertEquals("The [path] property must be specified for field [alias-field].", exception.getMessage());
     }
 
     public void testParsingWithExtraArgument() throws IOException {
-        String mapping = Strings.toString(XContentFactory.jsonBuilder()
-            .startObject()
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .startObject("type")
-                    .startObject("properties")
-                        .startObject("alias-field")
-                            .field("type", "alias")
-                            .field("path", "concrete-field")
-                            .field("extra-field", "extra-value")
-                        .endObject()
-                    .endObject()
+                .startObject("properties")
+                .startObject("alias-field")
+                .field("type", "alias")
+                .field("path", "concrete-field")
+                .field("extra-field", "extra-value")
                 .endObject()
-            .endObject());
-        MapperParsingException exception = expectThrows(MapperParsingException.class,
-            () -> parser.parse("type", new CompressedXContent(mapping)));
-        assertEquals("Mapping definition for [alias-field] has unsupported parameters:  [extra-field : extra-value]",
-            exception.getMessage());
+                .endObject()
+                .endObject()
+                .endObject()
+        );
+        MapperParsingException exception = expectThrows(
+            MapperParsingException.class,
+            () -> parser.parse("type", new CompressedXContent(mapping))
+        );
+        assertEquals(
+            "Mapping definition for [alias-field] has unsupported parameters:  [extra-field : extra-value]",
+            exception.getMessage()
+        );
     }
 
     public void testMerge() throws IOException {
-        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject()
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .startObject("type")
-                    .startObject("properties")
-                        .startObject("first-field")
-                            .field("type", "keyword")
-                        .endObject()
-                        .startObject("alias-field")
-                            .field("type", "alias")
-                            .field("path", "first-field")
-                        .endObject()
-                    .endObject()
+                .startObject("properties")
+                .startObject("first-field")
+                .field("type", "keyword")
                 .endObject()
-            .endObject());
+                .startObject("alias-field")
+                .field("type", "alias")
+                .field("path", "first-field")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+        );
         mapperService.merge("type", new CompressedXContent(mapping), MergeReason.MAPPING_UPDATE);
 
         MappedFieldType firstFieldType = mapperService.fullName("alias-field");
         assertEquals("first-field", firstFieldType.name());
         assertTrue(firstFieldType instanceof KeywordFieldMapper.KeywordFieldType);
 
-        String newMapping = Strings.toString(XContentFactory.jsonBuilder().startObject()
-               .startObject("type")
-                    .startObject("properties")
-                        .startObject("second-field")
-                            .field("type", "text")
-                        .endObject()
-                        .startObject("alias-field")
-                            .field("type", "alias")
-                            .field("path", "second-field")
-                        .endObject()
-                    .endObject()
+        String newMapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("type")
+                .startObject("properties")
+                .startObject("second-field")
+                .field("type", "text")
                 .endObject()
-            .endObject());
+                .startObject("alias-field")
+                .field("type", "alias")
+                .field("path", "second-field")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+        );
         mapperService.merge("type", new CompressedXContent(newMapping), MergeReason.MAPPING_UPDATE);
 
         MappedFieldType secondFieldType = mapperService.fullName("alias-field");
@@ -135,33 +153,43 @@ public class FieldAliasMapperTests extends ESSingleNodeTestCase {
     }
 
     public void testMergeFailure() throws IOException {
-        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject()
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .startObject("type")
-                    .startObject("properties")
-                        .startObject("concrete-field")
-                            .field("type", "text")
-                        .endObject()
-                        .startObject("alias-field")
-                            .field("type", "alias")
-                            .field("path", "concrete-field")
-                        .endObject()
-                    .endObject()
+                .startObject("properties")
+                .startObject("concrete-field")
+                .field("type", "text")
                 .endObject()
-            .endObject());
+                .startObject("alias-field")
+                .field("type", "alias")
+                .field("path", "concrete-field")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+        );
         mapperService.merge("type", new CompressedXContent(mapping), MergeReason.MAPPING_UPDATE);
 
-        String newMapping = Strings.toString(XContentFactory.jsonBuilder().startObject()
-               .startObject("type")
-                    .startObject("properties")
-                        .startObject("alias-field")
-                            .field("type", "keyword")
-                        .endObject()
-                    .endObject()
+        String newMapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("type")
+                .startObject("properties")
+                .startObject("alias-field")
+                .field("type", "keyword")
                 .endObject()
-            .endObject());
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
-            () -> mapperService.merge("type", new CompressedXContent(newMapping), MergeReason.MAPPING_UPDATE));
-        assertEquals("Cannot merge a field alias mapping [alias-field] with a mapping that is not for a field alias.",
-            exception.getMessage());
+                .endObject()
+                .endObject()
+                .endObject()
+        );
+        IllegalArgumentException exception = expectThrows(
+            IllegalArgumentException.class,
+            () -> mapperService.merge("type", new CompressedXContent(newMapping), MergeReason.MAPPING_UPDATE)
+        );
+        assertEquals(
+            "Cannot merge a field alias mapping [alias-field] with a mapping that is not for a field alias.",
+            exception.getMessage()
+        );
     }
 }

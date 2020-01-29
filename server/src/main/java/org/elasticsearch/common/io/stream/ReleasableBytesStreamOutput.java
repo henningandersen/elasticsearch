@@ -36,8 +36,7 @@ import org.elasticsearch.common.util.PageCacheRecycler;
  * stream should only be closed after the bytes have been output or copied
  * elsewhere.
  */
-public class ReleasableBytesStreamOutput extends BytesStreamOutput
-    implements Releasable {
+public class ReleasableBytesStreamOutput extends BytesStreamOutput implements Releasable {
 
     private Releasable releasable;
 

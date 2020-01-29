@@ -203,15 +203,20 @@ public class AggregationPath {
             Aggregation agg = parent.getAggregations().get(token.name);
 
             if (agg == null) {
-                throw new IllegalArgumentException("Invalid order path [" + this +
-                        "]. Cannot find aggregation named [" + token.name + "]");
+                throw new IllegalArgumentException("Invalid order path [" + this + "]. Cannot find aggregation named [" + token.name + "]");
             }
 
             if (agg instanceof SingleBucketAggregation) {
                 if (token.key != null && !token.key.equals("doc_count")) {
-                    throw new IllegalArgumentException("Invalid order path [" + this +
-                            "]. Unknown value key [" + token.key + "] for single-bucket aggregation [" + token.name +
-                            "]. Either use [doc_count] as key or drop the key all together");
+                    throw new IllegalArgumentException(
+                        "Invalid order path ["
+                            + this
+                            + "]. Unknown value key ["
+                            + token.key
+                            + "] for single-bucket aggregation ["
+                            + token.name
+                            + "]. Either use [doc_count] as key or drop the key all together"
+                    );
                 }
                 parent = (SingleBucketAggregation) agg;
                 value = ((SingleBucketAggregation) agg).getDocCount();
@@ -220,15 +225,28 @@ public class AggregationPath {
 
             // the agg can only be a metrics agg, and a metrics agg must be at the end of the path
             if (i != pathElements.size() - 1) {
-                throw new IllegalArgumentException("Invalid order path [" + this +
- "]. Metrics aggregations cannot have sub-aggregations (at [" + token + ">" + pathElements.get(i + 1) + "]");
+                throw new IllegalArgumentException(
+                    "Invalid order path ["
+                        + this
+                        + "]. Metrics aggregations cannot have sub-aggregations (at ["
+                        + token
+                        + ">"
+                        + pathElements.get(i + 1)
+                        + "]"
+                );
             }
 
             if (agg instanceof InternalNumericMetricsAggregation.SingleValue) {
                 if (token.key != null && !token.key.equals("value")) {
-                    throw new IllegalArgumentException("Invalid order path [" + this +
-                            "]. Unknown value key [" + token.key + "] for single-value metric aggregation [" + token.name +
-                            "]. Either use [value] as key or drop the key all together");
+                    throw new IllegalArgumentException(
+                        "Invalid order path ["
+                            + this
+                            + "]. Unknown value key ["
+                            + token.key
+                            + "] for single-value metric aggregation ["
+                            + token.name
+                            + "]. Either use [value] as key or drop the key all together"
+                    );
                 }
                 parent = null;
                 value = ((InternalNumericMetricsAggregation.SingleValue) agg).value();
@@ -237,8 +255,13 @@ public class AggregationPath {
 
             // we're left with a multi-value metric agg
             if (token.key == null) {
-                throw new IllegalArgumentException("Invalid order path [" + this +
-                        "]. Missing value key in [" + token + "] which refers to a multi-value metric aggregation");
+                throw new IllegalArgumentException(
+                    "Invalid order path ["
+                        + this
+                        + "]. Missing value key in ["
+                        + token
+                        + "] which refers to a multi-value metric aggregation"
+                );
             }
             parent = null;
             value = ((InternalNumericMetricsAggregation.MultiValue) agg).value(token.key);
@@ -259,8 +282,8 @@ public class AggregationPath {
             AggregationPath.PathElement token = pathElements.get(i);
             aggregator = ProfilingAggregator.unwrap(aggregator.subAggregator(token.name));
             assert (aggregator instanceof SingleBucketAggregator && i <= pathElements.size() - 1)
-                    || (aggregator instanceof NumericMetricsAggregator && i == pathElements.size() - 1) :
-                    "this should be picked up before aggregation execution - on validate";
+                || (aggregator instanceof NumericMetricsAggregator
+                    && i == pathElements.size() - 1) : "this should be picked up before aggregation execution - on validate";
         }
         return aggregator;
     }
@@ -274,8 +297,8 @@ public class AggregationPath {
     public Aggregator resolveTopmostAggregator(Aggregator root) {
         AggregationPath.PathElement token = pathElements.get(0);
         Aggregator aggregator = ProfilingAggregator.unwrap(root.subAggregator(token.name));
-        assert (aggregator instanceof SingleBucketAggregator )
-                || (aggregator instanceof NumericMetricsAggregator) : "this should be picked up before aggregation execution - on validate";
+        assert (aggregator instanceof SingleBucketAggregator)
+            || (aggregator instanceof NumericMetricsAggregator) : "this should be picked up before aggregation execution - on validate";
         return aggregator;
     }
 
@@ -291,9 +314,15 @@ public class AggregationPath {
             String name = pathElements.get(i).name;
             aggregator = ProfilingAggregator.unwrap(aggregator.subAggregator(name));
             if (aggregator == null) {
-                throw new AggregationExecutionException("Invalid aggregator order path [" + this + "]. The " +
-                    "provided aggregation [" + name + "] either does not exist, or is a pipeline aggregation " +
-                    "and cannot be used to sort the buckets.");
+                throw new AggregationExecutionException(
+                    "Invalid aggregator order path ["
+                        + this
+                        + "]. The "
+                        + "provided aggregation ["
+                        + name
+                        + "] either does not exist, or is a pipeline aggregation "
+                        + "and cannot be used to sort the buckets."
+                );
             }
 
             if (i < pathElements.size() - 1) {
@@ -301,61 +330,94 @@ public class AggregationPath {
                 // we're in the middle of the path, so the aggregator can only be a single-bucket aggregator
 
                 if (!(aggregator instanceof SingleBucketAggregator)) {
-                    throw new AggregationExecutionException("Invalid aggregation order path [" + this +
-                            "]. Buckets can only be sorted on a sub-aggregator path " +
-                            "that is built out of zero or more single-bucket aggregations within the path and a final " +
-                            "single-bucket or a metrics aggregation at the path end. Sub-path [" +
-                            subPath(0, i + 1) + "] points to non single-bucket aggregation");
+                    throw new AggregationExecutionException(
+                        "Invalid aggregation order path ["
+                            + this
+                            + "]. Buckets can only be sorted on a sub-aggregator path "
+                            + "that is built out of zero or more single-bucket aggregations within the path and a final "
+                            + "single-bucket or a metrics aggregation at the path end. Sub-path ["
+                            + subPath(0, i + 1)
+                            + "] points to non single-bucket aggregation"
+                    );
                 }
 
                 if (pathElements.get(i).key != null) {
-                    throw new AggregationExecutionException("Invalid aggregation order path [" + this +
-                            "]. Buckets can only be sorted on a sub-aggregator path " +
-                            "that is built out of zero or more single-bucket aggregations within the path and a " +
-                            "final single-bucket or a metrics aggregation at the path end. Sub-path [" +
-                            subPath(0, i + 1) + "] points to non single-bucket aggregation");
+                    throw new AggregationExecutionException(
+                        "Invalid aggregation order path ["
+                            + this
+                            + "]. Buckets can only be sorted on a sub-aggregator path "
+                            + "that is built out of zero or more single-bucket aggregations within the path and a "
+                            + "final single-bucket or a metrics aggregation at the path end. Sub-path ["
+                            + subPath(0, i + 1)
+                            + "] points to non single-bucket aggregation"
+                    );
                 }
             }
         }
         boolean singleBucket = aggregator instanceof SingleBucketAggregator;
         if (!singleBucket && !(aggregator instanceof NumericMetricsAggregator)) {
-            throw new AggregationExecutionException("Invalid aggregation order path [" + this +
-                    "]. Buckets can only be sorted on a sub-aggregator path " +
-                    "that is built out of zero or more single-bucket aggregations within the path and a final " +
-                    "single-bucket or a metrics aggregation at the path end.");
+            throw new AggregationExecutionException(
+                "Invalid aggregation order path ["
+                    + this
+                    + "]. Buckets can only be sorted on a sub-aggregator path "
+                    + "that is built out of zero or more single-bucket aggregations within the path and a final "
+                    + "single-bucket or a metrics aggregation at the path end."
+            );
         }
 
         AggregationPath.PathElement lastToken = lastPathElement();
 
         if (singleBucket) {
             if (lastToken.key != null && !"doc_count".equals(lastToken.key)) {
-                throw new AggregationExecutionException("Invalid aggregation order path [" + this +
-                        "]. Ordering on a single-bucket aggregation can only be done on its doc_count. " +
-                        "Either drop the key (a la \"" + lastToken.name + "\") or change it to \"doc_count\" (a la \"" + lastToken.name +
-                        ".doc_count\")");
+                throw new AggregationExecutionException(
+                    "Invalid aggregation order path ["
+                        + this
+                        + "]. Ordering on a single-bucket aggregation can only be done on its doc_count. "
+                        + "Either drop the key (a la \""
+                        + lastToken.name
+                        + "\") or change it to \"doc_count\" (a la \""
+                        + lastToken.name
+                        + ".doc_count\")"
+                );
             }
             return;   // perfectly valid to sort on single-bucket aggregation (will be sored on its doc_count)
         }
 
         if (aggregator instanceof NumericMetricsAggregator.SingleValue) {
             if (lastToken.key != null && !"value".equals(lastToken.key)) {
-                throw new AggregationExecutionException("Invalid aggregation order path [" + this +
-                        "]. Ordering on a single-value metrics aggregation can only be done on its value. " +
-                        "Either drop the key (a la \"" + lastToken.name + "\") or change it to \"value\" (a la \"" + lastToken.name +
-                        ".value\")");
+                throw new AggregationExecutionException(
+                    "Invalid aggregation order path ["
+                        + this
+                        + "]. Ordering on a single-value metrics aggregation can only be done on its value. "
+                        + "Either drop the key (a la \""
+                        + lastToken.name
+                        + "\") or change it to \"value\" (a la \""
+                        + lastToken.name
+                        + ".value\")"
+                );
             }
             return;   // perfectly valid to sort on single metric aggregation (will be sorted on its associated value)
         }
 
         // the aggregator must be of a multi-value metrics type
         if (lastToken.key == null) {
-            throw new AggregationExecutionException("Invalid aggregation order path [" + this +
-                    "]. When ordering on a multi-value metrics aggregation a metric name must be specified");
+            throw new AggregationExecutionException(
+                "Invalid aggregation order path ["
+                    + this
+                    + "]. When ordering on a multi-value metrics aggregation a metric name must be specified"
+            );
         }
 
         if (!((NumericMetricsAggregator.MultiValue) aggregator).hasMetric(lastToken.key)) {
-            throw new AggregationExecutionException("Invalid aggregation order path [" + this +
-                    "]. Unknown metric name [" + lastToken.key + "] on multi-value metrics aggregation [" + lastToken.name + "]");
+            throw new AggregationExecutionException(
+                "Invalid aggregation order path ["
+                    + this
+                    + "]. Unknown metric name ["
+                    + lastToken.key
+                    + "] on multi-value metrics aggregation ["
+                    + lastToken.name
+                    + "]"
+            );
         }
     }
 

@@ -61,12 +61,23 @@ public class RepositoriesServiceTests extends ESTestCase {
     public void setUp() throws Exception {
         super.setUp();
         ThreadPool threadPool = mock(ThreadPool.class);
-        final TransportService transportService = new TransportService(Settings.EMPTY, mock(Transport.class), threadPool,
+        final TransportService transportService = new TransportService(
+            Settings.EMPTY,
+            mock(Transport.class),
+            threadPool,
             TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-            boundAddress -> DiscoveryNode.createLocal(Settings.EMPTY, boundAddress.publishAddress(), UUIDs.randomBase64UUID()), null,
-            Collections.emptySet());
-        repositoriesService = new RepositoriesService(Settings.EMPTY, mock(ClusterService.class),
-            transportService, Collections.emptyMap(), Collections.singletonMap(TestRepository.TYPE, TestRepository::new), threadPool);
+            boundAddress -> DiscoveryNode.createLocal(Settings.EMPTY, boundAddress.publishAddress(), UUIDs.randomBase64UUID()),
+            null,
+            Collections.emptySet()
+        );
+        repositoriesService = new RepositoriesService(
+            Settings.EMPTY,
+            mock(ClusterService.class),
+            transportService,
+            Collections.emptyMap(),
+            Collections.singletonMap(TestRepository.TYPE, TestRepository::new),
+            threadPool
+        );
         repositoriesService.start();
     }
 
@@ -155,10 +166,20 @@ public class RepositoriesServiceTests extends ESTestCase {
         }
 
         @Override
-        public void finalizeSnapshot(SnapshotId snapshotId, ShardGenerations indices, long startTime, String failure,
-                                     int totalShards, List<SnapshotShardFailure> shardFailures, long repositoryStateId,
-                                     boolean includeGlobalState, MetaData metaData, Map<String, Object> userMetadata,
-                                     boolean writeShardGens, ActionListener<SnapshotInfo> listener) {
+        public void finalizeSnapshot(
+            SnapshotId snapshotId,
+            ShardGenerations indices,
+            long startTime,
+            String failure,
+            int totalShards,
+            List<SnapshotShardFailure> shardFailures,
+            long repositoryStateId,
+            boolean includeGlobalState,
+            MetaData metaData,
+            Map<String, Object> userMetadata,
+            boolean writeShardGens,
+            ActionListener<SnapshotInfo> listener
+        ) {
             listener.onResponse(null);
         }
 
@@ -198,15 +219,29 @@ public class RepositoriesServiceTests extends ESTestCase {
         }
 
         @Override
-        public void snapshotShard(Store store, MapperService mapperService, SnapshotId snapshotId, IndexId indexId, IndexCommit
-                                  snapshotIndexCommit, IndexShardSnapshotStatus snapshotStatus, boolean writeShardGens,
-                                  Map<String, Object> userMetadata, ActionListener<String> listener) {
+        public void snapshotShard(
+            Store store,
+            MapperService mapperService,
+            SnapshotId snapshotId,
+            IndexId indexId,
+            IndexCommit snapshotIndexCommit,
+            IndexShardSnapshotStatus snapshotStatus,
+            boolean writeShardGens,
+            Map<String, Object> userMetadata,
+            ActionListener<String> listener
+        ) {
 
         }
 
         @Override
-        public void restoreShard(Store store, SnapshotId snapshotId, IndexId indexId, ShardId snapshotShardId,
-                                 RecoveryState recoveryState, ActionListener<Void> listener) {
+        public void restoreShard(
+            Store store,
+            SnapshotId snapshotId,
+            IndexId indexId,
+            ShardId snapshotShardId,
+            RecoveryState recoveryState,
+            ActionListener<Void> listener
+        ) {
 
         }
 
@@ -216,8 +251,7 @@ public class RepositoriesServiceTests extends ESTestCase {
         }
 
         @Override
-        public void updateState(final ClusterState state) {
-        }
+        public void updateState(final ClusterState state) {}
 
         @Override
         public Lifecycle.State lifecycleState() {

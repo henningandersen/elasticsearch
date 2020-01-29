@@ -86,7 +86,8 @@ public class RestClusterStateAction extends BaseRestHandler {
              * flag to ask for it
              */
             clusterStateRequest.routingTable(
-                    metrics.contains(ClusterState.Metric.ROUTING_TABLE) || metrics.contains(ClusterState.Metric.ROUTING_NODES));
+                metrics.contains(ClusterState.Metric.ROUTING_TABLE) || metrics.contains(ClusterState.Metric.ROUTING_NODES)
+            );
             clusterStateRequest.metaData(metrics.contains(ClusterState.Metric.METADATA));
             clusterStateRequest.blocks(metrics.contains(ClusterState.Metric.BLOCKS));
             clusterStateRequest.customs(metrics.contains(ClusterState.Metric.CUSTOMS));

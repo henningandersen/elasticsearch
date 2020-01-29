@@ -45,20 +45,30 @@ public class MultiValuesSourceFieldConfig implements Writeable, ToXContentObject
 
     private static final String NAME = "field_config";
 
-    public static final BiFunction<Boolean, Boolean, ObjectParser<MultiValuesSourceFieldConfig.Builder, Void>> PARSER
-        = (scriptable, timezoneAware) -> {
+    public static final BiFunction<Boolean, Boolean, ObjectParser<MultiValuesSourceFieldConfig.Builder, Void>> PARSER = (
+        scriptable,
+        timezoneAware) -> {
 
-        ObjectParser<MultiValuesSourceFieldConfig.Builder, Void> parser
-            = new ObjectParser<>(MultiValuesSourceFieldConfig.NAME, MultiValuesSourceFieldConfig.Builder::new);
+        ObjectParser<MultiValuesSourceFieldConfig.Builder, Void> parser = new ObjectParser<>(
+            MultiValuesSourceFieldConfig.NAME,
+            MultiValuesSourceFieldConfig.Builder::new
+        );
 
         parser.declareString(MultiValuesSourceFieldConfig.Builder::setFieldName, ParseField.CommonFields.FIELD);
-        parser.declareField(MultiValuesSourceFieldConfig.Builder::setMissing, XContentParser::objectText,
-            ParseField.CommonFields.MISSING, ObjectParser.ValueType.VALUE);
+        parser.declareField(
+            MultiValuesSourceFieldConfig.Builder::setMissing,
+            XContentParser::objectText,
+            ParseField.CommonFields.MISSING,
+            ObjectParser.ValueType.VALUE
+        );
 
         if (scriptable) {
-            parser.declareField(MultiValuesSourceFieldConfig.Builder::setScript,
+            parser.declareField(
+                MultiValuesSourceFieldConfig.Builder::setScript,
                 (p, context) -> Script.parse(p),
-                Script.SCRIPT_PARSE_FIELD, ObjectParser.ValueType.OBJECT_OR_STRING);
+                Script.SCRIPT_PARSE_FIELD,
+                ObjectParser.ValueType.OBJECT_OR_STRING
+            );
         }
 
         if (timezoneAware) {
@@ -203,15 +213,25 @@ public class MultiValuesSourceFieldConfig implements Writeable, ToXContentObject
 
         public MultiValuesSourceFieldConfig build() {
             if (Strings.isNullOrEmpty(fieldName) && script == null) {
-                throw new IllegalArgumentException("[" +  ParseField.CommonFields.FIELD.getPreferredName()
-                    + "] and [" + Script.SCRIPT_PARSE_FIELD.getPreferredName() + "] cannot both be null.  " +
-                    "Please specify one or the other.");
+                throw new IllegalArgumentException(
+                    "["
+                        + ParseField.CommonFields.FIELD.getPreferredName()
+                        + "] and ["
+                        + Script.SCRIPT_PARSE_FIELD.getPreferredName()
+                        + "] cannot both be null.  "
+                        + "Please specify one or the other."
+                );
             }
 
             if (Strings.isNullOrEmpty(fieldName) == false && script != null) {
-                throw new IllegalArgumentException("[" +  ParseField.CommonFields.FIELD.getPreferredName()
-                    + "] and [" + Script.SCRIPT_PARSE_FIELD.getPreferredName() + "] cannot both be configured.  " +
-                    "Please specify one or the other.");
+                throw new IllegalArgumentException(
+                    "["
+                        + ParseField.CommonFields.FIELD.getPreferredName()
+                        + "] and ["
+                        + Script.SCRIPT_PARSE_FIELD.getPreferredName()
+                        + "] cannot both be configured.  "
+                        + "Please specify one or the other."
+                );
             }
 
             return new MultiValuesSourceFieldConfig(fieldName, missing, script, timeZone);

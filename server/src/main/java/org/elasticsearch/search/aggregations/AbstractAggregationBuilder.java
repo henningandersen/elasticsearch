@@ -31,8 +31,7 @@ import java.util.Objects;
 /**
  * Base implementation of a {@link AggregationBuilder}.
  */
-public abstract class AbstractAggregationBuilder<AB extends AbstractAggregationBuilder<AB>>
-    extends AggregationBuilder {
+public abstract class AbstractAggregationBuilder<AB extends AbstractAggregationBuilder<AB>> extends AggregationBuilder {
 
     protected Map<String, Object> metaData;
 
@@ -45,9 +44,11 @@ public abstract class AbstractAggregationBuilder<AB extends AbstractAggregationB
         super(name);
     }
 
-    protected AbstractAggregationBuilder(AbstractAggregationBuilder<AB> clone,
-                                         AggregatorFactories.Builder factoriesBuilder,
-                                         Map<String, Object> metaData) {
+    protected AbstractAggregationBuilder(
+        AbstractAggregationBuilder<AB> clone,
+        AggregatorFactories.Builder factoriesBuilder,
+        Map<String, Object> metaData
+    ) {
         super(clone, factoriesBuilder);
         this.metaData = metaData;
     }
@@ -140,8 +141,11 @@ public abstract class AbstractAggregationBuilder<AB extends AbstractAggregationB
         return factory;
     }
 
-    protected abstract AggregatorFactory doBuild(QueryShardContext queryShardContext, AggregatorFactory parent,
-                                                 AggregatorFactories.Builder subfactoriesBuilder) throws IOException;
+    protected abstract AggregatorFactory doBuild(
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subfactoriesBuilder
+    ) throws IOException;
 
     @Override
     public final XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {

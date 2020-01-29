@@ -60,8 +60,7 @@ public class RestIndexAction extends BaseRestHandler {
     }
 
     final class CreateHandler extends BaseRestHandler {
-        protected CreateHandler() {
-        }
+        protected CreateHandler() {}
 
         @Override
         public String getName() {
@@ -83,8 +82,7 @@ public class RestIndexAction extends BaseRestHandler {
     }
 
     final class AutoIdHandler extends BaseRestHandler {
-        protected AutoIdHandler() {
-        }
+        protected AutoIdHandler() {}
 
         @Override
         public String getName() {
@@ -124,8 +122,10 @@ public class RestIndexAction extends BaseRestHandler {
             indexRequest.opType(sOpType);
         }
 
-        return channel ->
-                client.index(indexRequest, new RestStatusToXContentListener<>(channel, r -> r.getLocation(indexRequest.routing())));
+        return channel -> client.index(
+            indexRequest,
+            new RestStatusToXContentListener<>(channel, r -> r.getLocation(indexRequest.routing()))
+        );
     }
 
 }

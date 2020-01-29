@@ -19,7 +19,6 @@
 
 package org.elasticsearch.search.aggregations.pipeline;
 
-
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -53,8 +52,7 @@ public abstract class PipelineAggregator implements NamedWriteable {
          * @throws java.io.IOException
          *             When parsing fails
          */
-        PipelineAggregationBuilder parse(String pipelineAggregatorName, XContentParser parser)
-                throws IOException;
+        PipelineAggregationBuilder parse(String pipelineAggregatorName, XContentParser parser) throws IOException;
     }
 
     private String name;

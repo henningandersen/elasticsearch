@@ -36,8 +36,8 @@ public final class ElasticsearchDirectoryReader extends FilterDirectoryReader {
     private final ShardId shardId;
     private final FilterDirectoryReader.SubReaderWrapper wrapper;
 
-    private ElasticsearchDirectoryReader(DirectoryReader in, FilterDirectoryReader.SubReaderWrapper wrapper,
-            ShardId shardId) throws IOException {
+    private ElasticsearchDirectoryReader(DirectoryReader in, FilterDirectoryReader.SubReaderWrapper wrapper, ShardId shardId)
+        throws IOException {
         super(in, wrapper);
         this.wrapper = wrapper;
         this.shardId = shardId;
@@ -75,9 +75,11 @@ public final class ElasticsearchDirectoryReader extends FilterDirectoryReader {
 
     private static final class SubReaderWrapper extends FilterDirectoryReader.SubReaderWrapper {
         private final ShardId shardId;
+
         SubReaderWrapper(ShardId shardId) {
             this.shardId = shardId;
         }
+
         @Override
         public LeafReader wrap(LeafReader reader) {
             return new ElasticsearchLeafReader(reader, shardId);
@@ -97,7 +99,8 @@ public final class ElasticsearchDirectoryReader extends FilterDirectoryReader {
         ElasticsearchDirectoryReader elasticsearchDirectoryReader = getElasticsearchDirectoryReader(reader);
         if (elasticsearchDirectoryReader == null) {
             throw new IllegalArgumentException(
-                    "Can't install close listener reader is not an ElasticsearchDirectoryReader/ElasticsearchLeafReader");
+                "Can't install close listener reader is not an ElasticsearchDirectoryReader/ElasticsearchLeafReader"
+            );
         }
         IndexReader.CacheHelper cacheHelper = elasticsearchDirectoryReader.getReaderCacheHelper();
         if (cacheHelper == null) {

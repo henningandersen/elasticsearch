@@ -31,14 +31,19 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.equalTo;
 
-public abstract class GeoGridTestCase<B extends InternalGeoGridBucket, T extends InternalGeoGrid<B>>
-        extends InternalMultiBucketAggregationTestCase<T> {
+public abstract class GeoGridTestCase<B extends InternalGeoGridBucket, T extends InternalGeoGrid<B>> extends
+    InternalMultiBucketAggregationTestCase<T> {
 
     /**
      * Instantiate a {@link InternalGeoGrid}-derived class using the same parameters as constructor.
      */
-    protected abstract T createInternalGeoGrid(String name, int size, List<InternalGeoGridBucket> buckets,
-                                               List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData);
+    protected abstract T createInternalGeoGrid(
+        String name,
+        int size,
+        List<InternalGeoGridBucket> buckets,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    );
 
     /**
      * Instantiate a {@link InternalGeoGridBucket}-derived class using the same parameters as constructor.
@@ -66,10 +71,12 @@ public abstract class GeoGridTestCase<B extends InternalGeoGridBucket, T extends
     }
 
     @Override
-    protected T createTestInstance(String name,
-                                   List<PipelineAggregator> pipelineAggregators,
-                                   Map<String, Object> metaData,
-                                   InternalAggregations aggregations) {
+    protected T createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        InternalAggregations aggregations
+    ) {
         final int precision = randomPrecision();
         int size = randomNumberOfBuckets();
         List<InternalGeoGridBucket> buckets = new ArrayList<>(size);
@@ -135,33 +142,34 @@ public abstract class GeoGridTestCase<B extends InternalGeoGridBucket, T extends
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 3)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            buckets = new ArrayList<>(buckets);
-            buckets.add(
-                    createInternalGeoGridBucket(randomNonNegativeLong(), randomInt(IndexWriter.MAX_DOCS), InternalAggregations.EMPTY));
-            break;
-        case 2:
-            size = size + between(1, 10);
-            break;
-        case 3:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
-        default:
-            throw new AssertionError("Illegal randomisation branch");
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                buckets = new ArrayList<>(buckets);
+                buckets.add(
+                    createInternalGeoGridBucket(randomNonNegativeLong(), randomInt(IndexWriter.MAX_DOCS), InternalAggregations.EMPTY)
+                );
+                break;
+            case 2:
+                size = size + between(1, 10);
+                break;
+            case 3:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
+            default:
+                throw new AssertionError("Illegal randomisation branch");
         }
         return createInternalGeoGrid(name, size, buckets, pipelineAggregators, metaData);
     }
 
     public void testCreateFromBuckets() {
-       InternalGeoGrid original = createTestInstance();
-       assertThat(original, equalTo(original.create(original.buckets)));
+        InternalGeoGrid original = createTestInstance();
+        assertThat(original, equalTo(original.create(original.buckets)));
     }
 }

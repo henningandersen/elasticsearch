@@ -53,18 +53,17 @@ public class DiversifiedSamplerTests extends AggregatorTestCase {
 
     public void testDiversifiedSampler() throws Exception {
         String data[] = {
-                // "id,cat,name,price,inStock,author_t,series_t,sequence_i,genre_s,genre_id",
-                "0553573403,book,A Game of Thrones,7.99,true,George R.R. Martin,A Song of Ice and Fire,1,fantasy,0",
-                "0553579908,book,A Clash of Kings,7.99,true,George R.R. Martin,A Song of Ice and Fire,2,fantasy,0",
-                "055357342X,book,A Storm of Swords,7.99,true,George R.R. Martin,A Song of Ice and Fire,3,fantasy,0",
-                "0553293354,book,Foundation,17.99,true,Isaac Asimov,Foundation Novels,1,scifi,1",
-                "0812521390,book,The Black Company,6.99,false,Glen Cook,The Chronicles of The Black Company,1,fantasy,0",
-                "0812550706,book,Ender's Game,6.99,true,Orson Scott Card,Ender,1,scifi,1",
-                "0441385532,book,Jhereg,7.95,false,Steven Brust,Vlad Taltos,1,fantasy,0",
-                "0380014300,book,Nine Princes In Amber,6.99,true,Roger Zelazny,the Chronicles of Amber,1,fantasy,0",
-                "0805080481,book,The Book of Three,5.99,true,Lloyd Alexander,The Chronicles of Prydain,1,fantasy,0",
-                "080508049X,book,The Black Cauldron,5.99,true,Lloyd Alexander,The Chronicles of Prydain,2,fantasy,0"
-        };
+            // "id,cat,name,price,inStock,author_t,series_t,sequence_i,genre_s,genre_id",
+            "0553573403,book,A Game of Thrones,7.99,true,George R.R. Martin,A Song of Ice and Fire,1,fantasy,0",
+            "0553579908,book,A Clash of Kings,7.99,true,George R.R. Martin,A Song of Ice and Fire,2,fantasy,0",
+            "055357342X,book,A Storm of Swords,7.99,true,George R.R. Martin,A Song of Ice and Fire,3,fantasy,0",
+            "0553293354,book,Foundation,17.99,true,Isaac Asimov,Foundation Novels,1,scifi,1",
+            "0812521390,book,The Black Company,6.99,false,Glen Cook,The Chronicles of The Black Company,1,fantasy,0",
+            "0812550706,book,Ender's Game,6.99,true,Orson Scott Card,Ender,1,scifi,1",
+            "0441385532,book,Jhereg,7.95,false,Steven Brust,Vlad Taltos,1,fantasy,0",
+            "0380014300,book,Nine Princes In Amber,6.99,true,Roger Zelazny,the Chronicles of Amber,1,fantasy,0",
+            "0805080481,book,The Book of Three,5.99,true,Lloyd Alexander,The Chronicles of Prydain,1,fantasy,0",
+            "080508049X,book,The Black Cauldron,5.99,true,Lloyd Alexander,The Chronicles of Prydain,2,fantasy,0" };
 
         Directory directory = newDirectory();
         RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory);
@@ -131,8 +130,7 @@ public class DiversifiedSamplerTests extends AggregatorTestCase {
             "0441385532,book,Jhereg,7.95,false,Steven Brust,Vlad Taltos,1,fantasy,0",
             "0380014300,book,Nine Princes In Amber,6.99,true,Roger Zelazny,the Chronicles of Amber,1,fantasy,0",
             "0805080481,book,The Book of Three,5.99,true,Lloyd Alexander,The Chronicles of Prydain,1,fantasy,0",
-            "080508049X,book,The Black Cauldron,5.99,true,Lloyd Alexander,The Chronicles of Prydain,2,fantasy,0"
-        };
+            "080508049X,book,The Black Cauldron,5.99,true,Lloyd Alexander,The Chronicles of Prydain,2,fantasy,0" };
 
         Directory directory = newDirectory();
         RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory);
@@ -180,28 +178,42 @@ public class DiversifiedSamplerTests extends AggregatorTestCase {
         }
     }
 
-    private void testCase(IndexSearcher indexSearcher, MappedFieldType genreFieldType, String executionHint,
-                          Consumer<InternalSampler> verify) throws IOException {
+    private void testCase(
+        IndexSearcher indexSearcher,
+        MappedFieldType genreFieldType,
+        String executionHint,
+        Consumer<InternalSampler> verify
+    ) throws IOException {
         testCase(indexSearcher, genreFieldType, executionHint, verify, 100, 1);
     }
 
-    private void testCase(IndexSearcher indexSearcher, MappedFieldType genreFieldType, String executionHint,
-                          Consumer<InternalSampler> verify, int shardSize, int maxDocsPerValue) throws IOException {
+    private void testCase(
+        IndexSearcher indexSearcher,
+        MappedFieldType genreFieldType,
+        String executionHint,
+        Consumer<InternalSampler> verify,
+        int shardSize,
+        int maxDocsPerValue
+    ) throws IOException {
         MappedFieldType idFieldType = new KeywordFieldMapper.KeywordFieldType();
         idFieldType.setName("id");
         idFieldType.setHasDocValues(true);
 
-        SortedNumericDVIndexFieldData fieldData = new SortedNumericDVIndexFieldData(new Index("index", "index"), "price",
-                IndexNumericFieldData.NumericType.DOUBLE);
-        FunctionScoreQuery query = new FunctionScoreQuery(new MatchAllDocsQuery(),
-                new FieldValueFactorFunction("price", 1, FieldValueFactorFunction.Modifier.RECIPROCAL, null, fieldData));
+        SortedNumericDVIndexFieldData fieldData = new SortedNumericDVIndexFieldData(
+            new Index("index", "index"),
+            "price",
+            IndexNumericFieldData.NumericType.DOUBLE
+        );
+        FunctionScoreQuery query = new FunctionScoreQuery(
+            new MatchAllDocsQuery(),
+            new FieldValueFactorFunction("price", 1, FieldValueFactorFunction.Modifier.RECIPROCAL, null, fieldData)
+        );
 
-        DiversifiedAggregationBuilder builder = new DiversifiedAggregationBuilder("_name")
-                .field(genreFieldType.name())
-                .executionHint(executionHint)
-                .maxDocsPerValue(maxDocsPerValue)
-                .shardSize(shardSize)
-                .subAggregation(new TermsAggregationBuilder("terms", null).field("id"));
+        DiversifiedAggregationBuilder builder = new DiversifiedAggregationBuilder("_name").field(genreFieldType.name())
+            .executionHint(executionHint)
+            .maxDocsPerValue(maxDocsPerValue)
+            .shardSize(shardSize)
+            .subAggregation(new TermsAggregationBuilder("terms", null).field("id"));
 
         InternalSampler result = search(indexSearcher, query, builder, genreFieldType, idFieldType);
         verify.accept(result);
@@ -222,9 +234,8 @@ public class DiversifiedSamplerTests extends AggregatorTestCase {
         genreFieldType.setName("genre");
         genreFieldType.setHasDocValues(true);
 
-        DiversifiedAggregationBuilder builder = new DiversifiedAggregationBuilder("_name")
-                .field(genreFieldType.name())
-                .subAggregation(new TermsAggregationBuilder("terms", null).field("id"));
+        DiversifiedAggregationBuilder builder = new DiversifiedAggregationBuilder("_name").field(genreFieldType.name())
+            .subAggregation(new TermsAggregationBuilder("terms", null).field("id"));
 
         InternalSampler result = search(indexSearcher, new MatchAllDocsQuery(), builder, genreFieldType, idFieldType);
         Terms terms = result.getAggregations().get("terms");

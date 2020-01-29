@@ -77,26 +77,42 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
         BytesRef apply(long ord) throws IOException;
     }
 
-    public GlobalOrdinalsStringTermsAggregator(String name, AggregatorFactories factories,
-                                               ValuesSource.Bytes.WithOrdinals valuesSource,
-                                               BucketOrder order,
-                                               DocValueFormat format,
-                                               BucketCountThresholds bucketCountThresholds,
-                                               IncludeExclude.OrdinalsFilter includeExclude,
-                                               SearchContext context,
-                                               Aggregator parent,
-                                               boolean remapGlobalOrds,
-                                               SubAggCollectionMode collectionMode,
-                                               boolean showTermDocCountError,
-                                               List<PipelineAggregator> pipelineAggregators,
-                                               Map<String, Object> metaData) throws IOException {
-        super(name, factories, context, parent, order, format, bucketCountThresholds, collectionMode, showTermDocCountError,
-            pipelineAggregators, metaData);
+    public GlobalOrdinalsStringTermsAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource.Bytes.WithOrdinals valuesSource,
+        BucketOrder order,
+        DocValueFormat format,
+        BucketCountThresholds bucketCountThresholds,
+        IncludeExclude.OrdinalsFilter includeExclude,
+        SearchContext context,
+        Aggregator parent,
+        boolean remapGlobalOrds,
+        SubAggCollectionMode collectionMode,
+        boolean showTermDocCountError,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
+        super(
+            name,
+            factories,
+            context,
+            parent,
+            order,
+            format,
+            bucketCountThresholds,
+            collectionMode,
+            showTermDocCountError,
+            pipelineAggregators,
+            metaData
+        );
         this.valuesSource = valuesSource;
         this.includeExclude = includeExclude;
         final IndexReader reader = context.searcher().getIndexReader();
-        final SortedSetDocValues values = reader.leaves().size() > 0 ?
-            valuesSource.globalOrdinalsValues(context.searcher().getIndexReader().leaves().get(0)) : DocValues.emptySortedSet();
+        final SortedSetDocValues values = reader.leaves().size() > 0
+            ? valuesSource.globalOrdinalsValues(context.searcher().getIndexReader().leaves().get(0))
+            : DocValues.emptySortedSet();
         this.valueCount = values.getValueCount();
         this.lookupGlobalOrd = values::lookupOrd;
         this.acceptedGlobalOrdinals = includeExclude != null ? includeExclude.acceptedGlobalOrdinals(values) : null;
@@ -122,8 +138,9 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
     }
 
     private SortedSetDocValues getGlobalOrds(LeafReaderContext ctx) throws IOException {
-        return acceptedGlobalOrdinals == null ?
-            valuesSource.globalOrdinalsValues(ctx) : new FilteredOrdinals(valuesSource.globalOrdinalsValues(ctx), acceptedGlobalOrdinals);
+        return acceptedGlobalOrdinals == null
+            ? valuesSource.globalOrdinalsValues(ctx)
+            : new FilteredOrdinals(valuesSource.globalOrdinalsValues(ctx), acceptedGlobalOrdinals);
     }
 
     @Override
@@ -229,19 +246,30 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
             list[i].bucketOrd = bucket.bucketOrd;
             otherDocCount -= list[i].docCount;
         }
-        //replay any deferred collections
+        // replay any deferred collections
         runDeferredCollections(survivingBucketOrds);
 
-        //Now build the aggs
+        // Now build the aggs
         for (int i = 0; i < list.length; i++) {
             StringTerms.Bucket bucket = list[i];
             bucket.aggregations = bucket.docCount == 0 ? bucketEmptyAggregations() : bucketAggregations(bucket.bucketOrd);
             bucket.docCountError = 0;
         }
 
-        return new StringTerms(name, order, bucketCountThresholds.getRequiredSize(), bucketCountThresholds.getMinDocCount(),
-                pipelineAggregators(), metaData(), format, bucketCountThresholds.getShardSize(), showTermDocCountError,
-                otherDocCount, Arrays.asList(list), 0);
+        return new StringTerms(
+            name,
+            order,
+            bucketCountThresholds.getRequiredSize(),
+            bucketCountThresholds.getMinDocCount(),
+            pipelineAggregators(),
+            metaData(),
+            format,
+            bucketCountThresholds.getShardSize(),
+            showTermDocCountError,
+            otherDocCount,
+            Arrays.asList(list),
+            0
+        );
     }
 
     /**
@@ -301,28 +329,44 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
         private LongUnaryOperator mapping;
         private IntArray segmentDocCounts;
 
-        LowCardinality(String name,
-                       AggregatorFactories factories,
-                       ValuesSource.Bytes.WithOrdinals valuesSource,
-                       BucketOrder order,
-                       DocValueFormat format,
-                       BucketCountThresholds bucketCountThresholds,
-                       SearchContext context,
-                       Aggregator parent,
-                       boolean forceDenseMode,
-                       SubAggCollectionMode collectionMode,
-                       boolean showTermDocCountError,
-                       List<PipelineAggregator> pipelineAggregators,
-                       Map<String, Object> metaData) throws IOException {
-            super(name, factories, valuesSource, order, format, bucketCountThresholds, null,
-                context, parent, forceDenseMode, collectionMode, showTermDocCountError, pipelineAggregators, metaData);
+        LowCardinality(
+            String name,
+            AggregatorFactories factories,
+            ValuesSource.Bytes.WithOrdinals valuesSource,
+            BucketOrder order,
+            DocValueFormat format,
+            BucketCountThresholds bucketCountThresholds,
+            SearchContext context,
+            Aggregator parent,
+            boolean forceDenseMode,
+            SubAggCollectionMode collectionMode,
+            boolean showTermDocCountError,
+            List<PipelineAggregator> pipelineAggregators,
+            Map<String, Object> metaData
+        )
+            throws IOException {
+            super(
+                name,
+                factories,
+                valuesSource,
+                order,
+                format,
+                bucketCountThresholds,
+                null,
+                context,
+                parent,
+                forceDenseMode,
+                collectionMode,
+                showTermDocCountError,
+                pipelineAggregators,
+                metaData
+            );
             assert factories == null || factories.countAggregators() == 0;
             this.segmentDocCounts = context.bigArrays().newIntArray(1, true);
         }
 
         @Override
-        public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-                                                    final LeafBucketCollector sub) throws IOException {
+        public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
             if (mapping != null) {
                 mapSegmentCountsToGlobalCounts(mapping);
             }

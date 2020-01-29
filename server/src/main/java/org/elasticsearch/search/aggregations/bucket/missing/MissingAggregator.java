@@ -39,16 +39,22 @@ public class MissingAggregator extends BucketsAggregator implements SingleBucket
 
     private final ValuesSource valuesSource;
 
-    public MissingAggregator(String name, AggregatorFactories factories, ValuesSource valuesSource,
-            SearchContext aggregationContext, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) throws IOException {
+    public MissingAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource valuesSource,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, aggregationContext, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         final DocValueBits docsWithValue;
         if (valuesSource != null) {
             docsWithValue = valuesSource.docsWithValue(ctx);
@@ -72,8 +78,13 @@ public class MissingAggregator extends BucketsAggregator implements SingleBucket
 
     @Override
     public InternalAggregation buildAggregation(long owningBucketOrdinal) throws IOException {
-        return new InternalMissing(name, bucketDocCount(owningBucketOrdinal), bucketAggregations(owningBucketOrdinal),
-                pipelineAggregators(), metaData());
+        return new InternalMissing(
+            name,
+            bucketDocCount(owningBucketOrdinal),
+            bucketAggregations(owningBucketOrdinal),
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override
@@ -82,5 +93,3 @@ public class MissingAggregator extends BucketsAggregator implements SingleBucket
     }
 
 }
-
-

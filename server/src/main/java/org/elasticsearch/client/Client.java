@@ -98,7 +98,6 @@ public interface Client extends ElasticsearchClient, Releasable {
      */
     AdminClient admin();
 
-
     /**
      * Index a JSON source associated with a given index.
      * <p>

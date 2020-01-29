@@ -40,8 +40,11 @@ import static org.hamcrest.Matchers.sameInstance;
 public class UsageServiceTests extends ESTestCase {
 
     public void testRestUsage() throws Exception {
-        DiscoveryNode discoveryNode = new DiscoveryNode("foo", new TransportAddress(InetAddress.getByName("localhost"), 12345),
-                Version.CURRENT);
+        DiscoveryNode discoveryNode = new DiscoveryNode(
+            "foo",
+            new TransportAddress(InetAddress.getByName("localhost"), 12345),
+            Version.CURRENT
+        );
         RestRequest restRequest = new FakeRestRequest();
         BaseRestHandler handlerA = new MockRestHandler("a");
         BaseRestHandler handlerB = new MockRestHandler("b");
@@ -102,8 +105,7 @@ public class UsageServiceTests extends ESTestCase {
 
         @Override
         protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
-            return channel -> {
-            };
+            return channel -> {};
         }
 
     }

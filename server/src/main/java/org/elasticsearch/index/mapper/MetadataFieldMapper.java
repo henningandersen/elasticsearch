@@ -24,7 +24,6 @@ import org.elasticsearch.common.settings.Settings;
 import java.io.IOException;
 import java.util.Map;
 
-
 /**
  * A mapper for a builtin field containing metadata about a document.
  */
@@ -33,8 +32,8 @@ public abstract class MetadataFieldMapper extends FieldMapper {
     public interface TypeParser extends Mapper.TypeParser {
 
         @Override
-        MetadataFieldMapper.Builder<?,?> parse(String name, Map<String, Object> node,
-                                               ParserContext parserContext) throws MapperParsingException;
+        MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException;
 
         /**
          * Get the default {@link MetadataFieldMapper} to use, if nothing had to be parsed.

@@ -50,8 +50,9 @@ import java.util.Objects;
  * A {@link CompositeValuesSourceBuilder} that builds a {@link RoundingValuesSource} from a {@link Script} or
  * a field name using the provided interval.
  */
-public class DateHistogramValuesSourceBuilder
-    extends CompositeValuesSourceBuilder<DateHistogramValuesSourceBuilder> implements DateIntervalConsumer {
+public class DateHistogramValuesSourceBuilder extends CompositeValuesSourceBuilder<DateHistogramValuesSourceBuilder>
+    implements
+        DateIntervalConsumer {
     static final String TYPE = "date_histogram";
 
     private static final ObjectParser<DateHistogramValuesSourceBuilder, Void> PARSER;
@@ -75,6 +76,7 @@ public class DateHistogramValuesSourceBuilder
         }, new ParseField("time_zone"), ObjectParser.ValueType.LONG);
         CompositeValuesSourceParserHelper.declareValuesSourceFields(PARSER, ValueType.NUMERIC);
     }
+
     static DateHistogramValuesSourceBuilder parse(String name, XContentParser parser) throws IOException {
         return PARSER.parse(parser, new DateHistogramValuesSourceBuilder(name), null);
     }
@@ -124,8 +126,7 @@ public class DateHistogramValuesSourceBuilder
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         DateHistogramValuesSourceBuilder other = (DateHistogramValuesSourceBuilder) obj;
-        return Objects.equals(dateHistogramInterval, other.dateHistogramInterval)
-            && Objects.equals(timeZone, other.timeZone);
+        return Objects.equals(dateHistogramInterval, other.dateHistogramInterval) && Objects.equals(timeZone, other.timeZone);
     }
 
     @Override
@@ -262,8 +263,7 @@ public class DateHistogramValuesSourceBuilder
             // is specified in the builder.
             final DocValueFormat docValueFormat = format() == null ? DocValueFormat.RAW : config.format();
             final MappedFieldType fieldType = config.fieldContext() != null ? config.fieldContext().fieldType() : null;
-            return new CompositeValuesSourceConfig(name, fieldType, vs, docValueFormat, order(),
-                missingBucket(), config.script() != null);
+            return new CompositeValuesSourceConfig(name, fieldType, vs, docValueFormat, order(), missingBucket(), config.script() != null);
         } else {
             throw new IllegalArgumentException("invalid source, expected numeric, got " + orig.getClass().getSimpleName());
         }

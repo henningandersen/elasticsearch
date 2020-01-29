@@ -50,8 +50,12 @@ public class TypeParsers {
     public static final String INDEX_OPTIONS_POSITIONS = "positions";
     public static final String INDEX_OPTIONS_OFFSETS = "offsets";
 
-    private static void parseAnalyzersAndTermVectors(FieldMapper.Builder builder, String name, Map<String, Object> fieldNode,
-                                                     Mapper.TypeParser.ParserContext parserContext) {
+    private static void parseAnalyzersAndTermVectors(
+        FieldMapper.Builder builder,
+        String name,
+        Map<String, Object> fieldNode,
+        Mapper.TypeParser.ParserContext parserContext
+    ) {
         NamedAnalyzer indexAnalyzer = null;
         NamedAnalyzer searchAnalyzer = null;
         NamedAnalyzer searchQuoteAnalyzer = null;
@@ -123,8 +127,9 @@ public class TypeParsers {
         }
 
         if (searchAnalyzer == null && searchQuoteAnalyzer != null) {
-            throw new MapperParsingException("analyzer and search_analyzer on field [" + name +
-                "] must be set when search_quote_analyzer is set");
+            throw new MapperParsingException(
+                "analyzer and search_analyzer on field [" + name + "] must be set when search_quote_analyzer is set"
+            );
         }
 
         if (searchAnalyzer == null) {
@@ -146,7 +151,7 @@ public class TypeParsers {
         }
     }
 
-    public static void parseNorms(FieldMapper.Builder<?,?> builder, String fieldName, Object propNode) {
+    public static void parseNorms(FieldMapper.Builder<?, ?> builder, String fieldName, Object propNode) {
         builder.omitNorms(XContentMapValues.nodeBooleanValue(propNode, fieldName + ".norms") == false);
     }
 
@@ -154,11 +159,15 @@ public class TypeParsers {
      * Parse text field attributes. In addition to {@link #parseField common attributes}
      * this will parse analysis and term-vectors related settings.
      */
-    public static void parseTextField(FieldMapper.Builder<?,?> builder, String name, Map<String, Object> fieldNode,
-                                      Mapper.TypeParser.ParserContext parserContext) {
+    public static void parseTextField(
+        FieldMapper.Builder<?, ?> builder,
+        String name,
+        Map<String, Object> fieldNode,
+        Mapper.TypeParser.ParserContext parserContext
+    ) {
         parseField(builder, name, fieldNode, parserContext);
         parseAnalyzersAndTermVectors(builder, name, fieldNode, parserContext);
-        for (Iterator<Map.Entry<String, Object>> iterator = fieldNode.entrySet().iterator(); iterator.hasNext(); ) {
+        for (Iterator<Map.Entry<String, Object>> iterator = fieldNode.entrySet().iterator(); iterator.hasNext();) {
             Map.Entry<String, Object> entry = iterator.next();
             final String propName = entry.getKey();
             final Object propNode = entry.getValue();
@@ -172,54 +181,68 @@ public class TypeParsers {
     /**
      * Parse the {@code meta} key of the mapping.
      */
-    public static void parseMeta(FieldMapper.Builder<?,?> builder, String name, Map<String, Object> fieldNode) {
+    public static void parseMeta(FieldMapper.Builder<?, ?> builder, String name, Map<String, Object> fieldNode) {
         Object metaObject = fieldNode.remove("meta");
         if (metaObject == null) {
             // no meta
             return;
         }
         if (metaObject instanceof Map == false) {
-            throw new MapperParsingException("[meta] must be an object, got " + metaObject.getClass().getSimpleName() +
-                    "[" + metaObject + "] for field [" + name +"]");
+            throw new MapperParsingException(
+                "[meta] must be an object, got " + metaObject.getClass().getSimpleName() + "[" + metaObject + "] for field [" + name + "]"
+            );
         }
         @SuppressWarnings("unchecked")
         Map<String, ?> meta = (Map<String, ?>) metaObject;
         if (meta.size() > 5) {
-            throw new MapperParsingException("[meta] can't have more than 5 entries, but got " + meta.size() + " on field [" +
-                    name + "]");
+            throw new MapperParsingException("[meta] can't have more than 5 entries, but got " + meta.size() + " on field [" + name + "]");
         }
         for (String key : meta.keySet()) {
             if (key.codePointCount(0, key.length()) > 20) {
-                throw new MapperParsingException("[meta] keys can't be longer than 20 chars, but got [" + key +
-                        "] for field [" + name + "]");
+                throw new MapperParsingException(
+                    "[meta] keys can't be longer than 20 chars, but got [" + key + "] for field [" + name + "]"
+                );
             }
         }
         for (Object value : meta.values()) {
             if (value instanceof String) {
                 String sValue = (String) value;
                 if (sValue.codePointCount(0, sValue.length()) > 50) {
-                    throw new MapperParsingException("[meta] values can't be longer than 50 chars, but got [" + value +
-                            "] for field [" + name + "]");
+                    throw new MapperParsingException(
+                        "[meta] values can't be longer than 50 chars, but got [" + value + "] for field [" + name + "]"
+                    );
                 }
             } else if (value == null) {
                 throw new MapperParsingException("[meta] values can't be null (field [" + name + "])");
             } else {
-                throw new MapperParsingException("[meta] values can only be strings, but got " +
-                        value.getClass().getSimpleName() + "[" + value + "] for field [" + name + "]");
+                throw new MapperParsingException(
+                    "[meta] values can only be strings, but got "
+                        + value.getClass().getSimpleName()
+                        + "["
+                        + value
+                        + "] for field ["
+                        + name
+                        + "]"
+                );
             }
         }
         final Function<Map.Entry<String, ?>, Object> entryValueFunction = Map.Entry::getValue;
         final Function<Object, String> stringCast = String.class::cast;
-        Map<String, String> checkedMeta = meta.entrySet().stream()
-                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, entryValueFunction.andThen(stringCast)));
+        Map<String, String> checkedMeta = meta.entrySet()
+            .stream()
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, entryValueFunction.andThen(stringCast)));
         builder.meta(checkedMeta);
     }
 
     /**
      * Parse common field attributes such as {@code doc_values} or {@code store}.
      */
-    public static void parseField(FieldMapper.Builder<?,?> builder, String name, Map<String, Object> fieldNode,
-                                  Mapper.TypeParser.ParserContext parserContext) {
+    public static void parseField(
+        FieldMapper.Builder<?, ?> builder,
+        String name,
+        Map<String, Object> fieldNode,
+        Mapper.TypeParser.ParserContext parserContext
+    ) {
         parseMeta(builder, name, fieldNode);
         for (Iterator<Map.Entry<String, Object>> iterator = fieldNode.entrySet().iterator(); iterator.hasNext();) {
             Map.Entry<String, Object> entry = iterator.next();
@@ -255,8 +278,12 @@ public class TypeParsers {
                 iterator.remove();
             } else if (propName.equals("copy_to")) {
                 if (parserContext.isWithinMultiField()) {
-                    throw new MapperParsingException("copy_to in multi fields is not allowed. Found the copy_to in field [" + name + "] " +
-                        "which is within a multi field.");
+                    throw new MapperParsingException(
+                        "copy_to in multi fields is not allowed. Found the copy_to in field ["
+                            + name
+                            + "] "
+                            + "which is within a multi field."
+                    );
                 } else {
                     parseCopyFields(propNode, builder);
                 }
@@ -265,22 +292,36 @@ public class TypeParsers {
         }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public static boolean parseMultiField(FieldMapper.Builder builder, String name, Mapper.TypeParser.ParserContext parserContext,
-                                          String propName, Object propNode) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static boolean parseMultiField(
+        FieldMapper.Builder builder,
+        String name,
+        Mapper.TypeParser.ParserContext parserContext,
+        String propName,
+        Object propNode
+    ) {
         if (propName.equals("fields")) {
             if (parserContext.isWithinMultiField()) {
                 // For indices created prior to 8.0, we only emit a deprecation warning and do not fail type parsing. This is to
                 // maintain the backwards-compatibility guarantee that we can always load indexes from the previous major version.
                 if (parserContext.indexVersionCreated().before(Version.V_8_0_0)) {
-                    deprecationLogger.deprecatedAndMaybeLog("multifield_within_multifield", "At least one multi-field, [" + name + "], " +
-                        "was encountered that itself contains a multi-field. Defining multi-fields within a multi-field is deprecated " +
-                        "and is not supported for indices created in 8.0 and later. To migrate the mappings, all instances of [fields] " +
-                        "that occur within a [fields] block should be removed from the mappings, either by flattening the chained " +
-                        "[fields] blocks into a single level, or switching to [copy_to] if appropriate.");
+                    deprecationLogger.deprecatedAndMaybeLog(
+                        "multifield_within_multifield",
+                        "At least one multi-field, ["
+                            + name
+                            + "], "
+                            + "was encountered that itself contains a multi-field. Defining multi-fields within a multi-field is deprecated "
+                            + "and is not supported for indices created in 8.0 and later. To migrate the mappings, all instances of [fields] "
+                            + "that occur within a [fields] block should be removed from the mappings, either by flattening the chained "
+                            + "[fields] blocks into a single level, or switching to [copy_to] if appropriate."
+                    );
                 } else {
-                    throw new IllegalArgumentException("Encountered a multi-field [" + name + "] which itself contains a multi-field. " +
-                        "Defining chained multi-fields is not supported.");
+                    throw new IllegalArgumentException(
+                        "Encountered a multi-field ["
+                            + name
+                            + "] which itself contains a multi-field. "
+                            + "Defining chained multi-fields is not supported."
+                    );
                 }
             }
 
@@ -292,15 +333,23 @@ public class TypeParsers {
             } else if (propNode instanceof Map) {
                 multiFieldsPropNodes = (Map<String, Object>) propNode;
             } else {
-                throw new MapperParsingException("expected map for property [fields] on field [" + propNode + "] or " +
-                    "[" + propName + "] but got a " + propNode.getClass());
+                throw new MapperParsingException(
+                    "expected map for property [fields] on field ["
+                        + propNode
+                        + "] or "
+                        + "["
+                        + propName
+                        + "] but got a "
+                        + propNode.getClass()
+                );
             }
 
             for (Map.Entry<String, Object> multiFieldEntry : multiFieldsPropNodes.entrySet()) {
                 String multiFieldName = multiFieldEntry.getKey();
                 if (multiFieldName.contains(".")) {
-                    throw new MapperParsingException("Field name [" + multiFieldName + "] which is a multi field of [" + name + "] cannot" +
-                        " contain '.'");
+                    throw new MapperParsingException(
+                        "Field name [" + multiFieldName + "] which is a multi field of [" + name + "] cannot" + " contain '.'"
+                    );
                 }
                 if (!(multiFieldEntry.getValue() instanceof Map)) {
                     throw new MapperParsingException("illegal field [" + multiFieldName + "], only fields can be specified inside fields");
@@ -315,8 +364,8 @@ public class TypeParsers {
                     throw new MapperParsingException("no type specified for property [" + multiFieldName + "]");
                 }
                 if (type.equals(ObjectMapper.CONTENT_TYPE)
-                        || type.equals(ObjectMapper.NESTED_CONTENT_TYPE)
-                        || type.equals(FieldAliasMapper.CONTENT_TYPE)) {
+                    || type.equals(ObjectMapper.NESTED_CONTENT_TYPE)
+                    || type.equals(FieldAliasMapper.CONTENT_TYPE)) {
                     throw new MapperParsingException("Type [" + type + "] cannot be used in multi field");
                 }
 
@@ -380,7 +429,7 @@ public class TypeParsers {
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static void parseCopyFields(Object propNode, FieldMapper.Builder builder) {
         FieldMapper.CopyTo.Builder copyToBuilder = new FieldMapper.CopyTo.Builder();
         if (isArray(propNode)) {

@@ -25,7 +25,7 @@ import java.util.List;
 
 /**
  * A multi bucket aggregation where the buckets are defined by a set of filters
- * (a bucket is produced per filter plus a bucket for each non-empty filter 
+ * (a bucket is produced per filter plus a bucket for each non-empty filter
  * intersection so A, B and A&amp;B).
  */
 public interface AdjacencyMatrix extends MultiBucketsAggregation {
@@ -34,8 +34,7 @@ public interface AdjacencyMatrix extends MultiBucketsAggregation {
      * A bucket associated with a specific filter or pair (identified by its
      * key)
      */
-    interface Bucket extends MultiBucketsAggregation.Bucket {
-    }
+    interface Bucket extends MultiBucketsAggregation.Bucket {}
 
     /**
      * The buckets created by this aggregation.

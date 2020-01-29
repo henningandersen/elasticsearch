@@ -34,4 +34,3 @@
  * by the {@link org.elasticsearch.index.mapper.MapperService} class.
  */
 package org.elasticsearch.index.mapper;
-

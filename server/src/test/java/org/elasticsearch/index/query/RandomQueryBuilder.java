@@ -49,7 +49,7 @@ public class RandomQueryBuilder {
             case 2:
                 // We make sure this query has no types to avoid deprecation warnings in the
                 // tests that use this method.
-            return new IdsQueryBuilderTests().createTestQueryBuilder();
+                return new IdsQueryBuilderTests().createTestQueryBuilder();
             case 3:
                 return createMultiTermQuery(r);
             default:
@@ -67,7 +67,7 @@ public class RandomQueryBuilder {
         // see issue #12123 for discussion
         MultiTermQueryBuilder multiTermQueryBuilder;
         String fieldName = randomFrom(STRING_FIELD_NAME, STRING_ALIAS_FIELD_NAME);
-        switch(RandomNumbers.randomIntBetween(r, 0, 3)) {
+        switch (RandomNumbers.randomIntBetween(r, 0, 3)) {
             case 0:
                 RangeQueryBuilder stringRangeQuery = new RangeQueryBuilder(fieldName);
                 stringRangeQuery.from("a" + RandomStrings.randomAsciiOfLengthBetween(r, 1, 10));
@@ -81,8 +81,7 @@ public class RandomQueryBuilder {
                 multiTermQueryBuilder = new WildcardQueryBuilderTests().createTestQueryBuilder();
                 break;
             case 3:
-                multiTermQueryBuilder = new FuzzyQueryBuilder(fieldName,
-                        RandomStrings.randomAsciiOfLengthBetween(r, 1, 10));
+                multiTermQueryBuilder = new FuzzyQueryBuilder(fieldName, RandomStrings.randomAsciiOfLengthBetween(r, 1, 10));
                 break;
             default:
                 throw new UnsupportedOperationException();

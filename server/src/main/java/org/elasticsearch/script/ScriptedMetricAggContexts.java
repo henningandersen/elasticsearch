@@ -62,13 +62,16 @@ public class ScriptedMetricAggContexts {
 
     public abstract static class MapScript {
         private static final Map<String, String> DEPRECATIONS = Map.of(
-                "doc",
-                "Accessing variable [doc] via [params.doc] from within a scripted metric agg map script "
-                        + "is deprecated in favor of directly accessing [doc].",
-                "_doc", "Accessing variable [doc] via [params._doc] from within a scripted metric agg map script "
-                        + "is deprecated in favor of directly accessing [doc].",
-                "_agg", "Accessing variable [_agg] via [params._agg] from within a scripted metric agg map script "
-                        + "is deprecated in favor of using [state].");
+            "doc",
+            "Accessing variable [doc] via [params.doc] from within a scripted metric agg map script "
+                + "is deprecated in favor of directly accessing [doc].",
+            "_doc",
+            "Accessing variable [doc] via [params._doc] from within a scripted metric agg map script "
+                + "is deprecated in favor of directly accessing [doc].",
+            "_agg",
+            "Accessing variable [_agg] via [params._agg] from within a scripted metric agg map script "
+                + "is deprecated in favor of using [state]."
+        );
 
         private final Map<String, Object> params;
         private final Map<String, Object> state;

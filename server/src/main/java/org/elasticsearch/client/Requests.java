@@ -468,7 +468,6 @@ public class Requests {
         return new VerifyRepositoryRequest(name);
     }
 
-
     /**
      * Creates new snapshot
      *

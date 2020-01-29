@@ -40,11 +40,18 @@ public abstract class SimpleMappedFieldType extends MappedFieldType {
     }
 
     @Override
-    public final Query rangeQuery(Object lowerTerm, Object upperTerm, boolean includeLower, boolean includeUpper,
-                                  ShapeRelation relation, ZoneId timeZone, DateMathParser parser, QueryShardContext context) {
+    public final Query rangeQuery(
+        Object lowerTerm,
+        Object upperTerm,
+        boolean includeLower,
+        boolean includeUpper,
+        ShapeRelation relation,
+        ZoneId timeZone,
+        DateMathParser parser,
+        QueryShardContext context
+    ) {
         if (relation == ShapeRelation.DISJOINT) {
-            throw new IllegalArgumentException("Field [" + name() + "] of type [" + typeName() +
-                    "] does not support DISJOINT ranges");
+            throw new IllegalArgumentException("Field [" + name() + "] of type [" + typeName() + "] does not support DISJOINT ranges");
         }
         // We do not fail on non-null time zones and date parsers
         // The reasoning is that on query parsers, you might want to set a time zone or format for date fields
@@ -56,8 +63,7 @@ public abstract class SimpleMappedFieldType extends MappedFieldType {
      * Same as {@link #rangeQuery(Object, Object, boolean, boolean, ShapeRelation, ZoneId, DateMathParser, QueryShardContext)}
      * but without the trouble of relations or date-specific options.
      */
-    protected Query rangeQuery(Object lowerTerm, Object upperTerm, boolean includeLower, boolean includeUpper,
-            QueryShardContext context) {
+    protected Query rangeQuery(Object lowerTerm, Object upperTerm, boolean includeLower, boolean includeUpper, QueryShardContext context) {
         throw new IllegalArgumentException("Field [" + name() + "] of type [" + typeName() + "] does not support range queries");
     }
 

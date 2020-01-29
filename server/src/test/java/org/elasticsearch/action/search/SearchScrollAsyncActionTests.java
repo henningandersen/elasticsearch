@@ -52,55 +52,60 @@ public class SearchScrollAsyncActionTests extends ESTestCase {
             new ScrollIdForNode(null, "node2", 2),
             new ScrollIdForNode(null, "node3", 17),
             new ScrollIdForNode(null, "node1", 0),
-            new ScrollIdForNode(null, "node3", 0));
+            new ScrollIdForNode(null, "node3", 0)
+        );
         DiscoveryNodes discoveryNodes = DiscoveryNodes.builder()
             .add(new DiscoveryNode("node1", buildNewFakeTransportAddress(), Version.CURRENT))
             .add(new DiscoveryNode("node2", buildNewFakeTransportAddress(), Version.CURRENT))
-            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT)).build();
+            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT))
+            .build();
 
         AtomicArray<SearchAsyncActionTests.TestSearchPhaseResult> results = new AtomicArray<>(scrollId.getContext().length);
         SearchScrollRequest request = new SearchScrollRequest();
         request.scroll(new Scroll(TimeValue.timeValueMinutes(1)));
         CountDownLatch latch = new CountDownLatch(1);
         AtomicInteger movedCounter = new AtomicInteger(0);
-        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action =
-            new SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, dummyListener(),
-                null, request, null)
-            {
-                @Override
-                protected void executeInitialPhase(Transport.Connection connection, InternalScrollSearchRequest internalRequest,
-                                                   SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener)
-                {
-                    new Thread(() -> {
-                        SearchAsyncActionTests.TestSearchPhaseResult testSearchPhaseResult =
-                            new SearchAsyncActionTests.TestSearchPhaseResult(internalRequest.id(), connection.getNode());
-                        testSearchPhaseResult.setSearchShardTarget(new SearchShardTarget(connection.getNode().getId(),
-                            new ShardId("test", "_na_", 1), null, OriginalIndices.NONE));
-                        searchActionListener.onResponse(testSearchPhaseResult);
-                    }).start();
-                }
+        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action = new SearchScrollAsyncAction<
+            SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, dummyListener(), null, request, null) {
+            @Override
+            protected void executeInitialPhase(
+                Transport.Connection connection,
+                InternalScrollSearchRequest internalRequest,
+                SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener
+            ) {
+                new Thread(() -> {
+                    SearchAsyncActionTests.TestSearchPhaseResult testSearchPhaseResult = new SearchAsyncActionTests.TestSearchPhaseResult(
+                        internalRequest.id(),
+                        connection.getNode()
+                    );
+                    testSearchPhaseResult.setSearchShardTarget(
+                        new SearchShardTarget(connection.getNode().getId(), new ShardId("test", "_na_", 1), null, OriginalIndices.NONE)
+                    );
+                    searchActionListener.onResponse(testSearchPhaseResult);
+                }).start();
+            }
 
-                @Override
-                protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
-                    return new SearchAsyncActionTests.MockConnection(node);
-                }
+            @Override
+            protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
+                return new SearchAsyncActionTests.MockConnection(node);
+            }
 
-                @Override
-                protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
-                    assertEquals(1, movedCounter.incrementAndGet());
-                    return new SearchPhase("test") {
-                        @Override
-                        public void run() throws IOException {
-                            latch.countDown();
-                        }
-                    };
-                }
+            @Override
+            protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
+                assertEquals(1, movedCounter.incrementAndGet());
+                return new SearchPhase("test") {
+                    @Override
+                    public void run() throws IOException {
+                        latch.countDown();
+                    }
+                };
+            }
 
-                @Override
-                protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
-                    results.setOnce(shardId, result);
-                }
-            };
+            @Override
+            protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
+                results.setOnce(shardId, result);
+            }
+        };
 
         action.run();
         latch.await();
@@ -121,11 +126,13 @@ public class SearchScrollAsyncActionTests extends ESTestCase {
             new ScrollIdForNode(null, "node2", 2),
             new ScrollIdForNode(null, "node3", 17),
             new ScrollIdForNode(null, "node1", 0),
-            new ScrollIdForNode(null, "node3", 0));
+            new ScrollIdForNode(null, "node3", 0)
+        );
         DiscoveryNodes discoveryNodes = DiscoveryNodes.builder()
             .add(new DiscoveryNode("node1", buildNewFakeTransportAddress(), Version.CURRENT))
             .add(new DiscoveryNode("node2", buildNewFakeTransportAddress(), Version.CURRENT))
-            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT)).build();
+            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT))
+            .build();
 
         AtomicArray<SearchAsyncActionTests.TestSearchPhaseResult> results = new AtomicArray<>(scrollId.getContext().length);
         SearchScrollRequest request = new SearchScrollRequest();
@@ -155,43 +162,47 @@ public class SearchScrollAsyncActionTests extends ESTestCase {
                 }
             }
         };
-        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action =
-            new SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, listener, null,
-                request, null) {
-                @Override
-                protected void executeInitialPhase(Transport.Connection connection, InternalScrollSearchRequest internalRequest,
-                                                   SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener)
-                {
-                    new Thread(() -> {
-                        SearchAsyncActionTests.TestSearchPhaseResult testSearchPhaseResult =
-                            new SearchAsyncActionTests.TestSearchPhaseResult(internalRequest.id(), connection.getNode());
-                        testSearchPhaseResult.setSearchShardTarget(new SearchShardTarget(connection.getNode().getId(),
-                            new ShardId("test", "_na_", 1), null, OriginalIndices.NONE));
-                        searchActionListener.onResponse(testSearchPhaseResult);
-                    }).start();
-                }
+        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action = new SearchScrollAsyncAction<
+            SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, listener, null, request, null) {
+            @Override
+            protected void executeInitialPhase(
+                Transport.Connection connection,
+                InternalScrollSearchRequest internalRequest,
+                SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener
+            ) {
+                new Thread(() -> {
+                    SearchAsyncActionTests.TestSearchPhaseResult testSearchPhaseResult = new SearchAsyncActionTests.TestSearchPhaseResult(
+                        internalRequest.id(),
+                        connection.getNode()
+                    );
+                    testSearchPhaseResult.setSearchShardTarget(
+                        new SearchShardTarget(connection.getNode().getId(), new ShardId("test", "_na_", 1), null, OriginalIndices.NONE)
+                    );
+                    searchActionListener.onResponse(testSearchPhaseResult);
+                }).start();
+            }
 
-                @Override
-                protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
-                    return new SearchAsyncActionTests.MockConnection(node);
-                }
+            @Override
+            protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
+                return new SearchAsyncActionTests.MockConnection(node);
+            }
 
-                @Override
-                protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
-                    assertEquals(1, movedCounter.incrementAndGet());
-                    return new SearchPhase("TEST_PHASE") {
-                        @Override
-                        public void run() throws IOException {
-                            throw new IllegalArgumentException("BOOM");
-                        }
-                    };
-                }
+            @Override
+            protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
+                assertEquals(1, movedCounter.incrementAndGet());
+                return new SearchPhase("TEST_PHASE") {
+                    @Override
+                    public void run() throws IOException {
+                        throw new IllegalArgumentException("BOOM");
+                    }
+                };
+            }
 
-                @Override
-                protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
-                    results.setOnce(shardId, result);
-                }
-            };
+            @Override
+            protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
+                results.setOnce(shardId, result);
+            }
+        };
 
         action.run();
         latch.await();
@@ -211,60 +222,65 @@ public class SearchScrollAsyncActionTests extends ESTestCase {
             new ScrollIdForNode(null, "node2", 2),
             new ScrollIdForNode(null, "node3", 17),
             new ScrollIdForNode(null, "node1", 0),
-            new ScrollIdForNode(null, "node3", 0));
+            new ScrollIdForNode(null, "node3", 0)
+        );
         // node2 is not available
         DiscoveryNodes discoveryNodes = DiscoveryNodes.builder()
             .add(new DiscoveryNode("node1", buildNewFakeTransportAddress(), Version.CURRENT))
-            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT)).build();
+            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT))
+            .build();
 
         AtomicArray<SearchAsyncActionTests.TestSearchPhaseResult> results = new AtomicArray<>(scrollId.getContext().length);
         SearchScrollRequest request = new SearchScrollRequest();
         request.scroll(new Scroll(TimeValue.timeValueMinutes(1)));
         CountDownLatch latch = new CountDownLatch(1);
         AtomicInteger movedCounter = new AtomicInteger(0);
-        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action =
-            new SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, dummyListener()
-                , null, request, null)
-            {
-                @Override
-                protected void executeInitialPhase(Transport.Connection connection, InternalScrollSearchRequest internalRequest,
-                                                   SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener)
-                {
-                    try {
-                        assertNotEquals("node2 is not available", "node2", connection.getNode().getId());
-                    } catch (NullPointerException e) {
-                        logger.warn(e);
+        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action = new SearchScrollAsyncAction<
+            SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, dummyListener(), null, request, null) {
+            @Override
+            protected void executeInitialPhase(
+                Transport.Connection connection,
+                InternalScrollSearchRequest internalRequest,
+                SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener
+            ) {
+                try {
+                    assertNotEquals("node2 is not available", "node2", connection.getNode().getId());
+                } catch (NullPointerException e) {
+                    logger.warn(e);
+                }
+                new Thread(() -> {
+                    SearchAsyncActionTests.TestSearchPhaseResult testSearchPhaseResult = new SearchAsyncActionTests.TestSearchPhaseResult(
+                        internalRequest.id(),
+                        connection.getNode()
+                    );
+                    testSearchPhaseResult.setSearchShardTarget(
+                        new SearchShardTarget(connection.getNode().getId(), new ShardId("test", "_na_", 1), null, OriginalIndices.NONE)
+                    );
+                    searchActionListener.onResponse(testSearchPhaseResult);
+                }).start();
+            }
+
+            @Override
+            protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
+                return new SearchAsyncActionTests.MockConnection(node);
+            }
+
+            @Override
+            protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
+                assertEquals(1, movedCounter.incrementAndGet());
+                return new SearchPhase("test") {
+                    @Override
+                    public void run() throws IOException {
+                        latch.countDown();
                     }
-                    new Thread(() -> {
-                        SearchAsyncActionTests.TestSearchPhaseResult testSearchPhaseResult =
-                            new SearchAsyncActionTests.TestSearchPhaseResult(internalRequest.id(), connection.getNode());
-                        testSearchPhaseResult.setSearchShardTarget(new SearchShardTarget(connection.getNode().getId(),
-                            new ShardId("test", "_na_", 1), null, OriginalIndices.NONE));
-                        searchActionListener.onResponse(testSearchPhaseResult);
-                    }).start();
-                }
+                };
+            }
 
-                @Override
-                protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
-                    return new SearchAsyncActionTests.MockConnection(node);
-                }
-
-                @Override
-                protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
-                    assertEquals(1, movedCounter.incrementAndGet());
-                    return new SearchPhase("test") {
-                        @Override
-                        public void run() throws IOException {
-                            latch.countDown();
-                        }
-                    };
-                }
-
-                @Override
-                protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
-                    results.setOnce(shardId, result);
-                }
-            };
+            @Override
+            protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
+                results.setOnce(shardId, result);
+            }
+        };
 
         action.run();
         latch.await();
@@ -291,59 +307,62 @@ public class SearchScrollAsyncActionTests extends ESTestCase {
             new ScrollIdForNode(null, "node2", 2),
             new ScrollIdForNode(null, "node3", 17),
             new ScrollIdForNode(null, "node1", 0),
-            new ScrollIdForNode(null, "node3", 0));
+            new ScrollIdForNode(null, "node3", 0)
+        );
         DiscoveryNodes discoveryNodes = DiscoveryNodes.builder()
             .add(new DiscoveryNode("node1", buildNewFakeTransportAddress(), Version.CURRENT))
             .add(new DiscoveryNode("node2", buildNewFakeTransportAddress(), Version.CURRENT))
-            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT)).build();
+            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT))
+            .build();
 
         AtomicArray<SearchAsyncActionTests.TestSearchPhaseResult> results = new AtomicArray<>(scrollId.getContext().length);
         SearchScrollRequest request = new SearchScrollRequest();
         request.scroll(new Scroll(TimeValue.timeValueMinutes(1)));
         CountDownLatch latch = new CountDownLatch(1);
         AtomicInteger movedCounter = new AtomicInteger(0);
-        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action =
-            new SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, dummyListener(),
-                null, request, null)
-            {
-                @Override
-                protected void executeInitialPhase(Transport.Connection connection, InternalScrollSearchRequest internalRequest,
-                                                   SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener)
-                {
-                    new Thread(() -> {
-                        if (internalRequest.id() == 17) {
-                            searchActionListener.onFailure(new IllegalArgumentException("BOOM on shard"));
-                        } else {
-                            SearchAsyncActionTests.TestSearchPhaseResult testSearchPhaseResult =
-                                new SearchAsyncActionTests.TestSearchPhaseResult(internalRequest.id(), connection.getNode());
-                            testSearchPhaseResult.setSearchShardTarget(new SearchShardTarget(connection.getNode().getId(),
-                                new ShardId("test", "_na_", 1), null, OriginalIndices.NONE));
-                            searchActionListener.onResponse(testSearchPhaseResult);
-                        }
-                    }).start();
-                }
+        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action = new SearchScrollAsyncAction<
+            SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, dummyListener(), null, request, null) {
+            @Override
+            protected void executeInitialPhase(
+                Transport.Connection connection,
+                InternalScrollSearchRequest internalRequest,
+                SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener
+            ) {
+                new Thread(() -> {
+                    if (internalRequest.id() == 17) {
+                        searchActionListener.onFailure(new IllegalArgumentException("BOOM on shard"));
+                    } else {
+                        SearchAsyncActionTests.TestSearchPhaseResult testSearchPhaseResult =
+                            new SearchAsyncActionTests.TestSearchPhaseResult(internalRequest.id(), connection.getNode());
+                        testSearchPhaseResult.setSearchShardTarget(
+                            new SearchShardTarget(connection.getNode().getId(), new ShardId("test", "_na_", 1), null, OriginalIndices.NONE)
+                        );
+                        searchActionListener.onResponse(testSearchPhaseResult);
+                    }
+                }).start();
+            }
 
-                @Override
-                protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
-                    return new SearchAsyncActionTests.MockConnection(node);
-                }
+            @Override
+            protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
+                return new SearchAsyncActionTests.MockConnection(node);
+            }
 
-                @Override
-                protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
-                    assertEquals(1, movedCounter.incrementAndGet());
-                    return new SearchPhase("test") {
-                        @Override
-                        public void run() throws IOException {
-                            latch.countDown();
-                        }
-                    };
-                }
+            @Override
+            protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
+                assertEquals(1, movedCounter.incrementAndGet());
+                return new SearchPhase("test") {
+                    @Override
+                    public void run() throws IOException {
+                        latch.countDown();
+                    }
+                };
+            }
 
-                @Override
-                protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
-                    results.setOnce(shardId, result);
-                }
-            };
+            @Override
+            protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
+                results.setOnce(shardId, result);
+            }
+        };
 
         action.run();
         latch.await();
@@ -369,11 +388,13 @@ public class SearchScrollAsyncActionTests extends ESTestCase {
             new ScrollIdForNode(null, "node2", 2),
             new ScrollIdForNode(null, "node3", 17),
             new ScrollIdForNode(null, "node1", 0),
-            new ScrollIdForNode(null, "node3", 0));
+            new ScrollIdForNode(null, "node3", 0)
+        );
         DiscoveryNodes discoveryNodes = DiscoveryNodes.builder()
             .add(new DiscoveryNode("node1", buildNewFakeTransportAddress(), Version.CURRENT))
             .add(new DiscoveryNode("node2", buildNewFakeTransportAddress(), Version.CURRENT))
-            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT)).build();
+            .add(new DiscoveryNode("node3", buildNewFakeTransportAddress(), Version.CURRENT))
+            .build();
 
         AtomicArray<SearchAsyncActionTests.TestSearchPhaseResult> results = new AtomicArray<>(scrollId.getContext().length);
         SearchScrollRequest request = new SearchScrollRequest();
@@ -402,32 +423,33 @@ public class SearchScrollAsyncActionTests extends ESTestCase {
                 }
             }
         };
-        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action =
-            new SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, listener, null,
-                request, null) {
-                @Override
-                protected void executeInitialPhase(Transport.Connection connection, InternalScrollSearchRequest internalRequest,
-                                                   SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener)
-                {
-                    new Thread(() -> searchActionListener.onFailure(new IllegalArgumentException("BOOM on shard"))).start();
-                }
+        SearchScrollAsyncAction<SearchAsyncActionTests.TestSearchPhaseResult> action = new SearchScrollAsyncAction<
+            SearchAsyncActionTests.TestSearchPhaseResult>(scrollId, logger, discoveryNodes, listener, null, request, null) {
+            @Override
+            protected void executeInitialPhase(
+                Transport.Connection connection,
+                InternalScrollSearchRequest internalRequest,
+                SearchActionListener<SearchAsyncActionTests.TestSearchPhaseResult> searchActionListener
+            ) {
+                new Thread(() -> searchActionListener.onFailure(new IllegalArgumentException("BOOM on shard"))).start();
+            }
 
-                @Override
-                protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
-                    return new SearchAsyncActionTests.MockConnection(node);
-                }
+            @Override
+            protected Transport.Connection getConnection(String clusterAlias, DiscoveryNode node) {
+                return new SearchAsyncActionTests.MockConnection(node);
+            }
 
-                @Override
-                protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
-                   fail("don't move all shards failed");
-                   return null;
-                }
+            @Override
+            protected SearchPhase moveToNextPhase(BiFunction<String, String, DiscoveryNode> clusterNodeLookup) {
+                fail("don't move all shards failed");
+                return null;
+            }
 
-                @Override
-                protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
-                    results.setOnce(shardId, result);
-                }
-            };
+            @Override
+            protected void onFirstPhaseResult(int shardId, SearchAsyncActionTests.TestSearchPhaseResult result) {
+                results.setOnce(shardId, result);
+            }
+        };
 
         action.run();
         latch.await();

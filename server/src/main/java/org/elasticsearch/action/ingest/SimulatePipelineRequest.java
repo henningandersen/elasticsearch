@@ -62,8 +62,7 @@ public class SimulatePipelineRequest extends ActionRequest implements ToXContent
         this.xContentType = Objects.requireNonNull(xContentType);
     }
 
-    SimulatePipelineRequest() {
-    }
+    SimulatePipelineRequest() {}
 
     SimulatePipelineRequest(StreamInput in) throws IOException {
         super(in);
@@ -164,36 +163,34 @@ public class SimulatePipelineRequest extends ActionRequest implements ToXContent
     static Parsed parse(Map<String, Object> config, boolean verbose, IngestService ingestService) throws Exception {
         Map<String, Object> pipelineConfig = ConfigurationUtils.readMap(null, null, config, Fields.PIPELINE);
         Pipeline pipeline = Pipeline.create(
-            SIMULATED_PIPELINE_ID, pipelineConfig, ingestService.getProcessorFactories(), ingestService.getScriptService()
+            SIMULATED_PIPELINE_ID,
+            pipelineConfig,
+            ingestService.getProcessorFactories(),
+            ingestService.getScriptService()
         );
         List<IngestDocument> ingestDocumentList = parseDocs(config);
         return new Parsed(pipeline, ingestDocumentList, verbose);
     }
 
     private static List<IngestDocument> parseDocs(Map<String, Object> config) {
-        List<Map<String, Object>> docs =
-            ConfigurationUtils.readList(null, null, config, Fields.DOCS);
+        List<Map<String, Object>> docs = ConfigurationUtils.readList(null, null, config, Fields.DOCS);
         List<IngestDocument> ingestDocumentList = new ArrayList<>();
         for (Map<String, Object> dataMap : docs) {
-            Map<String, Object> document = ConfigurationUtils.readMap(null, null,
-                dataMap, Fields.SOURCE);
-            String index = ConfigurationUtils.readStringOrIntProperty(null, null,
-                dataMap, MetaData.INDEX.getFieldName(), "_index");
-            String id = ConfigurationUtils.readStringOrIntProperty(null, null,
-                dataMap, MetaData.ID.getFieldName(), "_id");
-            String routing = ConfigurationUtils.readOptionalStringOrIntProperty(null, null,
-                dataMap, MetaData.ROUTING.getFieldName());
+            Map<String, Object> document = ConfigurationUtils.readMap(null, null, dataMap, Fields.SOURCE);
+            String index = ConfigurationUtils.readStringOrIntProperty(null, null, dataMap, MetaData.INDEX.getFieldName(), "_index");
+            String id = ConfigurationUtils.readStringOrIntProperty(null, null, dataMap, MetaData.ID.getFieldName(), "_id");
+            String routing = ConfigurationUtils.readOptionalStringOrIntProperty(null, null, dataMap, MetaData.ROUTING.getFieldName());
             Long version = null;
             if (dataMap.containsKey(MetaData.VERSION.getFieldName())) {
                 version = (Long) ConfigurationUtils.readObject(null, null, dataMap, MetaData.VERSION.getFieldName());
             }
             VersionType versionType = null;
             if (dataMap.containsKey(MetaData.VERSION_TYPE.getFieldName())) {
-                versionType = VersionType.fromString(ConfigurationUtils.readStringProperty(null, null, dataMap,
-                    MetaData.VERSION_TYPE.getFieldName()));
+                versionType = VersionType.fromString(
+                    ConfigurationUtils.readStringProperty(null, null, dataMap, MetaData.VERSION_TYPE.getFieldName())
+                );
             }
-            IngestDocument ingestDocument =
-                new IngestDocument(index, id, routing, version, versionType, document);
+            IngestDocument ingestDocument = new IngestDocument(index, id, routing, version, versionType, document);
             ingestDocumentList.add(ingestDocument);
         }
         return ingestDocumentList;

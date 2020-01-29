@@ -104,9 +104,12 @@ public class ConnectionManager implements Closeable {
      * Once a successful is established, it can be validated before being exposed.
      * The ActionListener will be called on the calling thread or the generic thread pool.
      */
-    public void connectToNode(DiscoveryNode node, ConnectionProfile connectionProfile,
-                              ConnectionValidator connectionValidator,
-                              ActionListener<Void> listener) throws ConnectTransportException {
+    public void connectToNode(
+        DiscoveryNode node,
+        ConnectionProfile connectionProfile,
+        ConnectionValidator connectionValidator,
+        ActionListener<Void> listener
+    ) throws ConnectTransportException {
         ConnectionProfile resolvedProfile = ConnectionProfile.resolveConnectionProfile(connectionProfile, defaultProfile);
         if (node == null) {
             listener.onFailure(new ConnectTransportException(null, "can't connect to a null node"));
@@ -140,37 +143,36 @@ public class ConnectionManager implements Closeable {
 
         final RunOnce releaseOnce = new RunOnce(connectingRefCounter::decRef);
         internalOpenConnection(node, resolvedProfile, ActionListener.wrap(conn -> {
-            connectionValidator.validate(conn, resolvedProfile, ActionListener.wrap(
-                ignored -> {
-                    assert Transports.assertNotTransportThread("connection validator success");
-                    try {
-                        if (connectedNodes.putIfAbsent(node, conn) != null) {
-                            logger.debug("existing connection to node [{}], closing new redundant connection", node);
-                            IOUtils.closeWhileHandlingException(conn);
-                        } else {
-                            logger.debug("connected to node [{}]", node);
-                            try {
-                                connectionListener.onNodeConnected(node, conn);
-                            } finally {
-                                final Transport.Connection finalConnection = conn;
-                                conn.addCloseListener(ActionListener.wrap(() -> {
-                                    logger.trace("unregistering {} after connection close and marking as disconnected", node);
-                                    connectedNodes.remove(node, finalConnection);
-                                    connectionListener.onNodeDisconnected(node, conn);
-                                }));
-                            }
+            connectionValidator.validate(conn, resolvedProfile, ActionListener.wrap(ignored -> {
+                assert Transports.assertNotTransportThread("connection validator success");
+                try {
+                    if (connectedNodes.putIfAbsent(node, conn) != null) {
+                        logger.debug("existing connection to node [{}], closing new redundant connection", node);
+                        IOUtils.closeWhileHandlingException(conn);
+                    } else {
+                        logger.debug("connected to node [{}]", node);
+                        try {
+                            connectionListener.onNodeConnected(node, conn);
+                        } finally {
+                            final Transport.Connection finalConnection = conn;
+                            conn.addCloseListener(ActionListener.wrap(() -> {
+                                logger.trace("unregistering {} after connection close and marking as disconnected", node);
+                                connectedNodes.remove(node, finalConnection);
+                                connectionListener.onNodeDisconnected(node, conn);
+                            }));
                         }
-                    } finally {
-                        ListenableFuture<Void> future = pendingConnections.remove(node);
-                        assert future == currentListener : "Listener in pending map is different than the expected listener";
-                        releaseOnce.run();
-                        future.onResponse(null);
                     }
-                }, e -> {
-                    assert Transports.assertNotTransportThread("connection validator failure");
-                    IOUtils.closeWhileHandlingException(conn);
-                    failConnectionListeners(node, releaseOnce, e, currentListener);
-                }));
+                } finally {
+                    ListenableFuture<Void> future = pendingConnections.remove(node);
+                    assert future == currentListener : "Listener in pending map is different than the expected listener";
+                    releaseOnce.run();
+                    future.onResponse(null);
+                }
+            }, e -> {
+                assert Transports.assertNotTransportThread("connection validator failure");
+                IOUtils.closeWhileHandlingException(conn);
+                failConnectionListeners(node, releaseOnce, e, currentListener);
+            }));
         }, e -> {
             assert Transports.assertNotTransportThread("internalOpenConnection failure");
             failConnectionListeners(node, releaseOnce, e, currentListener);
@@ -246,8 +248,11 @@ public class ConnectionManager implements Closeable {
         }
     }
 
-    private void internalOpenConnection(DiscoveryNode node, ConnectionProfile connectionProfile,
-                                        ActionListener<Transport.Connection> listener) {
+    private void internalOpenConnection(
+        DiscoveryNode node,
+        ConnectionProfile connectionProfile,
+        ActionListener<Transport.Connection> listener
+    ) {
         transport.openConnection(node, connectionProfile, ActionListener.map(listener, connection -> {
             assert Transports.assertNotTransportThread("internalOpenConnection success");
             try {

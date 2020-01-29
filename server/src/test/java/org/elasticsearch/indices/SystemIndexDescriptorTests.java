@@ -33,37 +33,37 @@ public class SystemIndexDescriptorTests extends ESTestCase {
 
     public void testValidation() {
         {
-            Exception ex = expectThrows(NullPointerException.class,
-                () -> new SystemIndexDescriptor(null, randomAlphaOfLength(5)));
+            Exception ex = expectThrows(NullPointerException.class, () -> new SystemIndexDescriptor(null, randomAlphaOfLength(5)));
             assertThat(ex.getMessage(), containsString("must not be null"));
         }
 
         {
-            Exception ex = expectThrows(IllegalArgumentException.class,
-                () -> new SystemIndexDescriptor("", randomAlphaOfLength(5)));
+            Exception ex = expectThrows(IllegalArgumentException.class, () -> new SystemIndexDescriptor("", randomAlphaOfLength(5)));
             assertThat(ex.getMessage(), containsString("must at least 2 characters in length"));
         }
 
         {
-            Exception ex = expectThrows(IllegalArgumentException.class,
-                () -> new SystemIndexDescriptor(".", randomAlphaOfLength(5)));
+            Exception ex = expectThrows(IllegalArgumentException.class, () -> new SystemIndexDescriptor(".", randomAlphaOfLength(5)));
             assertThat(ex.getMessage(), containsString("must at least 2 characters in length"));
         }
 
         {
-            Exception ex = expectThrows(IllegalArgumentException.class,
-                () -> new SystemIndexDescriptor(randomAlphaOfLength(10), randomAlphaOfLength(5)));
+            Exception ex = expectThrows(
+                IllegalArgumentException.class,
+                () -> new SystemIndexDescriptor(randomAlphaOfLength(10), randomAlphaOfLength(5))
+            );
             assertThat(ex.getMessage(), containsString("must start with the character [.]"));
         }
 
         {
-            Exception ex = expectThrows(IllegalArgumentException.class,
-                () -> new SystemIndexDescriptor(".*", randomAlphaOfLength(5)));
+            Exception ex = expectThrows(IllegalArgumentException.class, () -> new SystemIndexDescriptor(".*", randomAlphaOfLength(5)));
             assertThat(ex.getMessage(), containsString("must not start with the character sequence [.*] to prevent conflicts"));
         }
         {
-            Exception ex = expectThrows(IllegalArgumentException.class,
-                () -> new SystemIndexDescriptor(".*" + randomAlphaOfLength(10), randomAlphaOfLength(5)));
+            Exception ex = expectThrows(
+                IllegalArgumentException.class,
+                () -> new SystemIndexDescriptor(".*" + randomAlphaOfLength(10), randomAlphaOfLength(5))
+            );
             assertThat(ex.getMessage(), containsString("must not start with the character sequence [.*] to prevent conflicts"));
         }
     }
@@ -83,10 +83,20 @@ public class SystemIndexDescriptorTests extends ESTestCase {
         descriptors.put(broadPatternSource, Arrays.asList(broadPattern));
         descriptors.put(otherSource, Arrays.asList(notOverlapping, overlapping1, overlapping2, overlapping3));
 
-        IllegalStateException exception = expectThrows(IllegalStateException.class,
-            () -> SystemIndexDescriptor.checkForOverlappingPatterns(descriptors));
-        assertThat(exception.getMessage(), containsString("a system index descriptor [" + broadPattern +
-            "] from plugin [" + broadPatternSource + "] overlaps with other system index descriptors:"));
+        IllegalStateException exception = expectThrows(
+            IllegalStateException.class,
+            () -> SystemIndexDescriptor.checkForOverlappingPatterns(descriptors)
+        );
+        assertThat(
+            exception.getMessage(),
+            containsString(
+                "a system index descriptor ["
+                    + broadPattern
+                    + "] from plugin ["
+                    + broadPatternSource
+                    + "] overlaps with other system index descriptors:"
+            )
+        );
         String fromPluginString = " from plugin [" + otherSource + "]";
         assertThat(exception.getMessage(), containsString(overlapping1.toString() + fromPluginString));
         assertThat(exception.getMessage(), containsString(overlapping2.toString() + fromPluginString));
@@ -107,10 +117,16 @@ public class SystemIndexDescriptorTests extends ESTestCase {
         descriptors.put(source1, Arrays.asList(pattern1));
         descriptors.put(source2, Arrays.asList(pattern2));
 
-        IllegalStateException exception = expectThrows(IllegalStateException.class,
-            () -> SystemIndexDescriptor.checkForOverlappingPatterns(descriptors));
-        assertThat(exception.getMessage(), containsString("a system index descriptor [" + pattern1 +
-            "] from plugin [" + source1 + "] overlaps with other system index descriptors:"));
+        IllegalStateException exception = expectThrows(
+            IllegalStateException.class,
+            () -> SystemIndexDescriptor.checkForOverlappingPatterns(descriptors)
+        );
+        assertThat(
+            exception.getMessage(),
+            containsString(
+                "a system index descriptor [" + pattern1 + "] from plugin [" + source1 + "] overlaps with other system index descriptors:"
+            )
+        );
         assertThat(exception.getMessage(), containsString(pattern2.toString() + " from plugin [" + source2 + "]"));
 
     }

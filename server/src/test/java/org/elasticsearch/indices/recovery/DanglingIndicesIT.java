@@ -56,15 +56,22 @@ public class DanglingIndicesIT extends ESIntegTestCase {
 
         createIndex(INDEX_NAME, Settings.builder().put("number_of_replicas", 2).build());
         ensureGreen(INDEX_NAME);
-        assertBusy(() -> internalCluster().getInstances(IndicesService.class).forEach(
-            indicesService -> assertTrue(indicesService.allPendingDanglingIndicesWritten())));
+        assertBusy(
+            () -> internalCluster().getInstances(IndicesService.class)
+                .forEach(indicesService -> assertTrue(indicesService.allPendingDanglingIndicesWritten()))
+        );
 
         boolean refreshIntervalChanged = randomBoolean();
         if (refreshIntervalChanged) {
-            client().admin().indices().prepareUpdateSettings(INDEX_NAME).setSettings(
-                Settings.builder().put("index.refresh_interval", "42s").build()).get();
-            assertBusy(() -> internalCluster().getInstances(IndicesService.class).forEach(
-                indicesService -> assertTrue(indicesService.allPendingDanglingIndicesWritten())));
+            client().admin()
+                .indices()
+                .prepareUpdateSettings(INDEX_NAME)
+                .setSettings(Settings.builder().put("index.refresh_interval", "42s").build())
+                .get();
+            assertBusy(
+                () -> internalCluster().getInstances(IndicesService.class)
+                    .forEach(indicesService -> assertTrue(indicesService.allPendingDanglingIndicesWritten()))
+            );
         }
 
         if (randomBoolean()) {
@@ -85,8 +92,10 @@ public class DanglingIndicesIT extends ESIntegTestCase {
 
         assertBusy(() -> assertTrue("Expected dangling index " + INDEX_NAME + " to be recovered", indexExists(INDEX_NAME)));
         if (refreshIntervalChanged) {
-            assertThat(client().admin().indices().prepareGetSettings(INDEX_NAME).get().getSetting(INDEX_NAME, "index.refresh_interval"),
-                equalTo("42s"));
+            assertThat(
+                client().admin().indices().prepareGetSettings(INDEX_NAME).get().getSetting(INDEX_NAME, "index.refresh_interval"),
+                equalTo("42s")
+            );
         }
         ensureGreen(INDEX_NAME);
     }
@@ -100,8 +109,10 @@ public class DanglingIndicesIT extends ESIntegTestCase {
 
         createIndex(INDEX_NAME, Settings.builder().put("number_of_replicas", 2).build());
         ensureGreen(INDEX_NAME);
-        assertBusy(() -> internalCluster().getInstances(IndicesService.class).forEach(
-            indicesService -> assertTrue(indicesService.allPendingDanglingIndicesWritten())));
+        assertBusy(
+            () -> internalCluster().getInstances(IndicesService.class)
+                .forEach(indicesService -> assertTrue(indicesService.allPendingDanglingIndicesWritten()))
+        );
 
         // Restart node, deleting the index in its absence, so that there is a dangling index to recover
         internalCluster().restartRandomDataNode(new InternalTestCluster.RestartCallback() {
@@ -130,8 +141,8 @@ public class DanglingIndicesIT extends ESIntegTestCase {
 
         createIndex(INDEX_NAME, Settings.builder().put("number_of_replicas", 2).build());
         ensureGreen(INDEX_NAME);
-        internalCluster().getInstances(IndicesService.class).forEach(
-            indicesService -> assertTrue(indicesService.allPendingDanglingIndicesWritten()));
+        internalCluster().getInstances(IndicesService.class)
+            .forEach(indicesService -> assertTrue(indicesService.allPendingDanglingIndicesWritten()));
 
         // Restart node, deleting the index in its absence, so that there is a dangling index to recover
         internalCluster().restartRandomDataNode(new InternalTestCluster.RestartCallback() {

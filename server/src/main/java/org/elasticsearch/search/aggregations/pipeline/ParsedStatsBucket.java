@@ -23,7 +23,6 @@ import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.search.aggregations.metrics.ParsedStats;
 
-
 public class ParsedStatsBucket extends ParsedStats implements StatsBucket {
 
     @Override
@@ -32,7 +31,10 @@ public class ParsedStatsBucket extends ParsedStats implements StatsBucket {
     }
 
     private static final ObjectParser<ParsedStatsBucket, Void> PARSER = new ObjectParser<>(
-            ParsedStatsBucket.class.getSimpleName(), true, ParsedStatsBucket::new);
+        ParsedStatsBucket.class.getSimpleName(),
+        true,
+        ParsedStatsBucket::new
+    );
 
     static {
         declareStatsFields(PARSER);

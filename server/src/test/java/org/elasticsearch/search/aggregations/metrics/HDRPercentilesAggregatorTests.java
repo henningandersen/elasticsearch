@@ -34,10 +34,6 @@ import org.elasticsearch.common.CheckedConsumer;
 import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.index.mapper.NumberFieldMapper;
 import org.elasticsearch.search.aggregations.AggregatorTestCase;
-import org.elasticsearch.search.aggregations.metrics.HDRPercentilesAggregator;
-import org.elasticsearch.search.aggregations.metrics.InternalHDRPercentiles;
-import org.elasticsearch.search.aggregations.metrics.PercentilesAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.PercentilesMethod;
 import org.elasticsearch.search.aggregations.support.AggregationInspectionHelper;
 
 import java.io.IOException;
@@ -121,8 +117,8 @@ public class HDRPercentilesAggregatorTests extends AggregatorTestCase {
         });
     }
 
-    private void testCase(Query query, CheckedConsumer<RandomIndexWriter, IOException> buildIndex,
-                          Consumer<InternalHDRPercentiles> verify) throws IOException {
+    private void testCase(Query query, CheckedConsumer<RandomIndexWriter, IOException> buildIndex, Consumer<InternalHDRPercentiles> verify)
+        throws IOException {
         try (Directory directory = newDirectory()) {
             try (RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory)) {
                 buildIndex.accept(indexWriter);
@@ -131,8 +127,8 @@ public class HDRPercentilesAggregatorTests extends AggregatorTestCase {
             try (IndexReader indexReader = DirectoryReader.open(directory)) {
                 IndexSearcher indexSearcher = newSearcher(indexReader, true, true);
 
-                PercentilesAggregationBuilder builder =
-                        new PercentilesAggregationBuilder("test").field("number").method(PercentilesMethod.HDR);
+                PercentilesAggregationBuilder builder = new PercentilesAggregationBuilder("test").field("number")
+                    .method(PercentilesMethod.HDR);
 
                 MappedFieldType fieldType = new NumberFieldMapper.NumberFieldType(NumberFieldMapper.NumberType.LONG);
                 fieldType.setName("number");

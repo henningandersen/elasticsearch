@@ -28,7 +28,7 @@ public final class BucketUtils {
     /**
      * Heuristic used to determine the size of shard-side PriorityQueues when
      * selecting the top N terms from a distributed index.
-     * 
+     *
      * @param finalSize
      *            The number of terms required in the final reduce phase.
      * @return A suggested default for the size of any shard-side PriorityQueues

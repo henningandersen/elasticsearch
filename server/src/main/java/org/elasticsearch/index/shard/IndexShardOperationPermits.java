@@ -100,10 +100,10 @@ final class IndexShardOperationPermits implements Closeable {
      * @throws TimeoutException          if timed out waiting for in-flight operations to finish
      * @throws IndexShardClosedException if operation permit has been closed
      */
-    <E extends Exception> void blockOperations(
-            final long timeout,
-            final TimeUnit timeUnit,
-            final CheckedRunnable<E> onBlocked) throws InterruptedException, TimeoutException, E {
+    <E extends Exception> void blockOperations(final long timeout, final TimeUnit timeUnit, final CheckedRunnable<E> onBlocked)
+        throws InterruptedException,
+        TimeoutException,
+        E {
         delayOperations();
         try (Releasable ignored = acquireAll(timeout, timeUnit)) {
             onBlocked.run();
@@ -122,7 +122,7 @@ final class IndexShardOperationPermits implements Closeable {
      * @param timeout    the maximum time to wait for the in-flight operations block
      * @param timeUnit   the time unit of the {@code timeout} argument
      */
-    public void asyncBlockOperations(final ActionListener<Releasable> onAcquired, final long timeout, final TimeUnit timeUnit)  {
+    public void asyncBlockOperations(final ActionListener<Releasable> onAcquired, final long timeout, final TimeUnit timeUnit) {
         delayOperations();
         threadPool.executor(ThreadPool.Names.GENERIC).execute(new AbstractRunnable() {
 
@@ -226,8 +226,12 @@ final class IndexShardOperationPermits implements Closeable {
      *                        isn't used
      *
      */
-    public void acquire(final ActionListener<Releasable> onAcquired, final String executorOnDelay, final boolean forceExecution,
-                        final Object debugInfo) {
+    public void acquire(
+        final ActionListener<Releasable> onAcquired,
+        final String executorOnDelay,
+        final boolean forceExecution,
+        final Object debugInfo
+    ) {
         final StackTraceElement[] stackTrace;
         if (Assertions.ENABLED) {
             stackTrace = Thread.currentThread().getStackTrace();
@@ -237,8 +241,13 @@ final class IndexShardOperationPermits implements Closeable {
         acquire(onAcquired, executorOnDelay, forceExecution, debugInfo, stackTrace);
     }
 
-    private void acquire(final ActionListener<Releasable> onAcquired, final String executorOnDelay, final boolean forceExecution,
-                        final Object debugInfo, final StackTraceElement[] stackTrace) {
+    private void acquire(
+        final ActionListener<Releasable> onAcquired,
+        final String executorOnDelay,
+        final boolean forceExecution,
+        final Object debugInfo,
+        final StackTraceElement[] stackTrace
+    ) {
         if (closed) {
             onAcquired.onFailure(new IndexShardClosedException(shardId));
             return;
@@ -250,7 +259,8 @@ final class IndexShardOperationPermits implements Closeable {
                     final Supplier<StoredContext> contextSupplier = threadPool.getThreadContext().newRestorableContext(false);
                     final ActionListener<Releasable> wrappedListener;
                     if (executorOnDelay != null) {
-                        wrappedListener = ActionListener.delegateFailure(new ContextPreservingActionListener<>(contextSupplier, onAcquired),
+                        wrappedListener = ActionListener.delegateFailure(
+                            new ContextPreservingActionListener<>(contextSupplier, onAcquired),
                             (l, r) -> threadPool.executor(executorOnDelay).execute(new ActionRunnable<>(l) {
                                 @Override
                                 public boolean isForceExecution() {
@@ -267,7 +277,8 @@ final class IndexShardOperationPermits implements Closeable {
                                     IOUtils.closeWhileHandlingException(r);
                                     super.onRejection(e);
                                 }
-                            }));
+                            })
+                        );
                     } else {
                         wrappedListener = new ContextPreservingActionListener<>(contextSupplier, onAcquired);
                     }
@@ -322,7 +333,6 @@ final class IndexShardOperationPermits implements Closeable {
         }
     }
 
-
     synchronized boolean isBlocked() {
         return queuedBlockOperations > 0;
     }
@@ -332,8 +342,9 @@ final class IndexShardOperationPermits implements Closeable {
      *         when the permit was acquired plus a stack traces that was captured when the permit was request.
      */
     List<String> getActiveOperations() {
-        return issuedPermits.values().stream().map(
-            t -> t.v1() + "\n" + ExceptionsHelper.formatStackTrace(t.v2()))
+        return issuedPermits.values()
+            .stream()
+            .map(t -> t.v1() + "\n" + ExceptionsHelper.formatStackTrace(t.v2()))
             .collect(Collectors.toList());
     }
 

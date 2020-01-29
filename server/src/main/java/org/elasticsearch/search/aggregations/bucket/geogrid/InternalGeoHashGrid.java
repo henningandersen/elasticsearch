@@ -33,8 +33,13 @@ import java.util.Map;
  */
 public class InternalGeoHashGrid extends InternalGeoGrid<InternalGeoHashGridBucket> {
 
-    InternalGeoHashGrid(String name, int requiredSize, List<InternalGeoGridBucket> buckets,
-                        List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    InternalGeoHashGrid(
+        String name,
+        int requiredSize,
+        List<InternalGeoGridBucket> buckets,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, requiredSize, buckets, pipelineAggregators, metaData);
     }
 

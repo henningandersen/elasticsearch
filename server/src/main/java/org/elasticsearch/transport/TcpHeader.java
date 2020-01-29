@@ -25,7 +25,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import java.io.IOException;
 
 public class TcpHeader {
-    
+
     public static final Version VERSION_WITH_HEADER_SIZE = Version.V_7_6_0;
 
     public static final int MARKER_BYTES_SIZE = 2;
@@ -52,10 +52,16 @@ public class TcpHeader {
         }
     }
 
-    public static void writeHeader(StreamOutput output, long requestId, byte status, Version version, int contentSize,
-                                   int variableHeaderSize) throws IOException {
-        output.writeByte((byte)'E');
-        output.writeByte((byte)'S');
+    public static void writeHeader(
+        StreamOutput output,
+        long requestId,
+        byte status,
+        Version version,
+        int contentSize,
+        int variableHeaderSize
+    ) throws IOException {
+        output.writeByte((byte) 'E');
+        output.writeByte((byte) 'S');
         // write the size, the size indicates the remaining message size, not including the size int
         if (version.onOrAfter(VERSION_WITH_HEADER_SIZE)) {
             output.writeInt(contentSize + REQUEST_ID_SIZE + STATUS_SIZE + VERSION_ID_SIZE + VARIABLE_HEADER_SIZE);

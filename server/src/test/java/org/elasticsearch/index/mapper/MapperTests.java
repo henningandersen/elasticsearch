@@ -24,7 +24,6 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESTestCase;
 
-
 public class MapperTests extends ESTestCase {
 
     public void testSuccessfulBuilderContext() {

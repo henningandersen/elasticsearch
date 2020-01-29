@@ -35,14 +35,30 @@ import java.util.List;
 /**
  * Flush Action.
  */
-public class TransportFlushAction
-        extends TransportBroadcastReplicationAction<FlushRequest, FlushResponse, ShardFlushRequest, ReplicationResponse> {
+public class TransportFlushAction extends TransportBroadcastReplicationAction<
+    FlushRequest,
+    FlushResponse,
+    ShardFlushRequest,
+    ReplicationResponse> {
 
     @Inject
-    public TransportFlushAction(ClusterService clusterService, TransportService transportService, NodeClient client,
-                                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
-        super(FlushAction.NAME, FlushRequest::new, clusterService, transportService, client, actionFilters, indexNameExpressionResolver,
-            TransportShardFlushAction.TYPE);
+    public TransportFlushAction(
+        ClusterService clusterService,
+        TransportService transportService,
+        NodeClient client,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver
+    ) {
+        super(
+            FlushAction.NAME,
+            FlushRequest::new,
+            clusterService,
+            transportService,
+            client,
+            actionFilters,
+            indexNameExpressionResolver,
+            TransportShardFlushAction.TYPE
+        );
     }
 
     @Override
@@ -56,8 +72,12 @@ public class TransportFlushAction
     }
 
     @Override
-    protected FlushResponse newResponse(int successfulShards, int failedShards, int totalNumCopies, List
-            <DefaultShardOperationFailedException> shardFailures) {
+    protected FlushResponse newResponse(
+        int successfulShards,
+        int failedShards,
+        int totalNumCopies,
+        List<DefaultShardOperationFailedException> shardFailures
+    ) {
         return new FlushResponse(totalNumCopies, successfulShards, failedShards, shardFailures);
     }
 }

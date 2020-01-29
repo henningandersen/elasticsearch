@@ -47,9 +47,18 @@ public abstract class GeoGridAggregator<T extends InternalGeoGrid> extends Bucke
     protected final CellIdSource valuesSource;
     protected final LongHash bucketOrds;
 
-    GeoGridAggregator(String name, AggregatorFactories factories, CellIdSource valuesSource,
-                      int requiredSize, int shardSize, SearchContext aggregationContext,
-                      Aggregator parent, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    GeoGridAggregator(
+        String name,
+        AggregatorFactories factories,
+        CellIdSource valuesSource,
+        int requiredSize,
+        int shardSize,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, aggregationContext, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.requiredSize = requiredSize;
@@ -66,8 +75,7 @@ public abstract class GeoGridAggregator<T extends InternalGeoGrid> extends Bucke
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         final SortedNumericDocValues values = valuesSource.longValues(ctx);
         return new LeafBucketCollectorBase(sub, null) {
             @Override
@@ -95,8 +103,13 @@ public abstract class GeoGridAggregator<T extends InternalGeoGrid> extends Bucke
         };
     }
 
-    abstract T buildAggregation(String name, int requiredSize, List<InternalGeoGridBucket> buckets,
-                                              List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData);
+    abstract T buildAggregation(
+        String name,
+        int requiredSize,
+        List<InternalGeoGridBucket> buckets,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    );
 
     /**
      * This method is used to return a re-usable instance of the bucket when building

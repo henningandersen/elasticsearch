@@ -54,8 +54,7 @@ public final class NodeMetaData {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NodeMetaData that = (NodeMetaData) o;
-        return nodeId.equals(that.nodeId) &&
-            nodeVersion.equals(that.nodeVersion);
+        return nodeId.equals(that.nodeId) && nodeVersion.equals(that.nodeVersion);
     }
 
     @Override
@@ -65,10 +64,7 @@ public final class NodeMetaData {
 
     @Override
     public String toString() {
-        return "NodeMetaData{" +
-            "nodeId='" + nodeId + '\'' +
-            ", nodeVersion=" + nodeVersion +
-            '}';
+        return "NodeMetaData{" + "nodeId='" + nodeId + '\'' + ", nodeVersion=" + nodeVersion + '}';
     }
 
     public String nodeId() {
@@ -87,12 +83,14 @@ public final class NodeMetaData {
 
         if (nodeVersion.before(Version.CURRENT.minimumIndexCompatibilityVersion())) {
             throw new IllegalStateException(
-                "cannot upgrade a node from version [" + nodeVersion + "] directly to version [" + Version.CURRENT + "]");
+                "cannot upgrade a node from version [" + nodeVersion + "] directly to version [" + Version.CURRENT + "]"
+            );
         }
 
         if (nodeVersion.after(Version.CURRENT)) {
             throw new IllegalStateException(
-                "cannot downgrade a node from version [" + nodeVersion + "] to version [" + Version.CURRENT + "]");
+                "cannot downgrade a node from version [" + nodeVersion + "] to version [" + Version.CURRENT + "]"
+            );
         }
 
         return nodeVersion.equals(Version.CURRENT) ? this : new NodeMetaData(nodeId, Version.CURRENT);

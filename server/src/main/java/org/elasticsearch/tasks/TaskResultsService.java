@@ -77,8 +77,7 @@ public class TaskResultsService {
      * The backoff policy to use when saving a task result fails. The total wait
      * time is 600000 milliseconds, ten minutes.
      */
-    static final BackoffPolicy STORE_BACKOFF_POLICY =
-            BackoffPolicy.exponentialBackoff(timeValueMillis(250), 14);
+    static final BackoffPolicy STORE_BACKOFF_POLICY = BackoffPolicy.exponentialBackoff(timeValueMillis(250), 14);
 
     private final Client client;
 
@@ -129,7 +128,9 @@ public class TaskResultsService {
             IndexMetaData metaData = state.getMetaData().index(TASK_INDEX);
             if (getTaskResultMappingVersion(metaData) < TASK_RESULT_MAPPING_VERSION) {
                 // The index already exists but doesn't have our mapping
-                client.admin().indices().preparePutMapping(TASK_INDEX)
+                client.admin()
+                    .indices()
+                    .preparePutMapping(TASK_INDEX)
                     .setSource(taskResultIndexMapping(), XContentType.JSON)
                     .execute(ActionListener.delegateFailure(listener, (l, r) -> doStoreResult(taskResult, listener)));
             } else {
@@ -143,7 +144,8 @@ public class TaskResultsService {
         if (mappingMetaData == null) {
             return 0;
         }
-        @SuppressWarnings("unchecked") Map<String, Object> meta = (Map<String, Object>) mappingMetaData.sourceAsMap().get("_meta");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> meta = (Map<String, Object>) mappingMetaData.sourceAsMap().get("_meta");
         if (meta == null || meta.containsKey(TASK_RESULT_MAPPING_VERSION_META_FIELD) == false) {
             return 1; // The mapping was created before meta field was introduced
         }
@@ -170,8 +172,7 @@ public class TaskResultsService {
 
             @Override
             public void onFailure(Exception e) {
-                if (false == (e instanceof EsRejectedExecutionException)
-                        || false == backoff.hasNext()) {
+                if (false == (e instanceof EsRejectedExecutionException) || false == backoff.hasNext()) {
                     listener.onFailure(e);
                 } else {
                     TimeValue wait = backoff.next();
@@ -196,8 +197,10 @@ public class TaskResultsService {
             Streams.copy(is, out);
             return out.toString(StandardCharsets.UTF_8.name());
         } catch (Exception e) {
-            logger.error(() -> new ParameterizedMessage(
-                    "failed to create tasks results index template [{}]", TASK_RESULT_INDEX_MAPPING_FILE), e);
+            logger.error(
+                () -> new ParameterizedMessage("failed to create tasks results index template [{}]", TASK_RESULT_INDEX_MAPPING_FILE),
+                e
+            );
             throw new IllegalStateException("failed to create tasks results index template [" + TASK_RESULT_INDEX_MAPPING_FILE + "]", e);
         }
 

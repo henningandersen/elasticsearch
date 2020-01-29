@@ -55,8 +55,10 @@ public class PercentileRanksAggregationBuilder extends LeafOnly<ValuesSource, Pe
         Double compression;
     }
 
-    private static final ObjectParser<TDigestOptions, String> TDIGEST_OPTIONS_PARSER =
-            new ObjectParser<>(PercentilesMethod.TDIGEST.getParseField().getPreferredName(), TDigestOptions::new);
+    private static final ObjectParser<TDigestOptions, String> TDIGEST_OPTIONS_PARSER = new ObjectParser<>(
+        PercentilesMethod.TDIGEST.getParseField().getPreferredName(),
+        TDigestOptions::new
+    );
     static {
         TDIGEST_OPTIONS_PARSER.declareDouble((opts, compression) -> opts.compression = compression, new ParseField("compression"));
     }
@@ -65,20 +67,27 @@ public class PercentileRanksAggregationBuilder extends LeafOnly<ValuesSource, Pe
         Integer numberOfSigDigits;
     }
 
-    private static final ObjectParser<HDROptions, String> HDR_OPTIONS_PARSER =
-            new ObjectParser<>(PercentilesMethod.HDR.getParseField().getPreferredName(), HDROptions::new);
+    private static final ObjectParser<HDROptions, String> HDR_OPTIONS_PARSER = new ObjectParser<>(
+        PercentilesMethod.HDR.getParseField().getPreferredName(),
+        HDROptions::new
+    );
     static {
-        HDR_OPTIONS_PARSER.declareInt((opts, numberOfSigDigits) -> opts.numberOfSigDigits = numberOfSigDigits,
-                new ParseField("number_of_significant_value_digits"));
+        HDR_OPTIONS_PARSER.declareInt(
+            (opts, numberOfSigDigits) -> opts.numberOfSigDigits = numberOfSigDigits,
+            new ParseField("number_of_significant_value_digits")
+        );
     }
 
-    // The builder requires two parameters for the constructor: aggregation name and values array.  The
+    // The builder requires two parameters for the constructor: aggregation name and values array. The
     // agg name is supplied externally via the Parser's context (as a String), while the values array
     // is parsed from the request and supplied to the ConstructingObjectParser as a ctor argument
     private static final ConstructingObjectParser<PercentileRanksAggregationBuilder, String> PARSER;
     static {
-        PARSER = new ConstructingObjectParser<>(PercentileRanksAggregationBuilder.NAME, false,
-            (a, context) -> new PercentileRanksAggregationBuilder(context, (List) a[0]));
+        PARSER = new ConstructingObjectParser<>(
+            PercentileRanksAggregationBuilder.NAME,
+            false,
+            (a, context) -> new PercentileRanksAggregationBuilder(context, (List) a[0])
+        );
         ValuesSourceParserHelper.declareAnyFields(PARSER, true, true);
         PARSER.declareDoubleArray(constructorArg(), VALUES_FIELD);
         PARSER.declareBoolean(PercentileRanksAggregationBuilder::keyed, PercentilesAggregationBuilder.KEYED_FIELD);
@@ -126,9 +135,11 @@ public class PercentileRanksAggregationBuilder extends LeafOnly<ValuesSource, Pe
         this.values = sortedValues;
     }
 
-    protected PercentileRanksAggregationBuilder(PercentileRanksAggregationBuilder clone,
-                                                Builder factoriesBuilder,
-                                                Map<String, Object> metaData) {
+    protected PercentileRanksAggregationBuilder(
+        PercentileRanksAggregationBuilder clone,
+        Builder factoriesBuilder,
+        Map<String, Object> metaData
+    ) {
         super(clone, factoriesBuilder, metaData);
         this.values = clone.values;
         this.method = clone.method;
@@ -212,7 +223,8 @@ public class PercentileRanksAggregationBuilder extends LeafOnly<ValuesSource, Pe
     public PercentileRanksAggregationBuilder compression(double compression) {
         if (compression < 0.0) {
             throw new IllegalArgumentException(
-                    "[compression] must be greater than or equal to 0. Found [" + compression + "] in [" + name + "]");
+                "[compression] must be greater than or equal to 0. Found [" + compression + "] in [" + name + "]"
+            );
         }
         this.compression = compression;
         return this;
@@ -239,19 +251,39 @@ public class PercentileRanksAggregationBuilder extends LeafOnly<ValuesSource, Pe
     }
 
     @Override
-    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(QueryShardContext queryShardContext,
-                                                                     ValuesSourceConfig<ValuesSource> config,
-                                                                     AggregatorFactory parent,
-                                                                     Builder subFactoriesBuilder) throws IOException {
+    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         switch (method) {
-        case TDIGEST:
-            return new TDigestPercentileRanksAggregatorFactory(name, config, values, compression, keyed, queryShardContext, parent,
-                    subFactoriesBuilder, metaData);
-        case HDR:
-            return new HDRPercentileRanksAggregatorFactory(name, config, values, numberOfSignificantValueDigits, keyed, queryShardContext,
-                    parent, subFactoriesBuilder, metaData);
-        default:
-            throw new IllegalStateException("Illegal method [" + method + "]");
+            case TDIGEST:
+                return new TDigestPercentileRanksAggregatorFactory(
+                    name,
+                    config,
+                    values,
+                    compression,
+                    keyed,
+                    queryShardContext,
+                    parent,
+                    subFactoriesBuilder,
+                    metaData
+                );
+            case HDR:
+                return new HDRPercentileRanksAggregatorFactory(
+                    name,
+                    config,
+                    values,
+                    numberOfSignificantValueDigits,
+                    keyed,
+                    queryShardContext,
+                    parent,
+                    subFactoriesBuilder,
+                    metaData
+                );
+            default:
+                throw new IllegalStateException("Illegal method [" + method + "]");
         }
     }
 

@@ -57,8 +57,7 @@ import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSear
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-@ESIntegTestCase.ClusterScope(scope = ESIntegTestCase.Scope.SUITE, numDataNodes = 2,
-    supportsDedicatedMasters = false, numClientNodes = 1)
+@ESIntegTestCase.ClusterScope(scope = ESIntegTestCase.Scope.SUITE, numDataNodes = 2, supportsDedicatedMasters = false, numClientNodes = 1)
 public class ExceptionRetryIT extends ESIntegTestCase {
 
     @Override
@@ -82,25 +81,33 @@ public class ExceptionRetryIT extends ESIntegTestCase {
         int numDocs = scaledRandomIntBetween(100, 1000);
         Client client = internalCluster().coordOnlyNodeClient();
         NodesStatsResponse nodeStats = client().admin().cluster().prepareNodesStats().get();
-        NodeStats unluckyNode = randomFrom(nodeStats.getNodes().stream().filter((s) -> s.getNode().isDataNode())
-            .collect(Collectors.toList()));
-        assertAcked(client().admin().indices().prepareCreate("index").setSettings(Settings.builder()
-            .put("index.number_of_replicas", 1)
-            .put("index.number_of_shards", 5)));
+        NodeStats unluckyNode = randomFrom(
+            nodeStats.getNodes().stream().filter((s) -> s.getNode().isDataNode()).collect(Collectors.toList())
+        );
+        assertAcked(
+            client().admin()
+                .indices()
+                .prepareCreate("index")
+                .setSettings(Settings.builder().put("index.number_of_replicas", 1).put("index.number_of_shards", 5))
+        );
         ensureGreen("index");
         logger.info("unlucky node: {}", unluckyNode.getNode());
-        //create a transport service that throws a ConnectTransportException for one bulk request and therefore triggers a retry.
+        // create a transport service that throws a ConnectTransportException for one bulk request and therefore triggers a retry.
         for (NodeStats dataNode : nodeStats.getNodes()) {
-            MockTransportService mockTransportService = ((MockTransportService) internalCluster().getInstance(TransportService.class,
-                dataNode.getNode().getName()));
-            mockTransportService.addSendBehavior(internalCluster().getInstance(TransportService.class, unluckyNode.getNode().getName()),
+            MockTransportService mockTransportService = ((MockTransportService) internalCluster().getInstance(
+                TransportService.class,
+                dataNode.getNode().getName()
+            ));
+            mockTransportService.addSendBehavior(
+                internalCluster().getInstance(TransportService.class, unluckyNode.getNode().getName()),
                 (connection, requestId, action, request, options) -> {
                     connection.sendRequest(requestId, action, request, options);
                     if (action.equals(TransportShardBulkAction.ACTION_NAME) && exceptionThrown.compareAndSet(false, true)) {
                         logger.debug("Throw ConnectTransportException");
                         throw new ConnectTransportException(connection.getNode(), action);
                     }
-                });
+                }
+            );
         }
 
         BulkRequestBuilder bulkBuilder = client.prepareBulk();
@@ -128,8 +135,10 @@ public class ExceptionRetryIT extends ESIntegTestCase {
         for (int i = 0; i < searchResponse.getHits().getHits().length; i++) {
             if (!uniqueIds.add(searchResponse.getHits().getHits()[i].getId())) {
                 if (!found_duplicate_already) {
-                    SearchResponse dupIdResponse = client().prepareSearch("index").setQuery(termQuery("_id",
-                        searchResponse.getHits().getHits()[i].getId())).setExplain(true).get();
+                    SearchResponse dupIdResponse = client().prepareSearch("index")
+                        .setQuery(termQuery("_id", searchResponse.getHits().getHits()[i].getId()))
+                        .setExplain(true)
+                        .get();
                     assertThat(dupIdResponse.getHits().getTotalHits().value, greaterThan(1L));
                     logger.info("found a duplicate id:");
                     for (SearchHit hit : dupIdResponse.getHits()) {

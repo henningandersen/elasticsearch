@@ -32,7 +32,7 @@ public class AliasFilterParsingException extends ElasticsearchException {
         setIndex(index);
     }
 
-    public AliasFilterParsingException(StreamInput in) throws IOException{
+    public AliasFilterParsingException(StreamInput in) throws IOException {
         super(in);
     }
 }

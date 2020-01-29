@@ -62,21 +62,41 @@ public class TransportResizeAction extends TransportMasterNodeAction<ResizeReque
     private final Client client;
 
     @Inject
-    public TransportResizeAction(TransportService transportService, ClusterService clusterService,
-                                 ThreadPool threadPool, MetaDataCreateIndexService createIndexService,
-                                 ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
-        this(ResizeAction.NAME, transportService, clusterService, threadPool, createIndexService, actionFilters,
-            indexNameExpressionResolver, client);
+    public TransportResizeAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        MetaDataCreateIndexService createIndexService,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        Client client
+    ) {
+        this(
+            ResizeAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            createIndexService,
+            actionFilters,
+            indexNameExpressionResolver,
+            client
+        );
     }
 
-    protected TransportResizeAction(String actionName, TransportService transportService, ClusterService clusterService,
-                                 ThreadPool threadPool, MetaDataCreateIndexService createIndexService,
-                                 ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
+    protected TransportResizeAction(
+        String actionName,
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        MetaDataCreateIndexService createIndexService,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        Client client
+    ) {
         super(actionName, transportService, clusterService, threadPool, actionFilters, ResizeRequest::new, indexNameExpressionResolver);
         this.createIndexService = createIndexService;
         this.client = client;
     }
-
 
     @Override
     protected String executor() {
@@ -95,8 +115,12 @@ public class TransportResizeAction extends TransportMasterNodeAction<ResizeReque
     }
 
     @Override
-    protected void masterOperation(Task task, final ResizeRequest resizeRequest, final ClusterState state,
-                                   final ActionListener<ResizeResponse> listener) {
+    protected void masterOperation(
+        Task task,
+        final ResizeRequest resizeRequest,
+        final ClusterState state,
+        final ActionListener<ResizeResponse> listener
+    ) {
 
         // there is no need to fetch docs stats for split but we keep it simple and do it anyway for simplicity of the code
         final String sourceIndex = indexNameExpressionResolver.resolveDateMathExpression(resizeRequest.getSourceIndex());
@@ -104,31 +128,43 @@ public class TransportResizeAction extends TransportMasterNodeAction<ResizeReque
         IndicesStatsRequestBuilder statsRequestBuilder = client.admin().indices().prepareStats(sourceIndex).clear().setDocs(true);
         IndicesStatsRequest statsRequest = statsRequestBuilder.request();
         statsRequest.setParentTask(clusterService.localNode().getId(), task.getId());
-        client.execute(IndicesStatsAction.INSTANCE, statsRequest,
+        client.execute(
+            IndicesStatsAction.INSTANCE,
+            statsRequest,
             ActionListener.delegateFailure(listener, (delegatedListener, indicesStatsResponse) -> {
-                CreateIndexClusterStateUpdateRequest updateRequest = prepareCreateIndexRequest(resizeRequest, state,
-                    i -> {
-                        IndexShardStats shard = indicesStatsResponse.getIndex(sourceIndex).getIndexShards().get(i);
-                        return shard == null ? null : shard.getPrimary().getDocs();
-                    }, sourceIndex, targetIndex);
+                CreateIndexClusterStateUpdateRequest updateRequest = prepareCreateIndexRequest(resizeRequest, state, i -> {
+                    IndexShardStats shard = indicesStatsResponse.getIndex(sourceIndex).getIndexShards().get(i);
+                    return shard == null ? null : shard.getPrimary().getDocs();
+                }, sourceIndex, targetIndex);
                 createIndexService.createIndex(
-                    updateRequest, ActionListener.map(delegatedListener,
-                        response -> new ResizeResponse(response.isAcknowledged(), response.isShardsAcknowledged(), updateRequest.index()))
+                    updateRequest,
+                    ActionListener.map(
+                        delegatedListener,
+                        response -> new ResizeResponse(response.isAcknowledged(), response.isShardsAcknowledged(), updateRequest.index())
+                    )
                 );
-            }));
+            })
+        );
 
     }
 
     // static for unittesting this method
-    static CreateIndexClusterStateUpdateRequest prepareCreateIndexRequest(final ResizeRequest resizeRequest, final ClusterState state
-        , final IntFunction<DocsStats> perShardDocStats, String sourceIndexName, String targetIndexName) {
+    static CreateIndexClusterStateUpdateRequest prepareCreateIndexRequest(
+        final ResizeRequest resizeRequest,
+        final ClusterState state,
+        final IntFunction<DocsStats> perShardDocStats,
+        String sourceIndexName,
+        String targetIndexName
+    ) {
         final CreateIndexRequest targetIndex = resizeRequest.getTargetIndexRequest();
         final IndexMetaData metaData = state.metaData().index(sourceIndexName);
         if (metaData == null) {
             throw new IndexNotFoundException(sourceIndexName);
         }
-        final Settings targetIndexSettings = Settings.builder().put(targetIndex.settings())
-            .normalizePrefix(IndexMetaData.INDEX_SETTING_PREFIX).build();
+        final Settings targetIndexSettings = Settings.builder()
+            .put(targetIndex.settings())
+            .normalizePrefix(IndexMetaData.INDEX_SETTING_PREFIX)
+            .build();
         final int numShards;
         if (IndexMetaData.INDEX_NUMBER_OF_SHARDS_SETTING.exists(targetIndexSettings)) {
             numShards = IndexMetaData.INDEX_NUMBER_OF_SHARDS_SETTING.get(targetIndexSettings);
@@ -152,8 +188,12 @@ public class TransportResizeAction extends TransportMasterNodeAction<ResizeReque
                         count += docsStats.getCount();
                     }
                     if (count > IndexWriter.MAX_DOCS) {
-                        throw new IllegalStateException("Can't merge index with more than [" + IndexWriter.MAX_DOCS
-                            + "] docs - too many documents in shards " + shardIds);
+                        throw new IllegalStateException(
+                            "Can't merge index with more than ["
+                                + IndexWriter.MAX_DOCS
+                                + "] docs - too many documents in shards "
+                                + shardIds
+                        );
                     }
                 }
             } else if (resizeRequest.getResizeType() == ResizeType.SPLIT) {
@@ -175,9 +215,9 @@ public class TransportResizeAction extends TransportMasterNodeAction<ResizeReque
                 throw new IllegalArgumentException("cannot provide index.number_of_routing_shards on resize");
             }
         }
-        if (IndexSettings.INDEX_SOFT_DELETES_SETTING.get(metaData.getSettings()) &&
-            IndexSettings.INDEX_SOFT_DELETES_SETTING.exists(targetIndexSettings) &&
-            IndexSettings.INDEX_SOFT_DELETES_SETTING.get(targetIndexSettings) == false) {
+        if (IndexSettings.INDEX_SOFT_DELETES_SETTING.get(metaData.getSettings())
+            && IndexSettings.INDEX_SOFT_DELETES_SETTING.exists(targetIndexSettings)
+            && IndexSettings.INDEX_SOFT_DELETES_SETTING.get(targetIndexSettings) == false) {
             throw new IllegalArgumentException("Can't disable [index.soft_deletes.enabled] setting on resize");
         }
         String cause = resizeRequest.getResizeType().name().toLowerCase(Locale.ROOT) + "_index";
@@ -187,16 +227,16 @@ public class TransportResizeAction extends TransportMasterNodeAction<ResizeReque
         targetIndex.settings(settingsBuilder);
 
         return new CreateIndexClusterStateUpdateRequest(cause, targetIndex.index(), targetIndexName)
-                // mappings are updated on the node when creating in the shards, this prevents race-conditions since all mapping must be
-                // applied once we took the snapshot and if somebody messes things up and switches the index read/write and adds docs we
-                // miss the mappings for everything is corrupted and hard to debug
-                .ackTimeout(targetIndex.timeout())
-                .masterNodeTimeout(targetIndex.masterNodeTimeout())
-                .settings(targetIndex.settings())
-                .aliases(targetIndex.aliases())
-                .waitForActiveShards(targetIndex.waitForActiveShards())
-                .recoverFrom(metaData.getIndex())
-                .resizeType(resizeRequest.getResizeType())
-                .copySettings(resizeRequest.getCopySettings() == null ? false : resizeRequest.getCopySettings());
+            // mappings are updated on the node when creating in the shards, this prevents race-conditions since all mapping must be
+            // applied once we took the snapshot and if somebody messes things up and switches the index read/write and adds docs we
+            // miss the mappings for everything is corrupted and hard to debug
+            .ackTimeout(targetIndex.timeout())
+            .masterNodeTimeout(targetIndex.masterNodeTimeout())
+            .settings(targetIndex.settings())
+            .aliases(targetIndex.aliases())
+            .waitForActiveShards(targetIndex.waitForActiveShards())
+            .recoverFrom(metaData.getIndex())
+            .resizeType(resizeRequest.getResizeType())
+            .copySettings(resizeRequest.getCopySettings() == null ? false : resizeRequest.getCopySettings());
     }
 }

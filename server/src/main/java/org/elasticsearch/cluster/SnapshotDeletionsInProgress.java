@@ -205,9 +205,7 @@ public class SnapshotDeletionsInProgress extends AbstractNamedDiffable<Custom> i
                 return false;
             }
             Entry that = (Entry) o;
-            return snapshot.equals(that.snapshot)
-                       && startTime == that.startTime
-                       && repositoryStateId == that.repositoryStateId;
+            return snapshot.equals(that.snapshot) && startTime == that.startTime && repositoryStateId == that.repositoryStateId;
         }
 
         @Override

@@ -70,9 +70,16 @@ public class TransportBulkActionTests extends ESTestCase {
         boolean indexCreated = false; // set when the "real" index is created
 
         TestTransportBulkAction() {
-            super(TransportBulkActionTests.this.threadPool, transportService, clusterService, null,
-                    null, new ActionFilters(Collections.emptySet()), new Resolver(),
-                    new AutoCreateIndex(Settings.EMPTY, clusterService.getClusterSettings(), new Resolver()));
+            super(
+                TransportBulkActionTests.this.threadPool,
+                transportService,
+                clusterService,
+                null,
+                null,
+                new ActionFilters(Collections.emptySet()),
+                new Resolver(),
+                new AutoCreateIndex(Settings.EMPTY, clusterService.getClusterSettings(), new Resolver())
+            );
         }
 
         @Override
@@ -93,9 +100,14 @@ public class TransportBulkActionTests extends ESTestCase {
         threadPool = new TestThreadPool(getClass().getName());
         clusterService = createClusterService(threadPool);
         CapturingTransport capturingTransport = new CapturingTransport();
-        transportService = capturingTransport.createTransportService(clusterService.getSettings(), threadPool,
+        transportService = capturingTransport.createTransportService(
+            clusterService.getSettings(),
+            threadPool,
             TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-            boundAddress -> clusterService.localNode(), null, Collections.emptySet());
+            boundAddress -> clusterService.localNode(),
+            null,
+            Collections.emptySet()
+        );
         transportService.start();
         transportService.acceptIncomingRequests();
         bulkAction = new TestTransportBulkAction();
@@ -119,39 +131,38 @@ public class TransportBulkActionTests extends ESTestCase {
             assertTrue(bulkResponses[0].isFailed());
             assertTrue(bulkResponses[0].getFailure().getCause() instanceof IndexNotFoundException);
             assertEquals("index", bulkResponses[0].getFailure().getIndex());
-        }, exception -> {
-            throw new AssertionError(exception);
-        }));
+        }, exception -> { throw new AssertionError(exception); }));
     }
 
     public void testDeleteNonExistingDocExternalVersionCreatesIndex() throws Exception {
-        BulkRequest bulkRequest = new BulkRequest()
-                .add(new DeleteRequest("index").id("id").versionType(VersionType.EXTERNAL).version(0));
+        BulkRequest bulkRequest = new BulkRequest().add(new DeleteRequest("index").id("id").versionType(VersionType.EXTERNAL).version(0));
 
-        ActionTestUtils.execute(bulkAction, null, bulkRequest, ActionListener.wrap(response -> {
-            assertTrue(bulkAction.indexCreated);
-        }, exception -> {
-            throw new AssertionError(exception);
-        }));
+        ActionTestUtils.execute(
+            bulkAction,
+            null,
+            bulkRequest,
+            ActionListener.wrap(response -> { assertTrue(bulkAction.indexCreated); }, exception -> { throw new AssertionError(exception); })
+        );
     }
 
     public void testDeleteNonExistingDocExternalGteVersionCreatesIndex() throws Exception {
-        BulkRequest bulkRequest = new BulkRequest()
-                .add(new DeleteRequest("index2").id("id").versionType(VersionType.EXTERNAL_GTE).version(0));
+        BulkRequest bulkRequest = new BulkRequest().add(
+            new DeleteRequest("index2").id("id").versionType(VersionType.EXTERNAL_GTE).version(0)
+        );
 
-        ActionTestUtils.execute(bulkAction, null, bulkRequest, ActionListener.wrap(response -> {
-            assertTrue(bulkAction.indexCreated);
-        }, exception -> {
-            throw new AssertionError(exception);
-        }));
+        ActionTestUtils.execute(
+            bulkAction,
+            null,
+            bulkRequest,
+            ActionListener.wrap(response -> { assertTrue(bulkAction.indexCreated); }, exception -> { throw new AssertionError(exception); })
+        );
     }
 
     public void testGetIndexWriteRequest() throws Exception {
         IndexRequest indexRequest = new IndexRequest("index").id("id1").source(Collections.emptyMap());
         UpdateRequest upsertRequest = new UpdateRequest("index", "id1").upsert(indexRequest).script(mockScript("1"));
         UpdateRequest docAsUpsertRequest = new UpdateRequest("index", "id2").doc(indexRequest).docAsUpsert(true);
-        UpdateRequest scriptedUpsert = new UpdateRequest("index", "id2").upsert(indexRequest).script(mockScript("1"))
-            .scriptedUpsert(true);
+        UpdateRequest scriptedUpsert = new UpdateRequest("index", "id2").upsert(indexRequest).script(mockScript("1")).scriptedUpsert(true);
 
         assertEquals(TransportBulkAction.getIndexWriteRequest(indexRequest), indexRequest);
         assertEquals(TransportBulkAction.getIndexWriteRequest(upsertRequest), indexRequest);

@@ -54,11 +54,17 @@ public class PeerRecoveryRetentionLeaseCreationIT extends ESIntegTestCase {
         final String dataNode = internalCluster().startDataOnlyNode();
         final Path[] nodeDataPaths = internalCluster().getInstance(NodeEnvironment.class, dataNode).nodeDataPaths();
 
-        assertAcked(prepareCreate("index").setSettings(Settings.builder()
-            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
-            .put(IndexSettings.INDEX_SOFT_DELETES_SETTING.getKey(), true)
-            .put(IndexMetaData.SETTING_VERSION_CREATED,
-                VersionUtils.randomVersionBetween(random(), Version.CURRENT.minimumIndexCompatibilityVersion(), Version.CURRENT))));
+        assertAcked(
+            prepareCreate("index").setSettings(
+                Settings.builder()
+                    .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
+                    .put(IndexSettings.INDEX_SOFT_DELETES_SETTING.getKey(), true)
+                    .put(
+                        IndexMetaData.SETTING_VERSION_CREATED,
+                        VersionUtils.randomVersionBetween(random(), Version.CURRENT.minimumIndexCompatibilityVersion(), Version.CURRENT)
+                    )
+            )
+        );
         ensureGreen("index");
 
         // Change the node ID so that the persisted retention lease no longer applies.
@@ -75,12 +81,17 @@ public class PeerRecoveryRetentionLeaseCreationIT extends ESIntegTestCase {
         });
 
         ensureGreen("index");
-        assertThat(client().admin().cluster().prepareNodesInfo(dataNode).clear().get().getNodes().get(0).getNode().getId(),
-            equalTo(newNodeId));
+        assertThat(
+            client().admin().cluster().prepareNodesInfo(dataNode).clear().get().getNodes().get(0).getNode().getId(),
+            equalTo(newNodeId)
+        );
         final RetentionLeases retentionLeases = client().admin().indices().prepareStats("index").get().getShards()[0]
-            .getRetentionLeaseStats().retentionLeases();
-        assertTrue("expected lease for [" + newNodeId + "] in " + retentionLeases,
-            retentionLeases.contains(ReplicationTracker.getPeerRecoveryRetentionLeaseId(newNodeId)));
+            .getRetentionLeaseStats()
+            .retentionLeases();
+        assertTrue(
+            "expected lease for [" + newNodeId + "] in " + retentionLeases,
+            retentionLeases.contains(ReplicationTracker.getPeerRecoveryRetentionLeaseId(newNodeId))
+        );
     }
 
 }

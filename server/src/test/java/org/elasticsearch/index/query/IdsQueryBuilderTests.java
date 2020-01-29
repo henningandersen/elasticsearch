@@ -19,7 +19,6 @@
 
 package org.elasticsearch.index.query;
 
-
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermInSetQuery;
@@ -70,27 +69,15 @@ public class IdsQueryBuilderTests extends AbstractQueryTestCase<IdsQueryBuilder>
     }
 
     public void testFromJson() throws IOException {
-        String json =
-                "{\n" +
-                "  \"ids\" : {\n" +
-                "    \"values\" : [ \"1\", \"100\", \"4\" ],\n" +
-                "    \"boost\" : 1.0\n" +
-                "  }\n" +
-                "}";
+        String json = "{\n" + "  \"ids\" : {\n" + "    \"values\" : [ \"1\", \"100\", \"4\" ],\n" + "    \"boost\" : 1.0\n" + "  }\n" + "}";
         IdsQueryBuilder parsed = (IdsQueryBuilder) parseQuery(json);
         checkGeneratedJson(json, parsed);
-        assertThat(parsed.ids(), contains("1","100","4"));
+        assertThat(parsed.ids(), contains("1", "100", "4"));
 
         // check that type that is not an array and also ids that are numbers are parsed
-        json =
-                "{\n" +
-                "  \"ids\" : {\n" +
-                "    \"values\" : [ 1, 100, 4 ],\n" +
-                "    \"boost\" : 1.0\n" +
-                "  }\n" +
-                "}";
+        json = "{\n" + "  \"ids\" : {\n" + "    \"values\" : [ 1, 100, 4 ],\n" + "    \"boost\" : 1.0\n" + "  }\n" + "}";
         parsed = (IdsQueryBuilder) parseQuery(json);
-        assertThat(parsed.ids(), contains("1","100","4"));
+        assertThat(parsed.ids(), contains("1", "100", "4"));
     }
 
     @Override

@@ -110,8 +110,7 @@ public class FiltersAggregator extends BucketsAggregator {
                 return false;
             }
             KeyedFilter other = (KeyedFilter) obj;
-            return Objects.equals(key, other.key)
-                    && Objects.equals(filter, other.filter);
+            return Objects.equals(key, other.key) && Objects.equals(filter, other.filter);
         }
     }
 
@@ -122,9 +121,19 @@ public class FiltersAggregator extends BucketsAggregator {
     private final String otherBucketKey;
     private final int totalNumKeys;
 
-    public FiltersAggregator(String name, AggregatorFactories factories, String[] keys, Supplier<Weight[]> filters, boolean keyed,
-            String otherBucketKey, SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) throws IOException {
+    public FiltersAggregator(
+        String name,
+        AggregatorFactories factories,
+        String[] keys,
+        Supplier<Weight[]> filters,
+        boolean keyed,
+        String otherBucketKey,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData);
         this.keyed = keyed;
         this.keys = keys;
@@ -139,8 +148,7 @@ public class FiltersAggregator extends BucketsAggregator {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         // no need to provide deleted docs to the filter
         Weight[] filters = this.filters.get();
         final Bits[] bits = new Bits[filters.length];
@@ -170,15 +178,23 @@ public class FiltersAggregator extends BucketsAggregator {
         List<InternalFilters.InternalBucket> buckets = new ArrayList<>(keys.length);
         for (int i = 0; i < keys.length; i++) {
             long bucketOrd = bucketOrd(owningBucketOrdinal, i);
-            InternalFilters.InternalBucket bucket = new InternalFilters.InternalBucket(keys[i], bucketDocCount(bucketOrd),
-                    bucketAggregations(bucketOrd), keyed);
+            InternalFilters.InternalBucket bucket = new InternalFilters.InternalBucket(
+                keys[i],
+                bucketDocCount(bucketOrd),
+                bucketAggregations(bucketOrd),
+                keyed
+            );
             buckets.add(bucket);
         }
         // other bucket
         if (showOtherBucket) {
             long bucketOrd = bucketOrd(owningBucketOrdinal, keys.length);
-            InternalFilters.InternalBucket bucket = new InternalFilters.InternalBucket(otherBucketKey, bucketDocCount(bucketOrd),
-                    bucketAggregations(bucketOrd), keyed);
+            InternalFilters.InternalBucket bucket = new InternalFilters.InternalBucket(
+                otherBucketKey,
+                bucketDocCount(bucketOrd),
+                bucketAggregations(bucketOrd),
+                keyed
+            );
             buckets.add(bucket);
         }
         return new InternalFilters(name, buckets, keyed, pipelineAggregators(), metaData());

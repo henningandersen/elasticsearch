@@ -28,10 +28,9 @@ import org.elasticsearch.tasks.TaskId;
  * Builder for task-based requests
  */
 public class TasksRequestBuilder<
-            Request extends BaseTasksRequest<Request>,
-            Response extends BaseTasksResponse,
-            RequestBuilder extends TasksRequestBuilder<Request, Response, RequestBuilder>
-        > extends ActionRequestBuilder<Request, Response> {
+    Request extends BaseTasksRequest<Request>,
+    Response extends BaseTasksResponse,
+    RequestBuilder extends TasksRequestBuilder<Request, Response, RequestBuilder>> extends ActionRequestBuilder<Request, Response> {
 
     protected TasksRequestBuilder(ElasticsearchClient client, ActionType<Response> action, Request request) {
         super(client, action, request);
@@ -65,7 +64,7 @@ public class TasksRequestBuilder<
     }
 
     /**
-     * Match all children of the provided task. 
+     * Match all children of the provided task.
      */
     @SuppressWarnings("unchecked")
     public final RequestBuilder setParentTaskId(TaskId taskId) {
@@ -73,4 +72,3 @@ public class TasksRequestBuilder<
         return (RequestBuilder) this;
     }
 }
-

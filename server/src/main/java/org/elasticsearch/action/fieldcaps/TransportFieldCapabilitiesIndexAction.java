@@ -45,27 +45,43 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class TransportFieldCapabilitiesIndexAction extends TransportSingleShardAction<FieldCapabilitiesIndexRequest,
+public class TransportFieldCapabilitiesIndexAction extends TransportSingleShardAction<
+    FieldCapabilitiesIndexRequest,
     FieldCapabilitiesIndexResponse> {
 
     private static final String ACTION_NAME = FieldCapabilitiesAction.NAME + "[index]";
-    public static final ActionType<FieldCapabilitiesIndexResponse> TYPE =
-        new ActionType<>(ACTION_NAME, FieldCapabilitiesIndexResponse::new);
+    public static final ActionType<FieldCapabilitiesIndexResponse> TYPE = new ActionType<>(
+        ACTION_NAME,
+        FieldCapabilitiesIndexResponse::new
+    );
 
     private final IndicesService indicesService;
 
     @Inject
-    public TransportFieldCapabilitiesIndexAction(ClusterService clusterService, TransportService transportService,
-                                                 IndicesService indicesService, ThreadPool threadPool, ActionFilters actionFilters,
-                                                 IndexNameExpressionResolver indexNameExpressionResolver) {
-        super(ACTION_NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-            FieldCapabilitiesIndexRequest::new, ThreadPool.Names.MANAGEMENT);
+    public TransportFieldCapabilitiesIndexAction(
+        ClusterService clusterService,
+        TransportService transportService,
+        IndicesService indicesService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver
+    ) {
+        super(
+            ACTION_NAME,
+            threadPool,
+            clusterService,
+            transportService,
+            actionFilters,
+            indexNameExpressionResolver,
+            FieldCapabilitiesIndexRequest::new,
+            ThreadPool.Names.MANAGEMENT
+        );
         this.indicesService = indicesService;
     }
 
     @Override
     protected boolean resolveIndex(FieldCapabilitiesIndexRequest request) {
-        //internal action, index already resolved
+        // internal action, index already resolved
         return false;
     }
 
@@ -89,9 +105,14 @@ public class TransportFieldCapabilitiesIndexAction extends TransportSingleShardA
             MappedFieldType ft = mapperService.fullName(field);
             if (ft != null) {
                 if (indicesService.isMetaDataField(mapperService.getIndexSettings().getIndexVersionCreated(), field)
-                        || fieldPredicate.test(ft.name())) {
-                    FieldCapabilities fieldCap = new FieldCapabilities(field, ft.typeName(), ft.isSearchable(), ft.isAggregatable(),
-                            ft.meta());
+                    || fieldPredicate.test(ft.name())) {
+                    FieldCapabilities fieldCap = new FieldCapabilities(
+                        field,
+                        ft.typeName(),
+                        ft.isSearchable(),
+                        ft.isAggregatable(),
+                        ft.meta()
+                    );
                     responseMap.put(field, fieldCap);
                 } else {
                     continue;

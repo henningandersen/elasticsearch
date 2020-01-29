@@ -61,9 +61,10 @@ public class AdjacencyMatrixAggregator extends BucketsAggregator {
         private final String key;
         private final QueryBuilder filter;
 
-        public static final NamedObjectParser<KeyedFilter, Void> PARSER =
-                (XContentParser p, Void c, String name) ->
-                     new KeyedFilter(name, parseInnerQueryBuilder(p));
+        public static final NamedObjectParser<KeyedFilter, Void> PARSER = (XContentParser p, Void c, String name) -> new KeyedFilter(
+            name,
+            parseInnerQueryBuilder(p)
+        );
 
         public KeyedFilter(String key, QueryBuilder filter) {
             if (key == null) {
@@ -128,9 +129,18 @@ public class AdjacencyMatrixAggregator extends BucketsAggregator {
     private final int totalNumIntersections;
     private final String separator;
 
-    public AdjacencyMatrixAggregator(String name, AggregatorFactories factories, String separator, String[] keys,
-            Weight[] filters, SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) throws IOException {
+    public AdjacencyMatrixAggregator(
+        String name,
+        AggregatorFactories factories,
+        String separator,
+        String[] keys,
+        Weight[] filters,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData);
         this.separator = separator;
         this.keys = keys;
@@ -168,7 +178,7 @@ public class AdjacencyMatrixAggregator extends BucketsAggregator {
                     } else {
                         // Skip checks on all the other filters given one half of the pairing failed
                         pos += (filters.length - (i + 1));
-                    }                    
+                    }
                 }
                 assert pos == bits.length + totalNumIntersections;
             }
@@ -188,8 +198,11 @@ public class AdjacencyMatrixAggregator extends BucketsAggregator {
             // a date-histogram where we will look for transactions over time and can expect many
             // empty buckets.
             if (docCount > 0) {
-                InternalAdjacencyMatrix.InternalBucket bucket = new InternalAdjacencyMatrix.InternalBucket(keys[i],
-                        docCount, bucketAggregations(bucketOrd));
+                InternalAdjacencyMatrix.InternalBucket bucket = new InternalAdjacencyMatrix.InternalBucket(
+                    keys[i],
+                    docCount,
+                    bucketAggregations(bucketOrd)
+                );
                 buckets.add(bucket);
                 consumeBucketsAndMaybeBreak(1);
             }
@@ -202,8 +215,11 @@ public class AdjacencyMatrixAggregator extends BucketsAggregator {
                 // Empty buckets are not returned due to potential for very sparse matrices
                 if (docCount > 0) {
                     String intersectKey = keys[i] + separator + keys[j];
-                    InternalAdjacencyMatrix.InternalBucket bucket = new InternalAdjacencyMatrix.InternalBucket(intersectKey,
-                            docCount, bucketAggregations(bucketOrd));
+                    InternalAdjacencyMatrix.InternalBucket bucket = new InternalAdjacencyMatrix.InternalBucket(
+                        intersectKey,
+                        docCount,
+                        bucketAggregations(bucketOrd)
+                    );
                     buckets.add(bucket);
                     consumeBucketsAndMaybeBreak(1);
                 }

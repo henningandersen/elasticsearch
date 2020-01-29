@@ -105,9 +105,12 @@ public class RepositoryDataTests extends ESTestCase {
             indices.add(indexId);
             builder.put(indexId, 0, "2");
         }
-        RepositoryData newRepoData = repositoryData.addSnapshot(newSnapshot,
+        RepositoryData newRepoData = repositoryData.addSnapshot(
+            newSnapshot,
             randomFrom(SnapshotState.SUCCESS, SnapshotState.PARTIAL, SnapshotState.FAILED),
-            randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion()), builder.build());
+            randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion()),
+            builder.build()
+        );
         // verify that the new repository data has the new snapshot and its indices
         assertTrue(newRepoData.getSnapshotIds().contains(newSnapshot));
         for (IndexId indexId : indices) {
@@ -131,12 +134,24 @@ public class RepositoryDataTests extends ESTestCase {
             snapshotStates.put(snapshotId.getUUID(), randomFrom(SnapshotState.values()));
             snapshotVersions.put(snapshotId.getUUID(), randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion()));
         }
-        RepositoryData repositoryData = new RepositoryData(EMPTY_REPO_GEN, snapshotIds,
-            Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), ShardGenerations.EMPTY);
+        RepositoryData repositoryData = new RepositoryData(
+            EMPTY_REPO_GEN,
+            snapshotIds,
+            Collections.emptyMap(),
+            Collections.emptyMap(),
+            Collections.emptyMap(),
+            ShardGenerations.EMPTY
+        );
         // test that initializing indices works
         Map<IndexId, Set<SnapshotId>> indices = randomIndices(snapshotIds);
-        RepositoryData newRepoData =
-            new RepositoryData(repositoryData.getGenId(), snapshotIds, snapshotStates, snapshotVersions, indices, ShardGenerations.EMPTY);
+        RepositoryData newRepoData = new RepositoryData(
+            repositoryData.getGenId(),
+            snapshotIds,
+            snapshotStates,
+            snapshotVersions,
+            indices,
+            ShardGenerations.EMPTY
+        );
         List<SnapshotId> expected = new ArrayList<>(repositoryData.getSnapshotIds());
         Collections.sort(expected);
         List<SnapshotId> actual = new ArrayList<>(newRepoData.getSnapshotIds());
@@ -172,8 +187,12 @@ public class RepositoryDataTests extends ESTestCase {
     public void testGetSnapshotState() {
         final SnapshotId snapshotId = new SnapshotId(randomAlphaOfLength(8), UUIDs.randomBase64UUID());
         final SnapshotState state = randomFrom(SnapshotState.values());
-        final RepositoryData repositoryData = RepositoryData.EMPTY.addSnapshot(snapshotId, state,
-            randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion()), ShardGenerations.EMPTY);
+        final RepositoryData repositoryData = RepositoryData.EMPTY.addSnapshot(
+            snapshotId,
+            state,
+            randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion()),
+            ShardGenerations.EMPTY
+        );
         assertEquals(state, repositoryData.getSnapshotState(snapshotId));
         assertNull(repositoryData.getSnapshotState(new SnapshotId(randomAlphaOfLength(8), UUIDs.randomBase64UUID())));
     }
@@ -217,17 +236,32 @@ public class RepositoryDataTests extends ESTestCase {
         }
         assertNotNull(corruptedIndexId);
 
-        RepositoryData corruptedRepositoryData = new RepositoryData(parsedRepositoryData.getGenId(), snapshotIds, snapshotStates,
-            snapshotVersions, indexSnapshots, shardGenBuilder.build());
+        RepositoryData corruptedRepositoryData = new RepositoryData(
+            parsedRepositoryData.getGenId(),
+            snapshotIds,
+            snapshotStates,
+            snapshotVersions,
+            indexSnapshots,
+            shardGenBuilder.build()
+        );
 
         final XContentBuilder corruptedBuilder = XContentBuilder.builder(xContent);
         corruptedRepositoryData.snapshotsToXContent(corruptedBuilder, true);
 
         try (XContentParser xParser = createParser(corruptedBuilder)) {
-            ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class, () ->
-                RepositoryData.snapshotsFromXContent(xParser, corruptedRepositoryData.getGenId()));
-            assertThat(e.getMessage(), equalTo("Detected a corrupted repository, index " + corruptedIndexId + " references an unknown " +
-                "snapshot uuid [_does_not_exist]"));
+            ElasticsearchParseException e = expectThrows(
+                ElasticsearchParseException.class,
+                () -> RepositoryData.snapshotsFromXContent(xParser, corruptedRepositoryData.getGenId())
+            );
+            assertThat(
+                e.getMessage(),
+                equalTo(
+                    "Detected a corrupted repository, index "
+                        + corruptedIndexId
+                        + " references an unknown "
+                        + "snapshot uuid [_does_not_exist]"
+                )
+            );
         }
     }
 
@@ -261,10 +295,14 @@ public class RepositoryDataTests extends ESTestCase {
         builder.endObject();
 
         try (XContentParser xParser = createParser(builder)) {
-            ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class, () ->
-                RepositoryData.snapshotsFromXContent(xParser, randomNonNegativeLong()));
-            assertThat(e.getMessage(), equalTo("Detected a corrupted repository, " +
-                "index [docs/_id] references an unknown snapshot uuid [null]"));
+            ElasticsearchParseException e = expectThrows(
+                ElasticsearchParseException.class,
+                () -> RepositoryData.snapshotsFromXContent(xParser, randomNonNegativeLong())
+            );
+            assertThat(
+                e.getMessage(),
+                equalTo("Detected a corrupted repository, " + "index [docs/_id] references an unknown snapshot uuid [null]")
+            );
         }
     }
 
@@ -287,8 +325,12 @@ public class RepositoryDataTests extends ESTestCase {
                     builder.put(someIndex, j, uuid);
                 }
             }
-            repositoryData = repositoryData.addSnapshot(snapshotId, randomFrom(SnapshotState.values()),
-                randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion()), builder.build());
+            repositoryData = repositoryData.addSnapshot(
+                snapshotId,
+                randomFrom(SnapshotState.values()),
+                randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion()),
+                builder.build()
+            );
         }
         return repositoryData;
     }

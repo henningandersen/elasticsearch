@@ -113,7 +113,7 @@ public class StoreFileMetaData implements Writeable {
 
     @Override
     public String toString() {
-        return "name [" + name + "], length [" + length + "], checksum [" + checksum + "], writtenBy [" + writtenBy + "]" ;
+        return "name [" + name + "], length [" + length + "], checksum [" + checksum + "], writtenBy [" + writtenBy + "]";
     }
 
     /**

@@ -69,8 +69,12 @@ public abstract class PersistentTasksDecidersTestCase extends ESTestCase {
                 };
             }
         };
-        persistentTasksClusterService = new PersistentTasksClusterService(clusterService.getSettings(), registry, clusterService,
-            threadPool);
+        persistentTasksClusterService = new PersistentTasksClusterService(
+            clusterService.getSettings(),
+            registry,
+            clusterService,
+            threadPool
+        );
     }
 
     @AfterClass
@@ -106,9 +110,7 @@ public abstract class PersistentTasksDecidersTestCase extends ESTestCase {
             tasks.addTask("_task_" + i, "test", null, new PersistentTasksCustomMetaData.Assignment(null, "initialized"));
         }
 
-        MetaData metaData = MetaData.builder()
-            .putCustom(PersistentTasksCustomMetaData.TYPE, tasks.build())
-            .build();
+        MetaData metaData = MetaData.builder().putCustom(PersistentTasksCustomMetaData.TYPE, tasks.build()).build();
 
         return ClusterState.builder(ClusterName.DEFAULT).nodes(nodes).metaData(metaData).build();
     }
@@ -124,9 +126,11 @@ public abstract class PersistentTasksDecidersTestCase extends ESTestCase {
     }
 
     /** Asserts that the cluster state contains nbTasks tasks that verify the given predicate **/
-    protected static void assertPersistentTasks(final long nbTasks,
-                                              final ClusterState clusterState,
-                                              final Predicate<PersistentTasksCustomMetaData.PersistentTask> predicate) {
+    protected static void assertPersistentTasks(
+        final long nbTasks,
+        final ClusterState clusterState,
+        final Predicate<PersistentTasksCustomMetaData.PersistentTask> predicate
+    ) {
         PersistentTasksCustomMetaData tasks = clusterState.metaData().custom(PersistentTasksCustomMetaData.TYPE);
         assertNotNull("Persistent tasks must be not null", tasks);
         assertEquals(nbTasks, tasks.tasks().stream().filter(predicate).count());

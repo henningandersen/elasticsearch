@@ -35,18 +35,33 @@ import org.elasticsearch.transport.TransportService;
 import java.io.IOException;
 import java.util.List;
 
-public class TransportNodesStatsAction extends TransportNodesAction<NodesStatsRequest,
-                                                                    NodesStatsResponse,
-                                                                    TransportNodesStatsAction.NodeStatsRequest,
-                                                                    NodeStats> {
+public class TransportNodesStatsAction extends TransportNodesAction<
+    NodesStatsRequest,
+    NodesStatsResponse,
+    TransportNodesStatsAction.NodeStatsRequest,
+    NodeStats> {
 
     private final NodeService nodeService;
 
     @Inject
-    public TransportNodesStatsAction(ThreadPool threadPool, ClusterService clusterService, TransportService transportService,
-                                     NodeService nodeService, ActionFilters actionFilters) {
-        super(NodesStatsAction.NAME, threadPool, clusterService, transportService, actionFilters,
-            NodesStatsRequest::new, NodeStatsRequest::new, ThreadPool.Names.MANAGEMENT, NodeStats.class);
+    public TransportNodesStatsAction(
+        ThreadPool threadPool,
+        ClusterService clusterService,
+        TransportService transportService,
+        NodeService nodeService,
+        ActionFilters actionFilters
+    ) {
+        super(
+            NodesStatsAction.NAME,
+            threadPool,
+            clusterService,
+            transportService,
+            actionFilters,
+            NodesStatsRequest::new,
+            NodeStatsRequest::new,
+            ThreadPool.Names.MANAGEMENT,
+            NodeStats.class
+        );
         this.nodeService = nodeService;
     }
 
@@ -68,9 +83,21 @@ public class TransportNodesStatsAction extends TransportNodesAction<NodesStatsRe
     @Override
     protected NodeStats nodeOperation(NodeStatsRequest nodeStatsRequest, Task task) {
         NodesStatsRequest request = nodeStatsRequest.request;
-        return nodeService.stats(request.indices(), request.os(), request.process(), request.jvm(), request.threadPool(),
-                request.fs(), request.transport(), request.http(), request.breaker(), request.script(), request.discovery(),
-                request.ingest(), request.adaptiveSelection());
+        return nodeService.stats(
+            request.indices(),
+            request.os(),
+            request.process(),
+            request.jvm(),
+            request.threadPool(),
+            request.fs(),
+            request.transport(),
+            request.http(),
+            request.breaker(),
+            request.script(),
+            request.discovery(),
+            request.ingest(),
+            request.adaptiveSelection()
+        );
     }
 
     public static class NodeStatsRequest extends BaseNodeRequest {

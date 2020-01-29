@@ -56,8 +56,7 @@ public class IntervalBuilder {
     }
 
     public IntervalsSource analyzeText(String query, int maxGaps, boolean ordered) throws IOException {
-        try (TokenStream ts = analyzer.tokenStream(field, query);
-             CachingTokenFilter stream = new CachingTokenFilter(ts)) {
+        try (TokenStream ts = analyzer.tokenStream(field, query); CachingTokenFilter stream = new CachingTokenFilter(ts)) {
             return analyzeText(stream, maxGaps, ordered);
         }
     }
@@ -174,8 +173,7 @@ public class IntervalBuilder {
             if (posInc > 0) {
                 if (synonyms.size() == 1) {
                     terms.add(extend(synonyms.get(0), spaces));
-                }
-                else if (synonyms.size() > 1) {
+                } else if (synonyms.size() > 1) {
                     terms.add(extend(Intervals.or(synonyms.toArray(new IntervalsSource[0])), spaces));
                 }
                 synonyms.clear();
@@ -185,8 +183,7 @@ public class IntervalBuilder {
         }
         if (synonyms.size() == 1) {
             terms.add(extend(synonyms.get(0), spaces));
-        }
-        else {
+        } else {
             terms.add(extend(Intervals.or(synonyms.toArray(new IntervalsSource[0])), spaces));
         }
         return combineSources(terms, maxGaps, ordered);

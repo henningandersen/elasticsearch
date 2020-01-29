@@ -75,17 +75,17 @@ public class UpdateNoopIT extends ESIntegTestCase {
 
     public void testArrayField() throws Exception {
         updateAndCheckSource(0, 1, fields("bar", "baz"));
-        updateAndCheckSource(1, 2, fields("bar", new String[] {"baz", "bort"}));
-        updateAndCheckSource(1, 2, fields("bar", new String[] {"baz", "bort"}));
+        updateAndCheckSource(1, 2, fields("bar", new String[] { "baz", "bort" }));
+        updateAndCheckSource(1, 2, fields("bar", new String[] { "baz", "bort" }));
         updateAndCheckSource(2, 3, fields("bar", "bir"));
         updateAndCheckSource(2, 3, fields("bar", "bir"));
-        updateAndCheckSource(3, 4, fields("bar", new String[] {"baz", "bort"}));
-        updateAndCheckSource(3, 4, fields("bar", new String[] {"baz", "bort"}));
-        updateAndCheckSource(4, 5, fields("bar", new String[] {"bir", "bort"}));
-        updateAndCheckSource(4, 5, fields("bar", new String[] {"bir", "bort"}));
-        updateAndCheckSource(5, 6, fields("bar", new String[] {"bir", "for"}));
-        updateAndCheckSource(5, 6, fields("bar", new String[] {"bir", "for"}));
-        updateAndCheckSource(6, 7, fields("bar", new String[] {"bir", "for", "far"}));
+        updateAndCheckSource(3, 4, fields("bar", new String[] { "baz", "bort" }));
+        updateAndCheckSource(3, 4, fields("bar", new String[] { "baz", "bort" }));
+        updateAndCheckSource(4, 5, fields("bar", new String[] { "bir", "bort" }));
+        updateAndCheckSource(4, 5, fields("bar", new String[] { "bir", "bort" }));
+        updateAndCheckSource(5, 6, fields("bar", new String[] { "bir", "for" }));
+        updateAndCheckSource(5, 6, fields("bar", new String[] { "bir", "for" }));
+        updateAndCheckSource(6, 7, fields("bar", new String[] { "bir", "for", "far" }));
 
         assertEquals(5, totalNoopUpdates());
     }
@@ -95,115 +95,178 @@ public class UpdateNoopIT extends ESIntegTestCase {
         String key1 = 1 + randomAlphaOfLength(3);
         String key2 = 2 + randomAlphaOfLength(3);
         String key3 = 3 + randomAlphaOfLength(3);
-        updateAndCheckSource(0, 1, XContentFactory.jsonBuilder().startObject()
+        updateAndCheckSource(
+            0,
+            1,
+            XContentFactory.jsonBuilder().startObject().startObject("test").field(key1, "foo").field(key2, "baz").endObject().endObject()
+        );
+        updateAndCheckSource(
+            0,
+            1,
+            XContentFactory.jsonBuilder().startObject().startObject("test").field(key1, "foo").field(key2, "baz").endObject().endObject()
+        );
+        updateAndCheckSource(
+            1,
+            2,
+            XContentFactory.jsonBuilder().startObject().startObject("test").field(key1, "foo").field(key2, "bir").endObject().endObject()
+        );
+        updateAndCheckSource(
+            1,
+            2,
+            XContentFactory.jsonBuilder().startObject().startObject("test").field(key1, "foo").field(key2, "bir").endObject().endObject()
+        );
+        updateAndCheckSource(
+            2,
+            3,
+            XContentFactory.jsonBuilder().startObject().startObject("test").field(key1, "foo").field(key2, "foo").endObject().endObject()
+        );
+        updateAndCheckSource(
+            3,
+            4,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .startObject("test")
-                    .field(key1, "foo")
-                    .field(key2, "baz")
-                .endObject().endObject());
-        updateAndCheckSource(0, 1, XContentFactory.jsonBuilder().startObject()
+                .field(key1, "foo")
+                .field(key2, (Object) null)
+                .endObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            3,
+            4,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .startObject("test")
-                    .field(key1, "foo")
-                    .field(key2, "baz")
-                .endObject().endObject());
-        updateAndCheckSource(1, 2, XContentFactory.jsonBuilder().startObject()
+                .field(key1, "foo")
+                .field(key2, (Object) null)
+                .endObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            4,
+            5,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .startObject("test")
-                    .field(key1, "foo")
-                    .field(key2, "bir")
-                .endObject().endObject());
-        updateAndCheckSource(1, 2, XContentFactory.jsonBuilder().startObject()
-                .startObject("test")
-                    .field(key1, "foo")
-                    .field(key2, "bir")
-                .endObject().endObject());
-        updateAndCheckSource(2, 3, XContentFactory.jsonBuilder().startObject()
-                .startObject("test")
-                    .field(key1, "foo")
-                    .field(key2, "foo")
-                .endObject().endObject());
-        updateAndCheckSource(3, 4, XContentFactory.jsonBuilder().startObject()
-                .startObject("test")
-                    .field(key1, "foo")
-                    .field(key2, (Object) null)
-                .endObject().endObject());
-        updateAndCheckSource(3, 4, XContentFactory.jsonBuilder().startObject()
-                .startObject("test")
-                    .field(key1, "foo")
-                    .field(key2, (Object) null)
-                .endObject().endObject());
-        updateAndCheckSource(4, 5, XContentFactory.jsonBuilder().startObject()
-                .startObject("test")
-                    .field(key1, "foo")
-                    .field(key2, (Object) null)
-                    .field(key3, (Object) null)
-                .endObject().endObject());
+                .field(key1, "foo")
+                .field(key2, (Object) null)
+                .field(key3, (Object) null)
+                .endObject()
+                .endObject()
+        );
 
         assertEquals(3, totalNoopUpdates());
     }
 
     public void testMapAndField() throws Exception {
-        updateAndCheckSource(0, 1, XContentFactory.jsonBuilder().startObject()
+        updateAndCheckSource(
+            0,
+            1,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "foo")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "baz")
+                .field("mf1", "foo")
+                .field("mf2", "baz")
                 .endObject()
-                .endObject());
-        updateAndCheckSource(0, 1, XContentFactory.jsonBuilder().startObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            0,
+            1,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "foo")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "baz")
+                .field("mf1", "foo")
+                .field("mf2", "baz")
                 .endObject()
-                .endObject());
-        updateAndCheckSource(1, 2, XContentFactory.jsonBuilder().startObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            1,
+            2,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "foo")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "bir")
+                .field("mf1", "foo")
+                .field("mf2", "bir")
                 .endObject()
-                .endObject());
-        updateAndCheckSource(1, 2, XContentFactory.jsonBuilder().startObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            1,
+            2,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "foo")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "bir")
+                .field("mf1", "foo")
+                .field("mf2", "bir")
                 .endObject()
-                .endObject());
-        updateAndCheckSource(2, 3, XContentFactory.jsonBuilder().startObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            2,
+            3,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "foo")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "foo")
+                .field("mf1", "foo")
+                .field("mf2", "foo")
                 .endObject()
-                .endObject());
-        updateAndCheckSource(3, 4, XContentFactory.jsonBuilder().startObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            3,
+            4,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "bar")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "foo")
+                .field("mf1", "foo")
+                .field("mf2", "foo")
                 .endObject()
-                .endObject());
-        updateAndCheckSource(3, 4, XContentFactory.jsonBuilder().startObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            3,
+            4,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "bar")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "foo")
+                .field("mf1", "foo")
+                .field("mf2", "foo")
                 .endObject()
-                .endObject());
-        updateAndCheckSource(4, 5, XContentFactory.jsonBuilder().startObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            4,
+            5,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "baz")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "foo")
+                .field("mf1", "foo")
+                .field("mf2", "foo")
                 .endObject()
-                .endObject());
-        updateAndCheckSource(5, 6, XContentFactory.jsonBuilder().startObject()
+                .endObject()
+        );
+        updateAndCheckSource(
+            5,
+            6,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "bop")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "foo")
+                .field("mf1", "foo")
+                .field("mf2", "foo")
                 .endObject()
-                .endObject());
+                .endObject()
+        );
 
         assertEquals(3, totalNoopUpdates());
     }
@@ -213,13 +276,18 @@ public class UpdateNoopIT extends ESIntegTestCase {
      * its true by default.
      */
     public void testTotallyEmpty() throws Exception {
-        updateAndCheckSource(0, 1, XContentFactory.jsonBuilder().startObject()
+        updateAndCheckSource(
+            0,
+            1,
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .field("f", "foo")
                 .startObject("m")
-                    .field("mf1", "foo")
-                    .field("mf2", "baz")
+                .field("mf1", "foo")
+                .field("mf2", "baz")
                 .endObject()
-                .endObject());
+                .endObject()
+        );
         update(true, 0, 1, XContentFactory.jsonBuilder().startObject().endObject());
         update(false, 1, 2, XContentFactory.jsonBuilder().startObject().endObject());
         update(null, 1, 2, XContentFactory.jsonBuilder().startObject().endObject());
@@ -247,9 +315,9 @@ public class UpdateNoopIT extends ESIntegTestCase {
 
     private UpdateResponse update(Boolean detectNoop, long expectedSeqNo, long expectedVersion, XContentBuilder xContentBuilder) {
         UpdateRequestBuilder updateRequest = client().prepareUpdate("test", "1")
-                .setDoc(xContentBuilder)
-                .setDocAsUpsert(true)
-                .setFetchSource(true);
+            .setDoc(xContentBuilder)
+            .setDocAsUpsert(true)
+            .setFetchSource(true);
         if (detectNoop != null) {
             updateRequest.setDetectNoop(detectNoop);
         }
@@ -261,8 +329,16 @@ public class UpdateNoopIT extends ESIntegTestCase {
     }
 
     private long totalNoopUpdates() {
-        return client().admin().indices().prepareStats("test").setIndexing(true).get().getIndex("test").getTotal().getIndexing().getTotal()
-                .getNoopUpdateCount();
+        return client().admin()
+            .indices()
+            .prepareStats("test")
+            .setIndexing(true)
+            .get()
+            .getIndex("test")
+            .getTotal()
+            .getIndexing()
+            .getTotal()
+            .getNoopUpdateCount();
     }
 
     @Before

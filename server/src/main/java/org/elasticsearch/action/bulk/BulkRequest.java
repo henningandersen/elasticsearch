@@ -220,36 +220,49 @@ public class BulkRequest extends ActionRequest implements CompositeIndicesReques
     /**
      * Adds a framed data in binary format
      */
-    public BulkRequest add(byte[] data, int from, int length, @Nullable String defaultIndex,
-                           XContentType xContentType) throws IOException {
+    public BulkRequest add(byte[] data, int from, int length, @Nullable String defaultIndex, XContentType xContentType) throws IOException {
         return add(new BytesArray(data, from, length), defaultIndex, xContentType);
     }
 
     /**
      * Adds a framed data in binary format
      */
-    public BulkRequest add(BytesReference data, @Nullable String defaultIndex,
-                           XContentType xContentType) throws IOException {
+    public BulkRequest add(BytesReference data, @Nullable String defaultIndex, XContentType xContentType) throws IOException {
         return add(data, defaultIndex, null, null, null, true, xContentType);
     }
 
     /**
      * Adds a framed data in binary format
      */
-    public BulkRequest add(BytesReference data, @Nullable String defaultIndex, boolean allowExplicitIndex,
-                           XContentType xContentType) throws IOException {
+    public BulkRequest add(BytesReference data, @Nullable String defaultIndex, boolean allowExplicitIndex, XContentType xContentType)
+        throws IOException {
         return add(data, defaultIndex, null, null, null, allowExplicitIndex, xContentType);
 
     }
 
-    public BulkRequest add(BytesReference data, @Nullable String defaultIndex,
-                           @Nullable String defaultRouting, @Nullable FetchSourceContext defaultFetchSourceContext,
-                           @Nullable String defaultPipeline, boolean allowExplicitIndex,
-                           XContentType xContentType) throws IOException {
+    public BulkRequest add(
+        BytesReference data,
+        @Nullable String defaultIndex,
+        @Nullable String defaultRouting,
+        @Nullable FetchSourceContext defaultFetchSourceContext,
+        @Nullable String defaultPipeline,
+        boolean allowExplicitIndex,
+        XContentType xContentType
+    ) throws IOException {
         String routing = valueOrDefault(defaultRouting, globalRouting);
         String pipeline = valueOrDefault(defaultPipeline, globalPipeline);
-        new BulkRequestParser(true).parse(data, defaultIndex, routing, defaultFetchSourceContext, pipeline,
-                allowExplicitIndex, xContentType, (indexRequest, type) -> internalAdd(indexRequest), this::internalAdd, this::add);
+        new BulkRequestParser(true).parse(
+            data,
+            defaultIndex,
+            routing,
+            defaultFetchSourceContext,
+            pipeline,
+            allowExplicitIndex,
+            xContentType,
+            (indexRequest, type) -> internalAdd(indexRequest),
+            this::internalAdd,
+            this::add
+        );
         return this;
     }
 
@@ -299,10 +312,11 @@ public class BulkRequest extends ActionRequest implements CompositeIndicesReques
         return this;
     }
 
-    public final BulkRequest routing(String globalRouting){
+    public final BulkRequest routing(String globalRouting) {
         this.globalRouting = globalRouting;
         return this;
     }
+
     /**
      * A timeout to wait if the index operation can't be performed immediately. Defaults to {@code 1m}.
      */
@@ -332,7 +346,9 @@ public class BulkRequest extends ActionRequest implements CompositeIndicesReques
             // We first check if refresh has been set
             if (((WriteRequest<?>) request).getRefreshPolicy() != RefreshPolicy.NONE) {
                 validationException = addValidationError(
-                        "RefreshPolicy is not supported on an item request. Set it on the BulkRequest instead.", validationException);
+                    "RefreshPolicy is not supported on an item request. Set it on the BulkRequest instead.",
+                    validationException
+                );
             }
             ActionRequestValidationException ex = ((WriteRequest<?>) request).validate();
             if (ex != null) {

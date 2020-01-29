@@ -46,8 +46,13 @@ public final class AutoExpandReplicas {
 
     private static final AutoExpandReplicas FALSE_INSTANCE = new AutoExpandReplicas(0, 0, false);
 
-    public static final Setting<AutoExpandReplicas> SETTING = new Setting<>(IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS, "false",
-        AutoExpandReplicas::parse, Property.Dynamic, Property.IndexScope);
+    public static final Setting<AutoExpandReplicas> SETTING = new Setting<>(
+        IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS,
+        "false",
+        AutoExpandReplicas::parse,
+        Property.Dynamic,
+        Property.IndexScope
+    );
 
     private static AutoExpandReplicas parse(String value) {
         final int min;
@@ -57,15 +62,18 @@ public final class AutoExpandReplicas {
         }
         final int dash = value.indexOf('-');
         if (-1 == dash) {
-            throw new IllegalArgumentException("failed to parse [" + IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS +
-                "] from value: [" + value + "] at index " + dash);
+            throw new IllegalArgumentException(
+                "failed to parse [" + IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS + "] from value: [" + value + "] at index " + dash
+            );
         }
         final String sMin = value.substring(0, dash);
         try {
             min = Integer.parseInt(sMin);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("failed to parse [" + IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS +
-                "] from value: [" + value + "] at index "  + dash, e);
+            throw new IllegalArgumentException(
+                "failed to parse [" + IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS + "] from value: [" + value + "] at index " + dash,
+                e
+            );
         }
         String sMax = value.substring(dash + 1);
         if (sMax.equals(ALL_NODES_VALUE)) {
@@ -74,8 +82,10 @@ public final class AutoExpandReplicas {
             try {
                 max = Integer.parseInt(sMax);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("failed to parse [" + IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS +
-                    "] from value: [" + value + "] at index "  + dash, e);
+                throw new IllegalArgumentException(
+                    "failed to parse [" + IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS + "] from value: [" + value + "] at index " + dash,
+                    e
+                );
             }
         }
         return new AutoExpandReplicas(min, max, true);
@@ -87,8 +97,14 @@ public final class AutoExpandReplicas {
 
     private AutoExpandReplicas(int minReplicas, int maxReplicas, boolean enabled) {
         if (minReplicas > maxReplicas) {
-            throw new IllegalArgumentException("[" + IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS +
-                "] minReplicas must be =< maxReplicas but wasn't " + minReplicas + " > "  + maxReplicas);
+            throw new IllegalArgumentException(
+                "["
+                    + IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS
+                    + "] minReplicas must be =< maxReplicas but wasn't "
+                    + minReplicas
+                    + " > "
+                    + maxReplicas
+            );
         }
         this.minReplicas = minReplicas;
         this.maxReplicas = maxReplicas;
@@ -100,7 +116,7 @@ public final class AutoExpandReplicas {
     }
 
     int getMaxReplicas(int numDataNodes) {
-        return Math.min(maxReplicas, numDataNodes-1);
+        return Math.min(maxReplicas, numDataNodes - 1);
     }
 
     private OptionalInt getDesiredNumberOfReplicas(IndexMetaData indexMetaData, RoutingAllocation allocation) {
@@ -111,7 +127,7 @@ public final class AutoExpandReplicas {
                 for (ObjectCursor<DiscoveryNode> cursor : allocation.nodes().getDataNodes().values()) {
                     Decision decision = allocation.deciders().shouldAutoExpandToNode(indexMetaData, cursor.value, allocation);
                     if (decision.type() != Decision.Type.NO) {
-                        numMatchingDataNodes ++;
+                        numMatchingDataNodes++;
                     }
                 }
             } else {
@@ -161,5 +177,3 @@ public final class AutoExpandReplicas {
         return nrReplicasChanged;
     }
 }
-
-

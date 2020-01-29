@@ -63,7 +63,8 @@ public class MetaDataIndexUpgradeServiceTests extends ESTestCase {
         final MetaDataIndexUpgradeService service = getMetaDataIndexUpgradeService();
         final IndexMetaData initial = newIndexMeta(
             "foo",
-            Settings.builder().put(IndexMetaData.SETTING_VERSION_UPGRADED, Version.CURRENT).put("index.refresh_interval", "-200").build());
+            Settings.builder().put(IndexMetaData.SETTING_VERSION_UPGRADED, Version.CURRENT).put("index.refresh_interval", "-200").build()
+        );
         assertTrue(service.isUpgraded(initial));
         final IndexMetaData after = service.upgradeIndexMetaData(initial, Version.CURRENT.minimumIndexCompatibilityVersion());
         // the index does not need to be upgraded, but checking that it does should archive any broken settings
@@ -84,11 +85,13 @@ public class MetaDataIndexUpgradeServiceTests extends ESTestCase {
 
     public void testUpgradeCustomSimilarity() {
         MetaDataIndexUpgradeService service = getMetaDataIndexUpgradeService();
-        IndexMetaData src = newIndexMeta("foo",
+        IndexMetaData src = newIndexMeta(
+            "foo",
             Settings.builder()
                 .put("index.similarity.my_similarity.type", "DFR")
                 .put("index.similarity.my_similarity.after_effect", "l")
-                .build());
+                .build()
+        );
         assertFalse(service.isUpgraded(src));
         src = service.upgradeIndexMetaData(src, Version.CURRENT.minimumIndexCompatibilityVersion());
         assertTrue(service.isUpgraded(src));
@@ -108,27 +111,51 @@ public class MetaDataIndexUpgradeServiceTests extends ESTestCase {
     public void testFailUpgrade() {
         MetaDataIndexUpgradeService service = getMetaDataIndexUpgradeService();
         Version minCompat = Version.CURRENT.minimumIndexCompatibilityVersion();
-        Version indexUpgraded = VersionUtils.randomVersionBetween(random(),
+        Version indexUpgraded = VersionUtils.randomVersionBetween(
+            random(),
             minCompat,
             Version.max(minCompat, VersionUtils.getPreviousVersion(Version.CURRENT))
         );
         Version indexCreated = Version.fromString((minCompat.major - 1) + "." + randomInt(5) + "." + randomInt(5));
-        final IndexMetaData metaData = newIndexMeta("foo", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_UPGRADED, indexUpgraded)
-            .put(IndexMetaData.SETTING_VERSION_CREATED, indexCreated)
-            .build());
-        String message = expectThrows(IllegalStateException.class, () -> service.upgradeIndexMetaData(metaData,
-            Version.CURRENT.minimumIndexCompatibilityVersion())).getMessage();
-        assertThat(message, equalTo("The index [foo/" + metaData.getIndexUUID() + "] was created with version [" + indexCreated + "] " +
-             "but the minimum compatible version is [" + minCompat + "]." +
-            " It should be re-indexed in Elasticsearch " + minCompat.major + ".x before upgrading to " + Version.CURRENT.toString() + "."));
+        final IndexMetaData metaData = newIndexMeta(
+            "foo",
+            Settings.builder()
+                .put(IndexMetaData.SETTING_VERSION_UPGRADED, indexUpgraded)
+                .put(IndexMetaData.SETTING_VERSION_CREATED, indexCreated)
+                .build()
+        );
+        String message = expectThrows(
+            IllegalStateException.class,
+            () -> service.upgradeIndexMetaData(metaData, Version.CURRENT.minimumIndexCompatibilityVersion())
+        ).getMessage();
+        assertThat(
+            message,
+            equalTo(
+                "The index [foo/"
+                    + metaData.getIndexUUID()
+                    + "] was created with version ["
+                    + indexCreated
+                    + "] "
+                    + "but the minimum compatible version is ["
+                    + minCompat
+                    + "]."
+                    + " It should be re-indexed in Elasticsearch "
+                    + minCompat.major
+                    + ".x before upgrading to "
+                    + Version.CURRENT.toString()
+                    + "."
+            )
+        );
 
         indexCreated = VersionUtils.randomVersionBetween(random(), minCompat, Version.CURRENT);
         indexUpgraded = VersionUtils.randomVersionBetween(random(), indexCreated, Version.CURRENT);
-        IndexMetaData goodMeta = newIndexMeta("foo", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_UPGRADED, indexUpgraded)
-            .put(IndexMetaData.SETTING_VERSION_CREATED, indexCreated)
-            .build());
+        IndexMetaData goodMeta = newIndexMeta(
+            "foo",
+            Settings.builder()
+                .put(IndexMetaData.SETTING_VERSION_UPGRADED, indexUpgraded)
+                .put(IndexMetaData.SETTING_VERSION_CREATED, indexCreated)
+                .build()
+        );
         service.upgradeIndexMetaData(goodMeta, Version.CURRENT.minimumIndexCompatibilityVersion());
     }
 
@@ -137,7 +164,8 @@ public class MetaDataIndexUpgradeServiceTests extends ESTestCase {
             Settings.EMPTY,
             xContentRegistry(),
             new MapperRegistry(Collections.emptyMap(), Collections.emptyMap(), MapperPlugin.NOOP_FIELD_FILTER),
-            IndexScopedSettings.DEFAULT_SCOPED_SETTINGS);
+            IndexScopedSettings.DEFAULT_SCOPED_SETTINGS
+        );
     }
 
     public static IndexMetaData newIndexMeta(String name, Settings indexSettings) {
@@ -158,8 +186,10 @@ public class MetaDataIndexUpgradeServiceTests extends ESTestCase {
     }
 
     private static Version randomEarlierCompatibleVersion() {
-        return randomValueOtherThan(Version.CURRENT, () -> VersionUtils.randomVersionBetween(random(),
-            Version.CURRENT.minimumIndexCompatibilityVersion(), Version.CURRENT));
+        return randomValueOtherThan(
+            Version.CURRENT,
+            () -> VersionUtils.randomVersionBetween(random(), Version.CURRENT.minimumIndexCompatibilityVersion(), Version.CURRENT)
+        );
     }
 
 }

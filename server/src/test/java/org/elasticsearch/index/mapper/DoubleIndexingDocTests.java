@@ -40,9 +40,9 @@ public class DoubleIndexingDocTests extends ESSingleNodeTestCase {
         Directory dir = newDirectory();
         IndexWriter writer = new IndexWriter(dir, newIndexWriterConfig(random(), Lucene.STANDARD_ANALYZER));
 
-        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject().startObject("_doc")
-                .startObject("properties").endObject()
-                .endObject().endObject());
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder().startObject().startObject("_doc").startObject("properties").endObject().endObject().endObject()
+        );
         IndexService index = createIndex("test");
         client().admin().indices().preparePutMapping("test").setSource(mapping, XContentType.JSON).get();
         MapperService mapperService = index.mapperService();
@@ -50,19 +50,29 @@ public class DoubleIndexingDocTests extends ESSingleNodeTestCase {
 
         QueryShardContext context = index.newQueryShardContext(0, null, () -> 0L, null);
 
-        ParsedDocument doc = mapper.parse(new SourceToParse("test", "1", BytesReference
-                .bytes(XContentFactory.jsonBuilder()
+        ParsedDocument doc = mapper.parse(
+            new SourceToParse(
+                "test",
+                "1",
+                BytesReference.bytes(
+                    XContentFactory.jsonBuilder()
                         .startObject()
                         .field("field1", "value1")
                         .field("field2", 1)
                         .field("field3", 1.1)
                         .field("field4", "2010-01-01")
-                        .startArray("field5").value(1).value(2).value(3).endArray()
-                        .endObject()),
-                XContentType.JSON));
+                        .startArray("field5")
+                        .value(1)
+                        .value(2)
+                        .value(3)
+                        .endArray()
+                        .endObject()
+                ),
+                XContentType.JSON
+            )
+        );
         assertNotNull(doc.dynamicMappingsUpdate());
-        client().admin().indices().preparePutMapping("test")
-            .setSource(doc.dynamicMappingsUpdate().toString(), XContentType.JSON).get();
+        client().admin().indices().preparePutMapping("test").setSource(doc.dynamicMappingsUpdate().toString(), XContentType.JSON).get();
 
         writer.addDocument(doc.rootDoc());
         writer.addDocument(doc.rootDoc());

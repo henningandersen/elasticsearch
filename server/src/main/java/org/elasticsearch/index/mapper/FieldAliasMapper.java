@@ -43,9 +43,7 @@ public final class FieldAliasMapper extends Mapper {
     private final String name;
     private final String path;
 
-    public FieldAliasMapper(String simpleName,
-                            String name,
-                            String path) {
+    public FieldAliasMapper(String simpleName, String name, String path) {
         super(simpleName);
         this.name = name;
         this.path = path;
@@ -68,8 +66,9 @@ public final class FieldAliasMapper extends Mapper {
     @Override
     public Mapper merge(Mapper mergeWith) {
         if (!(mergeWith instanceof FieldAliasMapper)) {
-            throw new IllegalArgumentException("Cannot merge a field alias mapping ["
-                + name() + "] with a mapping that is not for a field alias.");
+            throw new IllegalArgumentException(
+                "Cannot merge a field alias mapping [" + name() + "] with a mapping that is not for a field alias."
+            );
         }
         return mergeWith;
     }
@@ -86,16 +85,12 @@ public final class FieldAliasMapper extends Mapper {
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        return builder.startObject(simpleName())
-            .field("type", CONTENT_TYPE)
-            .field(Names.PATH, path)
-            .endObject();
+        return builder.startObject(simpleName()).field("type", CONTENT_TYPE).field(Names.PATH, path).endObject();
     }
 
     public static class TypeParser implements Mapper.TypeParser {
         @Override
-        public Mapper.Builder parse(String name, Map<String, Object> node, ParserContext parserContext)
-            throws MapperParsingException {
+        public Mapper.Builder parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
             FieldAliasMapper.Builder builder = new FieldAliasMapper.Builder(name);
             Object pathField = node.remove(Names.PATH);
             String path = XContentMapValues.nodeStringValue(pathField, null);

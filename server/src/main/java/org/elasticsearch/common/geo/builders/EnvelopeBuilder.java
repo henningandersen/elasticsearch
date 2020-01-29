@@ -141,7 +141,6 @@ public class EnvelopeBuilder extends ShapeBuilder<Rectangle, org.elasticsearch.g
             return false;
         }
         EnvelopeBuilder other = (EnvelopeBuilder) obj;
-        return Objects.equals(topLeft, other.topLeft) &&
-                Objects.equals(bottomRight, other.bottomRight);
+        return Objects.equals(topLeft, other.topLeft) && Objects.equals(bottomRight, other.bottomRight);
     }
 }

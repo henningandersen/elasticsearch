@@ -109,8 +109,7 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
         waitForActiveShards = ActiveShardCount.readFrom(in);
     }
 
-    public CreateIndexRequest() {
-    }
+    public CreateIndexRequest() {}
 
     /**
      * Constructs a new request to create an index with the specified name.
@@ -138,7 +137,7 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
 
     @Override
     public String[] indices() {
-        return new String[]{index};
+        return new String[] { index };
     }
 
     @Override
@@ -268,8 +267,7 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
         // wrap it in a type map if its not
         if (source.size() != 1 || !source.containsKey(type)) {
             source = Map.of(MapperService.SINGLE_MAPPING_NAME, source);
-        }
-        else if (MapperService.SINGLE_MAPPING_NAME.equals(type) == false) {
+        } else if (MapperService.SINGLE_MAPPING_NAME.equals(type) == false) {
             // if it has a different type name, then unwrap and rewrap with _doc
             source = Map.of(MapperService.SINGLE_MAPPING_NAME, source.get(type));
         }
@@ -322,15 +320,14 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
      */
     public CreateIndexRequest aliases(BytesReference source) {
         // EMPTY is safe here because we never call namedObject
-        try (XContentParser parser = XContentHelper
-                .createParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE, source)) {
-            //move to the first alias
+        try (XContentParser parser = XContentHelper.createParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE, source)) {
+            // move to the first alias
             parser.nextToken();
             while ((parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 alias(Alias.fromXContent(parser));
             }
             return this;
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw new ElasticsearchParseException("Failed to parse aliases", e);
         }
     }

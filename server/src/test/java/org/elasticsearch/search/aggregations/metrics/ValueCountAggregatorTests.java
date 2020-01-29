@@ -125,8 +125,7 @@ public class ValueCountAggregatorTests extends AggregatorTestCase {
     }
 
     public void testUnmappedMissingString() throws IOException {
-        ValueCountAggregationBuilder aggregationBuilder = new ValueCountAggregationBuilder("name", null)
-            .field("number").missing("🍌🍌🍌");
+        ValueCountAggregationBuilder aggregationBuilder = new ValueCountAggregationBuilder("name", null).field("number").missing("🍌🍌🍌");
 
         testCase(aggregationBuilder, new MatchAllDocsQuery(), iw -> {
             iw.addDocument(singleton(new NumericDocValuesField("unrelatedField", 7)));
@@ -139,8 +138,7 @@ public class ValueCountAggregatorTests extends AggregatorTestCase {
     }
 
     public void testUnmappedMissingNumber() throws IOException {
-        ValueCountAggregationBuilder aggregationBuilder = new ValueCountAggregationBuilder("name", null)
-            .field("number").missing(1234);
+        ValueCountAggregationBuilder aggregationBuilder = new ValueCountAggregationBuilder("name", null).field("number").missing(1234);
 
         testCase(aggregationBuilder, new MatchAllDocsQuery(), iw -> {
             iw.addDocument(singleton(new NumericDocValuesField("unrelatedField", 7)));
@@ -153,8 +151,8 @@ public class ValueCountAggregatorTests extends AggregatorTestCase {
     }
 
     public void testUnmappedMissingGeoPoint() throws IOException {
-        ValueCountAggregationBuilder aggregationBuilder = new ValueCountAggregationBuilder("name", null)
-            .field("number").missing(new GeoPoint(42.39561, -71.13051));
+        ValueCountAggregationBuilder aggregationBuilder = new ValueCountAggregationBuilder("name", null).field("number")
+            .missing(new GeoPoint(42.39561, -71.13051));
 
         testCase(aggregationBuilder, new MatchAllDocsQuery(), iw -> {
             iw.addDocument(singleton(new NumericDocValuesField("unrelatedField", 7)));
@@ -174,7 +172,7 @@ public class ValueCountAggregatorTests extends AggregatorTestCase {
         MappedFieldType fieldType = new RangeFieldMapper.Builder(fieldName, rangeType).fieldType();
         fieldType.setName(fieldName);
         final ValueCountAggregationBuilder aggregationBuilder = new ValueCountAggregationBuilder("_name", null).field(fieldName);
-        testCase(aggregationBuilder,  new MatchAllDocsQuery(), iw -> {
+        testCase(aggregationBuilder, new MatchAllDocsQuery(), iw -> {
             iw.addDocument(singleton(new BinaryDocValuesField(fieldName, rangeType.encodeRanges(singleton(range1)))));
             iw.addDocument(singleton(new BinaryDocValuesField(fieldName, rangeType.encodeRanges(singleton(range1)))));
             iw.addDocument(singleton(new BinaryDocValuesField(fieldName, rangeType.encodeRanges(singleton(range2)))));
@@ -185,10 +183,12 @@ public class ValueCountAggregatorTests extends AggregatorTestCase {
         }, fieldType);
     }
 
-    private void testCase(Query query,
-                          ValueType valueType,
-                          CheckedConsumer<RandomIndexWriter, IOException> indexer,
-                          Consumer<InternalValueCount> verify) throws IOException {
+    private void testCase(
+        Query query,
+        ValueType valueType,
+        CheckedConsumer<RandomIndexWriter, IOException> indexer,
+        Consumer<InternalValueCount> verify
+    ) throws IOException {
         MappedFieldType fieldType = createMappedFieldType(valueType);
         fieldType.setName(FIELD_NAME);
         fieldType.setHasDocValues(true);
@@ -200,9 +200,13 @@ public class ValueCountAggregatorTests extends AggregatorTestCase {
 
     }
 
-    private void testCase(ValueCountAggregationBuilder aggregationBuilder, Query query,
-                          CheckedConsumer<RandomIndexWriter, IOException> indexer,
-                          Consumer<InternalValueCount> verify, MappedFieldType fieldType) throws IOException {
+    private void testCase(
+        ValueCountAggregationBuilder aggregationBuilder,
+        Query query,
+        CheckedConsumer<RandomIndexWriter, IOException> indexer,
+        Consumer<InternalValueCount> verify,
+        MappedFieldType fieldType
+    ) throws IOException {
         try (Directory directory = newDirectory()) {
             try (RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory)) {
                 indexer.accept(indexWriter);

@@ -38,8 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public abstract class AbstractRareTermsAggregator<T extends ValuesSource,
-    U extends IncludeExclude.Filter, V> extends DeferableBucketAggregator {
+public abstract class AbstractRareTermsAggregator<T extends ValuesSource, U extends IncludeExclude.Filter, V> extends
+    DeferableBucketAggregator {
 
     static final BucketOrder ORDER = BucketOrder.compound(BucketOrder.count(true), BucketOrder.key(true)); // sort by count ascending
 
@@ -53,10 +53,20 @@ public abstract class AbstractRareTermsAggregator<T extends ValuesSource,
     LeafBucketCollector subCollectors;
     final SetBackedScalingCuckooFilter filter;
 
-    AbstractRareTermsAggregator(String name, AggregatorFactories factories, SearchContext context,
-                                Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-                                Map<String, Object> metaData, long maxDocCount, double precision,
-                                DocValueFormat format, T valuesSource, U includeExclude) throws IOException {
+    AbstractRareTermsAggregator(
+        String name,
+        AggregatorFactories factories,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        long maxDocCount,
+        double precision,
+        DocValueFormat format,
+        T valuesSource,
+        U includeExclude
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData);
 
         // We seed the rng with the ShardID so results are deterministic and don't change randomly
@@ -79,9 +89,16 @@ public abstract class AbstractRareTermsAggregator<T extends ValuesSource,
              * But the RareTerms agg _must_ execute in breadth first since it relies on
              * deferring execution, so we just have to throw up our hands and refuse
              */
-            throw new IllegalStateException("RareTerms agg [" + name() + "] is the child of the nested agg [" + nestedAgg
-                + "], and also has a scoring child agg [" + scoringAgg + "].  This combination is not supported because " +
-                "it requires executing in [depth_first] mode, which the RareTerms agg cannot do.");
+            throw new IllegalStateException(
+                "RareTerms agg ["
+                    + name()
+                    + "] is the child of the nested agg ["
+                    + nestedAgg
+                    + "], and also has a scoring child agg ["
+                    + scoringAgg
+                    + "].  This combination is not supported because "
+                    + "it requires executing in [depth_first] mode, which the RareTerms agg cannot do."
+            );
         }
     }
 

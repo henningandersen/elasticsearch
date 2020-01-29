@@ -46,6 +46,7 @@ public class TermsValuesSourceBuilder extends CompositeValuesSourceBuilder<Terms
         PARSER = new ObjectParser<>(TermsValuesSourceBuilder.TYPE);
         CompositeValuesSourceParserHelper.declareValuesSourceFields(PARSER, null);
     }
+
     static TermsValuesSourceBuilder parse(String name, XContentParser parser) throws IOException {
         return PARSER.parse(parser, new TermsValuesSourceBuilder(name), null);
     }

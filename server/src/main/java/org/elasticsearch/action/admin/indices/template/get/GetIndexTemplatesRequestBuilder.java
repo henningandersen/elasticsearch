@@ -22,9 +22,9 @@ import org.elasticsearch.action.support.master.MasterNodeReadOperationRequestBui
 import org.elasticsearch.client.ElasticsearchClient;
 
 public class GetIndexTemplatesRequestBuilder extends MasterNodeReadOperationRequestBuilder<
-        GetIndexTemplatesRequest,
-        GetIndexTemplatesResponse,
-        GetIndexTemplatesRequestBuilder> {
+    GetIndexTemplatesRequest,
+    GetIndexTemplatesResponse,
+    GetIndexTemplatesRequestBuilder> {
 
     public GetIndexTemplatesRequestBuilder(ElasticsearchClient client, GetIndexTemplatesAction action) {
         super(client, action, new GetIndexTemplatesRequest());
@@ -34,4 +34,3 @@ public class GetIndexTemplatesRequestBuilder extends MasterNodeReadOperationRequ
         super(client, action, new GetIndexTemplatesRequest(names));
     }
 }
-

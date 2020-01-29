@@ -33,8 +33,9 @@ public class ShardStateIT extends ESIntegTestCase {
 
     public void testPrimaryFailureIncreasesTerm() throws Exception {
         internalCluster().ensureAtLeastNumDataNodes(2);
-        prepareCreate("test").setSettings(Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 2)
-            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)).get();
+        prepareCreate("test").setSettings(
+            Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 2).put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
+        ).get();
         ensureGreen();
         assertPrimaryTerms(1, 1);
 
@@ -51,8 +52,9 @@ public class ShardStateIT extends ESIntegTestCase {
 
         logger.info("--> waiting for a yellow index");
         // we can't use ensureYellow since that one is just as happy with a GREEN status.
-        assertBusy(() ->
-            assertThat(client().admin().cluster().prepareHealth("test").get().getStatus(), equalTo(ClusterHealthStatus.YELLOW)));
+        assertBusy(
+            () -> assertThat(client().admin().cluster().prepareHealth("test").get().getStatus(), equalTo(ClusterHealthStatus.YELLOW))
+        );
 
         final long term0 = shard == 0 ? 2 : 1;
         final long term1 = shard == 1 ? 2 : 1;
@@ -75,8 +77,11 @@ public class ShardStateIT extends ESIntegTestCase {
             IndexService indexService = indicesService.indexService(metaData.getIndex());
             if (indexService != null) {
                 for (IndexShard shard : indexService) {
-                    assertThat("term mismatch for shard " + shard.shardId(),
-                        shard.getPendingPrimaryTerm(), equalTo(metaData.primaryTerm(shard.shardId().id())));
+                    assertThat(
+                        "term mismatch for shard " + shard.shardId(),
+                        shard.getPendingPrimaryTerm(),
+                        equalTo(metaData.primaryTerm(shard.shardId().id()))
+                    );
                 }
             }
         }

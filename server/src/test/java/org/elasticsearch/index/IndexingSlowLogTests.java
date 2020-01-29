@@ -51,32 +51,45 @@ import static org.hamcrest.Matchers.startsWith;
 public class IndexingSlowLogTests extends ESTestCase {
 
     public void testSlowLogMessageHasJsonFields() throws IOException {
-        BytesReference source = BytesReference.bytes(JsonXContent.contentBuilder()
-            .startObject().field("foo", "bar").endObject());
-        ParsedDocument pd = new ParsedDocument(new NumericDocValuesField("version", 1),
-            SeqNoFieldMapper.SequenceIDFields.emptySeqID(), "id",
-            "routingValue", null, source, XContentType.JSON, null);
+        BytesReference source = BytesReference.bytes(JsonXContent.contentBuilder().startObject().field("foo", "bar").endObject());
+        ParsedDocument pd = new ParsedDocument(
+            new NumericDocValuesField("version", 1),
+            SeqNoFieldMapper.SequenceIDFields.emptySeqID(),
+            "id",
+            "routingValue",
+            null,
+            source,
+            XContentType.JSON,
+            null
+        );
         Index index = new Index("foo", "123");
         // Turning off document logging doesn't log source[]
-        ESLogMessage p =  IndexingSlowLogMessage.of(index, pd, 10, true, 0);
+        ESLogMessage p = IndexingSlowLogMessage.of(index, pd, 10, true, 0);
 
-        assertThat(p.get("message"),equalTo("[foo/123]"));
-        assertThat(p.get("took"),equalTo("10nanos"));
-        assertThat(p.get("took_millis"),equalTo("0"));
-        assertThat(p.get("id"),equalTo("id"));
-        assertThat(p.get("routing"),equalTo("routingValue"));
+        assertThat(p.get("message"), equalTo("[foo/123]"));
+        assertThat(p.get("took"), equalTo("10nanos"));
+        assertThat(p.get("took_millis"), equalTo("0"));
+        assertThat(p.get("id"), equalTo("id"));
+        assertThat(p.get("routing"), equalTo("routingValue"));
         assertThat(p.get("source"), is(emptyOrNullString()));
 
         // Turning on document logging logs the whole thing
-        p =  IndexingSlowLogMessage.of(index, pd, 10, true, Integer.MAX_VALUE);
+        p = IndexingSlowLogMessage.of(index, pd, 10, true, Integer.MAX_VALUE);
         assertThat(p.get("source"), containsString("{\\\"foo\\\":\\\"bar\\\"}"));
     }
 
     public void testSlowLogParsedDocumentPrinterSourceToLog() throws IOException {
-        BytesReference source = BytesReference.bytes(JsonXContent.contentBuilder()
-            .startObject().field("foo", "bar").endObject());
-        ParsedDocument pd = new ParsedDocument(new NumericDocValuesField("version", 1),
-            SeqNoFieldMapper.SequenceIDFields.emptySeqID(), "id", null, null, source, XContentType.JSON, null);
+        BytesReference source = BytesReference.bytes(JsonXContent.contentBuilder().startObject().field("foo", "bar").endObject());
+        ParsedDocument pd = new ParsedDocument(
+            new NumericDocValuesField("version", 1),
+            SeqNoFieldMapper.SequenceIDFields.emptySeqID(),
+            "id",
+            null,
+            null,
+            source,
+            XContentType.JSON,
+            null
+        );
         Index index = new Index("foo", "123");
         // Turning off document logging doesn't log source[]
         ESLogMessage p = IndexingSlowLogMessage.of(index, pd, 10, true, 0);
@@ -97,49 +110,77 @@ public class IndexingSlowLogTests extends ESTestCase {
 
         // Throwing a error if source cannot be converted
         source = new BytesArray("invalid");
-        ParsedDocument doc = new ParsedDocument(new NumericDocValuesField("version", 1),
-            SeqNoFieldMapper.SequenceIDFields.emptySeqID(), "id", null, null, source, XContentType.JSON, null);
+        ParsedDocument doc = new ParsedDocument(
+            new NumericDocValuesField("version", 1),
+            SeqNoFieldMapper.SequenceIDFields.emptySeqID(),
+            "id",
+            null,
+            null,
+            source,
+            XContentType.JSON,
+            null
+        );
 
-        final UncheckedIOException e = expectThrows(UncheckedIOException.class,
-            () -> IndexingSlowLogMessage.of(index, doc, 10, true, 3));
-        assertThat(e, hasToString(containsString("_failed_to_convert_[Unrecognized token 'invalid':"
-            + " was expecting ('true', 'false' or 'null')\\n"
-            + " at [Source: org.elasticsearch.common.bytes.AbstractBytesReference$MarkSupportingStreamInputWrapper")));
+        final UncheckedIOException e = expectThrows(UncheckedIOException.class, () -> IndexingSlowLogMessage.of(index, doc, 10, true, 3));
+        assertThat(
+            e,
+            hasToString(
+                containsString(
+                    "_failed_to_convert_[Unrecognized token 'invalid':"
+                        + " was expecting ('true', 'false' or 'null')\\n"
+                        + " at [Source: org.elasticsearch.common.bytes.AbstractBytesReference$MarkSupportingStreamInputWrapper"
+                )
+            )
+        );
         assertNotNull(e.getCause());
         assertThat(e.getCause(), instanceOf(JsonParseException.class));
-        assertThat(e.getCause(), hasToString(containsString("Unrecognized token 'invalid':"
-                + " was expecting ('true', 'false' or 'null')\n"
-                + " at [Source: org.elasticsearch.common.bytes.AbstractBytesReference$MarkSupportingStreamInputWrapper")));
+        assertThat(
+            e.getCause(),
+            hasToString(
+                containsString(
+                    "Unrecognized token 'invalid':"
+                        + " was expecting ('true', 'false' or 'null')\n"
+                        + " at [Source: org.elasticsearch.common.bytes.AbstractBytesReference$MarkSupportingStreamInputWrapper"
+                )
+            )
+        );
     }
 
     public void testReformatSetting() {
-        IndexMetaData metaData = newIndexMeta("index", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_REFORMAT_SETTING.getKey(), false)
-            .build());
+        IndexMetaData metaData = newIndexMeta(
+            "index",
+            Settings.builder()
+                .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+                .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_REFORMAT_SETTING.getKey(), false)
+                .build()
+        );
         IndexSettings settings = new IndexSettings(metaData, Settings.EMPTY);
         IndexingSlowLog log = new IndexingSlowLog(settings);
         assertFalse(log.isReformat());
-        settings.updateIndexMetaData(newIndexMeta("index",
-            Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_REFORMAT_SETTING.getKey(), "true").build()));
+        settings.updateIndexMetaData(
+            newIndexMeta("index", Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_REFORMAT_SETTING.getKey(), "true").build())
+        );
         assertTrue(log.isReformat());
 
-        settings.updateIndexMetaData(newIndexMeta("index",
-            Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_REFORMAT_SETTING.getKey(), "false").build()));
+        settings.updateIndexMetaData(
+            newIndexMeta("index", Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_REFORMAT_SETTING.getKey(), "false").build())
+        );
         assertFalse(log.isReformat());
 
         settings.updateIndexMetaData(newIndexMeta("index", Settings.EMPTY));
         assertTrue(log.isReformat());
 
-        metaData = newIndexMeta("index", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .build());
+        metaData = newIndexMeta("index", Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT).build());
         settings = new IndexSettings(metaData, Settings.EMPTY);
         log = new IndexingSlowLog(settings);
         assertTrue(log.isReformat());
         try {
-            settings.updateIndexMetaData(newIndexMeta("index",
-                Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_REFORMAT_SETTING.getKey(), "NOT A BOOLEAN").build()));
+            settings.updateIndexMetaData(
+                newIndexMeta(
+                    "index",
+                    Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_REFORMAT_SETTING.getKey(), "NOT A BOOLEAN").build()
+                )
+            );
             fail();
         } catch (IllegalArgumentException ex) {
             final String expected = "illegal value can't update [index.indexing.slowlog.reformat] from [true] to [NOT A BOOLEAN]";
@@ -147,47 +188,53 @@ public class IndexingSlowLogTests extends ESTestCase {
             assertNotNull(ex.getCause());
             assertThat(ex.getCause(), instanceOf(IllegalArgumentException.class));
             final IllegalArgumentException cause = (IllegalArgumentException) ex.getCause();
-            assertThat(cause,
-                hasToString(containsString("Failed to parse value [NOT A BOOLEAN] as only [true] or [false] are allowed.")));
+            assertThat(cause, hasToString(containsString("Failed to parse value [NOT A BOOLEAN] as only [true] or [false] are allowed.")));
         }
         assertTrue(log.isReformat());
     }
 
     public void testLevelSetting() {
         SlowLogLevel level = randomFrom(SlowLogLevel.values());
-        IndexMetaData metaData = newIndexMeta("index", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), level)
-            .build());
+        IndexMetaData metaData = newIndexMeta(
+            "index",
+            Settings.builder()
+                .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+                .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), level)
+                .build()
+        );
         IndexSettings settings = new IndexSettings(metaData, Settings.EMPTY);
         IndexingSlowLog log = new IndexingSlowLog(settings);
         assertEquals(level, log.getLevel());
         level = randomFrom(SlowLogLevel.values());
-        settings.updateIndexMetaData(newIndexMeta("index",
-            Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), level).build()));
+        settings.updateIndexMetaData(
+            newIndexMeta("index", Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), level).build())
+        );
         assertEquals(level, log.getLevel());
         level = randomFrom(SlowLogLevel.values());
-        settings.updateIndexMetaData(newIndexMeta("index",
-            Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), level).build()));
+        settings.updateIndexMetaData(
+            newIndexMeta("index", Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), level).build())
+        );
         assertEquals(level, log.getLevel());
 
-
-        settings.updateIndexMetaData(newIndexMeta("index",
-            Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), level).build()));
+        settings.updateIndexMetaData(
+            newIndexMeta("index", Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), level).build())
+        );
         assertEquals(level, log.getLevel());
 
         settings.updateIndexMetaData(newIndexMeta("index", Settings.EMPTY));
         assertEquals(SlowLogLevel.TRACE, log.getLevel());
 
-        metaData = newIndexMeta("index", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .build());
+        metaData = newIndexMeta("index", Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT).build());
         settings = new IndexSettings(metaData, Settings.EMPTY);
         log = new IndexingSlowLog(settings);
         assertTrue(log.isReformat());
         try {
-            settings.updateIndexMetaData(newIndexMeta("index",
-                Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), "NOT A LEVEL").build()));
+            settings.updateIndexMetaData(
+                newIndexMeta(
+                    "index",
+                    Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), "NOT A LEVEL").build()
+                )
+            );
             fail();
         } catch (IllegalArgumentException ex) {
             final String expected = "illegal value can't update [index.indexing.slowlog.level] from [TRACE] to [NOT A LEVEL]";
@@ -199,19 +246,25 @@ public class IndexingSlowLogTests extends ESTestCase {
         }
         assertEquals(SlowLogLevel.TRACE, log.getLevel());
 
-        metaData = newIndexMeta("index", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), SlowLogLevel.DEBUG)
-            .build());
+        metaData = newIndexMeta(
+            "index",
+            Settings.builder()
+                .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+                .put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())
+                .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), SlowLogLevel.DEBUG)
+                .build()
+        );
         settings = new IndexSettings(metaData, Settings.EMPTY);
         IndexingSlowLog debugLog = new IndexingSlowLog(settings);
 
-        metaData = newIndexMeta("index", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), SlowLogLevel.INFO)
-            .build());
+        metaData = newIndexMeta(
+            "index",
+            Settings.builder()
+                .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+                .put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())
+                .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_LEVEL_SETTING.getKey(), SlowLogLevel.INFO)
+                .build()
+        );
         settings = new IndexSettings(metaData, Settings.EMPTY);
         IndexingSlowLog infoLog = new IndexingSlowLog(settings);
 
@@ -220,13 +273,16 @@ public class IndexingSlowLogTests extends ESTestCase {
     }
 
     public void testSetLevels() {
-        IndexMetaData metaData = newIndexMeta("index", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_TRACE_SETTING.getKey(), "100ms")
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_DEBUG_SETTING.getKey(), "200ms")
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_INFO_SETTING.getKey(), "300ms")
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_WARN_SETTING.getKey(), "400ms")
-            .build());
+        IndexMetaData metaData = newIndexMeta(
+            "index",
+            Settings.builder()
+                .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+                .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_TRACE_SETTING.getKey(), "100ms")
+                .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_DEBUG_SETTING.getKey(), "200ms")
+                .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_INFO_SETTING.getKey(), "300ms")
+                .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_WARN_SETTING.getKey(), "400ms")
+                .build()
+        );
         IndexSettings settings = new IndexSettings(metaData, Settings.EMPTY);
         IndexingSlowLog log = new IndexingSlowLog(settings);
         assertEquals(TimeValue.timeValueMillis(100).nanos(), log.getIndexTraceThreshold());
@@ -234,21 +290,24 @@ public class IndexingSlowLogTests extends ESTestCase {
         assertEquals(TimeValue.timeValueMillis(300).nanos(), log.getIndexInfoThreshold());
         assertEquals(TimeValue.timeValueMillis(400).nanos(), log.getIndexWarnThreshold());
 
-        settings.updateIndexMetaData(newIndexMeta("index",
-            Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_TRACE_SETTING.getKey(), "120ms")
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_DEBUG_SETTING.getKey(), "220ms")
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_INFO_SETTING.getKey(), "320ms")
-            .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_WARN_SETTING.getKey(), "420ms").build()));
-
+        settings.updateIndexMetaData(
+            newIndexMeta(
+                "index",
+                Settings.builder()
+                    .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_TRACE_SETTING.getKey(), "120ms")
+                    .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_DEBUG_SETTING.getKey(), "220ms")
+                    .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_INFO_SETTING.getKey(), "320ms")
+                    .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_WARN_SETTING.getKey(), "420ms")
+                    .build()
+            )
+        );
 
         assertEquals(TimeValue.timeValueMillis(120).nanos(), log.getIndexTraceThreshold());
         assertEquals(TimeValue.timeValueMillis(220).nanos(), log.getIndexDebugThreshold());
         assertEquals(TimeValue.timeValueMillis(320).nanos(), log.getIndexInfoThreshold());
         assertEquals(TimeValue.timeValueMillis(420).nanos(), log.getIndexWarnThreshold());
 
-        metaData = newIndexMeta("index", Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .build());
+        metaData = newIndexMeta("index", Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT).build());
         settings.updateIndexMetaData(metaData);
         assertEquals(TimeValue.timeValueMillis(-1).nanos(), log.getIndexTraceThreshold());
         assertEquals(TimeValue.timeValueMillis(-1).nanos(), log.getIndexDebugThreshold());
@@ -263,36 +322,56 @@ public class IndexingSlowLogTests extends ESTestCase {
         assertEquals(TimeValue.timeValueMillis(-1).nanos(), log.getIndexInfoThreshold());
         assertEquals(TimeValue.timeValueMillis(-1).nanos(), log.getIndexWarnThreshold());
         try {
-            settings.updateIndexMetaData(newIndexMeta("index",
-                Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_TRACE_SETTING.getKey(), "NOT A TIME VALUE")
-                    .build()));
+            settings.updateIndexMetaData(
+                newIndexMeta(
+                    "index",
+                    Settings.builder()
+                        .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_TRACE_SETTING.getKey(), "NOT A TIME VALUE")
+                        .build()
+                )
+            );
             fail();
         } catch (IllegalArgumentException ex) {
             assertTimeValueException(ex, "index.indexing.slowlog.threshold.index.trace");
         }
 
         try {
-            settings.updateIndexMetaData(newIndexMeta("index",
-                Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_DEBUG_SETTING.getKey(), "NOT A TIME VALUE")
-                    .build()));
+            settings.updateIndexMetaData(
+                newIndexMeta(
+                    "index",
+                    Settings.builder()
+                        .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_DEBUG_SETTING.getKey(), "NOT A TIME VALUE")
+                        .build()
+                )
+            );
             fail();
         } catch (IllegalArgumentException ex) {
             assertTimeValueException(ex, "index.indexing.slowlog.threshold.index.debug");
         }
 
         try {
-            settings.updateIndexMetaData(newIndexMeta("index",
-                Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_INFO_SETTING.getKey(), "NOT A TIME VALUE")
-                    .build()));
+            settings.updateIndexMetaData(
+                newIndexMeta(
+                    "index",
+                    Settings.builder()
+                        .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_INFO_SETTING.getKey(), "NOT A TIME VALUE")
+                        .build()
+                )
+            );
             fail();
         } catch (IllegalArgumentException ex) {
             assertTimeValueException(ex, "index.indexing.slowlog.threshold.index.info");
         }
 
         try {
-            settings.updateIndexMetaData(newIndexMeta("index",
-                Settings.builder().put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_WARN_SETTING.getKey(), "NOT A TIME VALUE")
-                    .build()));
+            settings.updateIndexMetaData(
+                newIndexMeta(
+                    "index",
+                    Settings.builder()
+                        .put(IndexingSlowLog.INDEX_INDEXING_SLOWLOG_THRESHOLD_INDEX_WARN_SETTING.getKey(), "NOT A TIME VALUE")
+                        .build()
+                )
+            );
             fail();
         } catch (IllegalArgumentException ex) {
             assertTimeValueException(ex, "index.indexing.slowlog.threshold.index.warn");
@@ -305,13 +384,15 @@ public class IndexingSlowLogTests extends ESTestCase {
         assertNotNull(e.getCause());
         assertThat(e.getCause(), instanceOf(IllegalArgumentException.class));
         final IllegalArgumentException cause = (IllegalArgumentException) e.getCause();
-        final String causeExpected =
-                "failed to parse setting [" + key + "] with value [NOT A TIME VALUE] as a time value: unit is missing or unrecognized";
+        final String causeExpected = "failed to parse setting ["
+            + key
+            + "] with value [NOT A TIME VALUE] as a time value: unit is missing or unrecognized";
         assertThat(cause, hasToString(containsString(causeExpected)));
     }
 
     private IndexMetaData newIndexMeta(String name, Settings indexSettings) {
-        Settings build = Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+        Settings build = Settings.builder()
+            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
             .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
             .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
             .put(indexSettings)

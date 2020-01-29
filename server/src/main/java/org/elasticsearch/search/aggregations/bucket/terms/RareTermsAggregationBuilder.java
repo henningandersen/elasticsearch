@@ -54,11 +54,19 @@ public class RareTermsAggregationBuilder extends ValuesSourceAggregationBuilder<
         ValuesSourceParserHelper.declareAnyFields(PARSER, true, true);
         PARSER.declareLong(RareTermsAggregationBuilder::maxDocCount, MAX_DOC_COUNT_FIELD_NAME);
 
-        PARSER.declareField((b, v) -> b.includeExclude(IncludeExclude.merge(v, b.includeExclude())),
-            IncludeExclude::parseInclude, IncludeExclude.INCLUDE_FIELD, ObjectParser.ValueType.OBJECT_ARRAY_OR_STRING);
+        PARSER.declareField(
+            (b, v) -> b.includeExclude(IncludeExclude.merge(v, b.includeExclude())),
+            IncludeExclude::parseInclude,
+            IncludeExclude.INCLUDE_FIELD,
+            ObjectParser.ValueType.OBJECT_ARRAY_OR_STRING
+        );
 
-        PARSER.declareField((b, v) -> b.includeExclude(IncludeExclude.merge(b.includeExclude(), v)),
-            IncludeExclude::parseExclude, IncludeExclude.EXCLUDE_FIELD, ObjectParser.ValueType.STRING_ARRAY);
+        PARSER.declareField(
+            (b, v) -> b.includeExclude(IncludeExclude.merge(b.includeExclude(), v)),
+            IncludeExclude::parseExclude,
+            IncludeExclude.EXCLUDE_FIELD,
+            ObjectParser.ValueType.STRING_ARRAY
+        );
 
         PARSER.declareDouble(RareTermsAggregationBuilder::setPrecision, PRECISION);
     }
@@ -112,13 +120,20 @@ public class RareTermsAggregationBuilder extends ValuesSourceAggregationBuilder<
     public RareTermsAggregationBuilder maxDocCount(long maxDocCount) {
         if (maxDocCount <= 0) {
             throw new IllegalArgumentException(
-                "[" + MAX_DOC_COUNT_FIELD_NAME.getPreferredName() + "] must be greater than 0. Found ["
-                    + maxDocCount + "] in [" + name + "]");
+                "["
+                    + MAX_DOC_COUNT_FIELD_NAME.getPreferredName()
+                    + "] must be greater than 0. Found ["
+                    + maxDocCount
+                    + "] in ["
+                    + name
+                    + "]"
+            );
         }
-        //TODO review: what size cap should we put on this?
+        // TODO review: what size cap should we put on this?
         if (maxDocCount > MAX_MAX_DOC_COUNT) {
-            throw new IllegalArgumentException("[" + MAX_DOC_COUNT_FIELD_NAME.getPreferredName() + "] must be smaller" +
-                "than " + MAX_MAX_DOC_COUNT + "in [" + name + "]");
+            throw new IllegalArgumentException(
+                "[" + MAX_DOC_COUNT_FIELD_NAME.getPreferredName() + "] must be smaller" + "than " + MAX_MAX_DOC_COUNT + "in [" + name + "]"
+            );
         }
         this.maxDocCount = (int) maxDocCount;
         return this;
@@ -162,12 +177,23 @@ public class RareTermsAggregationBuilder extends ValuesSourceAggregationBuilder<
     }
 
     @Override
-    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(QueryShardContext queryShardContext,
-                                                                     ValuesSourceConfig<ValuesSource> config,
-                                                                     AggregatorFactory parent,
-                                                                     Builder subFactoriesBuilder) throws IOException {
-        return new RareTermsAggregatorFactory(name, config, includeExclude,
-            queryShardContext, parent, subFactoriesBuilder, metaData, maxDocCount, precision);
+    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
+        return new RareTermsAggregatorFactory(
+            name,
+            config,
+            includeExclude,
+            queryShardContext,
+            parent,
+            subFactoriesBuilder,
+            metaData,
+            maxDocCount,
+            precision
+        );
     }
 
     @Override

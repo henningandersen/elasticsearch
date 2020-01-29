@@ -84,10 +84,12 @@ public class MissingAggregationBuilder extends ValuesSourceAggregationBuilder<Va
     }
 
     @Override
-    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(QueryShardContext queryShardContext,
-                                                                        ValuesSourceConfig<ValuesSource> config,
-                                                                        AggregatorFactory parent,
-                                                                        Builder subFactoriesBuilder) throws IOException {
+    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         return new MissingAggregatorFactory(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 
@@ -95,7 +97,7 @@ public class MissingAggregationBuilder extends ValuesSourceAggregationBuilder<Va
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         return builder;
     }
-    
+
     @Override
     public String getType() {
         return NAME;

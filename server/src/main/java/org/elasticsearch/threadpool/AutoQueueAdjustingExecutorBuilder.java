@@ -48,25 +48,35 @@ public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<Aut
     private final Setting<TimeValue> targetedResponseTimeSetting;
     private final Setting<Integer> frameSizeSetting;
 
-    AutoQueueAdjustingExecutorBuilder(final Settings settings, final String name, final int size,
-                                      final int initialQueueSize, final int minQueueSize,
-                                      final int maxQueueSize, final int frameSize) {
+    AutoQueueAdjustingExecutorBuilder(
+        final Settings settings,
+        final String name,
+        final int size,
+        final int initialQueueSize,
+        final int minQueueSize,
+        final int maxQueueSize,
+        final int frameSize
+    ) {
         super(name);
         final String prefix = "thread_pool." + name;
         final String sizeKey = settingsKey(prefix, "size");
-        this.sizeSetting =
-                new Setting<>(
-                        sizeKey,
-                        s -> Integer.toString(size),
-                        s -> Setting.parseInt(s, 1, applyHardSizeLimit(settings, name), sizeKey),
-                        Setting.Property.NodeScope);
+        this.sizeSetting = new Setting<>(
+            sizeKey,
+            s -> Integer.toString(size),
+            s -> Setting.parseInt(s, 1, applyHardSizeLimit(settings, name), sizeKey),
+            Setting.Property.NodeScope
+        );
         final String queueSizeKey = settingsKey(prefix, "queue_size");
         final String minSizeKey = settingsKey(prefix, "min_queue_size");
         final String maxSizeKey = settingsKey(prefix, "max_queue_size");
         final String frameSizeKey = settingsKey(prefix, "auto_queue_frame_size");
         final String targetedResponseTimeKey = settingsKey(prefix, "target_response_time");
-        this.targetedResponseTimeSetting = Setting.timeSetting(targetedResponseTimeKey, TimeValue.timeValueSeconds(1),
-                TimeValue.timeValueMillis(10), Setting.Property.NodeScope);
+        this.targetedResponseTimeSetting = Setting.timeSetting(
+            targetedResponseTimeKey,
+            TimeValue.timeValueSeconds(1),
+            TimeValue.timeValueMillis(10),
+            Setting.Property.NodeScope
+        );
         this.queueSizeSetting = Setting.intSetting(queueSizeKey, initialQueueSize, Setting.Property.NodeScope);
         // These temp settings are used to validate the min and max settings below
         Setting<Integer> tempMaxQueueSizeSetting = Setting.intSetting(maxSizeKey, maxQueueSize, Setting.Property.NodeScope);
@@ -86,8 +96,14 @@ public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<Aut
                 @Override
                 public void validate(final Integer value, final Map<Setting<?>, Object> settings) {
                     if (value > (int) settings.get(tempMaxQueueSizeSetting)) {
-                        throw new IllegalArgumentException("Failed to parse value [" + value + "] for setting [" + minSizeKey
-                            + "] must be <= " + settings.get(tempMaxQueueSizeSetting));
+                        throw new IllegalArgumentException(
+                            "Failed to parse value ["
+                                + value
+                                + "] for setting ["
+                                + minSizeKey
+                                + "] must be <= "
+                                + settings.get(tempMaxQueueSizeSetting)
+                        );
                     }
                 }
 
@@ -98,41 +114,55 @@ public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<Aut
                 }
 
             },
-            Setting.Property.NodeScope);
+            Setting.Property.NodeScope
+        );
         this.maxQueueSizeSetting = new Setting<>(
-                maxSizeKey,
-                Integer.toString(maxQueueSize),
-                s -> Setting.parseInt(s, 0, maxSizeKey),
-                new Setting.Validator<Integer>() {
+            maxSizeKey,
+            Integer.toString(maxQueueSize),
+            s -> Setting.parseInt(s, 0, maxSizeKey),
+            new Setting.Validator<Integer>() {
 
-                    @Override
-                    public void validate(Integer value) {
+                @Override
+                public void validate(Integer value) {
 
+                }
+
+                @Override
+                public void validate(final Integer value, final Map<Setting<?>, Object> settings) {
+                    if (value < (int) settings.get(tempMinQueueSizeSetting)) {
+                        throw new IllegalArgumentException(
+                            "Failed to parse value ["
+                                + value
+                                + "] for setting ["
+                                + minSizeKey
+                                + "] must be >= "
+                                + settings.get(tempMinQueueSizeSetting)
+                        );
                     }
+                }
 
-                    @Override
-                    public void validate(final Integer value, final Map<Setting<?>, Object> settings) {
-                        if (value < (int) settings.get(tempMinQueueSizeSetting)) {
-                            throw new IllegalArgumentException("Failed to parse value [" + value + "] for setting [" + minSizeKey
-                                + "] must be >= " + settings.get(tempMinQueueSizeSetting));
-                        }
-                    }
+                @Override
+                public Iterator<Setting<?>> settings() {
+                    final List<Setting<?>> settings = List.of(tempMinQueueSizeSetting);
+                    return settings.iterator();
+                }
 
-                    @Override
-                    public Iterator<Setting<?>> settings() {
-                        final List<Setting<?>> settings = List.of(tempMinQueueSizeSetting);
-                        return settings.iterator();
-                    }
-
-                },
-                Setting.Property.NodeScope);
+            },
+            Setting.Property.NodeScope
+        );
         this.frameSizeSetting = Setting.intSetting(frameSizeKey, frameSize, 100, Setting.Property.NodeScope);
     }
 
     @Override
     public List<Setting<?>> getRegisteredSettings() {
-        return Arrays.asList(sizeSetting, queueSizeSetting, minQueueSizeSetting,
-                maxQueueSizeSetting, frameSizeSetting, targetedResponseTimeSetting);
+        return Arrays.asList(
+            sizeSetting,
+            queueSizeSetting,
+            minQueueSizeSetting,
+            maxQueueSizeSetting,
+            frameSizeSetting,
+            targetedResponseTimeSetting
+        );
     }
 
     @Override
@@ -148,8 +178,7 @@ public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<Aut
     }
 
     @Override
-    ThreadPool.ExecutorHolder build(final AutoExecutorSettings settings,
-                                    final ThreadContext threadContext) {
+    ThreadPool.ExecutorHolder build(final AutoExecutorSettings settings, final ThreadContext threadContext) {
         int size = settings.size;
         int initialQueueSize = settings.initialQueueSize;
         int minQueueSize = settings.minQueueSize;
@@ -157,21 +186,26 @@ public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<Aut
         int frameSize = settings.frameSize;
         TimeValue targetedResponseTime = settings.targetedResponseTime;
         final ThreadFactory threadFactory = EsExecutors.daemonThreadFactory(EsExecutors.threadName(settings.nodeName, name()));
-        final ExecutorService executor =
-                EsExecutors.newAutoQueueFixed(
-                        settings.nodeName + "/" + name(),
-                        size,
-                        initialQueueSize,
-                        minQueueSize,
-                        maxQueueSize,
-                        frameSize,
-                        targetedResponseTime,
-                        threadFactory,
-                        threadContext);
+        final ExecutorService executor = EsExecutors.newAutoQueueFixed(
+            settings.nodeName + "/" + name(),
+            size,
+            initialQueueSize,
+            minQueueSize,
+            maxQueueSize,
+            frameSize,
+            targetedResponseTime,
+            threadFactory,
+            threadContext
+        );
         // TODO: in a subsequent change we hope to extend ThreadPool.Info to be more specific for the thread pool type
-        final ThreadPool.Info info =
-            new ThreadPool.Info(name(), ThreadPool.ThreadPoolType.FIXED_AUTO_QUEUE_SIZE,
-                    size, size, null, new SizeValue(initialQueueSize));
+        final ThreadPool.Info info = new ThreadPool.Info(
+            name(),
+            ThreadPool.ThreadPoolType.FIXED_AUTO_QUEUE_SIZE,
+            size,
+            size,
+            null,
+            new SizeValue(initialQueueSize)
+        );
         return new ThreadPool.ExecutorHolder(executor, info);
     }
 
@@ -182,7 +216,8 @@ public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<Aut
             "name [%s], size [%d], queue size [%s]",
             info.getName(),
             info.getMax(),
-            info.getQueueSize() == null ? "unbounded" : info.getQueueSize());
+            info.getQueueSize() == null ? "unbounded" : info.getQueueSize()
+        );
     }
 
     static final class AutoExecutorSettings extends ExecutorBuilder.ExecutorSettings {
@@ -194,9 +229,15 @@ public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<Aut
         final int frameSize;
         final TimeValue targetedResponseTime;
 
-        AutoExecutorSettings(final String nodeName, final int size, final int initialQueueSize,
-                             final int minQueueSize, final int maxQueueSize, final int frameSize,
-                             final TimeValue targetedResponseTime) {
+        AutoExecutorSettings(
+            final String nodeName,
+            final int size,
+            final int initialQueueSize,
+            final int minQueueSize,
+            final int maxQueueSize,
+            final int frameSize,
+            final TimeValue targetedResponseTime
+        ) {
             super(nodeName);
             this.size = size;
             this.initialQueueSize = initialQueueSize;

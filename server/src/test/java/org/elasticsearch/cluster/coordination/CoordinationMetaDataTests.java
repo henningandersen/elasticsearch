@@ -86,10 +86,15 @@ public class CoordinationMetaDataTests extends ESTestCase {
     public void testVotingConfigurationSerializationEqualsHashCode() {
         VotingConfiguration initialConfig = randomVotingConfig();
         // Note: the explicit cast of the CopyFunction is needed for some IDE (specifically Eclipse 4.8.0) to infer the right type
-        EqualsHashCodeTestUtils.checkEqualsAndHashCode(initialConfig,
-                (CopyFunction<VotingConfiguration>) orig -> ESTestCase.copyWriteable(orig,
-                        new NamedWriteableRegistry(Collections.emptyList()), VotingConfiguration::new),
-                cfg -> randomlyChangeVotingConfiguration(cfg));
+        EqualsHashCodeTestUtils.checkEqualsAndHashCode(
+            initialConfig,
+            (CopyFunction<VotingConfiguration>) orig -> ESTestCase.copyWriteable(
+                orig,
+                new NamedWriteableRegistry(Collections.emptyList()),
+                VotingConfiguration::new
+            ),
+            cfg -> randomlyChangeVotingConfiguration(cfg)
+        );
     }
 
     private static VotingConfiguration randomVotingConfig() {
@@ -99,10 +104,15 @@ public class CoordinationMetaDataTests extends ESTestCase {
     public void testVotingTombstoneSerializationEqualsHashCode() {
         VotingConfigExclusion tombstone = new VotingConfigExclusion(randomAlphaOfLength(10), randomAlphaOfLength(10));
         // Note: the explicit cast of the CopyFunction is needed for some IDE (specifically Eclipse 4.8.0) to infer the right type
-        EqualsHashCodeTestUtils.checkEqualsAndHashCode(tombstone,
-                (CopyFunction<VotingConfigExclusion>) orig -> ESTestCase.copyWriteable(orig,
-                        new NamedWriteableRegistry(Collections.emptyList()), VotingConfigExclusion::new),
-                orig -> randomlyChangeVotingTombstone(orig));
+        EqualsHashCodeTestUtils.checkEqualsAndHashCode(
+            tombstone,
+            (CopyFunction<VotingConfigExclusion>) orig -> ESTestCase.copyWriteable(
+                orig,
+                new NamedWriteableRegistry(Collections.emptyList()),
+                VotingConfigExclusion::new
+            ),
+            orig -> randomlyChangeVotingTombstone(orig)
+        );
     }
 
     public void testVotingTombstoneXContent() throws IOException {
@@ -151,12 +161,20 @@ public class CoordinationMetaDataTests extends ESTestCase {
     }
 
     public void testCoordinationMetaDataSerializationEqualsHashCode() {
-        CoordinationMetaData initialMetaData = new CoordinationMetaData(randomNonNegativeLong(), randomVotingConfig(), randomVotingConfig(),
-                randomVotingTombstones());
+        CoordinationMetaData initialMetaData = new CoordinationMetaData(
+            randomNonNegativeLong(),
+            randomVotingConfig(),
+            randomVotingConfig(),
+            randomVotingTombstones()
+        );
         // Note: the explicit cast of the CopyFunction is needed for some IDE (specifically Eclipse 4.8.0) to infer the right type
-        EqualsHashCodeTestUtils.checkEqualsAndHashCode(initialMetaData,
-                (CopyFunction<CoordinationMetaData>) orig -> ESTestCase.copyWriteable(orig,
-                        new NamedWriteableRegistry(Collections.emptyList()), CoordinationMetaData::new),
+        EqualsHashCodeTestUtils.checkEqualsAndHashCode(
+            initialMetaData,
+            (CopyFunction<CoordinationMetaData>) orig -> ESTestCase.copyWriteable(
+                orig,
+                new NamedWriteableRegistry(Collections.emptyList()),
+                CoordinationMetaData::new
+            ),
             meta -> {
                 CoordinationMetaData.Builder builder = CoordinationMetaData.builder(meta);
                 switch (randomInt(3)) {
@@ -178,12 +196,17 @@ public class CoordinationMetaDataTests extends ESTestCase {
                         break;
                 }
                 return builder.build();
-            });
+            }
+        );
     }
 
     public void testXContent() throws IOException {
-        CoordinationMetaData originalMeta = new CoordinationMetaData(randomNonNegativeLong(), randomVotingConfig(), randomVotingConfig(),
-                randomVotingTombstones());
+        CoordinationMetaData originalMeta = new CoordinationMetaData(
+            randomNonNegativeLong(),
+            randomVotingConfig(),
+            randomVotingConfig(),
+            randomVotingTombstones()
+        );
 
         final XContentBuilder builder = JsonXContent.contentBuilder();
         builder.startObject();

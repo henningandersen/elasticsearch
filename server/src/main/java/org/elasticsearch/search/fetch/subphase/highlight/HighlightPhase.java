@@ -50,11 +50,13 @@ public class HighlightPhase implements FetchSubPhase {
         hitExecute(context.shardTarget(), context.getQueryShardContext(), context.parsedQuery().query(), context.highlight(), hitContext);
     }
 
-    public void hitExecute(SearchShardTarget shardTarget,
-                           QueryShardContext context,
-                           Query query,
-                           SearchContextHighlight highlight,
-                           HitContext hitContext) {
+    public void hitExecute(
+        SearchShardTarget shardTarget,
+        QueryShardContext context,
+        Query query,
+        SearchContextHighlight highlight,
+        HitContext hitContext
+    ) {
         Map<String, HighlightField> highlightFields = new HashMap<>();
         for (SearchContextHighlight.Field field : highlight.fields()) {
             Collection<String> fieldNamesToHighlight;
@@ -67,8 +69,7 @@ public class HighlightPhase implements FetchSubPhase {
             if (highlight.forceSource(field)) {
                 SourceFieldMapper sourceFieldMapper = context.getMapperService().documentMapper().sourceMapper();
                 if (sourceFieldMapper.enabled() == false) {
-                    throw new IllegalArgumentException("source is forced for fields " +  fieldNamesToHighlight
-                        + " but _source is disabled");
+                    throw new IllegalArgumentException("source is forced for fields " + fieldNamesToHighlight + " but _source is disabled");
                 }
             }
 
@@ -88,8 +89,8 @@ public class HighlightPhase implements FetchSubPhase {
                 // If the field was explicitly given we assume that whoever issued the query knew
                 // what they were doing and try to highlight anyway.
                 if (fieldNameContainsWildcards) {
-                    if (fieldType.typeName().equals(TextFieldMapper.CONTENT_TYPE) == false &&
-                        fieldType.typeName().equals(KeywordFieldMapper.CONTENT_TYPE) == false) {
+                    if (fieldType.typeName().equals(TextFieldMapper.CONTENT_TYPE) == false
+                        && fieldType.typeName().equals(KeywordFieldMapper.CONTENT_TYPE) == false) {
                         continue;
                     }
                 }
@@ -99,16 +100,25 @@ public class HighlightPhase implements FetchSubPhase {
                 }
                 Highlighter highlighter = highlighters.get(highlighterType);
                 if (highlighter == null) {
-                    throw new IllegalArgumentException("unknown highlighter type [" + highlighterType
-                        + "] for the field [" + fieldName + "]");
+                    throw new IllegalArgumentException(
+                        "unknown highlighter type [" + highlighterType + "] for the field [" + fieldName + "]"
+                    );
                 }
 
                 Query highlightQuery = field.fieldOptions().highlightQuery();
                 if (highlightQuery == null) {
                     highlightQuery = query;
                 }
-                HighlighterContext highlighterContext = new HighlighterContext(fieldType.name(),
-                    field, fieldType, shardTarget, context, highlight, hitContext, highlightQuery);
+                HighlighterContext highlighterContext = new HighlighterContext(
+                    fieldType.name(),
+                    field,
+                    fieldType,
+                    shardTarget,
+                    context,
+                    highlight,
+                    hitContext,
+                    highlightQuery
+                );
 
                 if ((highlighter.canHighlight(fieldType) == false) && fieldNameContainsWildcards) {
                     // if several fieldnames matched the wildcard then we want to skip those that we cannot highlight
@@ -119,8 +129,7 @@ public class HighlightPhase implements FetchSubPhase {
                     // Note that we make sure to use the original field name in the response. This is because the
                     // original field could be an alias, and highlighter implementations may instead reference the
                     // concrete field it points to.
-                    highlightFields.put(fieldName,
-                        new HighlightField(fieldName, highlightField.fragments()));
+                    highlightFields.put(fieldName, new HighlightField(fieldName, highlightField.fragments()));
                 }
             }
         }

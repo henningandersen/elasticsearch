@@ -55,8 +55,11 @@ public class CreateIndexResponseTests extends AbstractSerializingTestCase<Create
                 return new CreateIndexResponse(acknowledged, shardsAcknowledged, response.index());
             }
         } else {
-            return new CreateIndexResponse(response.isAcknowledged(), response.isShardsAcknowledged(),
-                        response.index() + randomAlphaOfLengthBetween(2, 5));
+            return new CreateIndexResponse(
+                response.isAcknowledged(),
+                response.isShardsAcknowledged(),
+                response.index() + randomAlphaOfLengthBetween(2, 5)
+            );
         }
     }
 

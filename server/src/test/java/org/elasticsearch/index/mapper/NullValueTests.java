@@ -22,7 +22,6 @@ import org.elasticsearch.common.compress.CompressedXContent;
  * under the License.
  */
 
-
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.IndexService;
@@ -33,20 +32,22 @@ import static org.hamcrest.Matchers.equalTo;
 public class NullValueTests extends ESSingleNodeTestCase {
     public void testNullNullValue() throws Exception {
         IndexService indexService = createIndex("test", Settings.builder().build());
-        String[] typesToTest = {"integer", "long", "double", "float", "short", "date", "ip", "keyword", "boolean", "byte", "geo_point"};
+        String[] typesToTest = { "integer", "long", "double", "float", "short", "date", "ip", "keyword", "boolean", "byte", "geo_point" };
 
         for (String type : typesToTest) {
-            String mapping = Strings.toString(XContentFactory.jsonBuilder()
+            String mapping = Strings.toString(
+                XContentFactory.jsonBuilder()
                     .startObject()
-                        .startObject("type")
-                            .startObject("properties")
-                                .startObject("numeric")
-                                    .field("type", type)
-                                    .field("null_value", (String) null)
-                                .endObject()
-                            .endObject()
-                        .endObject()
-                    .endObject());
+                    .startObject("type")
+                    .startObject("properties")
+                    .startObject("numeric")
+                    .field("type", type)
+                    .field("null_value", (String) null)
+                    .endObject()
+                    .endObject()
+                    .endObject()
+                    .endObject()
+            );
 
             try {
                 indexService.mapperService().documentMapperParser().parse("type", new CompressedXContent(mapping));

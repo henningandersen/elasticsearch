@@ -76,8 +76,8 @@ public class TypeFieldMapper extends MetadataFieldMapper {
 
     public static class TypeParser implements MetadataFieldMapper.TypeParser {
         @Override
-        public MetadataFieldMapper.Builder<?,?> parse(String name, Map<String, Object> node,
-                                                      ParserContext parserContext) throws MapperParsingException {
+        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             throw new MapperParsingException(NAME + " is not configurable");
         }
 
@@ -90,8 +90,7 @@ public class TypeFieldMapper extends MetadataFieldMapper {
 
     public static final class TypeFieldType extends StringFieldType {
 
-        TypeFieldType() {
-        }
+        TypeFieldType() {}
 
         protected TypeFieldType(TypeFieldType ref) {
             super(ref);
@@ -135,9 +134,7 @@ public class TypeFieldMapper extends MetadataFieldMapper {
                 return new MatchNoDocsQuery("No types");
             }
             BytesRef indexType = indexedValueForSearch(mapper.type());
-            if (values.stream()
-                    .map(this::indexedValueForSearch)
-                    .anyMatch(indexType::equals)) {
+            if (values.stream().map(this::indexedValueForSearch).anyMatch(indexType::equals)) {
                 if (context.getMapperService().hasNested()) {
                     // type filters are expected not to match nested docs
                     return Queries.newNonNestedFilter();
@@ -255,8 +252,7 @@ public class TypeFieldMapper extends MetadataFieldMapper {
     }
 
     private TypeFieldMapper(IndexSettings indexSettings, MappedFieldType existing) {
-        this(existing == null ? defaultFieldType(indexSettings) : existing.clone(),
-             indexSettings);
+        this(existing == null ? defaultFieldType(indexSettings) : existing.clone(), indexSettings);
     }
 
     private TypeFieldMapper(MappedFieldType fieldType, IndexSettings indexSettings) {

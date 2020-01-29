@@ -62,8 +62,10 @@ public class JsonVsCborTests extends ESTestCase {
 
         xsonGen.close();
         jsonGen.close();
-        try (XContentParser json0sParser = createParser(JsonXContent.jsonXContent, jsonOs.bytes());
-             XContentParser xson0sParser = createParser(CborXContent.cborXContent, xsonOs.bytes())) {
+        try (
+            XContentParser json0sParser = createParser(JsonXContent.jsonXContent, jsonOs.bytes());
+            XContentParser xson0sParser = createParser(CborXContent.cborXContent, xsonOs.bytes())
+        ) {
             verifySameTokens(json0sParser, xson0sParser);
         }
     }

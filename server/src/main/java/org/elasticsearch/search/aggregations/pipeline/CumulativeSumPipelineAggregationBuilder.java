@@ -93,13 +93,17 @@ public class CumulativeSumPipelineAggregationBuilder extends AbstractPipelineAgg
     }
 
     @Override
-    public void doValidate(AggregatorFactory parent, Collection<AggregationBuilder> aggFactories,
-            Collection<PipelineAggregationBuilder> pipelineAggregatorFactories) {
+    public void doValidate(
+        AggregatorFactory parent,
+        Collection<AggregationBuilder> aggFactories,
+        Collection<PipelineAggregationBuilder> pipelineAggregatorFactories
+    ) {
         if (bucketsPaths.length != 1) {
-            throw new IllegalStateException(BUCKETS_PATH.getPreferredName()
-                    + " must contain a single entry for aggregation [" + name + "]");
+            throw new IllegalStateException(
+                BUCKETS_PATH.getPreferredName() + " must contain a single entry for aggregation [" + name + "]"
+            );
         }
-        
+
         validateSequentiallyOrderedParentAggs(parent, NAME, name);
     }
 
@@ -111,8 +115,7 @@ public class CumulativeSumPipelineAggregationBuilder extends AbstractPipelineAgg
         return builder;
     }
 
-    public static CumulativeSumPipelineAggregationBuilder parse(String pipelineAggregatorName, XContentParser parser)
-            throws IOException {
+    public static CumulativeSumPipelineAggregationBuilder parse(String pipelineAggregatorName, XContentParser parser) throws IOException {
         XContentParser.Token token;
         String currentFieldName = null;
         String[] bucketsPaths = null;
@@ -127,8 +130,10 @@ public class CumulativeSumPipelineAggregationBuilder extends AbstractPipelineAgg
                 } else if (BUCKETS_PATH.match(currentFieldName, parser.getDeprecationHandler())) {
                     bucketsPaths = new String[] { parser.text() };
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + pipelineAggregatorName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + pipelineAggregatorName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else if (token == XContentParser.Token.START_ARRAY) {
                 if (BUCKETS_PATH.match(currentFieldName, parser.getDeprecationHandler())) {
@@ -139,22 +144,34 @@ public class CumulativeSumPipelineAggregationBuilder extends AbstractPipelineAgg
                     }
                     bucketsPaths = paths.toArray(new String[paths.size()]);
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + pipelineAggregatorName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + pipelineAggregatorName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else {
-                throw new ParsingException(parser.getTokenLocation(),
-                        "Unexpected token " + token + " in [" + pipelineAggregatorName + "].");
+                throw new ParsingException(
+                    parser.getTokenLocation(),
+                    "Unexpected token " + token + " in [" + pipelineAggregatorName + "]."
+                );
             }
         }
 
         if (bucketsPaths == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Missing required field [" + BUCKETS_PATH.getPreferredName()
-                    + "] for derivative aggregation [" + pipelineAggregatorName + "]");
+            throw new ParsingException(
+                parser.getTokenLocation(),
+                "Missing required field ["
+                    + BUCKETS_PATH.getPreferredName()
+                    + "] for derivative aggregation ["
+                    + pipelineAggregatorName
+                    + "]"
+            );
         }
 
-        CumulativeSumPipelineAggregationBuilder factory =
-                new CumulativeSumPipelineAggregationBuilder(pipelineAggregatorName, bucketsPaths[0]);
+        CumulativeSumPipelineAggregationBuilder factory = new CumulativeSumPipelineAggregationBuilder(
+            pipelineAggregatorName,
+            bucketsPaths[0]
+        );
         if (format != null) {
             factory.format(format);
         }

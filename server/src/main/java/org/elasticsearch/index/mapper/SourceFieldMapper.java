@@ -108,8 +108,8 @@ public class SourceFieldMapper extends MetadataFieldMapper {
 
     public static class TypeParser implements MetadataFieldMapper.TypeParser {
         @Override
-        public MetadataFieldMapper.Builder<?,?> parse(String name, Map<String, Object> node,
-                                                      ParserContext parserContext) throws MapperParsingException {
+        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             Builder builder = new Builder();
 
             for (Iterator<Map.Entry<String, Object>> iterator = node.entrySet().iterator(); iterator.hasNext();) {
@@ -250,8 +250,7 @@ public class SourceFieldMapper extends MetadataFieldMapper {
             // Percolate and tv APIs may not set the source and that is ok, because these APIs will not index any data
             if (filter != null) {
                 // we don't update the context source if we filter, we want to keep it as is...
-                Tuple<XContentType, Map<String, Object>> mapTuple =
-                    XContentHelper.convertToMap(originalSource, true, contentType);
+                Tuple<XContentType, Map<String, Object>> mapTuple = XContentHelper.convertToMap(originalSource, true, contentType);
                 Map<String, Object> filteredSource = filter.apply(mapTuple.v2());
                 BytesStreamOutput bStream = new BytesStreamOutput();
                 XContentType actualContentType = mapTuple.v1();

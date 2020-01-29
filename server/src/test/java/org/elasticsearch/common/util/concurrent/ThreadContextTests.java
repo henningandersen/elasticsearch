@@ -374,9 +374,9 @@ public class ThreadContextTests extends ESTestCase {
         // Create a runnable that should run with some header
         try (ThreadContext.StoredContext ignored = threadContext.stashContext()) {
             threadContext.putHeader("foo", "bar");
-            withContext = threadContext.preserveContext(sometimesAbstractRunnable(() -> {
-                assertEquals("bar", threadContext.getHeader("foo"));
-            }));
+            withContext = threadContext.preserveContext(
+                sometimesAbstractRunnable(() -> { assertEquals("bar", threadContext.getHeader("foo")); })
+            );
         }
 
         // We don't see the header outside of the runnable
@@ -397,9 +397,9 @@ public class ThreadContextTests extends ESTestCase {
         // Create a runnable that should run with some header
         try (ThreadContext.StoredContext ignored = threadContext.stashContext()) {
             threadContext.putHeader("foo", "bar");
-            withContext = threadContext.preserveContext(sometimesAbstractRunnable(() -> {
-                assertEquals("bar", threadContext.getHeader("foo"));
-            }));
+            withContext = threadContext.preserveContext(
+                sometimesAbstractRunnable(() -> { assertEquals("bar", threadContext.getHeader("foo")); })
+            );
         }
 
         // Now attempt to rewrap it
@@ -608,8 +608,10 @@ public class ThreadContextTests extends ESTestCase {
         threadContext.putHeader(Collections.<String, String>emptyMap());
         threadContext.putHeader(Collections.<String, String>singletonMap("foo", "bar"));
         assertEquals("bar", threadContext.getHeader("foo"));
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            threadContext.putHeader(Collections.<String, String>singletonMap("foo", "boom")));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> threadContext.putHeader(Collections.<String, String>singletonMap("foo", "boom"))
+        );
         assertEquals("value for key [foo] already present", e.getMessage());
     }
 

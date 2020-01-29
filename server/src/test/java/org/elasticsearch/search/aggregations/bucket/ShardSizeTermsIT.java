@@ -38,12 +38,13 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.count(false)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key").size(3).collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.count(false))
+            )
+            .get();
 
-        Terms  terms = response.getAggregations().get("keys");
+        Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
         assertThat(buckets.size(), equalTo(3));
         Map<String, Long> expected = new HashMap<>();
@@ -61,12 +62,17 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3).shardSize(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.count(false)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key")
+                    .size(3)
+                    .shardSize(3)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .order(BucketOrder.count(false))
+            )
+            .get();
 
-        Terms  terms = response.getAggregations().get("keys");
+        Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
         assertThat(buckets.size(), equalTo(3));
         Map<String, Long> expected = new HashMap<>();
@@ -85,10 +91,15 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).shardSize(5).order(BucketOrder.count(false)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key")
+                    .size(3)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .shardSize(5)
+                    .order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -108,11 +119,17 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
 
         indexData();
 
-        SearchResponse response = client().prepareSearch("idx").setRouting(routing1)
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).shardSize(5).order(BucketOrder.count(false)))
-                .get();
+        SearchResponse response = client().prepareSearch("idx")
+            .setRouting(routing1)
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key")
+                    .size(3)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .shardSize(5)
+                    .order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -121,7 +138,7 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         expected.put("1", 5L);
         expected.put("2", 4L);
         expected.put("3", 3L); // <-- count is now fixed
-        for (Terms.Bucket bucket: buckets) {
+        for (Terms.Bucket bucket : buckets) {
             assertThat(bucket.getDocCount(), equalTo(expected.get(bucket.getKey())));
         }
     }
@@ -132,12 +149,13 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.key(true)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key").size(3).collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.key(true))
+            )
+            .get();
 
-        Terms  terms = response.getAggregations().get("keys");
+        Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
         assertThat(buckets.size(), equalTo(3));
         Map<String, Long> expected = new HashMap<>();
@@ -155,10 +173,11 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.count(false)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key").size(3).collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -178,10 +197,15 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3).shardSize(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.count(false)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key")
+                    .size(3)
+                    .shardSize(3)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -201,10 +225,15 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).shardSize(5).order(BucketOrder.count(false)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key")
+                    .size(3)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .shardSize(5)
+                    .order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -224,11 +253,17 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
 
         indexData();
 
-        SearchResponse response = client().prepareSearch("idx").setRouting(routing1)
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).shardSize(5).order(BucketOrder.count(false)))
-                .get();
+        SearchResponse response = client().prepareSearch("idx")
+            .setRouting(routing1)
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key")
+                    .size(3)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .shardSize(5)
+                    .order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -248,10 +283,11 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.key(true)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key").size(3).collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.key(true))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -271,10 +307,11 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.count(false)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key").size(3).collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -294,10 +331,15 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3).shardSize(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.count(false)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key")
+                    .size(3)
+                    .shardSize(3)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -317,10 +359,15 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).shardSize(5).order(BucketOrder.count(false)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key")
+                    .size(3)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .shardSize(5)
+                    .order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -339,11 +386,17 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
 
         indexData();
 
-        SearchResponse response = client().prepareSearch("idx").setRouting(routing1)
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).shardSize(5).order(BucketOrder.count(false)))
-                .get();
+        SearchResponse response = client().prepareSearch("idx")
+            .setRouting(routing1)
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key")
+                    .size(3)
+                    .collectMode(randomFrom(SubAggCollectionMode.values()))
+                    .shardSize(5)
+                    .order(BucketOrder.count(false))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();
@@ -363,10 +416,11 @@ public class ShardSizeTermsIT extends ShardSizeTestCase {
         indexData();
 
         SearchResponse response = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(terms("keys").field("key").size(3)
-                        .collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.key(true)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("keys").field("key").size(3).collectMode(randomFrom(SubAggCollectionMode.values())).order(BucketOrder.key(true))
+            )
+            .get();
 
         Terms terms = response.getAggregations().get("keys");
         List<? extends Terms.Bucket> buckets = terms.getBuckets();

@@ -18,7 +18,6 @@
  */
 package org.elasticsearch.action.support;
 
-
 import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -90,8 +89,10 @@ public class IndicesOptions implements ToXContentFragment {
             } else if (states.containsAll(EnumSet.allOf(WildcardStates.class))) {
                 builder.field("expand_wildcards", "all");
             } else {
-                builder.field("expand_wildcards",
-                    states.stream().map(state -> state.toString().toLowerCase(Locale.ROOT)).collect(Collectors.joining(",")));
+                builder.field(
+                    "expand_wildcards",
+                    states.stream().map(state -> state.toString().toLowerCase(Locale.ROOT)).collect(Collectors.joining(","))
+                );
             }
             return builder;
         }
@@ -108,30 +109,42 @@ public class IndicesOptions implements ToXContentFragment {
         public static final EnumSet<Option> NONE = EnumSet.noneOf(Option.class);
     }
 
-    public static final IndicesOptions STRICT_EXPAND_OPEN =
-        new IndicesOptions(EnumSet.of(Option.ALLOW_NO_INDICES), EnumSet.of(WildcardStates.OPEN));
-    public static final IndicesOptions LENIENT_EXPAND_OPEN =
-        new IndicesOptions(EnumSet.of(Option.ALLOW_NO_INDICES, Option.IGNORE_UNAVAILABLE),
-            EnumSet.of(WildcardStates.OPEN));
-    public static final IndicesOptions LENIENT_EXPAND_OPEN_HIDDEN =
-        new IndicesOptions(EnumSet.of(Option.ALLOW_NO_INDICES, Option.IGNORE_UNAVAILABLE),
-            EnumSet.of(WildcardStates.OPEN, WildcardStates.HIDDEN));
-    public static final IndicesOptions LENIENT_EXPAND_OPEN_CLOSED =
-        new IndicesOptions(EnumSet.of(Option.ALLOW_NO_INDICES, Option.IGNORE_UNAVAILABLE),
-            EnumSet.of(WildcardStates.OPEN, WildcardStates.CLOSED));
-    public static final IndicesOptions LENIENT_EXPAND_OPEN_CLOSED_HIDDEN =
-        new IndicesOptions(EnumSet.of(Option.ALLOW_NO_INDICES, Option.IGNORE_UNAVAILABLE),
-            EnumSet.of(WildcardStates.OPEN, WildcardStates.CLOSED, WildcardStates.HIDDEN));
-    public static final IndicesOptions STRICT_EXPAND_OPEN_CLOSED =
-        new IndicesOptions(EnumSet.of(Option.ALLOW_NO_INDICES), EnumSet.of(WildcardStates.OPEN, WildcardStates.CLOSED));
-    public static final IndicesOptions STRICT_EXPAND_OPEN_FORBID_CLOSED =
-        new IndicesOptions(EnumSet.of(Option.ALLOW_NO_INDICES, Option.FORBID_CLOSED_INDICES), EnumSet.of(WildcardStates.OPEN));
-    public static final IndicesOptions STRICT_EXPAND_OPEN_FORBID_CLOSED_IGNORE_THROTTLED =
-        new IndicesOptions(EnumSet.of(Option.ALLOW_NO_INDICES, Option.FORBID_CLOSED_INDICES, Option.IGNORE_THROTTLED),
-            EnumSet.of(WildcardStates.OPEN));
-    public static final IndicesOptions STRICT_SINGLE_INDEX_NO_EXPAND_FORBID_CLOSED =
-        new IndicesOptions(EnumSet.of(Option.FORBID_ALIASES_TO_MULTIPLE_INDICES, Option.FORBID_CLOSED_INDICES),
-            EnumSet.noneOf(WildcardStates.class));
+    public static final IndicesOptions STRICT_EXPAND_OPEN = new IndicesOptions(
+        EnumSet.of(Option.ALLOW_NO_INDICES),
+        EnumSet.of(WildcardStates.OPEN)
+    );
+    public static final IndicesOptions LENIENT_EXPAND_OPEN = new IndicesOptions(
+        EnumSet.of(Option.ALLOW_NO_INDICES, Option.IGNORE_UNAVAILABLE),
+        EnumSet.of(WildcardStates.OPEN)
+    );
+    public static final IndicesOptions LENIENT_EXPAND_OPEN_HIDDEN = new IndicesOptions(
+        EnumSet.of(Option.ALLOW_NO_INDICES, Option.IGNORE_UNAVAILABLE),
+        EnumSet.of(WildcardStates.OPEN, WildcardStates.HIDDEN)
+    );
+    public static final IndicesOptions LENIENT_EXPAND_OPEN_CLOSED = new IndicesOptions(
+        EnumSet.of(Option.ALLOW_NO_INDICES, Option.IGNORE_UNAVAILABLE),
+        EnumSet.of(WildcardStates.OPEN, WildcardStates.CLOSED)
+    );
+    public static final IndicesOptions LENIENT_EXPAND_OPEN_CLOSED_HIDDEN = new IndicesOptions(
+        EnumSet.of(Option.ALLOW_NO_INDICES, Option.IGNORE_UNAVAILABLE),
+        EnumSet.of(WildcardStates.OPEN, WildcardStates.CLOSED, WildcardStates.HIDDEN)
+    );
+    public static final IndicesOptions STRICT_EXPAND_OPEN_CLOSED = new IndicesOptions(
+        EnumSet.of(Option.ALLOW_NO_INDICES),
+        EnumSet.of(WildcardStates.OPEN, WildcardStates.CLOSED)
+    );
+    public static final IndicesOptions STRICT_EXPAND_OPEN_FORBID_CLOSED = new IndicesOptions(
+        EnumSet.of(Option.ALLOW_NO_INDICES, Option.FORBID_CLOSED_INDICES),
+        EnumSet.of(WildcardStates.OPEN)
+    );
+    public static final IndicesOptions STRICT_EXPAND_OPEN_FORBID_CLOSED_IGNORE_THROTTLED = new IndicesOptions(
+        EnumSet.of(Option.ALLOW_NO_INDICES, Option.FORBID_CLOSED_INDICES, Option.IGNORE_THROTTLED),
+        EnumSet.of(WildcardStates.OPEN)
+    );
+    public static final IndicesOptions STRICT_SINGLE_INDEX_NO_EXPAND_FORBID_CLOSED = new IndicesOptions(
+        EnumSet.of(Option.FORBID_ALIASES_TO_MULTIPLE_INDICES, Option.FORBID_CLOSED_INDICES),
+        EnumSet.noneOf(WildcardStates.class)
+    );
 
     private final EnumSet<Option> options;
     private final EnumSet<WildcardStates> expandWildcards;
@@ -142,8 +155,10 @@ public class IndicesOptions implements ToXContentFragment {
     }
 
     private IndicesOptions(Collection<Option> options, Collection<WildcardStates> expandWildcards) {
-        this(options.isEmpty() ? Option.NONE : EnumSet.copyOf(options),
-            expandWildcards.isEmpty() ? WildcardStates.NONE : EnumSet.copyOf(expandWildcards));
+        this(
+            options.isEmpty() ? Option.NONE : EnumSet.copyOf(options),
+            expandWildcards.isEmpty() ? WildcardStates.NONE : EnumSet.copyOf(expandWildcards)
+        );
     }
 
     /**
@@ -241,36 +256,89 @@ public class IndicesOptions implements ToXContentFragment {
         return new IndicesOptions(options, states);
     }
 
-    public static IndicesOptions fromOptions(boolean ignoreUnavailable, boolean allowNoIndices, boolean expandToOpenIndices,
-                                             boolean expandToClosedIndices) {
+    public static IndicesOptions fromOptions(
+        boolean ignoreUnavailable,
+        boolean allowNoIndices,
+        boolean expandToOpenIndices,
+        boolean expandToClosedIndices
+    ) {
         return fromOptions(ignoreUnavailable, allowNoIndices, expandToOpenIndices, expandToClosedIndices, false);
     }
 
-    public static IndicesOptions fromOptions(boolean ignoreUnavailable, boolean allowNoIndices, boolean expandToOpenIndices,
-                                             boolean expandToClosedIndices, boolean expandToHiddenIndices) {
-        return fromOptions(ignoreUnavailable, allowNoIndices, expandToOpenIndices, expandToClosedIndices, expandToHiddenIndices, true,
-            false, false, false);
+    public static IndicesOptions fromOptions(
+        boolean ignoreUnavailable,
+        boolean allowNoIndices,
+        boolean expandToOpenIndices,
+        boolean expandToClosedIndices,
+        boolean expandToHiddenIndices
+    ) {
+        return fromOptions(
+            ignoreUnavailable,
+            allowNoIndices,
+            expandToOpenIndices,
+            expandToClosedIndices,
+            expandToHiddenIndices,
+            true,
+            false,
+            false,
+            false
+        );
     }
 
-    public static IndicesOptions fromOptions(boolean ignoreUnavailable, boolean allowNoIndices, boolean expandToOpenIndices,
-                                             boolean expandToClosedIndices, IndicesOptions defaultOptions) {
-        return fromOptions(ignoreUnavailable, allowNoIndices, expandToOpenIndices, expandToClosedIndices,
-            defaultOptions.expandWildcardsHidden(), defaultOptions.allowAliasesToMultipleIndices(),
-            defaultOptions.forbidClosedIndices(), defaultOptions.ignoreAliases(), defaultOptions.ignoreThrottled());
+    public static IndicesOptions fromOptions(
+        boolean ignoreUnavailable,
+        boolean allowNoIndices,
+        boolean expandToOpenIndices,
+        boolean expandToClosedIndices,
+        IndicesOptions defaultOptions
+    ) {
+        return fromOptions(
+            ignoreUnavailable,
+            allowNoIndices,
+            expandToOpenIndices,
+            expandToClosedIndices,
+            defaultOptions.expandWildcardsHidden(),
+            defaultOptions.allowAliasesToMultipleIndices(),
+            defaultOptions.forbidClosedIndices(),
+            defaultOptions.ignoreAliases(),
+            defaultOptions.ignoreThrottled()
+        );
     }
 
-    public static IndicesOptions fromOptions(boolean ignoreUnavailable, boolean allowNoIndices, boolean expandToOpenIndices,
-                                             boolean expandToClosedIndices, boolean allowAliasesToMultipleIndices,
-                                             boolean forbidClosedIndices, boolean ignoreAliases,
-                                             boolean ignoreThrottled) {
-        return fromOptions(ignoreUnavailable, allowNoIndices, expandToOpenIndices, expandToClosedIndices, false,
-            allowAliasesToMultipleIndices, forbidClosedIndices, ignoreAliases, ignoreThrottled);
+    public static IndicesOptions fromOptions(
+        boolean ignoreUnavailable,
+        boolean allowNoIndices,
+        boolean expandToOpenIndices,
+        boolean expandToClosedIndices,
+        boolean allowAliasesToMultipleIndices,
+        boolean forbidClosedIndices,
+        boolean ignoreAliases,
+        boolean ignoreThrottled
+    ) {
+        return fromOptions(
+            ignoreUnavailable,
+            allowNoIndices,
+            expandToOpenIndices,
+            expandToClosedIndices,
+            false,
+            allowAliasesToMultipleIndices,
+            forbidClosedIndices,
+            ignoreAliases,
+            ignoreThrottled
+        );
     }
 
-    public static IndicesOptions fromOptions(boolean ignoreUnavailable, boolean allowNoIndices, boolean expandToOpenIndices,
-                                             boolean expandToClosedIndices, boolean expandToHiddenIndices,
-                                             boolean allowAliasesToMultipleIndices, boolean forbidClosedIndices, boolean ignoreAliases,
-                                             boolean ignoreThrottled) {
+    public static IndicesOptions fromOptions(
+        boolean ignoreUnavailable,
+        boolean allowNoIndices,
+        boolean expandToOpenIndices,
+        boolean expandToClosedIndices,
+        boolean expandToHiddenIndices,
+        boolean allowAliasesToMultipleIndices,
+        boolean forbidClosedIndices,
+        boolean ignoreAliases,
+        boolean ignoreThrottled
+    ) {
         final EnumSet<Option> opts = EnumSet.noneOf(Option.class);
         final EnumSet<WildcardStates> wildcards = EnumSet.noneOf(WildcardStates.class);
 
@@ -307,20 +375,22 @@ public class IndicesOptions implements ToXContentFragment {
 
     public static IndicesOptions fromRequest(RestRequest request, IndicesOptions defaultSettings) {
         return fromParameters(
-                request.param("expand_wildcards"),
-                request.param("ignore_unavailable"),
-                request.param("allow_no_indices"),
-                request.param("ignore_throttled"),
-                defaultSettings);
+            request.param("expand_wildcards"),
+            request.param("ignore_unavailable"),
+            request.param("allow_no_indices"),
+            request.param("ignore_throttled"),
+            defaultSettings
+        );
     }
 
     public static IndicesOptions fromMap(Map<String, Object> map, IndicesOptions defaultSettings) {
         return fromParameters(
-                map.containsKey("expand_wildcards") ? map.get("expand_wildcards") : map.get("expandWildcards"),
-                map.containsKey("ignore_unavailable") ? map.get("ignore_unavailable") : map.get("ignoreUnavailable"),
-                map.containsKey("allow_no_indices") ? map.get("allow_no_indices") : map.get("allowNoIndices"),
-                map.containsKey("ignore_throttled") ? map.get("ignore_throttled") : map.get("ignoreThrottled"),
-                defaultSettings);
+            map.containsKey("expand_wildcards") ? map.get("expand_wildcards") : map.get("expandWildcards"),
+            map.containsKey("ignore_unavailable") ? map.get("ignore_unavailable") : map.get("ignoreUnavailable"),
+            map.containsKey("allow_no_indices") ? map.get("allow_no_indices") : map.get("allowNoIndices"),
+            map.containsKey("ignore_throttled") ? map.get("ignore_throttled") : map.get("ignoreThrottled"),
+            defaultSettings
+        );
     }
 
     /**
@@ -328,14 +398,23 @@ public class IndicesOptions implements ToXContentFragment {
      * false otherwise
      */
     public static boolean isIndicesOptions(String name) {
-        return "expand_wildcards".equals(name) || "expandWildcards".equals(name) ||
-                "ignore_unavailable".equals(name) || "ignoreUnavailable".equals(name) ||
-                "ignore_throttled".equals(name) || "ignoreThrottled".equals(name) ||
-                "allow_no_indices".equals(name) || "allowNoIndices".equals(name);
+        return "expand_wildcards".equals(name)
+            || "expandWildcards".equals(name)
+            || "ignore_unavailable".equals(name)
+            || "ignoreUnavailable".equals(name)
+            || "ignore_throttled".equals(name)
+            || "ignoreThrottled".equals(name)
+            || "allow_no_indices".equals(name)
+            || "allowNoIndices".equals(name);
     }
 
-    public static IndicesOptions fromParameters(Object wildcardsString, Object ignoreUnavailableString, Object allowNoIndicesString,
-                                                Object ignoreThrottled, IndicesOptions defaultSettings) {
+    public static IndicesOptions fromParameters(
+        Object wildcardsString,
+        Object ignoreUnavailableString,
+        Object allowNoIndicesString,
+        Object ignoreThrottled,
+        IndicesOptions defaultSettings
+    ) {
         if (wildcardsString == null && ignoreUnavailableString == null && allowNoIndicesString == null && ignoreThrottled == null) {
             return defaultSettings;
         }
@@ -344,15 +423,15 @@ public class IndicesOptions implements ToXContentFragment {
 
         // note that allowAliasesToMultipleIndices is not exposed, always true (only for internal use)
         return fromOptions(
-                nodeBooleanValue(ignoreUnavailableString, "ignore_unavailable", defaultSettings.ignoreUnavailable()),
-                nodeBooleanValue(allowNoIndicesString, "allow_no_indices", defaultSettings.allowNoIndices()),
-                wildcards.contains(WildcardStates.OPEN),
-                wildcards.contains(WildcardStates.CLOSED),
-                wildcards.contains(WildcardStates.HIDDEN),
-                defaultSettings.allowAliasesToMultipleIndices(),
-                defaultSettings.forbidClosedIndices(),
-                defaultSettings.ignoreAliases(),
-                nodeBooleanValue(ignoreThrottled, "ignore_throttled", defaultSettings.ignoreThrottled())
+            nodeBooleanValue(ignoreUnavailableString, "ignore_unavailable", defaultSettings.ignoreUnavailable()),
+            nodeBooleanValue(allowNoIndicesString, "allow_no_indices", defaultSettings.allowNoIndices()),
+            wildcards.contains(WildcardStates.OPEN),
+            wildcards.contains(WildcardStates.CLOSED),
+            wildcards.contains(WildcardStates.HIDDEN),
+            defaultSettings.allowAliasesToMultipleIndices(),
+            defaultSettings.forbidClosedIndices(),
+            defaultSettings.ignoreAliases(),
+            nodeBooleanValue(ignoreThrottled, "ignore_throttled", defaultSettings.ignoreThrottled())
         );
     }
 
@@ -465,16 +544,25 @@ public class IndicesOptions implements ToXContentFragment {
 
     @Override
     public String toString() {
-        return "IndicesOptions[" +
-                "ignore_unavailable=" + ignoreUnavailable() +
-                ", allow_no_indices=" + allowNoIndices() +
-                ", expand_wildcards_open=" + expandWildcardsOpen() +
-                ", expand_wildcards_closed=" + expandWildcardsClosed() +
-                ", expand_wildcards_hidden=" + expandWildcardsHidden() +
-                ", allow_aliases_to_multiple_indices=" + allowAliasesToMultipleIndices() +
-                ", forbid_closed_indices=" + forbidClosedIndices() +
-                ", ignore_aliases=" + ignoreAliases() +
-                ", ignore_throttled=" + ignoreThrottled() +
-                ']';
+        return "IndicesOptions["
+            + "ignore_unavailable="
+            + ignoreUnavailable()
+            + ", allow_no_indices="
+            + allowNoIndices()
+            + ", expand_wildcards_open="
+            + expandWildcardsOpen()
+            + ", expand_wildcards_closed="
+            + expandWildcardsClosed()
+            + ", expand_wildcards_hidden="
+            + expandWildcardsHidden()
+            + ", allow_aliases_to_multiple_indices="
+            + allowAliasesToMultipleIndices()
+            + ", forbid_closed_indices="
+            + forbidClosedIndices()
+            + ", ignore_aliases="
+            + ignoreAliases()
+            + ", ignore_throttled="
+            + ignoreThrottled()
+            + ']';
     }
 }

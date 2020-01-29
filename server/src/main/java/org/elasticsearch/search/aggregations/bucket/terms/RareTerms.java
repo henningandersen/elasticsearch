@@ -22,7 +22,6 @@ import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 
 import java.util.List;
 
-
 public interface RareTerms extends MultiBucketsAggregation {
 
     /**
@@ -45,4 +44,3 @@ public interface RareTerms extends MultiBucketsAggregation {
     Bucket getBucketByKey(String term);
 
 }
-

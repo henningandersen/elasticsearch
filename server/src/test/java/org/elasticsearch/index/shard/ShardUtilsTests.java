@@ -18,7 +18,6 @@
  */
 package org.elasticsearch.index.shard;
 
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.CompositeReaderContext;

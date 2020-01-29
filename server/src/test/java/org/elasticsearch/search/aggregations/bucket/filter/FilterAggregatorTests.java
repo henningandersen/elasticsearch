@@ -55,8 +55,7 @@ public class FilterAggregatorTests extends AggregatorTestCase {
         IndexSearcher indexSearcher = newSearcher(indexReader, true, true);
         QueryBuilder filter = QueryBuilders.termQuery("field", randomAlphaOfLength(5));
         FilterAggregationBuilder builder = new FilterAggregationBuilder("test", filter);
-        InternalFilter response = search(indexSearcher, new MatchAllDocsQuery(), builder,
-                fieldType);
+        InternalFilter response = search(indexSearcher, new MatchAllDocsQuery(), builder, fieldType);
         assertEquals(response.getDocCount(), 0);
         assertFalse(AggregationInspectionHelper.hasValue(response));
         indexReader.close();
@@ -75,7 +74,7 @@ public class FilterAggregatorTests extends AggregatorTestCase {
                 // make sure we have more than one segment to test the merge
                 indexWriter.getReader().close();
             }
-            int value = randomInt(maxTerm-1);
+            int value = randomInt(maxTerm - 1);
             expectedBucketCount[value] += 1;
             document.add(new Field("field", Integer.toString(value), fieldType));
             indexWriter.addDocument(document);
@@ -91,11 +90,10 @@ public class FilterAggregatorTests extends AggregatorTestCase {
             QueryBuilder filter = QueryBuilders.termQuery("field", Integer.toString(value));
             FilterAggregationBuilder builder = new FilterAggregationBuilder("test", filter);
 
-            for (boolean doReduce : new boolean[]{true, false}) {
+            for (boolean doReduce : new boolean[] { true, false }) {
                 final InternalFilter response;
                 if (doReduce) {
-                    response = searchAndReduce(indexSearcher, new MatchAllDocsQuery(), builder,
-                        fieldType);
+                    response = searchAndReduce(indexSearcher, new MatchAllDocsQuery(), builder, fieldType);
                 } else {
                     response = search(indexSearcher, new MatchAllDocsQuery(), builder, fieldType);
                 }

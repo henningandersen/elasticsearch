@@ -18,7 +18,6 @@
  */
 package org.elasticsearch.index.fielddata;
 
-
 /**
  * {@link AtomicFieldData} specialization for geo points.
  */

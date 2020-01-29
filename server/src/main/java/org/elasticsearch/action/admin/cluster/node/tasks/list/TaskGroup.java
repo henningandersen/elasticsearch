@@ -37,7 +37,6 @@ public class TaskGroup implements ToXContentObject {
 
     private final List<TaskGroup> childTasks;
 
-
     public TaskGroup(TaskInfo task, List<TaskGroup> childTasks) {
         this.task = task;
         this.childTasks = List.copyOf(childTasks);

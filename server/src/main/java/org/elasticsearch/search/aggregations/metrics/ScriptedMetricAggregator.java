@@ -43,15 +43,18 @@ class ScriptedMetricAggregator extends MetricsAggregator {
     private final Script reduceScript;
     private Map<String, Object> aggState;
 
-    ScriptedMetricAggregator(String name,
-                                ScriptedMetricAggContexts.MapScript.LeafFactory mapScript,
-                                ScriptedMetricAggContexts.CombineScript combineScript,
-                                Script reduceScript,
-                                Map<String, Object> aggState,
-                                SearchContext context,
-                                Aggregator parent,
-                                List<PipelineAggregator> pipelineAggregators,
-                                Map<String, Object> metaData) throws IOException {
+    ScriptedMetricAggregator(
+        String name,
+        ScriptedMetricAggContexts.MapScript.LeafFactory mapScript,
+        ScriptedMetricAggContexts.CombineScript combineScript,
+        Script reduceScript,
+        Map<String, Object> aggState,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, context, parent, pipelineAggregators, metaData);
         this.aggState = aggState;
         this.mapScript = mapScript;
@@ -65,8 +68,7 @@ class ScriptedMetricAggregator extends MetricsAggregator {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         final ScriptedMetricAggContexts.MapScript leafMapScript = mapScript.newInstance(ctx);
         return new LeafBucketCollectorBase(sub, leafMapScript) {
             @Override
@@ -93,8 +95,7 @@ class ScriptedMetricAggregator extends MetricsAggregator {
         } else {
             aggregation = aggState;
         }
-        return new InternalScriptedMetric(name, aggregation, reduceScript, pipelineAggregators(),
-                metaData());
+        return new InternalScriptedMetric(name, aggregation, reduceScript, pipelineAggregators(), metaData());
     }
 
     @Override

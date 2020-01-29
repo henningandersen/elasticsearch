@@ -70,8 +70,10 @@ public class CorsHandlerTests extends ESTestCase {
         final CorsHandler.Config corsConfig = CorsHandler.fromSettings(settings);
         assertTrue(corsConfig.isAnyOriginSupported());
         assertEquals(headers, corsConfig.allowedRequestHeaders());
-        assertEquals(methods.stream().map(s -> s.toUpperCase(Locale.ENGLISH)).collect(Collectors.toSet()),
-            corsConfig.allowedRequestMethods().stream().map(RestRequest.Method::name).collect(Collectors.toSet()));
+        assertEquals(
+            methods.stream().map(s -> s.toUpperCase(Locale.ENGLISH)).collect(Collectors.toSet()),
+            corsConfig.allowedRequestMethods().stream().map(RestRequest.Method::name).collect(Collectors.toSet())
+        );
     }
 
     public void testCorsConfigWithDefaults() {

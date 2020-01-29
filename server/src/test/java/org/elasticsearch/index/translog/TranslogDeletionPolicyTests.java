@@ -55,23 +55,19 @@ public class TranslogDeletionPolicyTests extends ESTestCase {
 
             long gen1 = randomIntBetween(0, allGens.size() - 1);
             Releasable releaseGen1 = deletionPolicy.acquireTranslogGen(gen1);
-            assertThat(deletionPolicy.minTranslogGenRequired(),
-                equalTo(Math.min(gen1, committedGen)));
+            assertThat(deletionPolicy.minTranslogGenRequired(), equalTo(Math.min(gen1, committedGen)));
 
             long gen2 = randomIntBetween(0, allGens.size() - 1);
             Releasable releaseGen2 = deletionPolicy.acquireTranslogGen(gen2);
-            assertThat(deletionPolicy.minTranslogGenRequired(),
-                equalTo(Math.min(Math.min(gen1, gen2), committedGen)));
+            assertThat(deletionPolicy.minTranslogGenRequired(), equalTo(Math.min(Math.min(gen1, gen2), committedGen)));
 
             if (randomBoolean()) {
                 releaseGen1.close();
-                assertThat(deletionPolicy.minTranslogGenRequired(),
-                    equalTo(Math.min(gen2, committedGen)));
+                assertThat(deletionPolicy.minTranslogGenRequired(), equalTo(Math.min(gen2, committedGen)));
                 releaseGen2.close();
             } else {
                 releaseGen2.close();
-                assertThat(deletionPolicy.minTranslogGenRequired(),
-                    equalTo(Math.min(gen1, committedGen)));
+                assertThat(deletionPolicy.minTranslogGenRequired(), equalTo(Math.min(gen1, committedGen)));
                 releaseGen1.close();
             }
             assertThat(deletionPolicy.minTranslogGenRequired(), equalTo(committedGen));
@@ -95,9 +91,21 @@ public class TranslogDeletionPolicyTests extends ESTestCase {
                 Mockito.doReturn(writer.getLastModifiedTime()).when(reader).getLastModifiedTime();
                 readers.add(reader);
             }
-            writer = TranslogWriter.create(new ShardId("index", "uuid", 0), translogUUID, gen,
-                tempDir.resolve(Translog.getFilename(gen)), FileChannel::open, TranslogConfig.DEFAULT_BUFFER_SIZE, 1L, 1L, () -> 1L,
-                () -> 1L, randomNonNegativeLong(), new TragicExceptionHolder(), seqNo -> {});
+            writer = TranslogWriter.create(
+                new ShardId("index", "uuid", 0),
+                translogUUID,
+                gen,
+                tempDir.resolve(Translog.getFilename(gen)),
+                FileChannel::open,
+                TranslogConfig.DEFAULT_BUFFER_SIZE,
+                1L,
+                1L,
+                () -> 1L,
+                () -> 1L,
+                randomNonNegativeLong(),
+                new TragicExceptionHolder(),
+                seqNo -> {}
+            );
             writer = Mockito.spy(writer);
             byte[] bytes = new byte[4];
             ByteArrayDataOutput out = new ByteArrayDataOutput(bytes);

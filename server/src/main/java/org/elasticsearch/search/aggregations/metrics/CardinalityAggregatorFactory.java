@@ -37,38 +37,45 @@ class CardinalityAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesS
 
     private final Long precisionThreshold;
 
-    CardinalityAggregatorFactory(String name, ValuesSourceConfig<ValuesSource> config,
-                                    Long precisionThreshold,
-                                    QueryShardContext queryShardContext,
-                                    AggregatorFactory parent,
-                                    AggregatorFactories.Builder subFactoriesBuilder,
-                                    Map<String, Object> metaData) throws IOException {
+    CardinalityAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource> config,
+        Long precisionThreshold,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.precisionThreshold = precisionThreshold;
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return new CardinalityAggregator(name, null, precision(), searchContext, parent, pipelineAggregators, metaData);
     }
 
     @Override
-    protected Aggregator doCreateInternal(ValuesSource valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        return new CardinalityAggregator(name, valuesSource, precision(), searchContext, parent, pipelineAggregators,
-                metaData);
+    protected Aggregator doCreateInternal(
+        ValuesSource valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new CardinalityAggregator(name, valuesSource, precision(), searchContext, parent, pipelineAggregators, metaData);
     }
 
     private int precision() {
         return precisionThreshold == null
-                ? HyperLogLogPlusPlus.DEFAULT_PRECISION
-                : HyperLogLogPlusPlus.precisionFromThreshold(precisionThreshold);
+            ? HyperLogLogPlusPlus.DEFAULT_PRECISION
+            : HyperLogLogPlusPlus.precisionFromThreshold(precisionThreshold);
     }
 }

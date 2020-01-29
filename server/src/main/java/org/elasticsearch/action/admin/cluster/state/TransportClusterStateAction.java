@@ -51,11 +51,23 @@ public class TransportClusterStateAction extends TransportMasterNodeReadAction<C
     private final Logger logger = LogManager.getLogger(getClass());
 
     @Inject
-    public TransportClusterStateAction(TransportService transportService, ClusterService clusterService,
-                                       ThreadPool threadPool, ActionFilters actionFilters,
-                                       IndexNameExpressionResolver indexNameExpressionResolver) {
-        super(ClusterStateAction.NAME, false, transportService, clusterService, threadPool, actionFilters,
-              ClusterStateRequest::new, indexNameExpressionResolver);
+    public TransportClusterStateAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver
+    ) {
+        super(
+            ClusterStateAction.NAME,
+            false,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            ClusterStateRequest::new,
+            indexNameExpressionResolver
+        );
     }
 
     @Override
@@ -79,11 +91,15 @@ public class TransportClusterStateAction extends TransportMasterNodeReadAction<C
     }
 
     @Override
-    protected void masterOperation(Task task, final ClusterStateRequest request, final ClusterState state,
-                                   final ActionListener<ClusterStateResponse> listener) throws IOException {
+    protected void masterOperation(
+        Task task,
+        final ClusterStateRequest request,
+        final ClusterState state,
+        final ActionListener<ClusterStateResponse> listener
+    ) throws IOException {
 
-        final Predicate<ClusterState> acceptableClusterStatePredicate
-            = request.waitForMetaDataVersion() == null ? clusterState -> true
+        final Predicate<ClusterState> acceptableClusterStatePredicate = request.waitForMetaDataVersion() == null
+            ? clusterState -> true
             : clusterState -> clusterState.metaData().version() >= request.waitForMetaDataVersion();
 
         final Predicate<ClusterState> acceptableClusterStateOrNotMasterPredicate = request.local()
@@ -97,35 +113,37 @@ public class TransportClusterStateAction extends TransportMasterNodeReadAction<C
             new ClusterStateObserver(state, clusterService, request.waitForTimeout(), logger, threadPool.getThreadContext())
                 .waitForNextChange(new ClusterStateObserver.Listener() {
 
-                @Override
-                public void onNewClusterState(ClusterState newState) {
-                    if (acceptableClusterStatePredicate.test(newState)) {
-                        ActionListener.completeWith(listener, () -> buildResponse(request, newState));
-                    } else {
-                        listener.onFailure(new NotMasterException(
-                            "master stepped down waiting for metadata version " + request.waitForMetaDataVersion()));
+                    @Override
+                    public void onNewClusterState(ClusterState newState) {
+                        if (acceptableClusterStatePredicate.test(newState)) {
+                            ActionListener.completeWith(listener, () -> buildResponse(request, newState));
+                        } else {
+                            listener.onFailure(
+                                new NotMasterException(
+                                    "master stepped down waiting for metadata version " + request.waitForMetaDataVersion()
+                                )
+                            );
+                        }
                     }
-                }
 
-                @Override
-                public void onClusterServiceClose() {
-                    listener.onFailure(new NodeClosedException(clusterService.localNode()));
-                }
-
-                @Override
-                public void onTimeout(TimeValue timeout) {
-                    try {
-                        listener.onResponse(new ClusterStateResponse(state.getClusterName(), null, true));
-                    } catch (Exception e) {
-                        listener.onFailure(e);
+                    @Override
+                    public void onClusterServiceClose() {
+                        listener.onFailure(new NodeClosedException(clusterService.localNode()));
                     }
-                }
-            }, acceptableClusterStateOrNotMasterPredicate);
+
+                    @Override
+                    public void onTimeout(TimeValue timeout) {
+                        try {
+                            listener.onResponse(new ClusterStateResponse(state.getClusterName(), null, true));
+                        } catch (Exception e) {
+                            listener.onFailure(e);
+                        }
+                    }
+                }, acceptableClusterStateOrNotMasterPredicate);
         }
     }
 
-    private ClusterStateResponse buildResponse(final ClusterStateRequest request,
-                                               final ClusterState currentState) {
+    private ClusterStateResponse buildResponse(final ClusterStateRequest request, final ClusterState currentState) {
         logger.trace("Serving cluster state request using version {}", currentState.version());
         ClusterState.Builder builder = ClusterState.builder(currentState.getClusterName());
         builder.version(currentState.version());

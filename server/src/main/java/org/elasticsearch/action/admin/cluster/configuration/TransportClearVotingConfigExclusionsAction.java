@@ -48,17 +48,29 @@ import org.elasticsearch.transport.TransportService;
 import java.io.IOException;
 import java.util.function.Predicate;
 
-public class TransportClearVotingConfigExclusionsAction
-    extends TransportMasterNodeAction<ClearVotingConfigExclusionsRequest, ClearVotingConfigExclusionsResponse> {
+public class TransportClearVotingConfigExclusionsAction extends TransportMasterNodeAction<
+    ClearVotingConfigExclusionsRequest,
+    ClearVotingConfigExclusionsResponse> {
 
     private static final Logger logger = LogManager.getLogger(TransportClearVotingConfigExclusionsAction.class);
 
     @Inject
-    public TransportClearVotingConfigExclusionsAction(TransportService transportService, ClusterService clusterService,
-                                                      ThreadPool threadPool, ActionFilters actionFilters,
-                                                      IndexNameExpressionResolver indexNameExpressionResolver) {
-        super(ClearVotingConfigExclusionsAction.NAME, transportService, clusterService, threadPool, actionFilters,
-            ClearVotingConfigExclusionsRequest::new, indexNameExpressionResolver);
+    public TransportClearVotingConfigExclusionsAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver
+    ) {
+        super(
+            ClearVotingConfigExclusionsAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            ClearVotingConfigExclusionsRequest::new,
+            indexNameExpressionResolver
+        );
     }
 
     @Override
@@ -72,8 +84,12 @@ public class TransportClearVotingConfigExclusionsAction
     }
 
     @Override
-    protected void masterOperation(Task task, ClearVotingConfigExclusionsRequest request, ClusterState initialState,
-                                   ActionListener<ClearVotingConfigExclusionsResponse> listener) throws Exception {
+    protected void masterOperation(
+        Task task,
+        ClearVotingConfigExclusionsRequest request,
+        ClusterState initialState,
+        ActionListener<ClearVotingConfigExclusionsResponse> listener
+    ) throws Exception {
 
         final long startTimeMillis = threadPool.relativeTimeInMillis();
 
@@ -88,8 +104,13 @@ public class TransportClearVotingConfigExclusionsAction
         };
 
         if (request.getWaitForRemoval() && allExclusionsRemoved.test(initialState) == false) {
-            final ClusterStateObserver clusterStateObserver = new ClusterStateObserver(initialState, clusterService, request.getTimeout(),
-                logger, threadPool.getThreadContext());
+            final ClusterStateObserver clusterStateObserver = new ClusterStateObserver(
+                initialState,
+                clusterService,
+                request.getTimeout(),
+                logger,
+                threadPool.getThreadContext()
+            );
 
             clusterStateObserver.waitForNextChange(new Listener() {
                 @Override
@@ -99,15 +120,21 @@ public class TransportClearVotingConfigExclusionsAction
 
                 @Override
                 public void onClusterServiceClose() {
-                    listener.onFailure(new ElasticsearchException("cluster service closed while waiting for removal of nodes "
-                        + initialState.getVotingConfigExclusions()));
+                    listener.onFailure(
+                        new ElasticsearchException(
+                            "cluster service closed while waiting for removal of nodes " + initialState.getVotingConfigExclusions()
+                        )
+                    );
                 }
 
                 @Override
                 public void onTimeout(TimeValue timeout) {
-                    listener.onFailure(new ElasticsearchTimeoutException(
-                        "timed out waiting for removal of nodes; if nodes should not be removed, set waitForRemoval to false. "
-                        + initialState.getVotingConfigExclusions()));
+                    listener.onFailure(
+                        new ElasticsearchTimeoutException(
+                            "timed out waiting for removal of nodes; if nodes should not be removed, set waitForRemoval to false. "
+                                + initialState.getVotingConfigExclusions()
+                        )
+                    );
                 }
             }, allExclusionsRemoved);
         } else {
@@ -115,15 +142,20 @@ public class TransportClearVotingConfigExclusionsAction
         }
     }
 
-    private void submitClearVotingConfigExclusionsTask(ClearVotingConfigExclusionsRequest request, long startTimeMillis,
-                                                       ActionListener<ClearVotingConfigExclusionsResponse> listener) {
+    private void submitClearVotingConfigExclusionsTask(
+        ClearVotingConfigExclusionsRequest request,
+        long startTimeMillis,
+        ActionListener<ClearVotingConfigExclusionsResponse> listener
+    ) {
         clusterService.submitStateUpdateTask("clear-voting-config-exclusions", new ClusterStateUpdateTask(Priority.URGENT) {
             @Override
             public ClusterState execute(ClusterState currentState) {
-                final CoordinationMetaData newCoordinationMetaData =
-                        CoordinationMetaData.builder(currentState.coordinationMetaData()).clearVotingConfigExclusions().build();
-                final MetaData newMetaData = MetaData.builder(currentState.metaData()).
-                        coordinationMetaData(newCoordinationMetaData).build();
+                final CoordinationMetaData newCoordinationMetaData = CoordinationMetaData.builder(currentState.coordinationMetaData())
+                    .clearVotingConfigExclusions()
+                    .build();
+                final MetaData newMetaData = MetaData.builder(currentState.metaData())
+                    .coordinationMetaData(newCoordinationMetaData)
+                    .build();
                 return ClusterState.builder(currentState).metaData(newMetaData).build();
             }
 

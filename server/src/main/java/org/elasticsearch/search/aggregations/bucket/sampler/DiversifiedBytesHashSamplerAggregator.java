@@ -49,10 +49,18 @@ public class DiversifiedBytesHashSamplerAggregator extends SamplerAggregator {
     private ValuesSource valuesSource;
     private int maxDocsPerValue;
 
-    DiversifiedBytesHashSamplerAggregator(String name, int shardSize, AggregatorFactories factories,
-            SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData,
-            ValuesSource valuesSource,
-            int maxDocsPerValue) throws IOException {
+    DiversifiedBytesHashSamplerAggregator(
+        String name,
+        int shardSize,
+        AggregatorFactories factories,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        ValuesSource valuesSource,
+        int maxDocsPerValue
+    )
+        throws IOException {
         super(name, shardSize, factories, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.maxDocsPerValue = maxDocsPerValue;
@@ -74,7 +82,6 @@ public class DiversifiedBytesHashSamplerAggregator extends SamplerAggregator {
         DiverseDocsDeferringCollector(Consumer<Long> circuitBreakerConsumer) {
             super(shardSize, context.bigArrays(), circuitBreakerConsumer);
         }
-
 
         @Override
         protected TopDocsCollector<ScoreDocKey> createTopDocsCollector(int size) {
@@ -114,8 +121,7 @@ public class DiversifiedBytesHashSamplerAggregator extends SamplerAggregator {
                         docID = target;
                         if (values.advanceExact(target)) {
                             if (values.docValueCount() > 1) {
-                                throw new IllegalArgumentException(
-                                        "Sample diversifying key must be a single valued-field");
+                                throw new IllegalArgumentException("Sample diversifying key must be a single valued-field");
                             }
                             return true;
                         } else {

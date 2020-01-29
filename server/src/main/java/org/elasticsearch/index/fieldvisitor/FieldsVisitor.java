@@ -47,9 +47,7 @@ import static org.elasticsearch.common.util.set.Sets.newHashSet;
  * Base {@link StoredFieldVisitor} that retrieves all non-redundant metadata.
  */
 public class FieldsVisitor extends StoredFieldVisitor {
-    private static final Set<String> BASE_REQUIRED_FIELDS = unmodifiableSet(newHashSet(
-            IdFieldMapper.NAME,
-            RoutingFieldMapper.NAME));
+    private static final Set<String> BASE_REQUIRED_FIELDS = unmodifiableSet(newHashSet(IdFieldMapper.NAME, RoutingFieldMapper.NAME));
 
     private final boolean loadSource;
     private final String sourceFieldName;
@@ -82,17 +80,14 @@ public class FieldsVisitor extends StoredFieldVisitor {
         }
         // All these fields are single-valued so we can stop when the set is
         // empty
-        return requiredFields.isEmpty()
-                ? Status.STOP
-                : Status.NO;
+        return requiredFields.isEmpty() ? Status.STOP : Status.NO;
     }
 
     public void postProcess(MapperService mapperService) {
         for (Map.Entry<String, List<Object>> entry : fields().entrySet()) {
             MappedFieldType fieldType = mapperService.fullName(entry.getKey());
             if (fieldType == null) {
-                throw new IllegalStateException("Field [" + entry.getKey()
-                    + "] exists in the index but not in mappings");
+                throw new IllegalStateException("Field [" + entry.getKey() + "] exists in the index but not in mappings");
             }
             List<Object> fieldValues = entry.getValue();
             for (int i = 0; i < fieldValues.size(); i++) {

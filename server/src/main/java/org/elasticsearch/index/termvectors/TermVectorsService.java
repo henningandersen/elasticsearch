@@ -69,8 +69,7 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 
-public class TermVectorsService  {
-
+public class TermVectorsService {
 
     private TermVectorsService() {}
 
@@ -92,9 +91,13 @@ public class TermVectorsService  {
             handleFieldWildcards(indexShard, request);
         }
 
-        try (Engine.GetResult get = indexShard.get(new Engine.Get(request.realtime(), false, request.id(), uidTerm)
-                .version(request.version()).versionType(request.versionType()));
-                Engine.Searcher searcher = indexShard.acquireSearcher("term_vector")) {
+        try (
+            Engine.GetResult get = indexShard.get(
+                new Engine.Get(request.realtime(), false, request.id(), uidTerm).version(request.version())
+                    .versionType(request.versionType())
+            );
+            Engine.Searcher searcher = indexShard.acquireSearcher("term_vector")
+        ) {
             Fields topLevelFields = fields(get.searcher() != null ? get.searcher().getIndexReader() : searcher.getIndexReader());
             DocIdAndVersion docIdAndVersion = get.docIdAndVersion();
             /* from an artificial document */
@@ -139,8 +142,14 @@ public class TermVectorsService  {
                     }
                 }
                 // write term vectors
-                termVectorsResponse.setFields(termVectorsByField, request.selectedFields(), request.getFlags(), topLevelFields, dfs,
-                        termVectorsFilter);
+                termVectorsResponse.setFields(
+                    termVectorsByField,
+                    request.selectedFields(),
+                    request.getFlags(),
+                    topLevelFields,
+                    dfs,
+                    termVectorsFilter
+                );
             }
             termVectorsResponse.setTookInMillis(TimeUnit.NANOSECONDS.toMillis(nanoTimeSupplier.getAsLong() - startTime));
         } catch (Exception ex) {
@@ -188,8 +197,13 @@ public class TermVectorsService  {
         return true;
     }
 
-    private static Fields addGeneratedTermVectors(IndexShard indexShard, Engine.GetResult get, Fields termVectorsByField,
-                                                        TermVectorsRequest request, Set<String> selectedFields) throws IOException {
+    private static Fields addGeneratedTermVectors(
+        IndexShard indexShard,
+        Engine.GetResult get,
+        Fields termVectorsByField,
+        TermVectorsRequest request,
+        Set<String> selectedFields
+    ) throws IOException {
         /* only keep valid fields */
         Set<String> validFields = new HashSet<>();
         for (String field : selectedFields) {
@@ -198,8 +212,7 @@ public class TermVectorsService  {
                 continue;
             }
             // already retrieved, only if the analyzer hasn't been overridden at the field
-            if (fieldType.storeTermVectors() &&
-                    (request.perFieldAnalyzer() == null || !request.perFieldAnalyzer().containsKey(field))) {
+            if (fieldType.storeTermVectors() && (request.perFieldAnalyzer() == null || !request.perFieldAnalyzer().containsKey(field))) {
                 continue;
             }
             validFields.add(field);
@@ -213,8 +226,14 @@ public class TermVectorsService  {
         String[] getFields = validFields.toArray(new String[validFields.size() + 1]);
         getFields[getFields.length - 1] = SourceFieldMapper.NAME;
         GetResult getResult = indexShard.getService().get(get, request.id(), getFields, null);
-        Fields generatedTermVectors = generateTermVectors(indexShard, getResult.sourceAsMap(), getResult.getFields().values(),
-            request.offsets(), request.perFieldAnalyzer(), validFields);
+        Fields generatedTermVectors = generateTermVectors(
+            indexShard,
+            getResult.sourceAsMap(),
+            getResult.getFields().values(),
+            request.offsets(),
+            request.perFieldAnalyzer(),
+            validFields
+        );
 
         /* merge with existing Fields */
         if (termVectorsByField == null) {
@@ -249,12 +268,14 @@ public class TermVectorsService  {
         return selectedFields;
     }
 
-    private static Fields generateTermVectors(IndexShard indexShard,
-                                              Map<String, Object> source,
-                                              Collection<DocumentField> getFields,
-                                              boolean withOffsets,
-                                              @Nullable Map<String, String> perFieldAnalyzer,
-                                              Set<String> fields) throws IOException {
+    private static Fields generateTermVectors(
+        IndexShard indexShard,
+        Map<String, Object> source,
+        Collection<DocumentField> getFields,
+        boolean withOffsets,
+        @Nullable Map<String, String> perFieldAnalyzer,
+        Set<String> fields
+    ) throws IOException {
         Map<String, Collection<Object>> values = new HashMap<>();
         for (DocumentField getField : getFields) {
             String field = getField.getName();
@@ -292,8 +313,13 @@ public class TermVectorsService  {
 
     private static Fields generateTermVectorsFromDoc(IndexShard indexShard, TermVectorsRequest request) throws IOException {
         // parse the document, at the moment we do update the mapping, just like percolate
-        ParsedDocument parsedDocument = parseDocument(indexShard, indexShard.shardId().getIndexName(), request.doc(),
-            request.xContentType(), request.routing());
+        ParsedDocument parsedDocument = parseDocument(
+            indexShard,
+            indexShard.shardId().getIndexName(),
+            request.doc(),
+            request.xContentType(),
+            request.routing()
+        );
 
         // select the right fields and generate term vectors
         ParseContext.Document doc = parsedDocument.rootDoc();
@@ -309,24 +335,33 @@ public class TermVectorsService  {
             }
             if (seenFields.contains(field.name())) {
                 continue;
-            }
-            else {
+            } else {
                 seenFields.add(field.name());
             }
             String[] values = doc.getValues(field.name());
             documentFields.add(new DocumentField(field.name(), Arrays.asList((Object[]) values)));
         }
-        return generateTermVectors(indexShard,
-            XContentHelper.convertToMap(parsedDocument.source(), true, request.xContentType()).v2(), documentFields,
-                request.offsets(), request.perFieldAnalyzer(), seenFields);
+        return generateTermVectors(
+            indexShard,
+            XContentHelper.convertToMap(parsedDocument.source(), true, request.xContentType()).v2(),
+            documentFields,
+            request.offsets(),
+            request.perFieldAnalyzer(),
+            seenFields
+        );
     }
 
-    private static ParsedDocument parseDocument(IndexShard indexShard, String index, BytesReference doc,
-                                                XContentType xContentType, String routing) {
+    private static ParsedDocument parseDocument(
+        IndexShard indexShard,
+        String index,
+        BytesReference doc,
+        XContentType xContentType,
+        String routing
+    ) {
         MapperService mapperService = indexShard.mapperService();
         DocumentMapperForType docMapper = mapperService.documentMapperWithAutoCreate();
-        ParsedDocument parsedDocument = docMapper.getDocumentMapper().parse(
-                new SourceToParse(index, "_id_for_tv_api", doc, xContentType, routing));
+        ParsedDocument parsedDocument = docMapper.getDocumentMapper()
+            .parse(new SourceToParse(index, "_id_for_tv_api", doc, xContentType, routing));
         if (docMapper.getMapping() != null) {
             parsedDocument.addDynamicMappingsUpdate(docMapper.getMapping());
         }
@@ -355,10 +390,9 @@ public class TermVectorsService  {
 
     // Poached from Lucene ParallelLeafReader
     private static final class ParallelFields extends Fields {
-        final Map<String,Terms> fields = new TreeMap<>();
+        final Map<String, Terms> fields = new TreeMap<>();
 
-        ParallelFields() {
-        }
+        ParallelFields() {}
 
         void addField(String fieldName, Terms terms) {
             fields.put(fieldName, terms);

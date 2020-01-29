@@ -214,8 +214,7 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
                 }
             }
         }
-        NestedQueryBuilder queryBuilder =  new NestedQueryBuilder(path, query, scoreMode, innerHitBuilder)
-            .ignoreUnmapped(ignoreUnmapped)
+        NestedQueryBuilder queryBuilder = new NestedQueryBuilder(path, query, scoreMode, innerHitBuilder).ignoreUnmapped(ignoreUnmapped)
             .queryName(queryName)
             .boost(boost);
         return queryBuilder;
@@ -253,10 +252,10 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
     @Override
     protected boolean doEquals(NestedQueryBuilder that) {
         return Objects.equals(query, that.query)
-                && Objects.equals(path, that.path)
-                && Objects.equals(scoreMode, that.scoreMode)
-                && Objects.equals(innerHitBuilder, that.innerHitBuilder)
-                && Objects.equals(ignoreUnmapped, that.ignoreUnmapped);
+            && Objects.equals(path, that.path)
+            && Objects.equals(scoreMode, that.scoreMode)
+            && Objects.equals(innerHitBuilder, that.innerHitBuilder)
+            && Objects.equals(ignoreUnmapped, that.ignoreUnmapped);
     }
 
     @Override
@@ -299,8 +298,7 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
             innerQuery = Queries.filtered(innerQuery, nestedObjectMapper.nestedTypeFilter());
         }
 
-        return new ESToParentBlockJoinQuery(innerQuery, parentFilter, scoreMode,
-                objectMapper == null ? null : objectMapper.fullPath());
+        return new ESToParentBlockJoinQuery(innerQuery, parentFilter, scoreMode, objectMapper == null ? null : objectMapper.fullPath());
     }
 
     @Override
@@ -332,15 +330,18 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
     static class NestedInnerHitContextBuilder extends InnerHitContextBuilder {
         private final String path;
 
-        NestedInnerHitContextBuilder(String path, QueryBuilder query, InnerHitBuilder innerHitBuilder,
-                                     Map<String, InnerHitContextBuilder> children) {
+        NestedInnerHitContextBuilder(
+            String path,
+            QueryBuilder query,
+            InnerHitBuilder innerHitBuilder,
+            Map<String, InnerHitContextBuilder> children
+        ) {
             super(query, innerHitBuilder, children);
             this.path = path;
         }
 
         @Override
-        protected void doBuild(SearchContext parentSearchContext,
-                          InnerHitsContext innerHitsContext) throws IOException {
+        protected void doBuild(SearchContext parentSearchContext, InnerHitsContext innerHitsContext) throws IOException {
             QueryShardContext queryShardContext = parentSearchContext.getQueryShardContext();
             ObjectMapper nestedObjectMapper = queryShardContext.getObjectMapper(path);
             if (nestedObjectMapper == null) {
@@ -350,10 +351,13 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
                     return;
                 }
             }
-            String name =  innerHitBuilder.getName() != null ? innerHitBuilder.getName() : nestedObjectMapper.fullPath();
+            String name = innerHitBuilder.getName() != null ? innerHitBuilder.getName() : nestedObjectMapper.fullPath();
             ObjectMapper parentObjectMapper = queryShardContext.nestedScope().nextLevel(nestedObjectMapper);
             NestedInnerHitSubContext nestedInnerHits = new NestedInnerHitSubContext(
-                name, parentSearchContext, parentObjectMapper, nestedObjectMapper
+                name,
+                parentSearchContext,
+                parentObjectMapper,
+                nestedObjectMapper
             );
             setupInnerHitsContext(queryShardContext, nestedInnerHits);
             queryShardContext.nestedScope().previousLevel();
@@ -401,13 +405,18 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
                 Query childFilter = childObjectMapper.nestedTypeFilter();
                 BitSetProducer parentFilter = context.bitsetFilterCache().getBitSetProducer(rawParentFilter);
                 Query q = new ParentChildrenBlockJoinQuery(parentFilter, childFilter, parentDocId);
-                Weight weight = context.searcher().createWeight(context.searcher().rewrite(q),
-                        org.apache.lucene.search.ScoreMode.COMPLETE_NO_SCORES, 1f);
+                Weight weight = context.searcher()
+                    .createWeight(context.searcher().rewrite(q), org.apache.lucene.search.ScoreMode.COMPLETE_NO_SCORES, 1f);
                 if (size() == 0) {
                     TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
                     intersect(weight, innerHitQueryWeight, totalHitCountCollector, ctx);
-                    result[i] = new TopDocsAndMaxScore(new TopDocs(new TotalHits(totalHitCountCollector.getTotalHits(),
-                        TotalHits.Relation.EQUAL_TO), Lucene.EMPTY_SCORE_DOCS), Float.NaN);
+                    result[i] = new TopDocsAndMaxScore(
+                        new TopDocs(
+                            new TotalHits(totalHitCountCollector.getTotalHits(), TotalHits.Relation.EQUAL_TO),
+                            Lucene.EMPTY_SCORE_DOCS
+                        ),
+                        Float.NaN
+                    );
                 } else {
                     int topN = Math.min(from() + size(), context.searcher().getIndexReader().maxDoc());
                     TopDocsCollector<?> topDocsCollector;

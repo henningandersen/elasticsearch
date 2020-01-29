@@ -35,8 +35,12 @@ import java.util.Objects;
 public final class InternalCardinality extends InternalNumericMetricsAggregation.SingleValue implements Cardinality {
     private final HyperLogLogPlusPlus counts;
 
-    InternalCardinality(String name, HyperLogLogPlusPlus counts, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    InternalCardinality(
+        String name,
+        HyperLogLogPlusPlus counts,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.counts = counts;
     }
@@ -91,8 +95,12 @@ public final class InternalCardinality extends InternalNumericMetricsAggregation
             final InternalCardinality cardinality = (InternalCardinality) aggregation;
             if (cardinality.counts != null) {
                 if (reduced == null) {
-                    reduced = new InternalCardinality(name, new HyperLogLogPlusPlus(cardinality.counts.precision(),
-                            BigArrays.NON_RECYCLING_INSTANCE, 1), pipelineAggregators(), getMetaData());
+                    reduced = new InternalCardinality(
+                        name,
+                        new HyperLogLogPlusPlus(cardinality.counts.precision(), BigArrays.NON_RECYCLING_INSTANCE, 1),
+                        pipelineAggregators(),
+                        getMetaData()
+                    );
                 }
                 reduced.merge(cardinality);
             }
@@ -136,4 +144,3 @@ public final class InternalCardinality extends InternalNumericMetricsAggregation
         return counts;
     }
 }
-

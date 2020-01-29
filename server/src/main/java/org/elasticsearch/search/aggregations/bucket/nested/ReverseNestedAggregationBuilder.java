@@ -46,8 +46,7 @@ public class ReverseNestedAggregationBuilder extends AbstractAggregationBuilder<
         super(name);
     }
 
-    public ReverseNestedAggregationBuilder(ReverseNestedAggregationBuilder clone,
-                                           Builder factoriesBuilder, Map<String, Object> map) {
+    public ReverseNestedAggregationBuilder(ReverseNestedAggregationBuilder clone, Builder factoriesBuilder, Map<String, Object> map) {
         super(clone, factoriesBuilder, map);
         this.path = clone.path;
     }
@@ -92,7 +91,7 @@ public class ReverseNestedAggregationBuilder extends AbstractAggregationBuilder<
 
     @Override
     protected AggregatorFactory doBuild(QueryShardContext queryShardContext, AggregatorFactory parent, Builder subFactoriesBuilder)
-            throws IOException {
+        throws IOException {
         if (findNestedAggregatorFactory(parent) == null) {
             throw new IllegalArgumentException("Reverse nested aggregation [" + name + "] can only be used inside a [nested] aggregation");
         }
@@ -111,8 +110,15 @@ public class ReverseNestedAggregationBuilder extends AbstractAggregationBuilder<
         NestedScope nestedScope = queryShardContext.nestedScope();
         try {
             nestedScope.nextLevel(parentObjectMapper);
-            return new ReverseNestedAggregatorFactory(name, false, parentObjectMapper, queryShardContext, parent, subFactoriesBuilder,
-                    metaData);
+            return new ReverseNestedAggregatorFactory(
+                name,
+                false,
+                parentObjectMapper,
+                queryShardContext,
+                parent,
+                subFactoriesBuilder,
+                metaData
+            );
         } finally {
             nestedScope.previousLevel();
         }
@@ -150,16 +156,17 @@ public class ReverseNestedAggregationBuilder extends AbstractAggregationBuilder<
                 if ("path".equals(currentFieldName)) {
                     path = parser.text();
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + aggregationName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + aggregationName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else {
                 throw new ParsingException(parser.getTokenLocation(), "Unexpected token " + token + " in [" + aggregationName + "].");
             }
         }
 
-        ReverseNestedAggregationBuilder factory = new ReverseNestedAggregationBuilder(
-                aggregationName);
+        ReverseNestedAggregationBuilder factory = new ReverseNestedAggregationBuilder(aggregationName);
         if (path != null) {
             factory.path(path);
         }

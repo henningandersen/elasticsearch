@@ -70,8 +70,15 @@ public class RecoveryFilesInfoRequest extends TransportRequest {
         totalTranslogOps = in.readVInt();
     }
 
-    RecoveryFilesInfoRequest(long recoveryId, ShardId shardId, List<String> phase1FileNames, List<Long> phase1FileSizes,
-                             List<String> phase1ExistingFileNames, List<Long> phase1ExistingFileSizes, int totalTranslogOps) {
+    RecoveryFilesInfoRequest(
+        long recoveryId,
+        ShardId shardId,
+        List<String> phase1FileNames,
+        List<Long> phase1FileSizes,
+        List<String> phase1ExistingFileNames,
+        List<Long> phase1ExistingFileSizes,
+        int totalTranslogOps
+    ) {
         this.recoveryId = recoveryId;
         this.shardId = shardId;
         this.phase1FileNames = phase1FileNames;

@@ -41,7 +41,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-
 /**
  * A discovery node represents a node that is part of the cluster.
  */
@@ -51,10 +50,7 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
 
     public static boolean nodeRequiresLocalStorage(Settings settings) {
         boolean localStorageEnable = Node.NODE_LOCAL_STORAGE_SETTING.get(settings);
-        if (localStorageEnable == false &&
-            (Node.NODE_DATA_SETTING.get(settings) ||
-                Node.NODE_MASTER_SETTING.get(settings))
-            ) {
+        if (localStorageEnable == false && (Node.NODE_DATA_SETTING.get(settings) || Node.NODE_MASTER_SETTING.get(settings))) {
             // TODO: make this a proper setting validation logic, requiring multi-settings validation
             throw new IllegalArgumentException("storage can not be disabled for master and data nodes");
         }
@@ -115,8 +111,13 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
      * @param roles            node roles
      * @param version          the version of the node
      */
-    public DiscoveryNode(String id, TransportAddress address, Map<String, String> attributes, Set<DiscoveryNodeRole> roles,
-                         Version version) {
+    public DiscoveryNode(
+        String id,
+        TransportAddress address,
+        Map<String, String> attributes,
+        Set<DiscoveryNodeRole> roles,
+        Version version
+    ) {
         this("", id, address, attributes, roles, version);
     }
 
@@ -136,10 +137,25 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
      * @param roles            node roles
      * @param version          the version of the node
      */
-    public DiscoveryNode(String nodeName, String nodeId, TransportAddress address,
-                         Map<String, String> attributes, Set<DiscoveryNodeRole> roles, Version version) {
-        this(nodeName, nodeId, UUIDs.randomBase64UUID(), address.address().getHostString(), address.getAddress(), address, attributes,
-            roles, version);
+    public DiscoveryNode(
+        String nodeName,
+        String nodeId,
+        TransportAddress address,
+        Map<String, String> attributes,
+        Set<DiscoveryNodeRole> roles,
+        Version version
+    ) {
+        this(
+            nodeName,
+            nodeId,
+            UUIDs.randomBase64UUID(),
+            address.address().getHostString(),
+            address.getAddress(),
+            address,
+            attributes,
+            roles,
+            version
+        );
     }
 
     /**
@@ -160,8 +176,17 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
      * @param roles            node roles
      * @param version          the version of the node
      */
-    public DiscoveryNode(String nodeName, String nodeId, String ephemeralId, String hostName, String hostAddress,
-                         TransportAddress address, Map<String, String> attributes, Set<DiscoveryNodeRole> roles, Version version) {
+    public DiscoveryNode(
+        String nodeName,
+        String nodeId,
+        String ephemeralId,
+        String hostName,
+        String hostAddress,
+        TransportAddress address,
+        Map<String, String> attributes,
+        Set<DiscoveryNodeRole> roles,
+        Version version
+    ) {
         if (nodeName != null) {
             this.nodeName = nodeName.intern();
         } else {
@@ -178,8 +203,8 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
             this.version = version;
         }
         this.attributes = Collections.unmodifiableMap(attributes);
-        //verify that no node roles are being provided as attributes
-        Predicate<Map<String, String>> predicate =  (attrs) -> {
+        // verify that no node roles are being provided as attributes
+        Predicate<Map<String, String>> predicate = (attrs) -> {
             boolean success = true;
             for (final DiscoveryNodeRole role : DiscoveryNode.roleNameToPossibleRoles.values()) {
                 success &= attrs.containsKey(role.roleName()) == false;
@@ -231,8 +256,11 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
                     roles.add(new DiscoveryNodeRole.UnknownRole(roleName, roleNameAbbreviation));
                 } else {
                     assert roleName.equals(role.roleName()) : "role name [" + roleName + "] does not match role [" + role.roleName() + "]";
-                    assert roleNameAbbreviation.equals(role.roleNameAbbreviation())
-                            : "role name abbreviation [" + roleName + "] does not match role [" + role.roleNameAbbreviation() + "]";
+                    assert roleNameAbbreviation.equals(role.roleNameAbbreviation()) : "role name abbreviation ["
+                        + roleName
+                        + "] does not match role ["
+                        + role.roleNameAbbreviation()
+                        + "]";
                     roles.add(role);
                 }
             }
@@ -280,8 +308,9 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
             }
         } else {
             // an old node will only understand legacy roles since pluggable roles is a new concept
-            final List<DiscoveryNodeRole> rolesToWrite =
-                    roles.stream().filter(DiscoveryNodeRole.BUILT_IN_ROLES::contains).collect(Collectors.toUnmodifiableList());
+            final List<DiscoveryNodeRole> rolesToWrite = roles.stream()
+                .filter(DiscoveryNodeRole.BUILT_IN_ROLES::contains)
+                .collect(Collectors.toUnmodifiableList());
             out.writeVInt(rolesToWrite.size());
             for (final DiscoveryNodeRole role : rolesToWrite) {
                 if (role == DiscoveryNodeRole.MASTER_ROLE) {
@@ -439,14 +468,17 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
     private static Map<String, DiscoveryNodeRole> roleNameToPossibleRoles;
 
     public static void setPossibleRoles(final Set<DiscoveryNodeRole> possibleRoles) {
-        final Map<String, DiscoveryNodeRole> roleNameToPossibleRoles =
-                possibleRoles.stream().collect(Collectors.toUnmodifiableMap(DiscoveryNodeRole::roleName, Function.identity()));
+        final Map<String, DiscoveryNodeRole> roleNameToPossibleRoles = possibleRoles.stream()
+            .collect(Collectors.toUnmodifiableMap(DiscoveryNodeRole::roleName, Function.identity()));
         // collect the abbreviation names into a map to ensure that there are not any duplicate abbreviations
         final Map<String, DiscoveryNodeRole> roleNameAbbreviationToPossibleRoles = roleNameToPossibleRoles.values()
-                .stream()
-                .collect(Collectors.toUnmodifiableMap(DiscoveryNodeRole::roleNameAbbreviation, Function.identity()));
-        assert roleNameToPossibleRoles.size() == roleNameAbbreviationToPossibleRoles.size() :
-                "roles by name [" + roleNameToPossibleRoles + "], roles by name abbreviation [" + roleNameAbbreviationToPossibleRoles + "]";
+            .stream()
+            .collect(Collectors.toUnmodifiableMap(DiscoveryNodeRole::roleNameAbbreviation, Function.identity()));
+        assert roleNameToPossibleRoles.size() == roleNameAbbreviationToPossibleRoles.size() : "roles by name ["
+            + roleNameToPossibleRoles
+            + "], roles by name abbreviation ["
+            + roleNameAbbreviationToPossibleRoles
+            + "]";
         DiscoveryNode.roleNameToPossibleRoles = roleNameToPossibleRoles;
     }
 

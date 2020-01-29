@@ -32,11 +32,31 @@ import java.util.Map;
 
 class HDRPercentilesAggregator extends AbstractHDRPercentilesAggregator {
 
-    HDRPercentilesAggregator(String name, ValuesSource valuesSource, SearchContext context, Aggregator parent, double[] percents,
-            int numberOfSignificantValueDigits, boolean keyed, DocValueFormat formatter,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
-        super(name, valuesSource, context, parent, percents, numberOfSignificantValueDigits, keyed, formatter,
-                pipelineAggregators, metaData);
+    HDRPercentilesAggregator(
+        String name,
+        ValuesSource valuesSource,
+        SearchContext context,
+        Aggregator parent,
+        double[] percents,
+        int numberOfSignificantValueDigits,
+        boolean keyed,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
+        super(
+            name,
+            valuesSource,
+            context,
+            parent,
+            percents,
+            numberOfSignificantValueDigits,
+            keyed,
+            formatter,
+            pipelineAggregators,
+            metaData
+        );
     }
 
     @Override
@@ -64,8 +84,6 @@ class HDRPercentilesAggregator extends AbstractHDRPercentilesAggregator {
         DoubleHistogram state;
         state = new DoubleHistogram(numberOfSignificantValueDigits);
         state.setAutoResize(true);
-        return new InternalHDRPercentiles(name, keys, state,
-                keyed,
-                format, pipelineAggregators(), metaData());
+        return new InternalHDRPercentiles(name, keys, state, keyed, format, pipelineAggregators(), metaData());
     }
 }

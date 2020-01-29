@@ -87,8 +87,8 @@ public class QuerySearchResultTests extends ESTestCase {
             Aggregations deserializedAggs = deserialized.consumeAggs();
             assertEquals(aggs.asList(), deserializedAggs.asList());
             List<SiblingPipelineAggregator> pipelineAggs = ((InternalAggregations) aggs).getTopLevelPipelineAggregators();
-            List<SiblingPipelineAggregator> deserializedPipelineAggs =
-                ((InternalAggregations) deserializedAggs).getTopLevelPipelineAggregators();
+            List<SiblingPipelineAggregator> deserializedPipelineAggs = ((InternalAggregations) deserializedAggs)
+                .getTopLevelPipelineAggregators();
             assertEquals(pipelineAggs.size(), deserializedPipelineAggs.size());
             for (int i = 0; i < pipelineAggs.size(); i++) {
                 SiblingPipelineAggregator pipelineAgg = pipelineAggs.get(i);

@@ -76,9 +76,10 @@ public class RoutingAllocation {
     private final RoutingNodesChangedObserver nodesChangedObserver = new RoutingNodesChangedObserver();
     private final RestoreInProgressUpdater restoreInProgressUpdater = new RestoreInProgressUpdater();
     private final RoutingChangesObserver routingChangesObserver = new RoutingChangesObserver.DelegatingRoutingChangesObserver(
-        nodesChangedObserver, indexMetaDataUpdater, restoreInProgressUpdater
+        nodesChangedObserver,
+        indexMetaDataUpdater,
+        restoreInProgressUpdater
     );
-
 
     /**
      * Creates a new {@link RoutingAllocation}
@@ -87,8 +88,13 @@ public class RoutingAllocation {
      * @param clusterState cluster state before rerouting
      * @param currentNanoTime the nano time to use for all delay allocation calculation (typically {@link System#nanoTime()})
      */
-    public RoutingAllocation(AllocationDeciders deciders, RoutingNodes routingNodes, ClusterState clusterState, ClusterInfo clusterInfo,
-                             long currentNanoTime) {
+    public RoutingAllocation(
+        AllocationDeciders deciders,
+        RoutingNodes routingNodes,
+        ClusterState clusterState,
+        ClusterInfo clusterInfo,
+        long currentNanoTime
+    ) {
         this.deciders = deciders;
         this.routingNodes = routingNodes;
         this.metaData = clusterState.metaData();
@@ -149,7 +155,7 @@ public class RoutingAllocation {
     }
 
     public <T extends ClusterState.Custom> T custom(String key) {
-        return (T)customs.get(key);
+        return (T) customs.get(key);
     }
 
     public ImmutableOpenMap<String, ClusterState.Custom> getCustoms() {

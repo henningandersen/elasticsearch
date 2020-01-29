@@ -130,9 +130,13 @@ public class TaskManager implements ClusterStateApplier {
         return task;
     }
 
-    public <Request extends ActionRequest, Response extends ActionResponse>
-    Task registerAndExecute(String type, TransportAction<Request, Response> action, Request request,
-                            BiConsumer<Task, Response> onResponse, BiConsumer<Task, Exception> onFailure) {
+    public <Request extends ActionRequest, Response extends ActionResponse> Task registerAndExecute(
+        String type,
+        TransportAction<Request, Response> action,
+        Request request,
+        BiConsumer<Task, Response> onResponse,
+        BiConsumer<Task, Exception> onFailure
+    ) {
         Task task = register(type, action.actionName, request);
         // NOTE: ActionListener cannot infer Response, see https://bugs.openjdk.java.net/browse/JDK-8203195
         action.execute(task, request, new ActionListener<Response>() {
@@ -289,7 +293,6 @@ public class TaskManager implements ClusterStateApplier {
         return Collections.unmodifiableMap(taskHashMap);
     }
 
-
     /**
      * Returns the list of currently running tasks on the node that can be cancelled
      */
@@ -380,8 +383,11 @@ public class TaskManager implements ClusterStateApplier {
                 while (banIterator.hasNext()) {
                     TaskId taskId = banIterator.next();
                     if (lastDiscoveryNodes.nodeExists(taskId.getNodeId()) == false) {
-                        logger.debug("Removing ban for the parent [{}] on the node [{}], reason: the parent node is gone", taskId,
-                            event.state().getNodes().getLocalNode());
+                        logger.debug(
+                            "Removing ban for the parent [{}] on the node [{}], reason: the parent node is gone",
+                            taskId,
+                            event.state().getNodes().getLocalNode()
+                        );
                         banIterator.remove();
                     }
                 }

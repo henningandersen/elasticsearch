@@ -53,7 +53,7 @@ public final class BitArray implements Releasable {
 
     private void fill(int index, boolean bit) {
         int wordNum = index >> 6;
-        bits = bigArrays.grow(bits,wordNum+1);
+        bits = bigArrays.grow(bits, wordNum + 1);
         long bitmask = 1L << index;
         long value = bit ? bits.get(wordNum) | bitmask : bits.get(wordNum) & ~bitmask;
         bits.set(wordNum, value);

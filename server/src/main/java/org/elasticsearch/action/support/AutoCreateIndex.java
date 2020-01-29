@@ -41,8 +41,13 @@ import java.util.List;
  */
 public final class AutoCreateIndex {
 
-    public static final Setting<AutoCreate> AUTO_CREATE_INDEX_SETTING =
-        new Setting<>("action.auto_create_index", "true", AutoCreate::new, Property.NodeScope, Setting.Property.Dynamic);
+    public static final Setting<AutoCreate> AUTO_CREATE_INDEX_SETTING = new Setting<>(
+        "action.auto_create_index",
+        "true",
+        AutoCreate::new,
+        Property.NodeScope,
+        Setting.Property.Dynamic
+    );
 
     private final boolean dynamicMappingDisabled;
     private final IndexNameExpressionResolver resolver;
@@ -76,8 +81,7 @@ public final class AutoCreateIndex {
             throw new IndexNotFoundException("[" + AUTO_CREATE_INDEX_SETTING.getKey() + "] is [false]", index);
         }
         if (dynamicMappingDisabled) {
-            throw new IndexNotFoundException("[" + MapperService.INDEX_MAPPER_DYNAMIC_SETTING.getKey() + "] is [false]",
-                    index);
+            throw new IndexNotFoundException("[" + MapperService.INDEX_MAPPER_DYNAMIC_SETTING.getKey() + "] is [false]", index);
         }
         // matches not set, default value of "true"
         if (autoCreate.expressions.isEmpty()) {
@@ -90,12 +94,17 @@ public final class AutoCreateIndex {
                 if (include) {
                     return true;
                 }
-                throw new IndexNotFoundException("[" + AUTO_CREATE_INDEX_SETTING.getKey() + "] contains [-"
-                        + indexExpression + "] which forbids automatic creation of the index", index);
+                throw new IndexNotFoundException(
+                    "["
+                        + AUTO_CREATE_INDEX_SETTING.getKey()
+                        + "] contains [-"
+                        + indexExpression
+                        + "] which forbids automatic creation of the index",
+                    index
+                );
             }
         }
-        throw new IndexNotFoundException("[" + AUTO_CREATE_INDEX_SETTING.getKey() + "] ([" + autoCreate
-                + "]) doesn't match", index);
+        throw new IndexNotFoundException("[" + AUTO_CREATE_INDEX_SETTING.getKey() + "] ([" + autoCreate + "]) doesn't match", index);
     }
 
     AutoCreate getAutoCreate() {
@@ -121,21 +130,33 @@ public final class AutoCreateIndex {
                     String[] patterns = Strings.commaDelimitedListToStringArray(value);
                     for (String pattern : patterns) {
                         if (pattern == null || pattern.trim().length() == 0) {
-                            throw new IllegalArgumentException("Can't parse [" + value + "] for setting [action.auto_create_index] must "
-                                    + "be either [true, false, or a comma separated list of index patterns]");
+                            throw new IllegalArgumentException(
+                                "Can't parse ["
+                                    + value
+                                    + "] for setting [action.auto_create_index] must "
+                                    + "be either [true, false, or a comma separated list of index patterns]"
+                            );
                         }
                         pattern = pattern.trim();
                         Tuple<String, Boolean> expression;
                         if (pattern.startsWith("-")) {
                             if (pattern.length() == 1) {
-                                throw new IllegalArgumentException("Can't parse [" + value + "] for setting [action.auto_create_index] "
-                                        + "must contain an index name after [-]");
+                                throw new IllegalArgumentException(
+                                    "Can't parse ["
+                                        + value
+                                        + "] for setting [action.auto_create_index] "
+                                        + "must contain an index name after [-]"
+                                );
                             }
                             expression = new Tuple<>(pattern.substring(1), false);
-                        } else if(pattern.startsWith("+")) {
+                        } else if (pattern.startsWith("+")) {
                             if (pattern.length() == 1) {
-                                throw new IllegalArgumentException("Can't parse [" + value + "] for setting [action.auto_create_index] "
-                                        + "must contain an index name after [+]");
+                                throw new IllegalArgumentException(
+                                    "Can't parse ["
+                                        + value
+                                        + "] for setting [action.auto_create_index] "
+                                        + "must contain an index name after [+]"
+                                );
                             }
                             expression = new Tuple<>(pattern.substring(1), true);
                         } else {

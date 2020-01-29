@@ -77,19 +77,14 @@ public class GeoJsonSerializationTests extends ESTestCase {
         }
     }
 
-
     private void xContentTest(Supplier<Geometry> instanceSupplier) throws IOException {
         AbstractXContentTestCase.xContentTester(
             this::createParser,
             () -> new GeometryWrapper(instanceSupplier.get()),
-            (geometryWrapper, xContentBuilder) -> {
-                geometryWrapper.toXContent(xContentBuilder, ToXContent.EMPTY_PARAMS);
-            },
-            GeometryWrapper::fromXContent)
-            .supportsUnknownFields(true)
-            .test();
+            (geometryWrapper, xContentBuilder) -> { geometryWrapper.toXContent(xContentBuilder, ToXContent.EMPTY_PARAMS); },
+            GeometryWrapper::fromXContent
+        ).supportsUnknownFields(true).test();
     }
-
 
     public void testPoint() throws IOException {
         xContentTest(() -> randomPoint(randomBoolean()));

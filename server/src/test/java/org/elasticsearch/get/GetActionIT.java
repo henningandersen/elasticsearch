@@ -69,10 +69,11 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     public void testSimpleGet() {
-        assertAcked(prepareCreate("test")
-                .setMapping("field1", "type=keyword,store=true", "field2", "type=keyword,store=true")
+        assertAcked(
+            prepareCreate("test").setMapping("field1", "type=keyword,store=true", "field2", "type=keyword,store=true")
                 .setSettings(Settings.builder().put("index.refresh_interval", -1))
-                .addAlias(new Alias("alias").writeIndex(randomFrom(true, false, null))));
+                .addAlias(new Alias("alias").writeIndex(randomFrom(true, false, null)))
+        );
         ensureGreen();
 
         GetResponse response = client().prepareGet(indexOrAlias(), "1").get();
@@ -124,15 +125,13 @@ public class GetActionIT extends ESIntegTestCase {
         assertThat(response.getField("field2"), nullValue());
 
         logger.info("--> realtime fetch of field & source");
-        response = client().prepareGet(indexOrAlias(), "1")
-            .setStoredFields("field1").setFetchSource("field1", null).get();
+        response = client().prepareGet(indexOrAlias(), "1").setStoredFields("field1").setFetchSource("field1", null).get();
         assertThat(response.isExists(), equalTo(true));
         assertThat(response.getIndex(), equalTo("test"));
         assertThat(response.getSourceAsMap(), hasKey("field1"));
         assertThat(response.getSourceAsMap(), not(hasKey("field2")));
         assertThat(response.getField("field1").getValues().get(0).toString(), equalTo("value1"));
         assertThat(response.getField("field2"), nullValue());
-
 
         logger.info("--> realtime get 1");
         response = client().prepareGet(indexOrAlias(), "1").get();
@@ -160,8 +159,7 @@ public class GetActionIT extends ESIntegTestCase {
         assertThat(response.getField("field2"), nullValue());
 
         logger.info("--> realtime fetch of field & source (loaded from index)");
-        response = client().prepareGet(indexOrAlias(), "1")
-            .setStoredFields("field1").setFetchSource(true).get();
+        response = client().prepareGet(indexOrAlias(), "1").setStoredFields("field1").setFetchSource(true).get();
         assertThat(response.isExists(), equalTo(true));
         assertThat(response.getIndex(), equalTo("test"));
         assertThat(response.getSourceAsBytes(), not(nullValue()));
@@ -195,21 +193,23 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     public void testGetWithAliasPointingToMultipleIndices() {
-        client().admin().indices().prepareCreate("index1")
-            .addAlias(new Alias("alias1").indexRouting("0")).get();
+        client().admin().indices().prepareCreate("index1").addAlias(new Alias("alias1").indexRouting("0")).get();
         if (randomBoolean()) {
-            client().admin().indices().prepareCreate("index2")
-                .addAlias(new Alias("alias1").indexRouting("0").writeIndex(randomFrom(false, null))).get();
+            client().admin()
+                .indices()
+                .prepareCreate("index2")
+                .addAlias(new Alias("alias1").indexRouting("0").writeIndex(randomFrom(false, null)))
+                .get();
         } else {
-            client().admin().indices().prepareCreate("index3")
-                .addAlias(new Alias("alias1").indexRouting("1").writeIndex(true)).get();
+            client().admin().indices().prepareCreate("index3").addAlias(new Alias("alias1").indexRouting("1").writeIndex(true)).get();
         }
-        IndexResponse indexResponse = client().prepareIndex("index1").setId("id")
-            .setSource(Collections.singletonMap("foo", "bar")).get();
+        IndexResponse indexResponse = client().prepareIndex("index1").setId("id").setSource(Collections.singletonMap("foo", "bar")).get();
         assertThat(indexResponse.status().getStatus(), equalTo(RestStatus.CREATED.getStatus()));
 
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class, () ->
-            client().prepareGet("alias1", "_alias_id").get());
+        IllegalArgumentException exception = expectThrows(
+            IllegalArgumentException.class,
+            () -> client().prepareGet("alias1", "_alias_id").get()
+        );
         assertThat(exception.getMessage(), endsWith("can't execute a single index op"));
     }
 
@@ -218,9 +218,11 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     public void testSimpleMultiGet() throws Exception {
-        assertAcked(prepareCreate("test").addAlias(new Alias("alias").writeIndex(randomFrom(true, false, null)))
+        assertAcked(
+            prepareCreate("test").addAlias(new Alias("alias").writeIndex(randomFrom(true, false, null)))
                 .setMapping("field", "type=keyword,store=true")
-                .setSettings(Settings.builder().put("index.refresh_interval", -1)));
+                .setSettings(Settings.builder().put("index.refresh_interval", -1))
+        );
         ensureGreen();
 
         MultiGetResponse response = client().prepareMultiGet().add(indexOrAlias(), "1").get();
@@ -232,11 +234,12 @@ public class GetActionIT extends ESIntegTestCase {
         }
 
         response = client().prepareMultiGet()
-                .add(indexOrAlias(), "1")
-                .add(indexOrAlias(), "15")
-                .add(indexOrAlias(), "3")
-                .add(indexOrAlias(), "9")
-                .add(indexOrAlias(), "11").get();
+            .add(indexOrAlias(), "1")
+            .add(indexOrAlias(), "15")
+            .add(indexOrAlias(), "3")
+            .add(indexOrAlias(), "9")
+            .add(indexOrAlias(), "11")
+            .get();
         assertThat(response.getResponses().length, equalTo(5));
         assertThat(response.getResponses()[0].getId(), equalTo("1"));
         assertThat(response.getResponses()[0].getIndex(), equalTo("test"));
@@ -261,9 +264,9 @@ public class GetActionIT extends ESIntegTestCase {
 
         // multi get with specific field
         response = client().prepareMultiGet()
-                .add(new MultiGetRequest.Item(indexOrAlias(), "1").storedFields("field"))
-                .add(new MultiGetRequest.Item(indexOrAlias(), "3").storedFields("field"))
-                .get();
+            .add(new MultiGetRequest.Item(indexOrAlias(), "1").storedFields("field"))
+            .add(new MultiGetRequest.Item(indexOrAlias(), "3").storedFields("field"))
+            .get();
 
         assertThat(response.getResponses().length, equalTo(2));
         assertThat(response.getResponses()[0].getResponse().getSourceAsBytes(), nullValue());
@@ -271,20 +274,25 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     public void testGetDocWithMultivaluedFields() throws Exception {
-        String mapping1 = Strings.toString(XContentFactory.jsonBuilder().startObject()
+        String mapping1 = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
                 .startObject("properties")
-                .startObject("field").field("type", "text").field("store", true).endObject()
-                .endObject().endObject());
-        assertAcked(prepareCreate("test")
-                .setMapping(mapping1));
+                .startObject("field")
+                .field("type", "text")
+                .field("store", true)
+                .endObject()
+                .endObject()
+                .endObject()
+        );
+        assertAcked(prepareCreate("test").setMapping(mapping1));
         ensureGreen();
 
         GetResponse response = client().prepareGet("test", "1").get();
         assertThat(response.isExists(), equalTo(false));
         assertThat(response.isExists(), equalTo(false));
 
-        client().prepareIndex("test").setId("1")
-                .setSource(jsonBuilder().startObject().array("field", "1", "2").endObject()).get();
+        client().prepareIndex("test").setId("1").setSource(jsonBuilder().startObject().array("field", "1", "2").endObject()).get();
 
         response = client().prepareGet("test", "1").setStoredFields("field").get();
         assertThat(response.isExists(), equalTo(true));
@@ -308,8 +316,7 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     public void testGetWithVersion() {
-        assertAcked(prepareCreate("test").addAlias(new Alias("alias"))
-                .setSettings(Settings.builder().put("index.refresh_interval", -1)));
+        assertAcked(prepareCreate("test").addAlias(new Alias("alias")).setSettings(Settings.builder().put("index.refresh_interval", -1)));
         ensureGreen();
 
         GetResponse response = client().prepareGet("test", "1").get();
@@ -334,7 +341,7 @@ public class GetActionIT extends ESIntegTestCase {
             client().prepareGet(indexOrAlias(), "1").setVersion(2).get();
             fail();
         } catch (VersionConflictEngineException e) {
-            //all good
+            // all good
         }
 
         // From Lucene index:
@@ -356,7 +363,7 @@ public class GetActionIT extends ESIntegTestCase {
             client().prepareGet(indexOrAlias(), "1").setVersion(2).setRealtime(false).get();
             fail();
         } catch (VersionConflictEngineException e) {
-            //all good
+            // all good
         }
 
         logger.info("--> index doc 1 again, so increasing the version");
@@ -374,7 +381,7 @@ public class GetActionIT extends ESIntegTestCase {
             client().prepareGet(indexOrAlias(), "1").setVersion(1).get();
             fail();
         } catch (VersionConflictEngineException e) {
-            //all good
+            // all good
         }
 
         response = client().prepareGet(indexOrAlias(), "1").setVersion(2).get();
@@ -396,7 +403,7 @@ public class GetActionIT extends ESIntegTestCase {
             client().prepareGet(indexOrAlias(), "1").setVersion(1).setRealtime(false).get();
             fail();
         } catch (VersionConflictEngineException e) {
-            //all good
+            // all good
         }
 
         response = client().prepareGet(indexOrAlias(), "1").setVersion(2).setRealtime(false).get();
@@ -407,8 +414,7 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     public void testMultiGetWithVersion() throws Exception {
-        assertAcked(prepareCreate("test").addAlias(new Alias("alias"))
-                .setSettings(Settings.builder().put("index.refresh_interval", -1)));
+        assertAcked(prepareCreate("test").addAlias(new Alias("alias")).setSettings(Settings.builder().put("index.refresh_interval", -1)));
         ensureGreen();
 
         MultiGetResponse response = client().prepareMultiGet().add(indexOrAlias(), "1").get();
@@ -421,10 +427,10 @@ public class GetActionIT extends ESIntegTestCase {
 
         // Version from translog
         response = client().prepareMultiGet()
-                .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(Versions.MATCH_ANY))
-                .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(1))
-                .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(2))
-                .get();
+            .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(Versions.MATCH_ANY))
+            .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(1))
+            .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(2))
+            .get();
         assertThat(response.getResponses().length, equalTo(3));
         // [0] version doesn't matter, which is the default
         assertThat(response.getResponses()[0].getFailure(), nullValue());
@@ -442,14 +448,14 @@ public class GetActionIT extends ESIntegTestCase {
         assertThat(response.getResponses()[2].getFailure().getMessage(), startsWith("[1]: version conflict"));
         assertThat(response.getResponses()[2].getFailure().getFailure(), instanceOf(VersionConflictEngineException.class));
 
-        //Version from Lucene index
+        // Version from Lucene index
         refresh();
         response = client().prepareMultiGet()
-                .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(Versions.MATCH_ANY))
-                .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(1))
-                .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(2))
-                .setRealtime(false)
-                .get();
+            .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(Versions.MATCH_ANY))
+            .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(1))
+            .add(new MultiGetRequest.Item(indexOrAlias(), "1").version(2))
+            .setRealtime(false)
+            .get();
         assertThat(response.getResponses().length, equalTo(3));
         // [0] version doesn't matter, which is the default
         assertThat(response.getResponses()[0].getFailure(), nullValue());
@@ -465,18 +471,16 @@ public class GetActionIT extends ESIntegTestCase {
         assertThat(response.getResponses()[2].getFailure().getMessage(), startsWith("[1]: version conflict"));
         assertThat(response.getResponses()[2].getFailure().getFailure(), instanceOf(VersionConflictEngineException.class));
 
-
-
         for (int i = 0; i < 3; i++) {
             client().prepareIndex("test").setId(Integer.toString(i)).setSource("field", "value" + i).get();
         }
 
         // Version from translog
         response = client().prepareMultiGet()
-                .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(Versions.MATCH_ANY))
-                .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(1))
-                .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(2))
-                .get();
+            .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(Versions.MATCH_ANY))
+            .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(1))
+            .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(2))
+            .get();
         assertThat(response.getResponses().length, equalTo(3));
         // [0] version doesn't matter, which is the default
         assertThat(response.getResponses()[0].getFailure(), nullValue());
@@ -494,15 +498,14 @@ public class GetActionIT extends ESIntegTestCase {
         assertThat(response.getResponses()[2].getResponse().isExists(), equalTo(true));
         assertThat(response.getResponses()[2].getResponse().getSourceAsMap().get("field").toString(), equalTo("value2"));
 
-
-        //Version from Lucene index
+        // Version from Lucene index
         refresh();
         response = client().prepareMultiGet()
-                .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(Versions.MATCH_ANY))
-                .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(1))
-                .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(2))
-                .setRealtime(false)
-                .get();
+            .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(Versions.MATCH_ANY))
+            .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(1))
+            .add(new MultiGetRequest.Item(indexOrAlias(), "2").version(2))
+            .setRealtime(false)
+            .get();
         assertThat(response.getResponses().length, equalTo(3));
         // [0] version doesn't matter, which is the default
         assertThat(response.getResponses()[0].getFailure(), nullValue());
@@ -522,68 +525,101 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     public void testGetFieldsNonLeafField() throws Exception {
-        assertAcked(prepareCreate("test").addAlias(new Alias("alias"))
-                .setMapping(jsonBuilder().startObject().startObject("_doc").startObject("properties")
-                        .startObject("field1").startObject("properties")
-                        .startObject("field2").field("type", "text").endObject()
-                        .endObject().endObject()
-                        .endObject().endObject().endObject())
-                .setSettings(Settings.builder().put("index.refresh_interval", -1)));
+        assertAcked(
+            prepareCreate("test").addAlias(new Alias("alias"))
+                .setMapping(
+                    jsonBuilder().startObject()
+                        .startObject("_doc")
+                        .startObject("properties")
+                        .startObject("field1")
+                        .startObject("properties")
+                        .startObject("field2")
+                        .field("type", "text")
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                )
+                .setSettings(Settings.builder().put("index.refresh_interval", -1))
+        );
 
-        client().prepareIndex("test").setId("1")
-                .setSource(jsonBuilder().startObject().startObject("field1").field("field2", "value1").endObject().endObject())
-                .get();
+        client().prepareIndex("test")
+            .setId("1")
+            .setSource(jsonBuilder().startObject().startObject("field1").field("field2", "value1").endObject().endObject())
+            .get();
 
-
-        IllegalArgumentException exc =
-            expectThrows(IllegalArgumentException.class,
-                () -> client().prepareGet(indexOrAlias(), "1").setStoredFields("field1").get());
+        IllegalArgumentException exc = expectThrows(
+            IllegalArgumentException.class,
+            () -> client().prepareGet(indexOrAlias(), "1").setStoredFields("field1").get()
+        );
         assertThat(exc.getMessage(), equalTo("field [field1] isn't a leaf field"));
 
         flush();
 
-        exc =
-            expectThrows(IllegalArgumentException.class,
-                () -> client().prepareGet(indexOrAlias(), "1").setStoredFields("field1").get());
+        exc = expectThrows(IllegalArgumentException.class, () -> client().prepareGet(indexOrAlias(), "1").setStoredFields("field1").get());
         assertThat(exc.getMessage(), equalTo("field [field1] isn't a leaf field"));
     }
 
     public void testGetFieldsComplexField() throws Exception {
-        assertAcked(prepareCreate("my-index")
-            // multi types in 5.6
-            .setSettings(Settings.builder().put("index.refresh_interval", -1))
-                .setMapping(jsonBuilder().startObject().startObject("_doc").startObject("properties")
-                        .startObject("field1").field("type", "object").startObject("properties")
-                        .startObject("field2").field("type", "object").startObject("properties")
-                                .startObject("field3").field("type", "object").startObject("properties")
-                                    .startObject("field4").field("type", "text").field("store", true)
-                                .endObject().endObject()
-                            .endObject().endObject()
-                        .endObject().endObject().endObject()
-                        .endObject().endObject().endObject()));
+        assertAcked(
+            prepareCreate("my-index")
+                // multi types in 5.6
+                .setSettings(Settings.builder().put("index.refresh_interval", -1))
+                .setMapping(
+                    jsonBuilder().startObject()
+                        .startObject("_doc")
+                        .startObject("properties")
+                        .startObject("field1")
+                        .field("type", "object")
+                        .startObject("properties")
+                        .startObject("field2")
+                        .field("type", "object")
+                        .startObject("properties")
+                        .startObject("field3")
+                        .field("type", "object")
+                        .startObject("properties")
+                        .startObject("field4")
+                        .field("type", "text")
+                        .field("store", true)
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                )
+        );
 
-        BytesReference source = BytesReference.bytes(jsonBuilder().startObject()
-                    .startArray("field1")
-                        .startObject()
-                            .startObject("field2")
-                                .startArray("field3")
-                                    .startObject()
-                                        .field("field4", "value1")
-                                    .endObject()
-                                .endArray()
-                            .endObject()
-                        .endObject()
-                        .startObject()
-                            .startObject("field2")
-                                .startArray("field3")
-                                    .startObject()
-                                        .field("field4", "value2")
-                                    .endObject()
-                                .endArray()
-                            .endObject()
-                        .endObject()
-                    .endArray()
-                .endObject());
+        BytesReference source = BytesReference.bytes(
+            jsonBuilder().startObject()
+                .startArray("field1")
+                .startObject()
+                .startObject("field2")
+                .startArray("field3")
+                .startObject()
+                .field("field4", "value1")
+                .endObject()
+                .endArray()
+                .endObject()
+                .endObject()
+                .startObject()
+                .startObject("field2")
+                .startArray("field3")
+                .startObject()
+                .field("field4", "value2")
+                .endObject()
+                .endArray()
+                .endObject()
+                .endObject()
+                .endArray()
+                .endObject()
+        );
 
         logger.info("indexing documents");
 
@@ -614,12 +650,10 @@ public class GetActionIT extends ESIntegTestCase {
         logger.info("flushing");
         FlushResponse flushResponse = client().admin().indices().prepareFlush("my-index").setForce(true).get();
         if (flushResponse.getSuccessfulShards() == 0) {
-            StringBuilder sb = new StringBuilder("failed to flush at least one shard. total shards [")
-                    .append(flushResponse.getTotalShards())
-                    .append("], failed shards: [")
-                    .append(flushResponse.getFailedShards())
-                    .append("]");
-            for (DefaultShardOperationFailedException failure: flushResponse.getShardFailures()) {
+            StringBuilder sb = new StringBuilder("failed to flush at least one shard. total shards [").append(
+                flushResponse.getTotalShards()
+            ).append("], failed shards: [").append(flushResponse.getFailedShards()).append("]");
+            for (DefaultShardOperationFailedException failure : flushResponse.getShardFailures()) {
                 sb.append("\nShard failure: ").append(failure);
             }
             fail(sb.toString());
@@ -636,114 +670,111 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     public void testUngeneratedFieldsThatAreNeverStored() throws IOException {
-        String createIndexSource = "{\n" +
-                "  \"settings\": {\n" +
-                "    \"index.translog.flush_threshold_size\": \"1pb\",\n" +
-                "    \"refresh_interval\": \"-1\"\n" +
-                "  },\n" +
-                "  \"mappings\": {\n" +
-                "    \"_doc\": {\n" +
-                "      \"properties\": {\n" +
-                "        \"suggest\": {\n" +
-                "          \"type\": \"completion\"\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+        String createIndexSource = "{\n"
+            + "  \"settings\": {\n"
+            + "    \"index.translog.flush_threshold_size\": \"1pb\",\n"
+            + "    \"refresh_interval\": \"-1\"\n"
+            + "  },\n"
+            + "  \"mappings\": {\n"
+            + "    \"_doc\": {\n"
+            + "      \"properties\": {\n"
+            + "        \"suggest\": {\n"
+            + "          \"type\": \"completion\"\n"
+            + "        }\n"
+            + "      }\n"
+            + "    }\n"
+            + "  }\n"
+            + "}";
         assertAcked(prepareCreate("test").addAlias(new Alias("alias")).setSource(createIndexSource, XContentType.JSON));
         ensureGreen();
-        String doc = "{\n" +
-                "  \"suggest\": {\n" +
-                "    \"input\": [\n" +
-                "      \"Nevermind\",\n" +
-                "      \"Nirvana\"\n" +
-                "    ]\n" +
-                "  }\n" +
-                "}";
+        String doc = "{\n"
+            + "  \"suggest\": {\n"
+            + "    \"input\": [\n"
+            + "      \"Nevermind\",\n"
+            + "      \"Nirvana\"\n"
+            + "    ]\n"
+            + "  }\n"
+            + "}";
 
         index("test", "1", doc);
-        String[] fieldsList = {"suggest"};
+        String[] fieldsList = { "suggest" };
         // before refresh - document is only in translog
         assertGetFieldsAlwaysNull(indexOrAlias(), "1", fieldsList);
         refresh();
-        //after refresh - document is in translog and also indexed
+        // after refresh - document is in translog and also indexed
         assertGetFieldsAlwaysNull(indexOrAlias(), "1", fieldsList);
         flush();
-        //after flush - document is in not anymore translog - only indexed
+        // after flush - document is in not anymore translog - only indexed
         assertGetFieldsAlwaysNull(indexOrAlias(), "1", fieldsList);
     }
 
     public void testUngeneratedFieldsThatAreAlwaysStored() throws IOException {
-        String createIndexSource = "{\n" +
-                "  \"settings\": {\n" +
-                "    \"index.translog.flush_threshold_size\": \"1pb\",\n" +
-                "    \"refresh_interval\": \"-1\"\n" +
-                "  }\n" +
-                "}";
-        assertAcked(prepareCreate("test")
-                .addAlias(new Alias("alias")).setSource(createIndexSource, XContentType.JSON));
+        String createIndexSource = "{\n"
+            + "  \"settings\": {\n"
+            + "    \"index.translog.flush_threshold_size\": \"1pb\",\n"
+            + "    \"refresh_interval\": \"-1\"\n"
+            + "  }\n"
+            + "}";
+        assertAcked(prepareCreate("test").addAlias(new Alias("alias")).setSource(createIndexSource, XContentType.JSON));
         ensureGreen();
 
         client().prepareIndex("test").setId("1").setRouting("routingValue").setId("1").setSource("{}", XContentType.JSON).get();
 
-        String[] fieldsList = {"_routing"};
+        String[] fieldsList = { "_routing" };
         // before refresh - document is only in translog
         assertGetFieldsAlwaysWorks(indexOrAlias(), "1", fieldsList, "routingValue");
         refresh();
-        //after refresh - document is in translog and also indexed
+        // after refresh - document is in translog and also indexed
         assertGetFieldsAlwaysWorks(indexOrAlias(), "1", fieldsList, "routingValue");
         flush();
-        //after flush - document is in not anymore translog - only indexed
+        // after flush - document is in not anymore translog - only indexed
         assertGetFieldsAlwaysWorks(indexOrAlias(), "1", fieldsList, "routingValue");
     }
 
     public void testUngeneratedFieldsNotPartOfSourceStored() throws IOException {
-        String createIndexSource = "{\n" +
-            "  \"settings\": {\n" +
-            "    \"index.translog.flush_threshold_size\": \"1pb\",\n" +
-            "    \"refresh_interval\": \"-1\"\n" +
-            "  }\n" +
-            "}";
+        String createIndexSource = "{\n"
+            + "  \"settings\": {\n"
+            + "    \"index.translog.flush_threshold_size\": \"1pb\",\n"
+            + "    \"refresh_interval\": \"-1\"\n"
+            + "  }\n"
+            + "}";
 
         assertAcked(prepareCreate("test").addAlias(new Alias("alias")).setSource(createIndexSource, XContentType.JSON));
         ensureGreen();
-        String doc = "{\n" +
-            "  \"text\": \"some text.\"\n" +
-            "}\n";
+        String doc = "{\n" + "  \"text\": \"some text.\"\n" + "}\n";
         client().prepareIndex("test").setId("1").setSource(doc, XContentType.JSON).setRouting("1").get();
-        String[] fieldsList = {"_routing"};
+        String[] fieldsList = { "_routing" };
         // before refresh - document is only in translog
         assertGetFieldsAlwaysWorks(indexOrAlias(), "1", fieldsList, "1");
         refresh();
-        //after refresh - document is in translog and also indexed
+        // after refresh - document is in translog and also indexed
         assertGetFieldsAlwaysWorks(indexOrAlias(), "1", fieldsList, "1");
         flush();
-        //after flush - document is in not anymore translog - only indexed
+        // after flush - document is in not anymore translog - only indexed
         assertGetFieldsAlwaysWorks(indexOrAlias(), "1", fieldsList, "1");
     }
 
     public void testGeneratedStringFieldsUnstored() throws IOException {
         indexSingleDocumentWithStringFieldsGeneratedFromText(false, randomBoolean());
-        String[] fieldsList = {"_field_names"};
+        String[] fieldsList = { "_field_names" };
         // before refresh - document is only in translog
         assertGetFieldsAlwaysNull(indexOrAlias(), "1", fieldsList);
         refresh();
-        //after refresh - document is in translog and also indexed
+        // after refresh - document is in translog and also indexed
         assertGetFieldsAlwaysNull(indexOrAlias(), "1", fieldsList);
         flush();
-        //after flush - document is in not anymore translog - only indexed
+        // after flush - document is in not anymore translog - only indexed
         assertGetFieldsAlwaysNull(indexOrAlias(), "1", fieldsList);
     }
 
     public void testGeneratedStringFieldsStored() throws IOException {
         indexSingleDocumentWithStringFieldsGeneratedFromText(true, randomBoolean());
-        String[] fieldsList = {"text1", "text2"};
-        String[] alwaysNotStoredFieldsList = {"_field_names"};
+        String[] fieldsList = { "text1", "text2" };
+        String[] alwaysNotStoredFieldsList = { "_field_names" };
         assertGetFieldsAlwaysWorks(indexOrAlias(), "1", fieldsList);
         assertGetFieldsNull(indexOrAlias(), "1", alwaysNotStoredFieldsList);
         flush();
-        //after flush - document is in not anymore translog - only indexed
+        // after flush - document is in not anymore translog - only indexed
         assertGetFieldsAlwaysWorks(indexOrAlias(), "1", fieldsList);
         assertGetFieldsNull(indexOrAlias(), "1", alwaysNotStoredFieldsList);
     }
@@ -751,34 +782,37 @@ public class GetActionIT extends ESIntegTestCase {
     void indexSingleDocumentWithStringFieldsGeneratedFromText(boolean stored, boolean sourceEnabled) {
 
         String storedString = stored ? "true" : "false";
-        String createIndexSource = "{\n" +
-                "  \"settings\": {\n" +
-                "    \"index.translog.flush_threshold_size\": \"1pb\",\n" +
-                "    \"refresh_interval\": \"-1\"\n" +
-                "  },\n" +
-                "  \"mappings\": {\n" +
-                "    \"_doc\": {\n" +
-                "      \"_source\" : {\"enabled\" : " + sourceEnabled + "}," +
-                "      \"properties\": {\n" +
-                "        \"text1\": {\n" +
-                "          \"type\": \"text\",\n" +
-                "          \"store\": \"" + storedString + "\"" +
-                "        },\n" +
-                "        \"text2\": {\n" +
-                "          \"type\": \"text\",\n" +
-                "          \"store\": \"" + storedString + "\"" +
-                "        }" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+        String createIndexSource = "{\n"
+            + "  \"settings\": {\n"
+            + "    \"index.translog.flush_threshold_size\": \"1pb\",\n"
+            + "    \"refresh_interval\": \"-1\"\n"
+            + "  },\n"
+            + "  \"mappings\": {\n"
+            + "    \"_doc\": {\n"
+            + "      \"_source\" : {\"enabled\" : "
+            + sourceEnabled
+            + "},"
+            + "      \"properties\": {\n"
+            + "        \"text1\": {\n"
+            + "          \"type\": \"text\",\n"
+            + "          \"store\": \""
+            + storedString
+            + "\""
+            + "        },\n"
+            + "        \"text2\": {\n"
+            + "          \"type\": \"text\",\n"
+            + "          \"store\": \""
+            + storedString
+            + "\""
+            + "        }"
+            + "      }\n"
+            + "    }\n"
+            + "  }\n"
+            + "}";
 
         assertAcked(prepareCreate("test").addAlias(new Alias("alias")).setSource(createIndexSource, XContentType.JSON));
         ensureGreen();
-        String doc = "{\n" +
-                "  \"text1\": \"some text.\"\n," +
-                "  \"text2\": \"more text.\"\n" +
-                "}\n";
+        String doc = "{\n" + "  \"text1\": \"some text.\"\n," + "  \"text2\": \"more text.\"\n" + "}\n";
         index("test", "1", doc);
     }
 
@@ -826,12 +860,12 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     protected void assertGetFieldNull(String index, String docId, String field, @Nullable String routing) {
-        //for get
+        // for get
         GetResponse response = getDocument(index, docId, field, routing);
         assertTrue(response.isExists());
         assertNull(response.getField(field));
         assertThat(response.getId(), equalTo(docId));
-        //same for multi get
+        // same for multi get
         response = multiGetDocument(index, docId, field, routing);
         assertNull(response.getField(field));
         assertThat(response.getId(), equalTo(docId));
@@ -839,7 +873,7 @@ public class GetActionIT extends ESIntegTestCase {
     }
 
     private GetResponse multiGetDocument(String index, String docId, String field, @Nullable String routing) {
-      MultiGetRequest.Item getItem = new MultiGetRequest.Item(index, docId).storedFields(field);
+        MultiGetRequest.Item getItem = new MultiGetRequest.Item(index, docId).storedFields(field);
         if (routing != null) {
             getItem.routing(routing);
         }

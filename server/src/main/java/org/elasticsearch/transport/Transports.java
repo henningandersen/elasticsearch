@@ -37,9 +37,10 @@ public enum Transports {
     public static boolean isTransportThread(Thread t) {
         final String threadName = t.getName();
         for (String s : Arrays.asList(
-                HttpServerTransport.HTTP_SERVER_WORKER_THREAD_NAME_PREFIX,
-                TcpTransport.TRANSPORT_WORKER_THREAD_NAME_PREFIX,
-                TEST_MOCK_TRANSPORT_THREAD_PREFIX)) {
+            HttpServerTransport.HTTP_SERVER_WORKER_THREAD_NAME_PREFIX,
+            TcpTransport.TRANSPORT_WORKER_THREAD_NAME_PREFIX,
+            TEST_MOCK_TRANSPORT_THREAD_PREFIX
+        )) {
             if (threadName.contains(s)) {
                 return true;
             }

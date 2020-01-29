@@ -61,11 +61,15 @@ public abstract class StringFieldType extends TermBasedFieldType {
     }
 
     @Override
-    public Query fuzzyQuery(Object value, Fuzziness fuzziness, int prefixLength, int maxExpansions,
-            boolean transpositions) {
+    public Query fuzzyQuery(Object value, Fuzziness fuzziness, int prefixLength, int maxExpansions, boolean transpositions) {
         failIfNotIndexed();
-        return new FuzzyQuery(new Term(name(), indexedValueForSearch(value)),
-                fuzziness.asDistance(BytesRefs.toString(value)), prefixLength, maxExpansions, transpositions);
+        return new FuzzyQuery(
+            new Term(name(), indexedValueForSearch(value)),
+            fuzziness.asDistance(BytesRefs.toString(value)),
+            prefixLength,
+            maxExpansions,
+            transpositions
+        );
     }
 
     @Override
@@ -92,8 +96,13 @@ public abstract class StringFieldType extends TermBasedFieldType {
     }
 
     @Override
-    public Query regexpQuery(String value, int flags, int maxDeterminizedStates,
-            MultiTermQuery.RewriteMethod method, QueryShardContext context) {
+    public Query regexpQuery(
+        String value,
+        int flags,
+        int maxDeterminizedStates,
+        MultiTermQuery.RewriteMethod method,
+        QueryShardContext context
+    ) {
         failIfNotIndexed();
         RegexpQuery query = new RegexpQuery(new Term(name(), indexedValueForSearch(value)), flags, maxDeterminizedStates);
         if (method != null) {
@@ -105,9 +114,12 @@ public abstract class StringFieldType extends TermBasedFieldType {
     @Override
     public Query rangeQuery(Object lowerTerm, Object upperTerm, boolean includeLower, boolean includeUpper, QueryShardContext context) {
         failIfNotIndexed();
-        return new TermRangeQuery(name(),
+        return new TermRangeQuery(
+            name(),
             lowerTerm == null ? null : indexedValueForSearch(lowerTerm),
             upperTerm == null ? null : indexedValueForSearch(upperTerm),
-            includeLower, includeUpper);
+            includeLower,
+            includeUpper
+        );
     }
 }

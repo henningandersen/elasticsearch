@@ -38,36 +38,46 @@ public class ReverseNestedAggregatorFactory extends AggregatorFactory {
     private final boolean unmapped;
     private final ObjectMapper parentObjectMapper;
 
-    public ReverseNestedAggregatorFactory(String name, boolean unmapped, ObjectMapper parentObjectMapper,
-                                          QueryShardContext queryShardContext, AggregatorFactory parent,
-                                          AggregatorFactories.Builder subFactories,
-                                          Map<String, Object> metaData) throws IOException {
+    public ReverseNestedAggregatorFactory(
+        String name,
+        boolean unmapped,
+        ObjectMapper parentObjectMapper,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactories,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, queryShardContext, parent, subFactories, metaData);
         this.unmapped = unmapped;
         this.parentObjectMapper = parentObjectMapper;
     }
 
     @Override
-    public Aggregator createInternal(SearchContext searchContext,
-                                        Aggregator parent,
-                                        boolean collectsFromSingleBucket,
-                                        List<PipelineAggregator> pipelineAggregators,
-                                        Map<String, Object> metaData) throws IOException {
+    public Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         if (unmapped) {
             return new Unmapped(name, searchContext, parent, pipelineAggregators, metaData);
         } else {
-            return new ReverseNestedAggregator(name, factories, parentObjectMapper,
-                searchContext, parent, pipelineAggregators, metaData);
+            return new ReverseNestedAggregator(name, factories, parentObjectMapper, searchContext, parent, pipelineAggregators, metaData);
         }
     }
 
     private static final class Unmapped extends NonCollectingAggregator {
 
-        Unmapped(String name,
-                    SearchContext context,
-                    Aggregator parent,
-                    List<PipelineAggregator> pipelineAggregators,
-                    Map<String, Object> metaData) throws IOException {
+        Unmapped(
+            String name,
+            SearchContext context,
+            Aggregator parent,
+            List<PipelineAggregator> pipelineAggregators,
+            Map<String, Object> metaData
+        )
+            throws IOException {
             super(name, context, parent, pipelineAggregators, metaData);
         }
 

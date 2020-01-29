@@ -33,11 +33,10 @@ public class TranslogStats implements Writeable, ToXContentFragment {
     private long translogSizeInBytes;
     private int numberOfOperations;
     private long uncommittedSizeInBytes;
-    private int  uncommittedOperations;
+    private int uncommittedOperations;
     private long earliestLastModifiedAge;
 
-    public TranslogStats() {
-    }
+    public TranslogStats() {}
 
     public TranslogStats(StreamInput in) throws IOException {
         numberOfOperations = in.readVInt();
@@ -47,8 +46,13 @@ public class TranslogStats implements Writeable, ToXContentFragment {
         earliestLastModifiedAge = in.readVLong();
     }
 
-    public TranslogStats(int numberOfOperations, long translogSizeInBytes, int uncommittedOperations, long uncommittedSizeInBytes,
-                         long earliestLastModifiedAge) {
+    public TranslogStats(
+        int numberOfOperations,
+        long translogSizeInBytes,
+        int uncommittedOperations,
+        long uncommittedSizeInBytes,
+        long earliestLastModifiedAge
+    ) {
         if (numberOfOperations < 0) {
             throw new IllegalArgumentException("numberOfOperations must be >= 0");
         }
@@ -80,8 +84,7 @@ public class TranslogStats implements Writeable, ToXContentFragment {
         this.translogSizeInBytes += translogStats.translogSizeInBytes;
         this.uncommittedOperations += translogStats.uncommittedOperations;
         this.uncommittedSizeInBytes += translogStats.uncommittedSizeInBytes;
-        this.earliestLastModifiedAge =
-            Math.min(this.earliestLastModifiedAge, translogStats.earliestLastModifiedAge);
+        this.earliestLastModifiedAge = Math.min(this.earliestLastModifiedAge, translogStats.earliestLastModifiedAge);
     }
 
     public long getTranslogSizeInBytes() {
@@ -102,7 +105,9 @@ public class TranslogStats implements Writeable, ToXContentFragment {
         return uncommittedOperations;
     }
 
-    public long getEarliestLastModifiedAge() { return earliestLastModifiedAge; }
+    public long getEarliestLastModifiedAge() {
+        return earliestLastModifiedAge;
+    }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {

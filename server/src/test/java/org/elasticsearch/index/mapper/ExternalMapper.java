@@ -87,13 +87,25 @@ public class ExternalMapper extends FieldMapper {
             BooleanFieldMapper boolMapper = boolBuilder.build(context);
             GeoPointFieldMapper pointMapper = latLonPointBuilder.build(context);
             AbstractGeometryFieldMapper shapeMapper = shapeBuilder.build(context);
-            FieldMapper stringMapper = (FieldMapper)stringBuilder.build(context);
+            FieldMapper stringMapper = (FieldMapper) stringBuilder.build(context);
             context.path().remove();
 
             setupFieldType(context);
 
-            return new ExternalMapper(name, fieldType, generatedValue, mapperName, binMapper, boolMapper, pointMapper,
-                shapeMapper, stringMapper, context.indexSettings(), multiFieldsBuilder.build(this, context), copyTo);
+            return new ExternalMapper(
+                name,
+                fieldType,
+                generatedValue,
+                mapperName,
+                binMapper,
+                boolMapper,
+                pointMapper,
+                shapeMapper,
+                stringMapper,
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                copyTo
+            );
         }
     }
 
@@ -107,7 +119,7 @@ public class ExternalMapper extends FieldMapper {
             this.generatedValue = generatedValue;
         }
 
-        @SuppressWarnings({"unchecked"})
+        @SuppressWarnings({ "unchecked" })
         @Override
         public Mapper.Builder parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
             ExternalMapper.Builder builder = new ExternalMapper.Builder(name, generatedValue, mapperName);
@@ -153,11 +165,20 @@ public class ExternalMapper extends FieldMapper {
     private AbstractGeometryFieldMapper shapeMapper;
     private FieldMapper stringMapper;
 
-    public ExternalMapper(String simpleName, MappedFieldType fieldType,
-                          String generatedValue, String mapperName,
-                          BinaryFieldMapper binMapper, BooleanFieldMapper boolMapper, GeoPointFieldMapper pointMapper,
-                          AbstractGeometryFieldMapper shapeMapper, FieldMapper stringMapper, Settings indexSettings,
-                          MultiFields multiFields, CopyTo copyTo) {
+    public ExternalMapper(
+        String simpleName,
+        MappedFieldType fieldType,
+        String generatedValue,
+        String mapperName,
+        BinaryFieldMapper binMapper,
+        BooleanFieldMapper boolMapper,
+        GeoPointFieldMapper pointMapper,
+        AbstractGeometryFieldMapper shapeMapper,
+        FieldMapper stringMapper,
+        Settings indexSettings,
+        MultiFields multiFields,
+        CopyTo copyTo
+    ) {
         super(simpleName, fieldType, new ExternalFieldType(), indexSettings, multiFields, copyTo);
         this.generatedValue = generatedValue;
         this.mapperName = mapperName;
@@ -217,12 +238,12 @@ public class ExternalMapper extends FieldMapper {
         AbstractGeometryFieldMapper shapeMapperUpdate = (AbstractGeometryFieldMapper) shapeMapper.updateFieldType(fullNameToFieldType);
         TextFieldMapper stringMapperUpdate = (TextFieldMapper) stringMapper.updateFieldType(fullNameToFieldType);
         if (update == this
-                && multiFieldsUpdate == multiFields
-                && binMapperUpdate == binMapper
-                && boolMapperUpdate == boolMapper
-                && pointMapperUpdate == pointMapper
-                && shapeMapperUpdate == shapeMapper
-                && stringMapperUpdate == stringMapper) {
+            && multiFieldsUpdate == multiFields
+            && binMapperUpdate == binMapper
+            && boolMapperUpdate == boolMapper
+            && pointMapperUpdate == pointMapper
+            && shapeMapperUpdate == shapeMapper
+            && stringMapperUpdate == stringMapper) {
             return this;
         }
         if (update == this) {

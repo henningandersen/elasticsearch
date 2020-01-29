@@ -134,13 +134,30 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
     private volatile RoutingNodes routingNodes;
 
     public ClusterState(long version, String stateUUID, ClusterState state) {
-        this(state.clusterName, version, stateUUID, state.metaData(), state.routingTable(), state.nodes(), state.blocks(),
-                state.customs(), false);
+        this(
+            state.clusterName,
+            version,
+            stateUUID,
+            state.metaData(),
+            state.routingTable(),
+            state.nodes(),
+            state.blocks(),
+            state.customs(),
+            false
+        );
     }
 
-    public ClusterState(ClusterName clusterName, long version, String stateUUID, MetaData metaData, RoutingTable routingTable,
-                        DiscoveryNodes nodes, ClusterBlocks blocks, ImmutableOpenMap<String, Custom> customs,
-                        boolean wasReadFromDiff) {
+    public ClusterState(
+        ClusterName clusterName,
+        long version,
+        String stateUUID,
+        MetaData metaData,
+        RoutingTable routingTable,
+        DiscoveryNodes nodes,
+        ClusterBlocks blocks,
+        ImmutableOpenMap<String, Custom> customs,
+        boolean wasReadFromDiff
+    ) {
         this.version = version;
         this.stateUUID = stateUUID;
         this.clusterName = clusterName;
@@ -252,27 +269,40 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
     public String toString() {
         StringBuilder sb = new StringBuilder();
         final String TAB = "   ";
-        sb.append("cluster uuid: ").append(metaData.clusterUUID())
-            .append(" [committed: ").append(metaData.clusterUUIDCommitted()).append("]").append("\n");
+        sb.append("cluster uuid: ")
+            .append(metaData.clusterUUID())
+            .append(" [committed: ")
+            .append(metaData.clusterUUIDCommitted())
+            .append("]")
+            .append("\n");
         sb.append("version: ").append(version).append("\n");
         sb.append("state uuid: ").append(stateUUID).append("\n");
         sb.append("from_diff: ").append(wasReadFromDiff).append("\n");
         sb.append("meta data version: ").append(metaData.version()).append("\n");
         sb.append(TAB).append("coordination_metadata:\n");
         sb.append(TAB).append(TAB).append("term: ").append(coordinationMetaData().term()).append("\n");
-        sb.append(TAB).append(TAB)
-                .append("last_committed_config: ").append(coordinationMetaData().getLastCommittedConfiguration()).append("\n");
-        sb.append(TAB).append(TAB)
-                .append("last_accepted_config: ").append(coordinationMetaData().getLastAcceptedConfiguration()).append("\n");
-        sb.append(TAB).append(TAB)
-                .append("voting tombstones: ").append(coordinationMetaData().getVotingConfigExclusions()).append("\n");
+        sb.append(TAB)
+            .append(TAB)
+            .append("last_committed_config: ")
+            .append(coordinationMetaData().getLastCommittedConfiguration())
+            .append("\n");
+        sb.append(TAB)
+            .append(TAB)
+            .append("last_accepted_config: ")
+            .append(coordinationMetaData().getLastAcceptedConfiguration())
+            .append("\n");
+        sb.append(TAB).append(TAB).append("voting tombstones: ").append(coordinationMetaData().getVotingConfigExclusions()).append("\n");
         for (IndexMetaData indexMetaData : metaData) {
             sb.append(TAB).append(indexMetaData.getIndex());
-            sb.append(": v[").append(indexMetaData.getVersion())
-                    .append("], mv[").append(indexMetaData.getMappingVersion())
-                    .append("], sv[").append(indexMetaData.getSettingsVersion())
-                    .append("], av[").append(indexMetaData.getAliasesVersion())
-                    .append("]\n");
+            sb.append(": v[")
+                .append(indexMetaData.getVersion())
+                .append("], mv[")
+                .append(indexMetaData.getMappingVersion())
+                .append("], sv[")
+                .append(indexMetaData.getSettingsVersion())
+                .append("], av[")
+                .append(indexMetaData.getAliasesVersion())
+                .append("]\n");
             for (int shard = 0; shard < indexMetaData.getNumberOfShards(); shard++) {
                 sb.append(TAB).append(TAB).append(shard).append(": ");
                 sb.append("p_term [").append(indexMetaData.primaryTerm(shard)).append("], ");
@@ -310,7 +340,8 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
      * In essence that means that all the changes from the other cluster state are also reflected by the current one
      */
     public boolean supersedes(ClusterState other) {
-        return this.nodes().getMasterNodeId() != null && this.nodes().getMasterNodeId().equals(other.nodes().getMasterNodeId())
+        return this.nodes().getMasterNodeId() != null
+            && this.nodes().getMasterNodeId().equals(other.nodes().getMasterNodeId())
             && this.version() > other.version();
 
     }
@@ -452,7 +483,6 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
                 }
                 builder.endObject();
 
-
                 builder.endObject();
             }
             builder.endObject();
@@ -471,8 +501,7 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
                 builder.startObject("mappings");
                 MappingMetaData mmd = indexMetaData.mapping();
                 if (mmd != null) {
-                    Map<String, Object> mapping = XContentHelper
-                            .convertToMap(new BytesArray(mmd.source().uncompressed()), false).v2();
+                    Map<String, Object> mapping = XContentHelper.convertToMap(new BytesArray(mmd.source().uncompressed()), false).v2();
                     if (mapping.size() == 1 && mapping.containsKey(mmd.type())) {
                         // the type name is the root value, reduce it
                         mapping = (Map<String, Object>) mapping.get(mmd.type());

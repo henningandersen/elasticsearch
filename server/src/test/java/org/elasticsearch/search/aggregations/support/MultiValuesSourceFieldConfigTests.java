@@ -41,8 +41,11 @@ public class MultiValuesSourceFieldConfigTests extends AbstractSerializingTestCa
         String field = randomAlphaOfLength(10);
         Object missing = randomBoolean() ? randomAlphaOfLength(10) : null;
         ZoneId timeZone = randomBoolean() ? randomZone() : null;
-        return new MultiValuesSourceFieldConfig.Builder()
-            .setFieldName(field).setMissing(missing).setScript(null).setTimeZone(timeZone).build();
+        return new MultiValuesSourceFieldConfig.Builder().setFieldName(field)
+            .setMissing(missing)
+            .setScript(null)
+            .setTimeZone(timeZone)
+            .build();
     }
 
     @Override
@@ -56,8 +59,10 @@ public class MultiValuesSourceFieldConfigTests extends AbstractSerializingTestCa
     }
 
     public void testBothFieldScript() {
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-            () -> new MultiValuesSourceFieldConfig.Builder().setFieldName("foo").setScript(new Script("foo")).build());
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> new MultiValuesSourceFieldConfig.Builder().setFieldName("foo").setScript(new Script("foo")).build()
+        );
         assertThat(e.getMessage(), equalTo("[field] and [script] cannot both be configured.  Please specify one or the other."));
     }
 }

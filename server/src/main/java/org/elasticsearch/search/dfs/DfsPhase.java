@@ -43,8 +43,7 @@ import java.util.Map;
 public class DfsPhase implements SearchPhase {
 
     @Override
-    public void preProcess(SearchContext context) {
-    }
+    public void preProcess(SearchContext context) {}
 
     @Override
     public void execute(SearchContext context) {
@@ -90,9 +89,10 @@ public class DfsPhase implements SearchPhase {
                 termStatistics[i] = stats.get(terms[i]);
             }
 
-            context.dfsResult().termsStatistics(terms, termStatistics)
-                    .fieldStatistics(fieldStatistics)
-                    .maxDoc(context.searcher().getIndexReader().maxDoc());
+            context.dfsResult()
+                .termsStatistics(terms, termStatistics)
+                .fieldStatistics(fieldStatistics)
+                .maxDoc(context.searcher().getIndexReader().maxDoc());
         } catch (Exception e) {
             throw new DfsPhaseExecutionException(context.shardTarget(), "Exception during dfs phase", e);
         }

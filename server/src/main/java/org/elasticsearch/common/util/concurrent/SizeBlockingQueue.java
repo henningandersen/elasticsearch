@@ -19,7 +19,6 @@
 
 package org.elasticsearch.common.util.concurrent;
 
-
 import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.Iterator;
@@ -126,7 +125,6 @@ public class SizeBlockingQueue<E> extends AbstractQueue<E> implements BlockingQu
             throw ie;
         }
     }
-
 
     @Override
     public boolean offer(E e) {

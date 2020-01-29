@@ -34,8 +34,13 @@ public class MinBucketPipelineAggregator extends BucketMetricsPipelineAggregator
     private List<String> minBucketKeys;
     private double minValue;
 
-    MinBucketPipelineAggregator(String name, String[] bucketsPaths, GapPolicy gapPolicy, DocValueFormat formatter,
-            Map<String, Object> metaData) {
+    MinBucketPipelineAggregator(
+        String name,
+        String[] bucketsPaths,
+        GapPolicy gapPolicy,
+        DocValueFormat formatter,
+        Map<String, Object> metaData
+    ) {
         super(name, bucketsPaths, gapPolicy, formatter, metaData);
     }
 

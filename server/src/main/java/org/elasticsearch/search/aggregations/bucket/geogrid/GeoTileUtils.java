@@ -83,8 +83,9 @@ public final class GeoTileUtils {
      */
     public static int checkPrecisionRange(int precision) {
         if (precision < 0 || precision > MAX_ZOOM) {
-            throw new IllegalArgumentException("Invalid geotile_grid precision of " +
-                precision + ". Must be between 0 and " + MAX_ZOOM + ".");
+            throw new IllegalArgumentException(
+                "Invalid geotile_grid precision of " + precision + ". Must be between 0 and " + MAX_ZOOM + "."
+            );
         }
         return precision;
     }
@@ -131,7 +132,7 @@ public final class GeoTileUtils {
      */
     public static long longEncode(String hashAsString) {
         int[] parsed = parseHash(hashAsString);
-        return longEncode((long)parsed[0], (long)parsed[1], (long)parsed[2]);
+        return longEncode((long) parsed[0], (long) parsed[1], (long) parsed[2]);
     }
 
     /**
@@ -141,7 +142,7 @@ public final class GeoTileUtils {
         final int zoom = (int) (hash >>> ZOOM_SHIFT);
         final int xTile = (int) ((hash >>> MAX_ZOOM) & X_Y_VALUE_MASK);
         final int yTile = (int) (hash & X_Y_VALUE_MASK);
-        return new int[]{zoom, xTile, yTile};
+        return new int[] { zoom, xTile, yTile };
     }
 
     private static long longEncode(long precision, long xTile, long yTile) {
@@ -157,14 +158,17 @@ public final class GeoTileUtils {
     private static int[] parseHash(String hashAsString) {
         final String[] parts = hashAsString.split("/", 4);
         if (parts.length != 3) {
-            throw new IllegalArgumentException("Invalid geotile_grid hash string of " +
-                hashAsString + ". Must be three integers in a form \"zoom/x/y\".");
+            throw new IllegalArgumentException(
+                "Invalid geotile_grid hash string of " + hashAsString + ". Must be three integers in a form \"zoom/x/y\"."
+            );
         }
         try {
-            return new int[]{Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2])};
+            return new int[] { Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]) };
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid geotile_grid hash string of " +
-                hashAsString + ". Must be three integers in a form \"zoom/x/y\".", e);
+            throw new IllegalArgumentException(
+                "Invalid geotile_grid hash string of " + hashAsString + ". Must be three integers in a form \"zoom/x/y\".",
+                e
+            );
         }
     }
 
@@ -199,8 +203,9 @@ public final class GeoTileUtils {
     private static int validateZXY(int zoom, int xTile, int yTile) {
         final int tiles = 1 << checkPrecisionRange(zoom);
         if (xTile < 0 || yTile < 0 || xTile >= tiles || yTile >= tiles) {
-            throw new IllegalArgumentException(String.format(
-                Locale.ROOT, "Zoom/X/Y combination is not valid: %d/%d/%d", zoom, xTile, yTile));
+            throw new IllegalArgumentException(
+                String.format(Locale.ROOT, "Zoom/X/Y combination is not valid: %d/%d/%d", zoom, xTile, yTile)
+            );
         }
         return tiles;
     }

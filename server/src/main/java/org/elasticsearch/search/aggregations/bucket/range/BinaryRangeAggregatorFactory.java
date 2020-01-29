@@ -32,39 +32,69 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class BinaryRangeAggregatorFactory
-        extends ValuesSourceAggregatorFactory<ValuesSource.Bytes> {
+public class BinaryRangeAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSource.Bytes> {
 
     private final List<BinaryRangeAggregator.Range> ranges;
     private final boolean keyed;
 
-    public BinaryRangeAggregatorFactory(String name,
-            ValuesSourceConfig<ValuesSource.Bytes> config,
-            List<BinaryRangeAggregator.Range> ranges, boolean keyed,
-            QueryShardContext queryShardContext,
-            AggregatorFactory parent, Builder subFactoriesBuilder,
-            Map<String, Object> metaData) throws IOException {
+    public BinaryRangeAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource.Bytes> config,
+        List<BinaryRangeAggregator.Range> ranges,
+        boolean keyed,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.ranges = ranges;
         this.keyed = keyed;
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext, Aggregator parent,
-                                        List<PipelineAggregator> pipelineAggregators,
-                                        Map<String, Object> metaData) throws IOException {
-        return new BinaryRangeAggregator(name, factories, null, config.format(),
-                ranges, keyed, searchContext, parent, pipelineAggregators, metaData);
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new BinaryRangeAggregator(
+            name,
+            factories,
+            null,
+            config.format(),
+            ranges,
+            keyed,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
 
     @Override
-    protected Aggregator doCreateInternal(ValuesSource.Bytes valuesSource,
-                                          SearchContext searchContext, Aggregator parent,
-                                          boolean collectsFromSingleBucket,
-                                          List<PipelineAggregator> pipelineAggregators,
-                                          Map<String, Object> metaData) throws IOException {
-        return new BinaryRangeAggregator(name, factories, valuesSource, config.format(),
-                ranges, keyed, searchContext, parent, pipelineAggregators, metaData);
+    protected Aggregator doCreateInternal(
+        ValuesSource.Bytes valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new BinaryRangeAggregator(
+            name,
+            factories,
+            valuesSource,
+            config.format(),
+            ranges,
+            keyed,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
 
 }

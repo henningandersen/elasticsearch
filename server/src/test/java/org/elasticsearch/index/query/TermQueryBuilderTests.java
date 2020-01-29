@@ -111,25 +111,20 @@ public class TermQueryBuilderTests extends AbstractTermQueryTestCase<TermQueryBu
     }
 
     public void testTermArray() throws IOException {
-        String queryAsString = "{\n" +
-                "    \"term\": {\n" +
-                "        \"age\": [34, 35]\n" +
-                "    }\n" +
-                "}";
+        String queryAsString = "{\n" + "    \"term\": {\n" + "        \"age\": [34, 35]\n" + "    }\n" + "}";
         ParsingException e = expectThrows(ParsingException.class, () -> parseQuery(queryAsString));
         assertEquals("[term] query does not support array of values", e.getMessage());
     }
 
     public void testFromJson() throws IOException {
-        String json =
-                "{\n" +
-                "  \"term\" : {\n" +
-                "    \"exact_value\" : {\n" +
-                "      \"value\" : \"Quick Foxes!\",\n" +
-                "      \"boost\" : 1.0\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+        String json = "{\n"
+            + "  \"term\" : {\n"
+            + "    \"exact_value\" : {\n"
+            + "      \"value\" : \"Quick Foxes!\",\n"
+            + "      \"boost\" : 1.0\n"
+            + "    }\n"
+            + "  }\n"
+            + "}";
 
         TermQueryBuilder parsed = (TermQueryBuilder) parseQuery(json);
         checkGeneratedJson(json, parsed);
@@ -140,30 +135,24 @@ public class TermQueryBuilderTests extends AbstractTermQueryTestCase<TermQueryBu
         TermQueryBuilder query = new TermQueryBuilder(GEO_POINT_FIELD_NAME, "2,3");
         QueryShardContext context = createShardContext();
         QueryShardException e = expectThrows(QueryShardException.class, () -> query.toQuery(context));
-        assertEquals("Geo fields do not support exact searching, use dedicated geo queries instead: [mapped_geo_point]",
-                e.getMessage());
+        assertEquals("Geo fields do not support exact searching, use dedicated geo queries instead: [mapped_geo_point]", e.getMessage());
     }
 
     public void testParseFailsWithMultipleFields() throws IOException {
-        String json = "{\n" +
-                "  \"term\" : {\n" +
-                "    \"message1\" : {\n" +
-                "      \"value\" : \"this\"\n" +
-                "    },\n" +
-                "    \"message2\" : {\n" +
-                "      \"value\" : \"this\"\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+        String json = "{\n"
+            + "  \"term\" : {\n"
+            + "    \"message1\" : {\n"
+            + "      \"value\" : \"this\"\n"
+            + "    },\n"
+            + "    \"message2\" : {\n"
+            + "      \"value\" : \"this\"\n"
+            + "    }\n"
+            + "  }\n"
+            + "}";
         ParsingException e = expectThrows(ParsingException.class, () -> parseQuery(json));
         assertEquals("[term] query doesn't support multiple fields, found [message1] and [message2]", e.getMessage());
 
-        String shortJson = "{\n" +
-                "  \"term\" : {\n" +
-                "    \"message1\" : \"this\",\n" +
-                "    \"message2\" : \"this\"\n" +
-                "  }\n" +
-                "}";
+        String shortJson = "{\n" + "  \"term\" : {\n" + "    \"message1\" : \"this\",\n" + "    \"message2\" : \"this\"\n" + "  }\n" + "}";
         e = expectThrows(ParsingException.class, () -> parseQuery(shortJson));
         assertEquals("[term] query doesn't support multiple fields, found [message1] and [message2]", e.getMessage());
     }
@@ -172,19 +161,19 @@ public class TermQueryBuilderTests extends AbstractTermQueryTestCase<TermQueryBu
         TermQueryBuilder builder = QueryBuilders.termQuery("_type", "value1");
         builder.doToQuery(createShardContext());
         assertWarnings(QueryShardContext.TYPES_DEPRECATION_MESSAGE);
-    }   
+    }
 
     public void testRewriteIndexQueryToMatchNone() throws IOException {
         TermQueryBuilder query = QueryBuilders.termQuery("_index", "does_not_exist");
         QueryShardContext queryShardContext = createShardContext();
         QueryBuilder rewritten = query.rewrite(queryShardContext);
         assertThat(rewritten, instanceOf(MatchNoneQueryBuilder.class));
-    }   
+    }
 
     public void testRewriteIndexQueryToNotMatchNone() throws IOException {
         TermQueryBuilder query = QueryBuilders.termQuery("_index", getIndex().getName());
         QueryShardContext queryShardContext = createShardContext();
         QueryBuilder rewritten = query.rewrite(queryShardContext);
         assertThat(rewritten, instanceOf(TermQueryBuilder.class));
-    }      
+    }
 }

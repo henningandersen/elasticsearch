@@ -24,9 +24,6 @@ import org.elasticsearch.search.DocValueFormat;
 import org.elasticsearch.search.aggregations.ParsedAggregation;
 import org.elasticsearch.search.aggregations.metrics.InternalExtendedStatsTests;
 import org.elasticsearch.search.aggregations.metrics.InternalExtendedStats;
-import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
-import org.elasticsearch.search.aggregations.pipeline.InternalExtendedStatsBucket;
-import org.elasticsearch.search.aggregations.pipeline.ParsedExtendedStatsBucket;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,19 +32,38 @@ import java.util.Map;
 public class InternalExtendedStatsBucketTests extends InternalExtendedStatsTests {
 
     @Override
-    protected InternalExtendedStatsBucket createInstance(String name, long count, double sum, double min,
-                                                         double max, double sumOfSqrs,
-                                                         double sigma, DocValueFormat formatter,
-                                                         List<PipelineAggregator> pipelineAggregators,
-                                                         Map<String, Object> metaData) {
-        return new InternalExtendedStatsBucket(name, count, sum, min, max, sumOfSqrs, sigma, formatter, pipelineAggregators,
-                Collections.emptyMap());
+    protected InternalExtendedStatsBucket createInstance(
+        String name,
+        long count,
+        double sum,
+        double min,
+        double max,
+        double sumOfSqrs,
+        double sigma,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
+        return new InternalExtendedStatsBucket(
+            name,
+            count,
+            sum,
+            min,
+            max,
+            sumOfSqrs,
+            sigma,
+            formatter,
+            pipelineAggregators,
+            Collections.emptyMap()
+        );
     }
 
     @Override
     public void testReduceRandom() {
-        expectThrows(UnsupportedOperationException.class,
-                () -> createTestInstance("name", Collections.emptyList(), null).reduce(null, null));
+        expectThrows(
+            UnsupportedOperationException.class,
+            () -> createTestInstance("name", Collections.emptyList(), null).reduce(null, null)
+        );
     }
 
     @Override

@@ -23,9 +23,7 @@ import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.client.ElasticsearchClient;
 
 public class FieldCapabilitiesRequestBuilder extends ActionRequestBuilder<FieldCapabilitiesRequest, FieldCapabilitiesResponse> {
-    public FieldCapabilitiesRequestBuilder(ElasticsearchClient client,
-                                           FieldCapabilitiesAction action,
-                                           String... indices) {
+    public FieldCapabilitiesRequestBuilder(ElasticsearchClient client, FieldCapabilitiesAction action, String... indices) {
         super(client, action, new FieldCapabilitiesRequest().indices(indices));
     }
 

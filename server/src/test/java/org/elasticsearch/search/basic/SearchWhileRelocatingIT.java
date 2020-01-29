@@ -48,17 +48,29 @@ public class SearchWhileRelocatingIT extends ESIntegTestCase {
 
     private void testSearchAndRelocateConcurrently(final int numberOfReplicas) throws Exception {
         final int numShards = between(1, 20);
-        client().admin().indices().prepareCreate("test")
-                .setSettings(Settings.builder().put("index.number_of_shards", numShards).put("index.number_of_replicas", numberOfReplicas))
-                .setMapping("loc", "type=geo_point", "test", "type=text").get();
+        client().admin()
+            .indices()
+            .prepareCreate("test")
+            .setSettings(Settings.builder().put("index.number_of_shards", numShards).put("index.number_of_replicas", numberOfReplicas))
+            .setMapping("loc", "type=geo_point", "test", "type=text")
+            .get();
         ensureGreen();
         List<IndexRequestBuilder> indexBuilders = new ArrayList<>();
         final int numDocs = between(10, 20);
         for (int i = 0; i < numDocs; i++) {
-            indexBuilders.add(client().prepareIndex("test").setId(Integer.toString(i))
+            indexBuilders.add(
+                client().prepareIndex("test")
+                    .setId(Integer.toString(i))
                     .setSource(
-                            jsonBuilder().startObject().field("test", "value").startObject("loc").field("lat", 11).field("lon", 21)
-                                    .endObject().endObject()));
+                        jsonBuilder().startObject()
+                            .field("test", "value")
+                            .startObject("loc")
+                            .field("lat", 11)
+                            .field("lon", 21)
+                            .endObject()
+                            .endObject()
+                    )
+            );
         }
         indexRandom(true, indexBuilders.toArray(new IndexRequestBuilder[indexBuilders.size()]));
         assertHitCount(client().prepareSearch().get(), (numDocs));
@@ -80,16 +92,25 @@ public class SearchWhileRelocatingIT extends ESIntegTestCase {
                                     // if only the hit-count is wrong. this can happen if the cluster-state is behind when the
                                     // request comes in. It's a small window but a known limitation.
                                     if (sr.getTotalShards() != sr.getSuccessfulShards() && sr.getFailedShards() == 0) {
-                                        nonCriticalExceptions.add("Count is " + sr.getHits().getTotalHits().value + " but " + numDocs +
-                                            " was expected. " + formatShardStatus(sr));
+                                        nonCriticalExceptions.add(
+                                            "Count is "
+                                                + sr.getHits().getTotalHits().value
+                                                + " but "
+                                                + numDocs
+                                                + " was expected. "
+                                                + formatShardStatus(sr)
+                                        );
                                     } else {
                                         assertHitCount(sr, numDocs);
                                     }
                                 }
 
                                 final SearchHits sh = sr.getHits();
-                                assertThat("Expected hits to be the same size the actual hits array", sh.getTotalHits().value,
-                                        equalTo((long) (sh.getHits().length)));
+                                assertThat(
+                                    "Expected hits to be the same size the actual hits array",
+                                    sh.getTotalHits().value,
+                                    equalTo((long) (sh.getHits().length))
+                                );
                                 // this is the more critical but that we hit the actual hit array has a different size than the
                                 // actual number of hits.
                             }
@@ -113,8 +134,14 @@ public class SearchWhileRelocatingIT extends ESIntegTestCase {
                 threads[j].join();
             }
             // this might time out on some machines if they are really busy and you hit lots of throttling
-            ClusterHealthResponse resp = client().admin().cluster().prepareHealth().setWaitForYellowStatus()
-                    .setWaitForNoRelocatingShards(true).setWaitForEvents(Priority.LANGUID).setTimeout("5m").get();
+            ClusterHealthResponse resp = client().admin()
+                .cluster()
+                .prepareHealth()
+                .setWaitForYellowStatus()
+                .setWaitForNoRelocatingShards(true)
+                .setWaitForEvents(Priority.LANGUID)
+                .setTimeout("5m")
+                .get();
             assertNoTimeout(resp);
             // if we hit only non-critical exceptions we make sure that the post search works
             if (!nonCriticalExceptions.isEmpty()) {

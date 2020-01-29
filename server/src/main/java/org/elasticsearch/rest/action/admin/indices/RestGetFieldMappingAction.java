@@ -62,20 +62,19 @@ public class RestGetFieldMappingAction extends BaseRestHandler {
         getMappingsRequest.indices(indices).fields(fields).includeDefaults(request.paramAsBoolean("include_defaults", false));
         getMappingsRequest.indicesOptions(IndicesOptions.fromRequest(request, getMappingsRequest.indicesOptions()));
         getMappingsRequest.local(request.paramAsBoolean("local", getMappingsRequest.local()));
-        return channel ->
-                client.admin().indices().getFieldMappings(getMappingsRequest, new RestBuilderListener<>(channel) {
-                    @Override
-                    public RestResponse buildResponse(GetFieldMappingsResponse response, XContentBuilder builder) throws Exception {
-                        Map<String, Map<String, FieldMappingMetaData>> mappingsByIndex = response.mappings();
+        return channel -> client.admin().indices().getFieldMappings(getMappingsRequest, new RestBuilderListener<>(channel) {
+            @Override
+            public RestResponse buildResponse(GetFieldMappingsResponse response, XContentBuilder builder) throws Exception {
+                Map<String, Map<String, FieldMappingMetaData>> mappingsByIndex = response.mappings();
 
-                        RestStatus status = OK;
-                        if (mappingsByIndex.isEmpty() && fields.length > 0) {
-                            status = NOT_FOUND;
-                        }
-                        response.toXContent(builder, request);
-                        return new BytesRestResponse(status, builder);
-                    }
-                });
+                RestStatus status = OK;
+                if (mappingsByIndex.isEmpty() && fields.length > 0) {
+                    status = NOT_FOUND;
+                }
+                response.toXContent(builder, request);
+                return new BytesRestResponse(status, builder);
+            }
+        });
     }
 
 }

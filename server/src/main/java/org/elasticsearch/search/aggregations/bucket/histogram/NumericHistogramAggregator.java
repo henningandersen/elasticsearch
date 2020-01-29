@@ -64,11 +64,24 @@ class NumericHistogramAggregator extends BucketsAggregator {
 
     private final LongHash bucketOrds;
 
-    NumericHistogramAggregator(String name, AggregatorFactories factories, double interval, double offset,
-                               BucketOrder order, boolean keyed, long minDocCount, double minBound, double maxBound,
-                               @Nullable ValuesSource.Numeric valuesSource, DocValueFormat formatter,
-                               SearchContext context, Aggregator parent,
-                               List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    NumericHistogramAggregator(
+        String name,
+        AggregatorFactories factories,
+        double interval,
+        double offset,
+        BucketOrder order,
+        boolean keyed,
+        long minDocCount,
+        double minBound,
+        double maxBound,
+        @Nullable ValuesSource.Numeric valuesSource,
+        DocValueFormat formatter,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
 
         super(name, factories, context, parent, pipelineAggregators, metaData);
         if (interval <= 0) {
@@ -96,8 +109,7 @@ class NumericHistogramAggregator extends BucketsAggregator {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         if (valuesSource == null) {
             return LeafBucketCollector.NO_OP_COLLECTOR;
         }
@@ -150,8 +162,17 @@ class NumericHistogramAggregator extends BucketsAggregator {
         if (minDocCount == 0) {
             emptyBucketInfo = new EmptyBucketInfo(interval, offset, minBound, maxBound, buildEmptySubAggregations());
         }
-        return new InternalHistogram(name, buckets, order, minDocCount, emptyBucketInfo, formatter, keyed, pipelineAggregators(),
-                metaData());
+        return new InternalHistogram(
+            name,
+            buckets,
+            order,
+            minDocCount,
+            emptyBucketInfo,
+            formatter,
+            keyed,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override
@@ -160,8 +181,17 @@ class NumericHistogramAggregator extends BucketsAggregator {
         if (minDocCount == 0) {
             emptyBucketInfo = new EmptyBucketInfo(interval, offset, minBound, maxBound, buildEmptySubAggregations());
         }
-        return new InternalHistogram(name, Collections.emptyList(), order, minDocCount, emptyBucketInfo, formatter, keyed,
-                pipelineAggregators(), metaData());
+        return new InternalHistogram(
+            name,
+            Collections.emptyList(),
+            order,
+            minDocCount,
+            emptyBucketInfo,
+            formatter,
+            keyed,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override

@@ -39,13 +39,14 @@ public class OsInfo implements Writeable, ToXContentFragment {
     private final String version;
 
     public OsInfo(
-            final long refreshInterval,
-            final int availableProcessors,
-            final int allocatedProcessors,
-            final String name,
-            final String prettyName,
-            final String arch,
-            final String version) {
+        final long refreshInterval,
+        final int availableProcessors,
+        final int allocatedProcessors,
+        final String name,
+        final String prettyName,
+        final String arch,
+        final String version
+    ) {
         this.refreshInterval = refreshInterval;
         this.availableProcessors = availableProcessors;
         this.allocatedProcessors = allocatedProcessors;

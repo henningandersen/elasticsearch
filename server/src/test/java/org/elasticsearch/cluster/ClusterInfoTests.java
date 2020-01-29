@@ -29,9 +29,7 @@ import org.elasticsearch.test.ESTestCase;
 public class ClusterInfoTests extends ESTestCase {
 
     public void testSerialization() throws Exception {
-        ClusterInfo clusterInfo = new ClusterInfo(
-                randomDiskUsage(), randomDiskUsage(), randomShardSizes(), randomRoutingToDataPath()
-        );
+        ClusterInfo clusterInfo = new ClusterInfo(randomDiskUsage(), randomDiskUsage(), randomShardSizes(), randomRoutingToDataPath());
         BytesStreamOutput output = new BytesStreamOutput();
         clusterInfo.writeTo(output);
 
@@ -48,8 +46,11 @@ public class ClusterInfoTests extends ESTestCase {
         for (int i = 0; i < numEntries; i++) {
             String key = randomAlphaOfLength(32);
             DiskUsage diskUsage = new DiskUsage(
-                    randomAlphaOfLength(4), randomAlphaOfLength(4), randomAlphaOfLength(4),
-                    randomIntBetween(0, Integer.MAX_VALUE), randomIntBetween(0, Integer.MAX_VALUE)
+                randomAlphaOfLength(4),
+                randomAlphaOfLength(4),
+                randomAlphaOfLength(4),
+                randomIntBetween(0, Integer.MAX_VALUE),
+                randomIntBetween(0, Integer.MAX_VALUE)
             );
             builder.put(key, diskUsage);
         }

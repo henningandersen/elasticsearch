@@ -103,11 +103,18 @@ public class BucketHelpersTests extends ESTestCase {
             }
         };
 
-        AggregationExecutionException e = expectThrows(AggregationExecutionException.class,
-            () -> BucketHelpers.resolveBucketValue(agg, bucket, "foo>bar", BucketHelpers.GapPolicy.SKIP));
+        AggregationExecutionException e = expectThrows(
+            AggregationExecutionException.class,
+            () -> BucketHelpers.resolveBucketValue(agg, bucket, "foo>bar", BucketHelpers.GapPolicy.SKIP)
+        );
 
-        assertThat(e.getMessage(), equalTo("buckets_path must reference either a number value or a single value numeric " +
-            "metric aggregation, got: [Object[]] at aggregation [foo]"));
+        assertThat(
+            e.getMessage(),
+            equalTo(
+                "buckets_path must reference either a number value or a single value numeric "
+                    + "metric aggregation, got: [Object[]] at aggregation [foo]"
+            )
+        );
     }
 
     public void testReturnMultiValueObject() {
@@ -176,10 +183,17 @@ public class BucketHelpersTests extends ESTestCase {
             }
         };
 
-        AggregationExecutionException e = expectThrows(AggregationExecutionException.class,
-            () -> BucketHelpers.resolveBucketValue(agg, bucket, "foo>bar", BucketHelpers.GapPolicy.SKIP));
+        AggregationExecutionException e = expectThrows(
+            AggregationExecutionException.class,
+            () -> BucketHelpers.resolveBucketValue(agg, bucket, "foo>bar", BucketHelpers.GapPolicy.SKIP)
+        );
 
-        assertThat(e.getMessage(), equalTo("buckets_path must reference either a number value or a single value numeric " +
-            "metric aggregation, but [foo] contains multiple values. Please specify which to use."));
+        assertThat(
+            e.getMessage(),
+            equalTo(
+                "buckets_path must reference either a number value or a single value numeric "
+                    + "metric aggregation, but [foo] contains multiple values. Please specify which to use."
+            )
+        );
     }
 }

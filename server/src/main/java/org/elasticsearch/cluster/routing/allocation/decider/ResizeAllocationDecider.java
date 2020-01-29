@@ -57,9 +57,9 @@ public class ResizeAllocationDecider extends AllocationDecider {
                 return Decision.ALWAYS;
             }
 
-            ShardId shardId = indexMetaData.getNumberOfShards() == sourceIndexMetaData.getNumberOfShards() ?
-                IndexMetaData.selectCloneShard(shardRouting.id(), sourceIndexMetaData, indexMetaData.getNumberOfShards()) :
-                IndexMetaData.selectSplitShard(shardRouting.id(), sourceIndexMetaData, indexMetaData.getNumberOfShards());
+            ShardId shardId = indexMetaData.getNumberOfShards() == sourceIndexMetaData.getNumberOfShards()
+                ? IndexMetaData.selectCloneShard(shardRouting.id(), sourceIndexMetaData, indexMetaData.getNumberOfShards())
+                : IndexMetaData.selectSplitShard(shardRouting.id(), sourceIndexMetaData, indexMetaData.getNumberOfShards());
             ShardRouting sourceShardRouting = allocation.routingNodes().activePrimary(shardId);
             if (sourceShardRouting == null) {
                 return allocation.decision(Decision.NO, NAME, "source primary shard [%s] is not active", shardId);

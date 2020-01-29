@@ -24,8 +24,10 @@ import org.elasticsearch.action.support.master.MasterNodeReadOperationRequestBui
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.common.unit.TimeValue;
 
-public class ClusterStateRequestBuilder extends MasterNodeReadOperationRequestBuilder<ClusterStateRequest,
-        ClusterStateResponse, ClusterStateRequestBuilder> {
+public class ClusterStateRequestBuilder extends MasterNodeReadOperationRequestBuilder<
+    ClusterStateRequest,
+    ClusterStateResponse,
+    ClusterStateRequestBuilder> {
 
     public ClusterStateRequestBuilder(ElasticsearchClient client, ClusterStateAction action) {
         super(client, action, new ClusterStateRequest());

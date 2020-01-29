@@ -38,8 +38,12 @@ public class TransportMainAction extends HandledTransportAction<MainRequest, Mai
     private final ClusterService clusterService;
 
     @Inject
-    public TransportMainAction(Settings settings, TransportService transportService,
-                               ActionFilters actionFilters, ClusterService clusterService) {
+    public TransportMainAction(
+        Settings settings,
+        TransportService transportService,
+        ActionFilters actionFilters,
+        ClusterService clusterService
+    ) {
         super(MainAction.NAME, transportService, actionFilters, MainRequest::new);
         this.nodeName = Node.NODE_NAME_SETTING.get(settings);
         this.clusterService = clusterService;
@@ -49,7 +53,7 @@ public class TransportMainAction extends HandledTransportAction<MainRequest, Mai
     protected void doExecute(Task task, MainRequest request, ActionListener<MainResponse> listener) {
         ClusterState clusterState = clusterService.state();
         listener.onResponse(
-            new MainResponse(nodeName, Version.CURRENT, clusterState.getClusterName(),
-                    clusterState.metaData().clusterUUID(), Build.CURRENT));
+            new MainResponse(nodeName, Version.CURRENT, clusterState.getClusterName(), clusterState.metaData().clusterUUID(), Build.CURRENT)
+        );
     }
 }

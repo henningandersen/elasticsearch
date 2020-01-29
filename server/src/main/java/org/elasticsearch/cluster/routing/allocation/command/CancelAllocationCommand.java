@@ -99,6 +99,7 @@ public class CancelAllocationCommand implements AllocationCommand {
     public String index() {
         return this.index;
     }
+
     /**
 
      * Get the id of the shard which allocation should be canceled
@@ -137,8 +138,14 @@ public class CancelAllocationCommand implements AllocationCommand {
         }
         if (shardRouting == null) {
             if (explain) {
-                return new RerouteExplanation(this, allocation.decision(Decision.NO, "cancel_allocation_command",
-                    "can't cancel " + shardId + ", failed to find it on node " + discoNode));
+                return new RerouteExplanation(
+                    this,
+                    allocation.decision(
+                        Decision.NO,
+                        "cancel_allocation_command",
+                        "can't cancel " + shardId + ", failed to find it on node " + discoNode
+                    )
+                );
             }
             throw new IllegalArgumentException("[cancel_allocation] can't cancel " + shardId + ", failed to find it on node " + discoNode);
         }
@@ -146,20 +153,47 @@ public class CancelAllocationCommand implements AllocationCommand {
             if ((shardRouting.initializing() && shardRouting.relocatingNodeId() != null) == false) {
                 // only allow cancelling initializing shard of primary relocation without allowPrimary flag
                 if (explain) {
-                    return new RerouteExplanation(this, allocation.decision(Decision.NO, "cancel_allocation_command",
-                        "can't cancel " + shardId + " on node " + discoNode + ", shard is primary and " +
-                            shardRouting.state().name().toLowerCase(Locale.ROOT)));
+                    return new RerouteExplanation(
+                        this,
+                        allocation.decision(
+                            Decision.NO,
+                            "cancel_allocation_command",
+                            "can't cancel "
+                                + shardId
+                                + " on node "
+                                + discoNode
+                                + ", shard is primary and "
+                                + shardRouting.state().name().toLowerCase(Locale.ROOT)
+                        )
+                    );
                 }
-                throw new IllegalArgumentException("[cancel_allocation] can't cancel " + shardId + " on node " +
-                    discoNode + ", shard is primary and " + shardRouting.state().name().toLowerCase(Locale.ROOT));
+                throw new IllegalArgumentException(
+                    "[cancel_allocation] can't cancel "
+                        + shardId
+                        + " on node "
+                        + discoNode
+                        + ", shard is primary and "
+                        + shardRouting.state().name().toLowerCase(Locale.ROOT)
+                );
             }
         }
-        routingNodes.failShard(LogManager.getLogger(CancelAllocationCommand.class), shardRouting,
-            new UnassignedInfo(UnassignedInfo.Reason.REROUTE_CANCELLED, null), indexMetaData, allocation.changes());
+        routingNodes.failShard(
+            LogManager.getLogger(CancelAllocationCommand.class),
+            shardRouting,
+            new UnassignedInfo(UnassignedInfo.Reason.REROUTE_CANCELLED, null),
+            indexMetaData,
+            allocation.changes()
+        );
         // TODO: We don't have to remove a cancelled shard from in-sync set once we have a strict resync implementation.
         allocation.removeAllocationId(shardRouting);
-        return new RerouteExplanation(this, allocation.decision(Decision.YES, "cancel_allocation_command",
-                "shard " + shardId + " on node " + discoNode + " can be cancelled"));
+        return new RerouteExplanation(
+            this,
+            allocation.decision(
+                Decision.YES,
+                "cancel_allocation_command",
+                "shard " + shardId + " on node " + discoNode + " can be cancelled"
+            )
+        );
     }
 
     @Override
@@ -218,10 +252,10 @@ public class CancelAllocationCommand implements AllocationCommand {
         }
         CancelAllocationCommand other = (CancelAllocationCommand) obj;
         // Override equals and hashCode for testing
-        return Objects.equals(index, other.index) &&
-                Objects.equals(shardId, other.shardId) &&
-                Objects.equals(node, other.node) &&
-                Objects.equals(allowPrimary, other.allowPrimary);
+        return Objects.equals(index, other.index)
+            && Objects.equals(shardId, other.shardId)
+            && Objects.equals(node, other.node)
+            && Objects.equals(allowPrimary, other.allowPrimary);
     }
 
     @Override

@@ -48,17 +48,26 @@ import static java.util.Collections.emptyList;
 public class StringRareTermsAggregator extends AbstractRareTermsAggregator<ValuesSource.Bytes, IncludeExclude.StringFilter, BytesRef> {
     protected BytesRefHash bucketOrds;
 
-    StringRareTermsAggregator(String name, AggregatorFactories factories, ValuesSource.Bytes valuesSource,
-                                     DocValueFormat format,  IncludeExclude.StringFilter stringFilter,
-                                     SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-                                     Map<String, Object> metaData, long maxDocCount, double precision) throws IOException {
+    StringRareTermsAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource.Bytes valuesSource,
+        DocValueFormat format,
+        IncludeExclude.StringFilter stringFilter,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        long maxDocCount,
+        double precision
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData, maxDocCount, precision, format, valuesSource, stringFilter);
         this.bucketOrds = new BytesRefHash(1, context.bigArrays());
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-                                                final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         final SortedBinaryDocValues values = valuesSource.bytesValues(ctx);
         if (subCollectors == null) {
             subCollectors = sub;
@@ -172,4 +181,3 @@ public class StringRareTermsAggregator extends AbstractRareTermsAggregator<Value
         Releasables.close(bucketOrds);
     }
 }
-

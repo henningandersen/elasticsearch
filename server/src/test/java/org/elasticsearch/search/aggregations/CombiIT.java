@@ -60,30 +60,22 @@ public class CombiIT extends ESIntegTestCase {
             String name = "name_" + randomIntBetween(1, 10);
             if (rarely()) {
                 missingValues++;
-                builders[i] = client().prepareIndex("idx").setSource(jsonBuilder()
-                        .startObject()
-                        .field("name", name)
-                        .endObject());
+                builders[i] = client().prepareIndex("idx").setSource(jsonBuilder().startObject().field("name", name).endObject());
             } else {
                 int value = randomIntBetween(1, 10);
                 values.put(value, values.getOrDefault(value, 0) + 1);
-                builders[i] = client().prepareIndex("idx").setSource(jsonBuilder()
-                        .startObject()
-                        .field("name", name)
-                        .field("value", value)
-                        .endObject());
+                builders[i] = client().prepareIndex("idx")
+                    .setSource(jsonBuilder().startObject().field("name", name).field("value", value).endObject());
             }
         }
         indexRandom(true, builders);
         ensureSearchable();
 
-
         SubAggCollectionMode aggCollectionMode = randomFrom(SubAggCollectionMode.values());
         SearchResponse response = client().prepareSearch("idx")
-                .addAggregation(missing("missing_values").field("value"))
-                .addAggregation(terms("values").field("value")
-                        .collectMode(aggCollectionMode ))
-                .get();
+            .addAggregation(missing("missing_values").field("value"))
+            .addAggregation(terms("values").field("value").collectMode(aggCollectionMode))
+            .get();
 
         assertSearchResponse(response);
 
@@ -103,7 +95,6 @@ public class CombiIT extends ESIntegTestCase {
         assertTrue(values.isEmpty());
     }
 
-
     /**
      * Some top aggs (eg. date_/histogram) that are executed on unmapped fields, will generate an estimate count of buckets - zero.
      * when the sub aggregator is then created, it will take this estimation into account. This used to cause
@@ -111,22 +102,29 @@ public class CombiIT extends ESIntegTestCase {
      */
     public void testSubAggregationForTopAggregationOnUnmappedField() throws Exception {
 
-        prepareCreate("idx").setMapping(jsonBuilder()
-                .startObject()
-                .startObject("_doc").startObject("properties")
-                    .startObject("name").field("type", "keyword").endObject()
-                    .startObject("value").field("type", "integer").endObject()
-                .endObject().endObject()
-                .endObject()).get();
+        prepareCreate("idx").setMapping(
+            jsonBuilder().startObject()
+                .startObject("_doc")
+                .startObject("properties")
+                .startObject("name")
+                .field("type", "keyword")
+                .endObject()
+                .startObject("value")
+                .field("type", "integer")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+        ).get();
 
         ensureSearchable("idx");
 
         SubAggCollectionMode aggCollectionMode = randomFrom(SubAggCollectionMode.values());
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .addAggregation(histogram("values").field("value1").interval(1)
-                        .subAggregation(terms("names").field("name")
-                                .collectMode(aggCollectionMode )))
-                .get();
+            .addAggregation(
+                histogram("values").field("value1").interval(1).subAggregation(terms("names").field("name").collectMode(aggCollectionMode))
+            )
+            .get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, Matchers.equalTo(0L));
         Histogram values = searchResponse.getAggregations().get("values");

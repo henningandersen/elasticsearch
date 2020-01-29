@@ -45,9 +45,18 @@ public class FiltersAggregatorFactory extends AggregatorFactory {
     private final boolean otherBucket;
     private final String otherBucketKey;
 
-    public FiltersAggregatorFactory(String name, List<KeyedFilter> filters, boolean keyed, boolean otherBucket,
-                                    String otherBucketKey, QueryShardContext queryShardContext, AggregatorFactory parent,
-                                    AggregatorFactories.Builder subFactories, Map<String, Object> metaData) throws IOException {
+    public FiltersAggregatorFactory(
+        String name,
+        List<KeyedFilter> filters,
+        boolean keyed,
+        boolean otherBucket,
+        String otherBucketKey,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactories,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, queryShardContext, parent, subFactories, metaData);
         this.keyed = keyed;
         this.otherBucket = otherBucket;
@@ -66,7 +75,7 @@ public class FiltersAggregatorFactory extends AggregatorFactory {
      * necessary. This is done lazily so that the {@link Weight}s are only
      * created if the aggregation collects documents reducing the overhead of
      * the aggregation in the case where no documents are collected.
-     * 
+     *
      * Note that as aggregations are initialsed and executed in a serial manner,
      * no concurrency considerations are necessary here.
      */
@@ -86,14 +95,25 @@ public class FiltersAggregatorFactory extends AggregatorFactory {
     }
 
     @Override
-    public Aggregator createInternal(SearchContext searchContext,
-                                        Aggregator parent,
-                                        boolean collectsFromSingleBucket,
-                                        List<PipelineAggregator> pipelineAggregators,
-                                        Map<String, Object> metaData) throws IOException {
-        return new FiltersAggregator(name, factories, keys, () -> getWeights(searchContext), keyed,
-            otherBucket ? otherBucketKey : null, searchContext, parent, pipelineAggregators, metaData);
+    public Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new FiltersAggregator(
+            name,
+            factories,
+            keys,
+            () -> getWeights(searchContext),
+            keyed,
+            otherBucket ? otherBucketKey : null,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
-
 
 }

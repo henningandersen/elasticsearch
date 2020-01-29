@@ -44,10 +44,14 @@ public class MainResponseTests extends AbstractSerializingTestCase<MainResponse>
         final String date = new Date(randomNonNegativeLong()).toString();
         Version version = VersionUtils.randomIndexCompatibleVersion(random());
         Build build = new Build(
-            Build.Flavor.UNKNOWN, Build.Type.UNKNOWN, randomAlphaOfLength(8), date, randomBoolean(),
+            Build.Flavor.UNKNOWN,
+            Build.Type.UNKNOWN,
+            randomAlphaOfLength(8),
+            date,
+            randomBoolean(),
             version.toString()
         );
-        return new MainResponse(nodeName, version, clusterName, clusterUuid , build);
+        return new MainResponse(nodeName, version, clusterName, clusterUuid, build);
     }
 
     @Override
@@ -64,29 +68,56 @@ public class MainResponseTests extends AbstractSerializingTestCase<MainResponse>
         String clusterUUID = randomAlphaOfLengthBetween(10, 20);
         final Build current = Build.CURRENT;
         Build build = new Build(
-            current.flavor(), current.type(), current.hash(), current.date(), current.isSnapshot(),
+            current.flavor(),
+            current.type(),
+            current.hash(),
+            current.date(),
+            current.isSnapshot(),
             current.getQualifiedVersion()
         );
         Version version = Version.CURRENT;
         MainResponse response = new MainResponse("nodeName", version, new ClusterName("clusterName"), clusterUUID, build);
         XContentBuilder builder = XContentFactory.jsonBuilder();
         response.toXContent(builder, ToXContent.EMPTY_PARAMS);
-        assertEquals("{"
+        assertEquals(
+            "{"
                 + "\"name\":\"nodeName\","
                 + "\"cluster_name\":\"clusterName\","
-                + "\"cluster_uuid\":\"" + clusterUUID + "\","
+                + "\"cluster_uuid\":\""
+                + clusterUUID
+                + "\","
                 + "\"version\":{"
-                    + "\"number\":\"" + build.getQualifiedVersion() + "\","
-                    + "\"build_flavor\":\"" + current.flavor().displayName() + "\","
-                    + "\"build_type\":\"" + current.type().displayName() + "\","
-                    + "\"build_hash\":\"" + current.hash() + "\","
-                    + "\"build_date\":\"" + current.date() + "\","
-                    + "\"build_snapshot\":" + current.isSnapshot() + ","
-                    + "\"lucene_version\":\"" + version.luceneVersion.toString() + "\","
-                    + "\"minimum_wire_compatibility_version\":\"" + version.minimumCompatibilityVersion().toString() + "\","
-                    + "\"minimum_index_compatibility_version\":\"" + version.minimumIndexCompatibilityVersion().toString() + "\"},"
+                + "\"number\":\""
+                + build.getQualifiedVersion()
+                + "\","
+                + "\"build_flavor\":\""
+                + current.flavor().displayName()
+                + "\","
+                + "\"build_type\":\""
+                + current.type().displayName()
+                + "\","
+                + "\"build_hash\":\""
+                + current.hash()
+                + "\","
+                + "\"build_date\":\""
+                + current.date()
+                + "\","
+                + "\"build_snapshot\":"
+                + current.isSnapshot()
+                + ","
+                + "\"lucene_version\":\""
+                + version.luceneVersion.toString()
+                + "\","
+                + "\"minimum_wire_compatibility_version\":\""
+                + version.minimumCompatibilityVersion().toString()
+                + "\","
+                + "\"minimum_index_compatibility_version\":\""
+                + version.minimumIndexCompatibilityVersion().toString()
+                + "\"},"
                 + "\"tagline\":\"You Know, for Search\""
-          + "}", Strings.toString(builder));
+                + "}",
+            Strings.toString(builder)
+        );
     }
 
     @Override
@@ -106,7 +137,11 @@ public class MainResponseTests extends AbstractSerializingTestCase<MainResponse>
             case 2:
                 // toggle the snapshot flag of the original Build parameter
                 build = new Build(
-                    Build.Flavor.UNKNOWN, Build.Type.UNKNOWN, build.hash(), build.date(), !build.isSnapshot(),
+                    Build.Flavor.UNKNOWN,
+                    Build.Type.UNKNOWN,
+                    build.hash(),
+                    build.date(),
+                    !build.isSnapshot(),
                     build.getQualifiedVersion()
                 );
                 break;

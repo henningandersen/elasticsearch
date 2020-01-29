@@ -47,19 +47,21 @@ public class WildcardQueryBuilderTests extends AbstractQueryTestCase<WildcardQue
     protected Map<String, WildcardQueryBuilder> getAlternateVersions() {
         Map<String, WildcardQueryBuilder> alternateVersions = new HashMap<>();
         WildcardQueryBuilder wildcardQuery = randomWildcardQuery();
-        String contentString = "{\n" +
-                "    \"wildcard\" : {\n" +
-                "        \"" + wildcardQuery.fieldName() + "\" : \"" + wildcardQuery.value() + "\"\n" +
-                "    }\n" +
-                "}";
+        String contentString = "{\n"
+            + "    \"wildcard\" : {\n"
+            + "        \""
+            + wildcardQuery.fieldName()
+            + "\" : \""
+            + wildcardQuery.value()
+            + "\"\n"
+            + "    }\n"
+            + "}";
         alternateVersions.put(contentString, wildcardQuery);
         return alternateVersions;
     }
 
     private static WildcardQueryBuilder randomWildcardQuery() {
-        String fieldName = randomFrom(STRING_FIELD_NAME,
-            STRING_ALIAS_FIELD_NAME,
-            randomAlphaOfLengthBetween(1, 10));
+        String fieldName = randomFrom(STRING_FIELD_NAME, STRING_ALIAS_FIELD_NAME, randomAlphaOfLengthBetween(1, 10));
         String text = randomAlphaOfLengthBetween(1, 10);
 
         return new WildcardQueryBuilder(fieldName, text);
@@ -108,27 +110,25 @@ public class WildcardQueryBuilderTests extends AbstractQueryTestCase<WildcardQue
     }
 
     public void testParseFailsWithMultipleFields() throws IOException {
-        String json =
-                "{\n" +
-                "    \"wildcard\": {\n" +
-                "      \"user1\": {\n" +
-                "        \"wildcard\": \"ki*y\"\n" +
-                "      },\n" +
-                "      \"user2\": {\n" +
-                "        \"wildcard\": \"ki*y\"\n" +
-                "      }\n" +
-                "    }\n" +
-                "}";
+        String json = "{\n"
+            + "    \"wildcard\": {\n"
+            + "      \"user1\": {\n"
+            + "        \"wildcard\": \"ki*y\"\n"
+            + "      },\n"
+            + "      \"user2\": {\n"
+            + "        \"wildcard\": \"ki*y\"\n"
+            + "      }\n"
+            + "    }\n"
+            + "}";
         ParsingException e = expectThrows(ParsingException.class, () -> parseQuery(json));
         assertEquals("[wildcard] query doesn't support multiple fields, found [user1] and [user2]", e.getMessage());
 
-        String shortJson =
-                "{\n" +
-                "    \"wildcard\": {\n" +
-                "      \"user1\": \"ki*y\",\n" +
-                "      \"user2\": \"ki*y\"\n" +
-                "    }\n" +
-                "}";
+        String shortJson = "{\n"
+            + "    \"wildcard\": {\n"
+            + "      \"user1\": \"ki*y\",\n"
+            + "      \"user2\": \"ki*y\"\n"
+            + "    }\n"
+            + "}";
         e = expectThrows(ParsingException.class, () -> parseQuery(shortJson));
         assertEquals("[wildcard] query doesn't support multiple fields, found [user1] and [user2]", e.getMessage());
     }
@@ -138,20 +138,20 @@ public class WildcardQueryBuilderTests extends AbstractQueryTestCase<WildcardQue
         builder.doToQuery(createShardContext());
         assertWarnings(QueryShardContext.TYPES_DEPRECATION_MESSAGE);
     }
-    
+
     public void testRewriteIndexQueryToMatchNone() throws IOException {
         WildcardQueryBuilder query = new WildcardQueryBuilder("_index", "does_not_exist");
         QueryShardContext queryShardContext = createShardContext();
         QueryBuilder rewritten = query.rewrite(queryShardContext);
         assertThat(rewritten, instanceOf(MatchNoneQueryBuilder.class));
-    }   
-    
+    }
+
     public void testRewriteIndexQueryNotMatchNone() throws IOException {
         String fullIndexName = getIndex().getName();
-        String firstHalfOfIndexName = fullIndexName.substring(0,fullIndexName.length()/2);
-        WildcardQueryBuilder query = new WildcardQueryBuilder("_index", firstHalfOfIndexName +"*");
+        String firstHalfOfIndexName = fullIndexName.substring(0, fullIndexName.length() / 2);
+        WildcardQueryBuilder query = new WildcardQueryBuilder("_index", firstHalfOfIndexName + "*");
         QueryShardContext queryShardContext = createShardContext();
         QueryBuilder rewritten = query.rewrite(queryShardContext);
         assertThat(rewritten, instanceOf(WildcardQueryBuilder.class));
-    }      
+    }
 }

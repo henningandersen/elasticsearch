@@ -90,8 +90,12 @@ import java.util.function.Supplier;
 public class ClusterModule extends AbstractModule {
 
     public static final String BALANCED_ALLOCATOR = "balanced"; // default
-    public static final Setting<String> SHARDS_ALLOCATOR_TYPE_SETTING =
-        new Setting<>("cluster.routing.allocation.type", BALANCED_ALLOCATOR, Function.identity(), Property.NodeScope);
+    public static final Setting<String> SHARDS_ALLOCATOR_TYPE_SETTING = new Setting<>(
+        "cluster.routing.allocation.type",
+        BALANCED_ALLOCATOR,
+        Function.identity(),
+        Property.NodeScope
+    );
 
     private final ClusterService clusterService;
     private final IndexNameExpressionResolver indexNameExpressionResolver;
@@ -101,8 +105,12 @@ public class ClusterModule extends AbstractModule {
     final Collection<AllocationDecider> deciderList;
     final ShardsAllocator shardsAllocator;
 
-    public ClusterModule(Settings settings, ClusterService clusterService, List<ClusterPlugin> clusterPlugins,
-                         ClusterInfoService clusterInfoService) {
+    public ClusterModule(
+        Settings settings,
+        ClusterService clusterService,
+        List<ClusterPlugin> clusterPlugins,
+        ClusterInfoService clusterInfoService
+    ) {
         this.deciderList = createAllocationDeciders(settings, clusterService.getClusterSettings(), clusterPlugins);
         this.allocationDeciders = new AllocationDeciders(deciderList);
         this.shardsAllocator = createShardsAllocator(settings, clusterService.getClusterSettings(), clusterPlugins);
@@ -116,17 +124,29 @@ public class ClusterModule extends AbstractModule {
         // Cluster State
         registerClusterCustom(entries, SnapshotsInProgress.TYPE, SnapshotsInProgress::new, SnapshotsInProgress::readDiffFrom);
         registerClusterCustom(entries, RestoreInProgress.TYPE, RestoreInProgress::new, RestoreInProgress::readDiffFrom);
-        registerClusterCustom(entries, SnapshotDeletionsInProgress.TYPE, SnapshotDeletionsInProgress::new,
-            SnapshotDeletionsInProgress::readDiffFrom);
-        registerClusterCustom(entries, RepositoryCleanupInProgress.TYPE, RepositoryCleanupInProgress::new,
-            RepositoryCleanupInProgress::readDiffFrom);
+        registerClusterCustom(
+            entries,
+            SnapshotDeletionsInProgress.TYPE,
+            SnapshotDeletionsInProgress::new,
+            SnapshotDeletionsInProgress::readDiffFrom
+        );
+        registerClusterCustom(
+            entries,
+            RepositoryCleanupInProgress.TYPE,
+            RepositoryCleanupInProgress::new,
+            RepositoryCleanupInProgress::readDiffFrom
+        );
         // Metadata
         registerMetaDataCustom(entries, RepositoriesMetaData.TYPE, RepositoriesMetaData::new, RepositoriesMetaData::readDiffFrom);
         registerMetaDataCustom(entries, IngestMetadata.TYPE, IngestMetadata::new, IngestMetadata::readDiffFrom);
         registerMetaDataCustom(entries, ScriptMetaData.TYPE, ScriptMetaData::new, ScriptMetaData::readDiffFrom);
         registerMetaDataCustom(entries, IndexGraveyard.TYPE, IndexGraveyard::new, IndexGraveyard::readDiffFrom);
-        registerMetaDataCustom(entries, PersistentTasksCustomMetaData.TYPE, PersistentTasksCustomMetaData::new,
-            PersistentTasksCustomMetaData::readDiffFrom);
+        registerMetaDataCustom(
+            entries,
+            PersistentTasksCustomMetaData.TYPE,
+            PersistentTasksCustomMetaData::new,
+            PersistentTasksCustomMetaData::readDiffFrom
+        );
         // Task Status (not Diffable)
         entries.add(new Entry(Task.Status.class, PersistentTasksNodeService.Status.NAME, PersistentTasksNodeService.Status::new));
         return entries;
@@ -135,31 +155,57 @@ public class ClusterModule extends AbstractModule {
     public static List<NamedXContentRegistry.Entry> getNamedXWriteables() {
         List<NamedXContentRegistry.Entry> entries = new ArrayList<>();
         // Metadata
-        entries.add(new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(RepositoriesMetaData.TYPE),
-            RepositoriesMetaData::fromXContent));
-        entries.add(new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(IngestMetadata.TYPE),
-            IngestMetadata::fromXContent));
-        entries.add(new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(ScriptMetaData.TYPE),
-            ScriptMetaData::fromXContent));
-        entries.add(new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(IndexGraveyard.TYPE),
-            IndexGraveyard::fromXContent));
-        entries.add(new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(PersistentTasksCustomMetaData.TYPE),
-            PersistentTasksCustomMetaData::fromXContent));
+        entries.add(
+            new NamedXContentRegistry.Entry(
+                MetaData.Custom.class,
+                new ParseField(RepositoriesMetaData.TYPE),
+                RepositoriesMetaData::fromXContent
+            )
+        );
+        entries.add(
+            new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(IngestMetadata.TYPE), IngestMetadata::fromXContent)
+        );
+        entries.add(
+            new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(ScriptMetaData.TYPE), ScriptMetaData::fromXContent)
+        );
+        entries.add(
+            new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(IndexGraveyard.TYPE), IndexGraveyard::fromXContent)
+        );
+        entries.add(
+            new NamedXContentRegistry.Entry(
+                MetaData.Custom.class,
+                new ParseField(PersistentTasksCustomMetaData.TYPE),
+                PersistentTasksCustomMetaData::fromXContent
+            )
+        );
         return entries;
     }
 
-    private static <T extends ClusterState.Custom> void registerClusterCustom(List<Entry> entries, String name, Reader<? extends T> reader,
-                                                                       Reader<NamedDiff> diffReader) {
+    private static <T extends ClusterState.Custom> void registerClusterCustom(
+        List<Entry> entries,
+        String name,
+        Reader<? extends T> reader,
+        Reader<NamedDiff> diffReader
+    ) {
         registerCustom(entries, ClusterState.Custom.class, name, reader, diffReader);
     }
 
-    private static <T extends MetaData.Custom> void registerMetaDataCustom(List<Entry> entries, String name, Reader<? extends T> reader,
-                                                                       Reader<NamedDiff> diffReader) {
+    private static <T extends MetaData.Custom> void registerMetaDataCustom(
+        List<Entry> entries,
+        String name,
+        Reader<? extends T> reader,
+        Reader<NamedDiff> diffReader
+    ) {
         registerCustom(entries, MetaData.Custom.class, name, reader, diffReader);
     }
 
-    private static <T extends NamedWriteable> void registerCustom(List<Entry> entries, Class<T> category, String name,
-                                                                  Reader<? extends T> reader, Reader<NamedDiff> diffReader) {
+    private static <T extends NamedWriteable> void registerCustom(
+        List<Entry> entries,
+        Class<T> category,
+        String name,
+        Reader<? extends T> reader,
+        Reader<NamedDiff> diffReader
+    ) {
         entries.add(new Entry(category, name, reader));
         entries.add(new Entry(NamedDiff.class, name, diffReader));
     }
@@ -170,8 +216,11 @@ public class ClusterModule extends AbstractModule {
 
     // TODO: this is public so allocation benchmark can access the default deciders...can we do that in another way?
     /** Return a new {@link AllocationDecider} instance with builtin deciders as well as those from plugins. */
-    public static Collection<AllocationDecider> createAllocationDeciders(Settings settings, ClusterSettings clusterSettings,
-                                                                         List<ClusterPlugin> clusterPlugins) {
+    public static Collection<AllocationDecider> createAllocationDeciders(
+        Settings settings,
+        ClusterSettings clusterSettings,
+        List<ClusterPlugin> clusterPlugins
+    ) {
         // collect deciders by class so that we can detect duplicates
         Map<Class, AllocationDecider> deciders = new LinkedHashMap<>();
         addAllocationDecider(deciders, new MaxRetryAllocationDecider());
@@ -205,8 +254,11 @@ public class ClusterModule extends AbstractModule {
         }
     }
 
-    private static ShardsAllocator createShardsAllocator(Settings settings, ClusterSettings clusterSettings,
-                                                         List<ClusterPlugin> clusterPlugins) {
+    private static ShardsAllocator createShardsAllocator(
+        Settings settings,
+        ClusterSettings clusterSettings,
+        List<ClusterPlugin> clusterPlugins
+    ) {
         Map<String, Supplier<ShardsAllocator>> allocators = new HashMap<>();
         allocators.put(BALANCED_ALLOCATOR, () -> new BalancedShardsAllocator(settings, clusterSettings));
 
@@ -222,8 +274,7 @@ public class ClusterModule extends AbstractModule {
         if (allocatorSupplier == null) {
             throw new IllegalArgumentException("Unknown ShardsAllocator [" + allocatorName + "]");
         }
-        return Objects.requireNonNull(allocatorSupplier.get(),
-            "ShardsAllocator factory for [" + allocatorName + "] returned null");
+        return Objects.requireNonNull(allocatorSupplier.get(), "ShardsAllocator factory for [" + allocatorName + "] returned null");
     }
 
     public AllocationService getAllocationService() {

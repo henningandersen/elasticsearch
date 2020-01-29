@@ -39,9 +39,13 @@ public class ScoreSortBuilder extends SortBuilder<ScoreSortBuilder> {
 
     public static final String NAME = "_score";
     private static final SortFieldAndFormat SORT_SCORE = new SortFieldAndFormat(
-            new SortField(null, SortField.Type.SCORE), DocValueFormat.RAW);
+        new SortField(null, SortField.Type.SCORE),
+        DocValueFormat.RAW
+    );
     private static final SortFieldAndFormat SORT_SCORE_REVERSE = new SortFieldAndFormat(
-            new SortField(null, SortField.Type.SCORE, true), DocValueFormat.RAW);
+        new SortField(null, SortField.Type.SCORE, true),
+        DocValueFormat.RAW
+    );
 
     /**
      * Build a ScoreSortBuilder default to descending sort order.

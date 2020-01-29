@@ -37,12 +37,14 @@ import java.util.Set;
 public class StringTermsTests extends InternalTermsTestCase {
 
     @Override
-    protected InternalTerms<?, ?> createTestInstance(String name,
-                                                     List<PipelineAggregator> pipelineAggregators,
-                                                     Map<String, Object> metaData,
-                                                     InternalAggregations aggregations,
-                                                     boolean showTermDocCountError,
-                                                     long docCountError) {
+    protected InternalTerms<?, ?> createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        InternalAggregations aggregations,
+        boolean showTermDocCountError,
+        long docCountError
+    ) {
         BucketOrder order = BucketOrder.count(false);
         long minDocCount = 1;
         int requiredSize = 3;
@@ -57,8 +59,20 @@ public class StringTermsTests extends InternalTermsTestCase {
             int docCount = randomIntBetween(1, 100);
             buckets.add(new StringTerms.Bucket(term, docCount, aggregations, showTermDocCountError, docCountError, format));
         }
-        return new StringTerms(name, order, requiredSize, minDocCount, pipelineAggregators,
-                metaData, format, shardSize, showTermDocCountError, otherDocCount, buckets, docCountError);
+        return new StringTerms(
+            name,
+            order,
+            requiredSize,
+            minDocCount,
+            pipelineAggregators,
+            metaData,
+            format,
+            shardSize,
+            showTermDocCountError,
+            otherDocCount,
+            buckets,
+            docCountError
+        );
     }
 
     @Override
@@ -88,45 +102,65 @@ public class StringTermsTests extends InternalTermsTestCase {
             List<PipelineAggregator> pipelineAggregators = stringTerms.pipelineAggregators();
             Map<String, Object> metaData = stringTerms.getMetaData();
             switch (between(0, 8)) {
-            case 0:
-                name += randomAlphaOfLength(5);
-                break;
-            case 1:
-                requiredSize += between(1, 100);
-                break;
-            case 2:
-                minDocCount += between(1, 100);
-                break;
-            case 3:
-                shardSize += between(1, 100);
-                break;
-            case 4:
-                showTermDocCountError = showTermDocCountError == false;
-                break;
-            case 5:
-                otherDocCount += between(1, 100);
-                break;
-            case 6:
-                docCountError += between(1, 100);
-                break;
-            case 7:
-                buckets = new ArrayList<>(buckets);
-                buckets.add(new StringTerms.Bucket(new BytesRef(randomAlphaOfLengthBetween(1, 10)), randomNonNegativeLong(),
-                        InternalAggregations.EMPTY, showTermDocCountError, docCountError, format));
-                break;
-            case 8:
-                if (metaData == null) {
-                    metaData = new HashMap<>(1);
-                } else {
-                    metaData = new HashMap<>(instance.getMetaData());
-                }
-                metaData.put(randomAlphaOfLength(15), randomInt());
-                break;
-            default:
-                throw new AssertionError("Illegal randomisation branch");
+                case 0:
+                    name += randomAlphaOfLength(5);
+                    break;
+                case 1:
+                    requiredSize += between(1, 100);
+                    break;
+                case 2:
+                    minDocCount += between(1, 100);
+                    break;
+                case 3:
+                    shardSize += between(1, 100);
+                    break;
+                case 4:
+                    showTermDocCountError = showTermDocCountError == false;
+                    break;
+                case 5:
+                    otherDocCount += between(1, 100);
+                    break;
+                case 6:
+                    docCountError += between(1, 100);
+                    break;
+                case 7:
+                    buckets = new ArrayList<>(buckets);
+                    buckets.add(
+                        new StringTerms.Bucket(
+                            new BytesRef(randomAlphaOfLengthBetween(1, 10)),
+                            randomNonNegativeLong(),
+                            InternalAggregations.EMPTY,
+                            showTermDocCountError,
+                            docCountError,
+                            format
+                        )
+                    );
+                    break;
+                case 8:
+                    if (metaData == null) {
+                        metaData = new HashMap<>(1);
+                    } else {
+                        metaData = new HashMap<>(instance.getMetaData());
+                    }
+                    metaData.put(randomAlphaOfLength(15), randomInt());
+                    break;
+                default:
+                    throw new AssertionError("Illegal randomisation branch");
             }
-            return new StringTerms(name, order, requiredSize, minDocCount, pipelineAggregators, metaData, format, shardSize,
-                    showTermDocCountError, otherDocCount, buckets, docCountError);
+            return new StringTerms(
+                name,
+                order,
+                requiredSize,
+                minDocCount,
+                pipelineAggregators,
+                metaData,
+                format,
+                shardSize,
+                showTermDocCountError,
+                otherDocCount,
+                buckets,
+                docCountError
+            );
         } else {
             String name = instance.getName();
             BucketOrder order = instance.order;
@@ -135,25 +169,25 @@ public class StringTermsTests extends InternalTermsTestCase {
             List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
             Map<String, Object> metaData = instance.getMetaData();
             switch (between(0, 3)) {
-            case 0:
-                name += randomAlphaOfLength(5);
-                break;
-            case 1:
-                requiredSize += between(1, 100);
-                break;
-            case 2:
-                minDocCount += between(1, 100);
-                break;
-            case 3:
-                if (metaData == null) {
-                    metaData = new HashMap<>(1);
-                } else {
-                    metaData = new HashMap<>(instance.getMetaData());
-                }
-                metaData.put(randomAlphaOfLength(15), randomInt());
-                break;
-            default:
-                throw new AssertionError("Illegal randomisation branch");
+                case 0:
+                    name += randomAlphaOfLength(5);
+                    break;
+                case 1:
+                    requiredSize += between(1, 100);
+                    break;
+                case 2:
+                    minDocCount += between(1, 100);
+                    break;
+                case 3:
+                    if (metaData == null) {
+                        metaData = new HashMap<>(1);
+                    } else {
+                        metaData = new HashMap<>(instance.getMetaData());
+                    }
+                    metaData.put(randomAlphaOfLength(15), randomInt());
+                    break;
+                default:
+                    throw new AssertionError("Illegal randomisation branch");
             }
             return new UnmappedTerms(name, order, requiredSize, minDocCount, pipelineAggregators, metaData);
         }

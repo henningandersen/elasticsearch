@@ -91,79 +91,146 @@ public class TcpTransportTests extends ESTestCase {
     }
 
     public void testRejectsPortRanges() {
-        expectThrows(
-            NumberFormatException.class,
-            () -> TcpTransport.parse("[::1]:100-200", 1000)
-        );
+        expectThrows(NumberFormatException.class, () -> TcpTransport.parse("[::1]:100-200", 1000));
     }
 
     public void testDefaultSeedAddressesWithDefaultPort() {
-        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6 ?
-            containsInAnyOrder(
-                "[::1]:9300", "[::1]:9301", "[::1]:9302", "[::1]:9303", "[::1]:9304", "[::1]:9305",
-                "127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302", "127.0.0.1:9303", "127.0.0.1:9304", "127.0.0.1:9305") :
-            containsInAnyOrder(
-                "127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302", "127.0.0.1:9303", "127.0.0.1:9304", "127.0.0.1:9305");
+        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6
+            ? containsInAnyOrder(
+                "[::1]:9300",
+                "[::1]:9301",
+                "[::1]:9302",
+                "[::1]:9303",
+                "[::1]:9304",
+                "[::1]:9305",
+                "127.0.0.1:9300",
+                "127.0.0.1:9301",
+                "127.0.0.1:9302",
+                "127.0.0.1:9303",
+                "127.0.0.1:9304",
+                "127.0.0.1:9305"
+            )
+            : containsInAnyOrder(
+                "127.0.0.1:9300",
+                "127.0.0.1:9301",
+                "127.0.0.1:9302",
+                "127.0.0.1:9303",
+                "127.0.0.1:9304",
+                "127.0.0.1:9305"
+            );
         testDefaultSeedAddresses(Settings.EMPTY, seedAddressMatcher);
     }
 
     public void testDefaultSeedAddressesWithNonstandardGlobalPortRange() {
-        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6 ?
-            containsInAnyOrder(
-                "[::1]:9500", "[::1]:9501", "[::1]:9502", "[::1]:9503", "[::1]:9504", "[::1]:9505",
-                "127.0.0.1:9500", "127.0.0.1:9501", "127.0.0.1:9502", "127.0.0.1:9503", "127.0.0.1:9504", "127.0.0.1:9505") :
-            containsInAnyOrder(
-                "127.0.0.1:9500", "127.0.0.1:9501", "127.0.0.1:9502", "127.0.0.1:9503", "127.0.0.1:9504", "127.0.0.1:9505");
+        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6
+            ? containsInAnyOrder(
+                "[::1]:9500",
+                "[::1]:9501",
+                "[::1]:9502",
+                "[::1]:9503",
+                "[::1]:9504",
+                "[::1]:9505",
+                "127.0.0.1:9500",
+                "127.0.0.1:9501",
+                "127.0.0.1:9502",
+                "127.0.0.1:9503",
+                "127.0.0.1:9504",
+                "127.0.0.1:9505"
+            )
+            : containsInAnyOrder(
+                "127.0.0.1:9500",
+                "127.0.0.1:9501",
+                "127.0.0.1:9502",
+                "127.0.0.1:9503",
+                "127.0.0.1:9504",
+                "127.0.0.1:9505"
+            );
         testDefaultSeedAddresses(Settings.builder().put(TransportSettings.PORT.getKey(), "9500-9600").build(), seedAddressMatcher);
     }
 
     public void testDefaultSeedAddressesWithSmallGlobalPortRange() {
-        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6 ?
-            containsInAnyOrder("[::1]:9300", "[::1]:9301", "[::1]:9302", "127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302") :
-            containsInAnyOrder("127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302");
+        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6
+            ? containsInAnyOrder("[::1]:9300", "[::1]:9301", "[::1]:9302", "127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302")
+            : containsInAnyOrder("127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302");
         testDefaultSeedAddresses(Settings.builder().put(TransportSettings.PORT.getKey(), "9300-9302").build(), seedAddressMatcher);
     }
 
     public void testDefaultSeedAddressesWithNonstandardProfilePortRange() {
-        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6 ?
-            containsInAnyOrder("[::1]:9500", "[::1]:9501", "[::1]:9502", "[::1]:9503", "[::1]:9504", "[::1]:9505",
-                "127.0.0.1:9500", "127.0.0.1:9501", "127.0.0.1:9502", "127.0.0.1:9503", "127.0.0.1:9504", "127.0.0.1:9505") :
-            containsInAnyOrder("127.0.0.1:9500", "127.0.0.1:9501", "127.0.0.1:9502", "127.0.0.1:9503", "127.0.0.1:9504", "127.0.0.1:9505");
-        testDefaultSeedAddresses(Settings.builder()
+        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6
+            ? containsInAnyOrder(
+                "[::1]:9500",
+                "[::1]:9501",
+                "[::1]:9502",
+                "[::1]:9503",
+                "[::1]:9504",
+                "[::1]:9505",
+                "127.0.0.1:9500",
+                "127.0.0.1:9501",
+                "127.0.0.1:9502",
+                "127.0.0.1:9503",
+                "127.0.0.1:9504",
+                "127.0.0.1:9505"
+            )
+            : containsInAnyOrder(
+                "127.0.0.1:9500",
+                "127.0.0.1:9501",
+                "127.0.0.1:9502",
+                "127.0.0.1:9503",
+                "127.0.0.1:9504",
+                "127.0.0.1:9505"
+            );
+        testDefaultSeedAddresses(
+            Settings.builder()
                 .put(TransportSettings.PORT_PROFILE.getConcreteSettingForNamespace(TransportSettings.DEFAULT_PROFILE).getKey(), "9500-9600")
-                .build(), seedAddressMatcher);
+                .build(),
+            seedAddressMatcher
+        );
     }
 
     public void testDefaultSeedAddressesWithSmallProfilePortRange() {
-        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6 ?
-            containsInAnyOrder("[::1]:9300", "[::1]:9301", "[::1]:9302", "127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302") :
-            containsInAnyOrder("127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302");
-        testDefaultSeedAddresses(Settings.builder()
+        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6
+            ? containsInAnyOrder("[::1]:9300", "[::1]:9301", "[::1]:9302", "127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302")
+            : containsInAnyOrder("127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302");
+        testDefaultSeedAddresses(
+            Settings.builder()
                 .put(TransportSettings.PORT_PROFILE.getConcreteSettingForNamespace(TransportSettings.DEFAULT_PROFILE).getKey(), "9300-9302")
-                .build(), seedAddressMatcher);
+                .build(),
+            seedAddressMatcher
+        );
     }
 
     public void testDefaultSeedAddressesPrefersProfileSettingToGlobalSetting() {
-        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6 ?
-            containsInAnyOrder("[::1]:9300", "[::1]:9301", "[::1]:9302", "127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302") :
-            containsInAnyOrder("127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302");
-        testDefaultSeedAddresses(Settings.builder()
+        final Matcher<Iterable<? extends String>> seedAddressMatcher = NetworkUtils.SUPPORTS_V6
+            ? containsInAnyOrder("[::1]:9300", "[::1]:9301", "[::1]:9302", "127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302")
+            : containsInAnyOrder("127.0.0.1:9300", "127.0.0.1:9301", "127.0.0.1:9302");
+        testDefaultSeedAddresses(
+            Settings.builder()
                 .put(TransportSettings.PORT_PROFILE.getConcreteSettingForNamespace(TransportSettings.DEFAULT_PROFILE).getKey(), "9300-9302")
                 .put(TransportSettings.PORT.getKey(), "9500-9600")
-                .build(), seedAddressMatcher);
+                .build(),
+            seedAddressMatcher
+        );
     }
 
     public void testDefaultSeedAddressesWithNonstandardSinglePort() {
-        testDefaultSeedAddresses(Settings.builder().put(TransportSettings.PORT.getKey(), "9500").build(),
-            NetworkUtils.SUPPORTS_V6 ? containsInAnyOrder("[::1]:9500", "127.0.0.1:9500") : containsInAnyOrder("127.0.0.1:9500"));
+        testDefaultSeedAddresses(
+            Settings.builder().put(TransportSettings.PORT.getKey(), "9500").build(),
+            NetworkUtils.SUPPORTS_V6 ? containsInAnyOrder("[::1]:9500", "127.0.0.1:9500") : containsInAnyOrder("127.0.0.1:9500")
+        );
     }
 
     private void testDefaultSeedAddresses(final Settings settings, Matcher<Iterable<? extends String>> seedAddressesMatcher) {
         final TestThreadPool testThreadPool = new TestThreadPool("test");
         try {
-            final TcpTransport tcpTransport = new TcpTransport(settings, Version.CURRENT, testThreadPool,
+            final TcpTransport tcpTransport = new TcpTransport(
+                settings,
+                Version.CURRENT,
+                testThreadPool,
                 new MockPageCacheRecycler(settings),
-                new NoneCircuitBreakerService(), writableRegistry(), new NetworkService(Collections.emptyList())) {
+                new NoneCircuitBreakerService(),
+                writableRegistry(),
+                new NetworkService(Collections.emptyList())
+            ) {
 
                 @Override
                 protected TcpServerChannel bind(String name, InetSocketAddress address) {
@@ -282,14 +349,16 @@ public class TcpTransportTests extends ESTestCase {
         } catch (Exception ex) {
             assertThat(ex, instanceOf(StreamCorruptedException.class));
             String expected = "invalid internal transport message format, got (45,43,"
-                + Integer.toHexString(byte1 & 0xFF) + ","
-                + Integer.toHexString(byte2 & 0xFF) + ")";
+                + Integer.toHexString(byte1 & 0xFF)
+                + ","
+                + Integer.toHexString(byte2 & 0xFF)
+                + ")";
             assertEquals(expected, ex.getMessage());
         }
     }
 
     public void testHTTPRequest() throws IOException {
-        String[] httpHeaders = {"GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE"};
+        String[] httpHeaders = { "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE" };
 
         for (String httpHeader : httpHeaders) {
             BytesStreamOutput streamOutput = new BytesStreamOutput(1 << 14);
@@ -330,8 +399,10 @@ public class TcpTransportTests extends ESTestCase {
         } catch (Exception ex) {
             assertThat(ex, instanceOf(StreamCorruptedException.class));
             String expected = "SSL/TLS request received but SSL/TLS is not enabled on this node, got (16,3,"
-                    + Integer.toHexString(byte1 & 0xFF) + ","
-                    + Integer.toHexString(byte2 & 0xFF) + ")";
+                + Integer.toHexString(byte1 & 0xFF)
+                + ","
+                + Integer.toHexString(byte2 & 0xFF)
+                + ")";
             assertEquals(expected, ex.getMessage());
         }
     }
@@ -350,8 +421,11 @@ public class TcpTransportTests extends ESTestCase {
             fail("Expected exception");
         } catch (Exception ex) {
             assertThat(ex, instanceOf(StreamCorruptedException.class));
-            assertEquals("received HTTP response on transport port, ensure that transport port " +
-                    "(not HTTP port) of a remote node is specified in the configuration", ex.getMessage());
+            assertEquals(
+                "received HTTP response on transport port, ensure that transport port "
+                    + "(not HTTP port) of a remote node is specified in the configuration",
+                ex.getMessage()
+            );
         }
     }
 }

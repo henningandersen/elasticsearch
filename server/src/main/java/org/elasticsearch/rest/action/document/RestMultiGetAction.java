@@ -61,8 +61,10 @@ public class RestMultiGetAction extends BaseRestHandler {
         multiGetRequest.preference(request.param("preference"));
         multiGetRequest.realtime(request.paramAsBoolean("realtime", multiGetRequest.realtime()));
         if (request.param("fields") != null) {
-            throw new IllegalArgumentException("The parameter [fields] is no longer supported, " +
-                "please use [stored_fields] to retrieve stored fields or _source filtering if the field is not stored");
+            throw new IllegalArgumentException(
+                "The parameter [fields] is no longer supported, "
+                    + "please use [stored_fields] to retrieve stored fields or _source filtering if the field is not stored"
+            );
         }
         String[] sFields = null;
         String sField = request.param("stored_fields");
@@ -72,8 +74,7 @@ public class RestMultiGetAction extends BaseRestHandler {
 
         FetchSourceContext defaultFetchSource = FetchSourceContext.parseFromRestRequest(request);
         try (XContentParser parser = request.contentOrSourceParamParser()) {
-            multiGetRequest.add(request.param("index"), sFields, defaultFetchSource,
-                request.param("routing"), parser, allowExplicitIndex);
+            multiGetRequest.add(request.param("index"), sFields, defaultFetchSource, request.param("routing"), parser, allowExplicitIndex);
         }
 
         return channel -> client.multiGet(multiGetRequest, new RestToXContentListener<>(channel));

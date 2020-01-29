@@ -72,13 +72,12 @@ public class GetFieldMappingsResponseTests extends AbstractWireSerializingTestCa
         Map<String, Map<String, FieldMappingMetaData>> mappings = new HashMap<>();
 
         int indices = randomInt(10);
-        for(int i = 0; i < indices; i++) {
+        for (int i = 0; i < indices; i++) {
             Map<String, FieldMappingMetaData> fieldMappings = new HashMap<>();
             int fields = randomInt(10);
             for (int k = 0; k < fields; k++) {
                 final String mapping = randomBoolean() ? "{\"type\":\"string\"}" : "{\"type\":\"keyword\"}";
-                FieldMappingMetaData metaData =
-                    new FieldMappingMetaData("my field", new BytesArray(mapping));
+                FieldMappingMetaData metaData = new FieldMappingMetaData("my field", new BytesArray(mapping));
                 fieldMappings.put("field" + k, metaData);
             }
             mappings.put("index" + i, fieldMappings);

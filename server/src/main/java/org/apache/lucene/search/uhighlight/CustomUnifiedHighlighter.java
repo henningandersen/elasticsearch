@@ -77,14 +77,16 @@ public class CustomUnifiedHighlighter extends UnifiedHighlighter {
      * @param fieldValue the original field values delimited by MULTIVAL_SEP_CHAR.
      * @param noMatchSize The size of the text that should be returned when no highlighting can be performed.
      */
-    public CustomUnifiedHighlighter(IndexSearcher searcher,
-                                    Analyzer analyzer,
-                                    OffsetSource offsetSource,
-                                    PassageFormatter passageFormatter,
-                                    @Nullable Locale breakIteratorLocale,
-                                    @Nullable BreakIterator breakIterator,
-                                    String fieldValue,
-                                    int noMatchSize) {
+    public CustomUnifiedHighlighter(
+        IndexSearcher searcher,
+        Analyzer analyzer,
+        OffsetSource offsetSource,
+        PassageFormatter passageFormatter,
+        @Nullable Locale breakIteratorLocale,
+        @Nullable BreakIterator breakIterator,
+        String fieldValue,
+        int noMatchSize
+    ) {
         super(searcher, analyzer);
         this.offsetSource = offsetSource;
         this.breakIterator = breakIterator;
@@ -98,11 +100,15 @@ public class CustomUnifiedHighlighter extends UnifiedHighlighter {
      * Highlights terms extracted from the provided query within the content of the provided field name
      */
     public Snippet[] highlightField(String field, Query query, int docId, int maxPassages) throws IOException {
-        Map<String, Object[]> fieldsAsObjects = super.highlightFieldsAsObjects(new String[]{field}, query,
-            new int[]{docId}, new int[]{maxPassages});
+        Map<String, Object[]> fieldsAsObjects = super.highlightFieldsAsObjects(
+            new String[] { field },
+            query,
+            new int[] { docId },
+            new int[] { maxPassages }
+        );
         Object[] snippetObjects = fieldsAsObjects.get(field);
         if (snippetObjects != null) {
-            //one single document at a time
+            // one single document at a time
             assert snippetObjects.length == 1;
             Object snippetObject = snippetObjects[0];
             if (snippetObject != null && snippetObject instanceof Snippet[]) {
@@ -113,10 +119,9 @@ public class CustomUnifiedHighlighter extends UnifiedHighlighter {
     }
 
     @Override
-    protected List<CharSequence[]> loadFieldValues(String[] fields, DocIdSetIterator docIter,
-                                                   int cacheCharsThreshold) throws IOException {
+    protected List<CharSequence[]> loadFieldValues(String[] fields, DocIdSetIterator docIter, int cacheCharsThreshold) throws IOException {
         // we only highlight one field, one document at a time
-        return Collections.singletonList(new String[]{fieldValue});
+        return Collections.singletonList(new String[] { fieldValue });
     }
 
     @Override
@@ -136,13 +141,22 @@ public class CustomUnifiedHighlighter extends UnifiedHighlighter {
         Set<HighlightFlag> highlightFlags = getFlags(field);
         PhraseHelper phraseHelper = getPhraseHelper(field, query, highlightFlags);
         LabelledCharArrayMatcher[] automata = getAutomata(field, query, highlightFlags);
-        UHComponents components = new UHComponents(field, fieldMatcher, query, terms, phraseHelper, automata, false , highlightFlags);
+        UHComponents components = new UHComponents(field, fieldMatcher, query, terms, phraseHelper, automata, false, highlightFlags);
         OffsetSource offsetSource = getOptimizedOffsetSource(components);
-        BreakIterator breakIterator = new SplittingBreakIterator(getBreakIterator(field),
-            UnifiedHighlighter.MULTIVAL_SEP_CHAR);
+        BreakIterator breakIterator = new SplittingBreakIterator(getBreakIterator(field), UnifiedHighlighter.MULTIVAL_SEP_CHAR);
         FieldOffsetStrategy strategy = getOffsetStrategy(offsetSource, components);
-        return new CustomFieldHighlighter(field, strategy, breakIteratorLocale, breakIterator,
-            getScorer(field), maxPassages, (noMatchSize > 0 ? 1 : 0), getFormatter(field), noMatchSize, fieldValue);
+        return new CustomFieldHighlighter(
+            field,
+            strategy,
+            breakIteratorLocale,
+            breakIterator,
+            getScorer(field),
+            maxPassages,
+            (noMatchSize > 0 ? 1 : 0),
+            getFormatter(field),
+            noMatchSize,
+            fieldValue
+        );
     }
 
     @Override
@@ -182,13 +196,12 @@ public class CustomUnifiedHighlighter extends UnifiedHighlighter {
             // sum position increments beyond 1
             int positionGaps = 0;
             if (positions.length >= 2) {
-                // positions are in increasing order.   max(0,...) is just a safeguard.
+                // positions are in increasing order. max(0,...) is just a safeguard.
                 positionGaps = Math.max(0, positions[positions.length - 1] - positions[0] - positions.length + 1);
             }
-            //if original slop is 0 then require inOrder
+            // if original slop is 0 then require inOrder
             boolean inorder = (mpq.getSlop() == 0);
-            return Collections.singletonList(new SpanNearQuery(positionSpanQueries,
-                mpq.getSlop() + positionGaps, inorder));
+            return Collections.singletonList(new SpanNearQuery(positionSpanQueries, mpq.getSlop() + positionGaps, inorder));
         } else {
             return null;
         }

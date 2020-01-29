@@ -63,21 +63,39 @@ public class SnapshotsInProgressSerializationTests extends AbstractDiffableWireS
         long startTime = randomLong();
         long repositoryStateId = randomLong();
         ImmutableOpenMap.Builder<ShardId, SnapshotsInProgress.ShardSnapshotStatus> builder = ImmutableOpenMap.builder();
-        final List<Index> esIndices =
-            indices.stream().map(i -> new Index(i.getName(), randomAlphaOfLength(10))).collect(Collectors.toList());
+        final List<Index> esIndices = indices.stream()
+            .map(i -> new Index(i.getName(), randomAlphaOfLength(10)))
+            .collect(Collectors.toList());
         for (Index idx : esIndices) {
             int shardsCount = randomIntBetween(1, 10);
             for (int j = 0; j < shardsCount; j++) {
                 ShardId shardId = new ShardId(idx, j);
                 String nodeId = randomAlphaOfLength(10);
                 ShardState shardState = randomFrom(ShardState.values());
-                builder.put(shardId, new SnapshotsInProgress.ShardSnapshotStatus(nodeId, shardState,
-                    shardState.failed() ? randomAlphaOfLength(10) : null, "1"));
+                builder.put(
+                    shardId,
+                    new SnapshotsInProgress.ShardSnapshotStatus(
+                        nodeId,
+                        shardState,
+                        shardState.failed() ? randomAlphaOfLength(10) : null,
+                        "1"
+                    )
+                );
             }
         }
         ImmutableOpenMap<ShardId, SnapshotsInProgress.ShardSnapshotStatus> shards = builder.build();
-        return new Entry(snapshot, includeGlobalState, partial, state, indices, startTime, repositoryStateId, shards,
-            SnapshotInfoTests.randomUserMetadata(), randomBoolean());
+        return new Entry(
+            snapshot,
+            includeGlobalState,
+            partial,
+            state,
+            indices,
+            startTime,
+            repositoryStateId,
+            shards,
+            SnapshotInfoTests.randomUserMetadata(),
+            randomBoolean()
+        );
     }
 
     @Override

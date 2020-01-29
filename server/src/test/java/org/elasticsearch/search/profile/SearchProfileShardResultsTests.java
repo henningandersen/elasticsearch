@@ -42,7 +42,7 @@ import static org.elasticsearch.common.xcontent.XContentParserUtils.ensureFieldN
 import static org.elasticsearch.test.XContentTestUtils.insertRandomFields;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertToXContentEquivalent;
 
-public class SearchProfileShardResultsTests  extends ESTestCase {
+public class SearchProfileShardResultsTests extends ESTestCase {
 
     public static SearchProfileShardResults createTestItem() {
         int size = rarely() ? 0 : randomIntBetween(1, 2);

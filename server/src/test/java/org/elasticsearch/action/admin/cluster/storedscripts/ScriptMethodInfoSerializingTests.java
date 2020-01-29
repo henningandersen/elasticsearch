@@ -61,7 +61,9 @@ public class ScriptMethodInfoSerializingTests extends AbstractSerializingTestCas
     }
 
     @Override
-    protected Writeable.Reader<ScriptMethodInfo> instanceReader() { return ScriptMethodInfo::new; }
+    protected Writeable.Reader<ScriptMethodInfo> instanceReader() {
+        return ScriptMethodInfo::new;
+    }
 
     @Override
     protected ScriptMethodInfo mutateInstance(ScriptMethodInfo instance) throws IOException {
@@ -153,11 +155,13 @@ public class ScriptMethodInfoSerializingTests extends AbstractSerializingTestCas
         for (int i = 0; i < numGetters; i++) {
             String suffix = randomValueOtherThanMany(suffixes::contains, () -> randomAlphaOfLengthBetween(MIN_LENGTH, MAX_LENGTH));
             suffixes.add(suffix);
-            getters.add(new ScriptMethodInfo(
-                GET_PREFIX + suffix,
-                randomAlphaOfLengthBetween(MIN_LENGTH, MAX_LENGTH),
-                Collections.unmodifiableList(new ArrayList<>())
-            ));
+            getters.add(
+                new ScriptMethodInfo(
+                    GET_PREFIX + suffix,
+                    randomAlphaOfLengthBetween(MIN_LENGTH, MAX_LENGTH),
+                    Collections.unmodifiableList(new ArrayList<>())
+                )
+            );
         }
         return Collections.unmodifiableSet(getters);
     }

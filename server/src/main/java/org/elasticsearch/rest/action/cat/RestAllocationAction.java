@@ -40,7 +40,6 @@ import org.elasticsearch.rest.action.RestResponseListener;
 
 import static org.elasticsearch.rest.RestRequest.Method.GET;
 
-
 public class RestAllocationAction extends AbstractCatAction {
 
     public RestAllocationAction(RestController controller) {
@@ -123,7 +122,7 @@ public class RestAllocationAction extends AbstractCatAction {
 
             ByteSizeValue total = nodeStats.getFs().getTotal().getTotal();
             ByteSizeValue avail = nodeStats.getFs().getTotal().getAvailable();
-            //if we don't know how much we use (non data nodes), it means 0
+            // if we don't know how much we use (non data nodes), it means 0
             long used = 0;
             short diskPercent = -1;
             if (total.getBytes() > 0) {

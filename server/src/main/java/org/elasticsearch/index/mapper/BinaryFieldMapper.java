@@ -72,15 +72,21 @@ public class BinaryFieldMapper extends FieldMapper {
         @Override
         public BinaryFieldMapper build(BuilderContext context) {
             setupFieldType(context);
-            return new BinaryFieldMapper(name, fieldType, defaultFieldType,
-                    context.indexSettings(), multiFieldsBuilder.build(this, context), copyTo);
+            return new BinaryFieldMapper(
+                name,
+                fieldType,
+                defaultFieldType,
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                copyTo
+            );
         }
     }
 
     public static class TypeParser implements Mapper.TypeParser {
         @Override
         public BinaryFieldMapper.Builder parse(String name, Map<String, Object> node, ParserContext parserContext)
-                throws MapperParsingException {
+            throws MapperParsingException {
             BinaryFieldMapper.Builder builder = new BinaryFieldMapper.Builder(name);
             parseField(builder, name, node, parserContext);
             return builder;
@@ -99,7 +105,6 @@ public class BinaryFieldMapper extends FieldMapper {
         public MappedFieldType clone() {
             return new BinaryFieldType(this);
         }
-
 
         @Override
         public String typeName() {
@@ -151,8 +156,14 @@ public class BinaryFieldMapper extends FieldMapper {
         }
     }
 
-    protected BinaryFieldMapper(String simpleName, MappedFieldType fieldType, MappedFieldType defaultFieldType,
-                                Settings indexSettings, MultiFields multiFields, CopyTo copyTo) {
+    protected BinaryFieldMapper(
+        String simpleName,
+        MappedFieldType fieldType,
+        MappedFieldType defaultFieldType,
+        Settings indexSettings,
+        MultiFields multiFields,
+        CopyTo copyTo
+    ) {
         super(simpleName, fieldType, defaultFieldType, indexSettings, multiFields, copyTo);
     }
 
@@ -223,7 +234,7 @@ public class BinaryFieldMapper extends FieldMapper {
                 final byte[] bytes = new byte[totalSize + (size + 1) * 5];
                 ByteArrayDataOutput out = new ByteArrayDataOutput(bytes);
                 out.writeVInt(size);  // write total number of values
-                for (int i = 0; i < size; i ++) {
+                for (int i = 0; i < size; i++) {
                     final byte[] value = bytesList.get(i);
                     int valueLength = value.length;
                     out.writeVInt(valueLength);

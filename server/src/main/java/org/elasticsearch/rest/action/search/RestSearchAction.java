@@ -96,8 +96,7 @@ public class RestSearchAction extends BaseRestHandler {
          * company.
          */
         IntConsumer setSize = size -> searchRequest.source().size(size);
-        request.withContentOrSourceParamParserOrNull(parser ->
-            parseSearchRequest(searchRequest, request, parser, setSize));
+        request.withContentOrSourceParamParserOrNull(parser -> parseSearchRequest(searchRequest, request, parser, setSize));
 
         return channel -> {
             RestCancellableNodeClient cancelClient = new RestCancellableNodeClient(client, request.getHttpChannel());
@@ -112,9 +111,12 @@ public class RestSearchAction extends BaseRestHandler {
      *        parameter
      * @param setSize how the size url parameter is handled. {@code udpate_by_query} and regular search differ here.
      */
-    public static void parseSearchRequest(SearchRequest searchRequest, RestRequest request,
-                                          XContentParser requestContentParser,
-                                          IntConsumer setSize) throws IOException {
+    public static void parseSearchRequest(
+        SearchRequest searchRequest,
+        RestRequest request,
+        XContentParser requestContentParser,
+        IntConsumer setSize
+    ) throws IOException {
 
         if (searchRequest.source() == null) {
             searchRequest.source(new SearchSourceBuilder());
@@ -131,8 +133,10 @@ public class RestSearchAction extends BaseRestHandler {
         if (request.hasParam("max_concurrent_shard_requests")) {
             // only set if we have the parameter since we auto adjust the max concurrency on the coordinator
             // based on the number of nodes in the cluster
-            final int maxConcurrentShardRequests = request.paramAsInt("max_concurrent_shard_requests",
-                searchRequest.getMaxConcurrentShardRequests());
+            final int maxConcurrentShardRequests = request.paramAsInt(
+                "max_concurrent_shard_requests",
+                searchRequest.getMaxConcurrentShardRequests()
+            );
             searchRequest.setMaxConcurrentShardRequests(maxConcurrentShardRequests);
         }
 
@@ -145,8 +149,7 @@ public class RestSearchAction extends BaseRestHandler {
         // from the REST layer. these modes are an internal optimization and should
         // not be specified explicitly by the user.
         String searchType = request.param("search_type");
-        if ("query_and_fetch".equals(searchType) ||
-                "dfs_query_and_fetch".equals(searchType)) {
+        if ("query_and_fetch".equals(searchType) || "dfs_query_and_fetch".equals(searchType)) {
             throw new IllegalArgumentException("Unsupported search type [" + searchType + "]");
         } else {
             searchRequest.searchType(searchType);
@@ -199,8 +202,7 @@ public class RestSearchAction extends BaseRestHandler {
             searchSourceBuilder.timeout(request.paramAsTime("timeout", null));
         }
         if (request.hasParam("terminate_after")) {
-            int terminateAfter = request.paramAsInt("terminate_after",
-                    SearchContext.DEFAULT_TERMINATE_AFTER);
+            int terminateAfter = request.paramAsInt("terminate_after", SearchContext.DEFAULT_TERMINATE_AFTER);
             if (terminateAfter < 0) {
                 throw new IllegalArgumentException("terminateAfter must be > 0");
             } else if (terminateAfter > 0) {
@@ -208,8 +210,10 @@ public class RestSearchAction extends BaseRestHandler {
             }
         }
 
-        StoredFieldsContext storedFieldsContext =
-            StoredFieldsContext.fromRestRequest(SearchSourceBuilder.STORED_FIELDS_FIELD.getPreferredName(), request);
+        StoredFieldsContext storedFieldsContext = StoredFieldsContext.fromRestRequest(
+            SearchSourceBuilder.STORED_FIELDS_FIELD.getPreferredName(),
+            request
+        );
         if (storedFieldsContext != null) {
             searchSourceBuilder.storedFields(storedFieldsContext);
         }
@@ -231,12 +235,9 @@ public class RestSearchAction extends BaseRestHandler {
             searchSourceBuilder.trackScores(request.paramAsBoolean("track_scores", false));
         }
 
-
         if (request.hasParam("track_total_hits")) {
             if (Booleans.isBoolean(request.param("track_total_hits"))) {
-                searchSourceBuilder.trackTotalHits(
-                    request.paramAsBoolean("track_total_hits", true)
-                );
+                searchSourceBuilder.trackTotalHits(request.paramAsBoolean("track_total_hits", true));
             } else {
                 searchSourceBuilder.trackTotalHitsUpTo(
                     request.paramAsInt("track_total_hits", SearchContext.DEFAULT_TRACK_TOTAL_HITS_UP_TO)
@@ -273,10 +274,12 @@ public class RestSearchAction extends BaseRestHandler {
             String suggestText = request.param("suggest_text", request.param("q"));
             int suggestSize = request.paramAsInt("suggest_size", 5);
             String suggestMode = request.param("suggest_mode");
-            searchSourceBuilder.suggest(new SuggestBuilder().addSuggestion(suggestField,
-                    termSuggestion(suggestField)
-                        .text(suggestText).size(suggestSize)
-                        .suggestMode(SuggestMode.resolve(suggestMode))));
+            searchSourceBuilder.suggest(
+                new SuggestBuilder().addSuggestion(
+                    suggestField,
+                    termSuggestion(suggestField).text(suggestText).size(suggestSize).suggestMode(SuggestMode.resolve(suggestMode))
+                )
+            );
         }
     }
 
@@ -300,10 +303,15 @@ public class RestSearchAction extends BaseRestHandler {
         if (trackTotalHitsUpTo == null) {
             searchRequest.source().trackTotalHits(true);
         } else if (trackTotalHitsUpTo != SearchContext.TRACK_TOTAL_HITS_ACCURATE
-                && trackTotalHitsUpTo != SearchContext.TRACK_TOTAL_HITS_DISABLED) {
-            throw new IllegalArgumentException("[" + TOTAL_HITS_AS_INT_PARAM + "] cannot be used " +
-                "if the tracking of total hits is not accurate, got " + trackTotalHitsUpTo);
-        }
+            && trackTotalHitsUpTo != SearchContext.TRACK_TOTAL_HITS_DISABLED) {
+                throw new IllegalArgumentException(
+                    "["
+                        + TOTAL_HITS_AS_INT_PARAM
+                        + "] cannot be used "
+                        + "if the tracking of total hits is not accurate, got "
+                        + trackTotalHitsUpTo
+                );
+            }
     }
 
     @Override

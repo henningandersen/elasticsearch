@@ -38,13 +38,12 @@ import static org.elasticsearch.rest.action.admin.indices.RestUpgradeActionDepre
 public class RestUpgradeStatusActionDeprecated extends BaseRestHandler {
 
     private static final DeprecationLogger deprecationLogger = new DeprecationLogger(
-        LogManager.getLogger(RestUpgradeStatusActionDeprecated.class));
+        LogManager.getLogger(RestUpgradeStatusActionDeprecated.class)
+    );
 
     public RestUpgradeStatusActionDeprecated(RestController controller) {
-        controller.registerAsDeprecatedHandler(GET, "/_upgrade", this,
-            UPGRADE_API_DEPRECATION_MESSAGE, deprecationLogger);
-        controller.registerAsDeprecatedHandler(GET, "/{index}/_upgrade", this,
-            UPGRADE_API_DEPRECATION_MESSAGE, deprecationLogger);
+        controller.registerAsDeprecatedHandler(GET, "/_upgrade", this, UPGRADE_API_DEPRECATION_MESSAGE, deprecationLogger);
+        controller.registerAsDeprecatedHandler(GET, "/{index}/_upgrade", this, UPGRADE_API_DEPRECATION_MESSAGE, deprecationLogger);
     }
 
     @Override

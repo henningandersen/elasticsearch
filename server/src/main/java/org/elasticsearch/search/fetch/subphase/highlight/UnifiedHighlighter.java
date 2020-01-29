@@ -71,8 +71,13 @@ public class UnifiedHighlighter implements Highlighter {
         try {
 
             final Analyzer analyzer = getAnalyzer(context.getMapperService().documentMapper(), hitContext);
-            List<Object> fieldValues = loadFieldValues(fieldType, field, context, hitContext,
-                highlighterContext.highlight.forceSource(field));
+            List<Object> fieldValues = loadFieldValues(
+                fieldType,
+                field,
+                context,
+                hitContext,
+                highlighterContext.highlight.forceSource(field)
+            );
             if (fieldValues.size() == 0) {
                 return null;
             }
@@ -83,28 +88,53 @@ public class UnifiedHighlighter implements Highlighter {
             final OffsetSource offsetSource = getOffsetSource(fieldType);
             if ((offsetSource == OffsetSource.ANALYSIS) && (fieldValue.length() > maxAnalyzedOffset)) {
                 throw new IllegalArgumentException(
-                    "The length of [" + highlighterContext.fieldName + "] field of [" + hitContext.hit().getId() +
-                        "] doc of [" + context.index().getName() + "] index " + "has exceeded [" +
-                        maxAnalyzedOffset + "] - maximum allowed to be analyzed for highlighting. " +
-                        "This maximum can be set by changing the [" + IndexSettings.MAX_ANALYZED_OFFSET_SETTING.getKey() +
-                        "] index level setting. " + "For large texts, indexing with offsets or term vectors is recommended!");
+                    "The length of ["
+                        + highlighterContext.fieldName
+                        + "] field of ["
+                        + hitContext.hit().getId()
+                        + "] doc of ["
+                        + context.index().getName()
+                        + "] index "
+                        + "has exceeded ["
+                        + maxAnalyzedOffset
+                        + "] - maximum allowed to be analyzed for highlighting. "
+                        + "This maximum can be set by changing the ["
+                        + IndexSettings.MAX_ANALYZED_OFFSET_SETTING.getKey()
+                        + "] index level setting. "
+                        + "For large texts, indexing with offsets or term vectors is recommended!"
+                );
             }
             if (numberOfFragments == 0
-                    // non-tokenized fields should not use any break iterator (ignore boundaryScannerType)
-                    || fieldType.tokenized() == false) {
+                // non-tokenized fields should not use any break iterator (ignore boundaryScannerType)
+                || fieldType.tokenized() == false) {
                 // we use a control char to separate values, which is the only char that the custom break iterator
                 // breaks the text on, so we don't lose the distinction between the different values of a field and we
                 // get back a snippet per value
                 CustomSeparatorBreakIterator breakIterator = new CustomSeparatorBreakIterator(MULTIVAL_SEP_CHAR);
-                highlighter = new CustomUnifiedHighlighter(searcher, analyzer, offsetSource, passageFormatter,
-                    field.fieldOptions().boundaryScannerLocale(), breakIterator, fieldValue, field.fieldOptions().noMatchSize());
+                highlighter = new CustomUnifiedHighlighter(
+                    searcher,
+                    analyzer,
+                    offsetSource,
+                    passageFormatter,
+                    field.fieldOptions().boundaryScannerLocale(),
+                    breakIterator,
+                    fieldValue,
+                    field.fieldOptions().noMatchSize()
+                );
                 numberOfFragments = numberOfFragments == 0 ? fieldValues.size() : numberOfFragments;
             } else {
-                //using paragraph separator we make sure that each field value holds a discrete passage for highlighting
+                // using paragraph separator we make sure that each field value holds a discrete passage for highlighting
                 BreakIterator bi = getBreakIterator(field);
-                highlighter = new CustomUnifiedHighlighter(searcher, analyzer, offsetSource, passageFormatter,
-                    field.fieldOptions().boundaryScannerLocale(), bi,
-                    fieldValue, field.fieldOptions().noMatchSize());
+                highlighter = new CustomUnifiedHighlighter(
+                    searcher,
+                    analyzer,
+                    offsetSource,
+                    passageFormatter,
+                    field.fieldOptions().boundaryScannerLocale(),
+                    bi,
+                    fieldValue,
+                    field.fieldOptions().noMatchSize()
+                );
                 numberOfFragments = field.fieldOptions().numberOfFragments();
             }
 
@@ -117,20 +147,27 @@ public class UnifiedHighlighter implements Highlighter {
                 highlighter.setFieldMatcher(name -> IdFieldMapper.NAME.equals(name) == false);
             }
 
-            Snippet[] fieldSnippets = highlighter.highlightField(highlighterContext.fieldName,
-                highlighterContext.query, hitContext.docId(), numberOfFragments);
+            Snippet[] fieldSnippets = highlighter.highlightField(
+                highlighterContext.fieldName,
+                highlighterContext.query,
+                hitContext.docId(),
+                numberOfFragments
+            );
             for (Snippet fieldSnippet : fieldSnippets) {
                 if (Strings.hasText(fieldSnippet.getText())) {
                     snippets.add(fieldSnippet);
                 }
             }
         } catch (IOException e) {
-            throw new FetchPhaseExecutionException(highlighterContext.shardTarget,
-                "Failed to highlight field [" + highlighterContext.fieldName + "]", e);
+            throw new FetchPhaseExecutionException(
+                highlighterContext.shardTarget,
+                "Failed to highlight field [" + highlighterContext.fieldName + "]",
+                e
+            );
         }
 
         if (field.fieldOptions().scoreOrdered()) {
-            //let's sort the snippets by score if needed
+            // let's sort the snippets by score if needed
             CollectionUtil.introSort(snippets, (o1, o2) -> Double.compare(o2.getScore(), o1.getScore()));
         }
 
@@ -146,36 +183,36 @@ public class UnifiedHighlighter implements Highlighter {
     }
 
     protected PassageFormatter getPassageFormatter(HitContext hitContext, SearchContextHighlight.Field field, Encoder encoder) {
-        CustomPassageFormatter passageFormatter = new CustomPassageFormatter(field.fieldOptions().preTags()[0],
-            field.fieldOptions().postTags()[0], encoder);
+        CustomPassageFormatter passageFormatter = new CustomPassageFormatter(
+            field.fieldOptions().preTags()[0],
+            field.fieldOptions().postTags()[0],
+            encoder
+        );
         return passageFormatter;
     }
-
 
     protected Analyzer getAnalyzer(DocumentMapper docMapper, HitContext hitContext) {
         return docMapper.mappers().indexAnalyzer();
     }
 
-    protected List<Object> loadFieldValues(MappedFieldType fieldType,
-                                           SearchContextHighlight.Field field,
-                                           QueryShardContext context,
-                                           FetchSubPhase.HitContext hitContext,
-                                           boolean forceSource) throws IOException {
+    protected List<Object> loadFieldValues(
+        MappedFieldType fieldType,
+        SearchContextHighlight.Field field,
+        QueryShardContext context,
+        FetchSubPhase.HitContext hitContext,
+        boolean forceSource
+    ) throws IOException {
         List<Object> fieldValues = HighlightUtils.loadFieldValues(fieldType, context, hitContext, forceSource);
-        fieldValues = fieldValues.stream()
-            .map((s) -> convertFieldValue(fieldType, s))
-            .collect(Collectors.toList());
+        fieldValues = fieldValues.stream().map((s) -> convertFieldValue(fieldType, s)).collect(Collectors.toList());
         return fieldValues;
     }
 
     protected BreakIterator getBreakIterator(SearchContextHighlight.Field field) {
         final SearchContextHighlight.FieldOptions fieldOptions = field.fieldOptions();
-        final Locale locale =
-            fieldOptions.boundaryScannerLocale() != null ? fieldOptions.boundaryScannerLocale() :
-                Locale.ROOT;
-        final HighlightBuilder.BoundaryScannerType type =
-            fieldOptions.boundaryScannerType()  != null ? fieldOptions.boundaryScannerType() :
-                HighlightBuilder.BoundaryScannerType.SENTENCE;
+        final Locale locale = fieldOptions.boundaryScannerLocale() != null ? fieldOptions.boundaryScannerLocale() : Locale.ROOT;
+        final HighlightBuilder.BoundaryScannerType type = fieldOptions.boundaryScannerType() != null
+            ? fieldOptions.boundaryScannerType()
+            : HighlightBuilder.BoundaryScannerType.SENTENCE;
         int maxLen = fieldOptions.fragmentCharSize();
         switch (type) {
             case SENTENCE:
@@ -200,8 +237,8 @@ public class UnifiedHighlighter implements Highlighter {
     }
 
     protected static String mergeFieldValues(List<Object> fieldValues, char valuesSeparator) {
-        //postings highlighter accepts all values in a single string, as offsets etc. need to match with content
-        //loaded from stored fields, we merge all values using a proper separator
+        // postings highlighter accepts all values in a single string, as offsets etc. need to match with content
+        // loaded from stored fields, we merge all values using a proper separator
         String rawValue = Strings.collectionToDelimitedString(fieldValues, String.valueOf(valuesSeparator));
         return rawValue.substring(0, Math.min(rawValue.length(), Integer.MAX_VALUE - 1));
     }

@@ -99,7 +99,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 public class TransportRolloverActionTests extends ESTestCase {
 
     public void testDocStatsSelectionFromPrimariesOnly() {
@@ -108,8 +107,11 @@ public class TransportRolloverActionTests extends ESTestCase {
 
         final Condition<?> condition = createTestCondition();
         String indexName = randomAlphaOfLengthBetween(5, 7);
-        evaluateConditions(Sets.newHashSet(condition), createMetaData(indexName),
-                createIndicesStatResponse(indexName, docsInShards, docsInPrimaryShards));
+        evaluateConditions(
+            Sets.newHashSet(condition),
+            createMetaData(indexName),
+            createIndicesStatResponse(indexName, docsInShards, docsInPrimaryShards)
+        );
         final ArgumentCaptor<Condition.Stats> argument = ArgumentCaptor.forClass(Condition.Stats.class);
         verify(condition).evaluate(argument.capture());
 
@@ -135,8 +137,11 @@ public class TransportRolloverActionTests extends ESTestCase {
             .settings(settings)
             .build();
         final Set<Condition<?>> conditions = Sets.newHashSet(maxDocsCondition, maxAgeCondition, maxSizeCondition);
-        Map<String, Boolean> results = evaluateConditions(conditions,
-            new DocsStats(matchMaxDocs, 0L, ByteSizeUnit.MB.toBytes(120)), metaData);
+        Map<String, Boolean> results = evaluateConditions(
+            conditions,
+            new DocsStats(matchMaxDocs, 0L, ByteSizeUnit.MB.toBytes(120)),
+            metaData
+        );
         assertThat(results.size(), equalTo(3));
         for (Boolean matched : results.values()) {
             assertThat(matched, equalTo(true));
@@ -197,8 +202,7 @@ public class TransportRolloverActionTests extends ESTestCase {
 
         long matchMaxDocs = randomIntBetween(100, 1000);
         final Set<Condition<?>> conditions = Sets.newHashSet(maxDocsCondition, maxAgeCondition, maxSizeCondition);
-        Map<String, Boolean> results = evaluateConditions(conditions,
-            new DocsStats(matchMaxDocs, 0L, ByteSizeUnit.MB.toBytes(120)), null);
+        Map<String, Boolean> results = evaluateConditions(conditions, new DocsStats(matchMaxDocs, 0L, ByteSizeUnit.MB.toBytes(120)), null);
         assertThat(results.size(), equalTo(3));
         results.forEach((k, v) -> assertFalse(v));
 
@@ -213,7 +217,7 @@ public class TransportRolloverActionTests extends ESTestCase {
             .creationDate(System.currentTimeMillis() - TimeValue.timeValueHours(randomIntBetween(5, 10)).getMillis())
             .settings(settings)
             .build();
-        IndicesStatsResponse indicesStats = randomIndicesStatsResponse(new IndexMetaData[]{metaData});
+        IndicesStatsResponse indicesStats = randomIndicesStatsResponse(new IndexMetaData[] { metaData });
         Map<String, Boolean> results2 = evaluateConditions(conditions, null, indicesStats);
         assertThat(results2.size(), equalTo(3));
         results2.forEach((k, v) -> assertFalse(v));
@@ -285,10 +289,11 @@ public class TransportRolloverActionTests extends ESTestCase {
             .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
             .build();
         MetaData.Builder metaDataBuilder = MetaData.builder()
-            .put(IndexMetaData.builder(index1)
-                .settings(settings)
-                .putAlias(AliasMetaData.builder(aliasWithWriteIndex))
-                .putAlias(AliasMetaData.builder(aliasWithNoWriteIndex).writeIndex(firstIsWriteIndex))
+            .put(
+                IndexMetaData.builder(index1)
+                    .settings(settings)
+                    .putAlias(AliasMetaData.builder(aliasWithWriteIndex))
+                    .putAlias(AliasMetaData.builder(aliasWithNoWriteIndex).writeIndex(firstIsWriteIndex))
             );
         IndexMetaData.Builder indexTwoBuilder = IndexMetaData.builder(index2).settings(settings);
         if (firstIsWriteIndex == null) {
@@ -297,17 +302,19 @@ public class TransportRolloverActionTests extends ESTestCase {
         metaDataBuilder.put(indexTwoBuilder);
         MetaData metaData = metaDataBuilder.build();
 
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class, () ->
-            TransportRolloverAction.validate(metaData, new RolloverRequest(aliasWithNoWriteIndex,
-                randomAlphaOfLength(10))));
+        IllegalArgumentException exception = expectThrows(
+            IllegalArgumentException.class,
+            () -> TransportRolloverAction.validate(metaData, new RolloverRequest(aliasWithNoWriteIndex, randomAlphaOfLength(10)))
+        );
         assertThat(exception.getMessage(), equalTo("source alias [" + aliasWithNoWriteIndex + "] does not point to a write index"));
-        exception = expectThrows(IllegalArgumentException.class, () ->
-            TransportRolloverAction.validate(metaData, new RolloverRequest(randomFrom(index1, index2),
-                randomAlphaOfLength(10))));
+        exception = expectThrows(
+            IllegalArgumentException.class,
+            () -> TransportRolloverAction.validate(metaData, new RolloverRequest(randomFrom(index1, index2), randomAlphaOfLength(10)))
+        );
         assertThat(exception.getMessage(), equalTo("source alias is a concrete index"));
-        exception = expectThrows(IllegalArgumentException.class, () ->
-            TransportRolloverAction.validate(metaData, new RolloverRequest(randomAlphaOfLength(5),
-                randomAlphaOfLength(10)))
+        exception = expectThrows(
+            IllegalArgumentException.class,
+            () -> TransportRolloverAction.validate(metaData, new RolloverRequest(randomAlphaOfLength(5), randomAlphaOfLength(10)))
         );
         assertThat(exception.getMessage(), equalTo("source alias does not exist"));
         TransportRolloverAction.validate(metaData, new RolloverRequest(aliasWithWriteIndex, randomAlphaOfLength(10)));
@@ -316,19 +323,29 @@ public class TransportRolloverActionTests extends ESTestCase {
     public void testGenerateRolloverIndexName() {
         String invalidIndexName = randomAlphaOfLength(10) + "A";
         IndexNameExpressionResolver indexNameExpressionResolver = new IndexNameExpressionResolver();
-        expectThrows(IllegalArgumentException.class, () ->
-            TransportRolloverAction.generateRolloverIndexName(invalidIndexName, indexNameExpressionResolver));
+        expectThrows(
+            IllegalArgumentException.class,
+            () -> TransportRolloverAction.generateRolloverIndexName(invalidIndexName, indexNameExpressionResolver)
+        );
         int num = randomIntBetween(0, 100);
         final String indexPrefix = randomAlphaOfLength(10);
         String indexEndingInNumbers = indexPrefix + "-" + num;
-        assertThat(TransportRolloverAction.generateRolloverIndexName(indexEndingInNumbers, indexNameExpressionResolver),
-            equalTo(indexPrefix + "-" + String.format(Locale.ROOT, "%06d", num + 1)));
-        assertThat(TransportRolloverAction.generateRolloverIndexName("index-name-1", indexNameExpressionResolver),
-            equalTo("index-name-000002"));
-        assertThat(TransportRolloverAction.generateRolloverIndexName("index-name-2", indexNameExpressionResolver),
-            equalTo("index-name-000003"));
-        assertEquals( "<index-name-{now/d}-000002>", TransportRolloverAction.generateRolloverIndexName("<index-name-{now/d}-1>",
-            indexNameExpressionResolver));
+        assertThat(
+            TransportRolloverAction.generateRolloverIndexName(indexEndingInNumbers, indexNameExpressionResolver),
+            equalTo(indexPrefix + "-" + String.format(Locale.ROOT, "%06d", num + 1))
+        );
+        assertThat(
+            TransportRolloverAction.generateRolloverIndexName("index-name-1", indexNameExpressionResolver),
+            equalTo("index-name-000002")
+        );
+        assertThat(
+            TransportRolloverAction.generateRolloverIndexName("index-name-2", indexNameExpressionResolver),
+            equalTo("index-name-000003")
+        );
+        assertEquals(
+            "<index-name-{now/d}-000002>",
+            TransportRolloverAction.generateRolloverIndexName("<index-name-{now/d}-1>", indexNameExpressionResolver)
+        );
     }
 
     public void testCreateIndexRequest() {
@@ -344,8 +361,11 @@ public class TransportRolloverActionTests extends ESTestCase {
             .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
             .build();
         rolloverRequest.getCreateIndexRequest().settings(settings);
-        final CreateIndexClusterStateUpdateRequest createIndexRequest =
-            TransportRolloverAction.prepareCreateIndexRequest(rolloverIndex, rolloverIndex, rolloverRequest);
+        final CreateIndexClusterStateUpdateRequest createIndexRequest = TransportRolloverAction.prepareCreateIndexRequest(
+            rolloverIndex,
+            rolloverIndex,
+            rolloverRequest
+        );
         assertThat(createIndexRequest.settings(), equalTo(settings));
         assertThat(createIndexRequest.index(), equalTo(rolloverIndex));
         assertThat(createIndexRequest.cause(), equalTo("rollover_index"));
@@ -354,20 +374,24 @@ public class TransportRolloverActionTests extends ESTestCase {
     public void testRejectDuplicateAlias() {
         final IndexTemplateMetaData template = IndexTemplateMetaData.builder("test-template")
             .patterns(Arrays.asList("foo-*", "bar-*"))
-            .putAlias(AliasMetaData.builder("foo-write")).putAlias(AliasMetaData.builder("bar-write").writeIndex(randomBoolean()))
+            .putAlias(AliasMetaData.builder("foo-write"))
+            .putAlias(AliasMetaData.builder("bar-write").writeIndex(randomBoolean()))
             .build();
         final MetaData metaData = MetaData.builder().put(createMetaData(randomAlphaOfLengthBetween(5, 7)), false).put(template).build();
         String indexName = randomFrom("foo-123", "bar-xyz");
         String aliasName = randomFrom("foo-write", "bar-write");
-        final IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-            () -> TransportRolloverAction.checkNoDuplicatedAliasInIndexTemplate(metaData, indexName, aliasName, randomBoolean()));
+        final IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> TransportRolloverAction.checkNoDuplicatedAliasInIndexTemplate(metaData, indexName, aliasName, randomBoolean())
+        );
         assertThat(ex.getMessage(), containsString("index template [test-template]"));
     }
 
     public void testHiddenAffectsResolvedTemplates() {
         final IndexTemplateMetaData template = IndexTemplateMetaData.builder("test-template")
             .patterns(Collections.singletonList("*"))
-            .putAlias(AliasMetaData.builder("foo-write")).putAlias(AliasMetaData.builder("bar-write").writeIndex(randomBoolean()))
+            .putAlias(AliasMetaData.builder("foo-write"))
+            .putAlias(AliasMetaData.builder("bar-write").writeIndex(randomBoolean()))
             .build();
         final MetaData metaData = MetaData.builder().put(createMetaData(randomAlphaOfLengthBetween(5, 7)), false).put(template).build();
         String indexName = randomFrom("foo-123", "bar-xyz");
@@ -376,8 +400,15 @@ public class TransportRolloverActionTests extends ESTestCase {
         // hidden shouldn't throw
         TransportRolloverAction.checkNoDuplicatedAliasInIndexTemplate(metaData, indexName, aliasName, Boolean.TRUE);
         // not hidden will throw
-        final IllegalArgumentException ex = expectThrows(IllegalArgumentException.class, () ->
-            TransportRolloverAction.checkNoDuplicatedAliasInIndexTemplate(metaData, indexName, aliasName, randomFrom(Boolean.FALSE, null)));
+        final IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> TransportRolloverAction.checkNoDuplicatedAliasInIndexTemplate(
+                metaData,
+                indexName,
+                aliasName,
+                randomFrom(Boolean.FALSE, null)
+            )
+        );
         assertThat(ex.getMessage(), containsString("index template [test-template]"));
     }
 
@@ -413,17 +444,29 @@ public class TransportRolloverActionTests extends ESTestCase {
         assert statsResponse.getTotal().getDocs().getCount() == (total + total);
 
         final IndexMetaData.Builder indexMetaData = IndexMetaData.builder("logs-index-000001")
-                .putAlias(AliasMetaData.builder("logs-alias").writeIndex(false).build()).settings(settings(Version.CURRENT))
-                .numberOfShards(1).numberOfReplicas(1);
+            .putAlias(AliasMetaData.builder("logs-alias").writeIndex(false).build())
+            .settings(settings(Version.CURRENT))
+            .numberOfShards(1)
+            .numberOfReplicas(1);
         final IndexMetaData.Builder indexMetaData2 = IndexMetaData.builder("logs-index-000002")
-                .putAlias(AliasMetaData.builder("logs-alias").writeIndex(true).build()).settings(settings(Version.CURRENT))
-                .numberOfShards(1).numberOfReplicas(1);
+            .putAlias(AliasMetaData.builder("logs-alias").writeIndex(true).build())
+            .settings(settings(Version.CURRENT))
+            .numberOfShards(1)
+            .numberOfReplicas(1);
         final ClusterState stateBefore = ClusterState.builder(ClusterName.DEFAULT)
-                .metaData(MetaData.builder().put(indexMetaData).put(indexMetaData2)).build();
+            .metaData(MetaData.builder().put(indexMetaData).put(indexMetaData2))
+            .build();
 
-        final TransportRolloverAction transportRolloverAction = new TransportRolloverAction(mockTransportService, mockClusterService,
-                mockThreadPool, mockCreateIndexService, mockActionFilters, mockIndexNameExpressionResolver, mdIndexAliasesService,
-                mockClient);
+        final TransportRolloverAction transportRolloverAction = new TransportRolloverAction(
+            mockTransportService,
+            mockClusterService,
+            mockThreadPool,
+            mockCreateIndexService,
+            mockActionFilters,
+            mockIndexNameExpressionResolver,
+            mdIndexAliasesService,
+            mockClient
+        );
 
         // For given alias, verify that condition evaluation fails when the condition doc count is greater than the primaries doc count
         // (primaries from only write index is considered)
@@ -531,7 +574,9 @@ public class TransportRolloverActionTests extends ESTestCase {
                 ShardId shardId = new ShardId(index.getIndex(), i);
                 boolean primary = (i == primaryIdx);
                 Path path = createTempDir().resolve("indices").resolve(index.getIndexUUID()).resolve(String.valueOf(i));
-                ShardRouting shardRouting = ShardRouting.newUnassigned(shardId, primary,
+                ShardRouting shardRouting = ShardRouting.newUnassigned(
+                    shardId,
+                    primary,
                     primary ? RecoverySource.EmptyStoreRecoverySource.INSTANCE : RecoverySource.PeerRecoverySource.INSTANCE,
                     new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null)
                 );
@@ -556,7 +601,11 @@ public class TransportRolloverActionTests extends ESTestCase {
             }
         }
         return IndicesStatsTests.newIndicesStatsResponse(
-            shardStats.toArray(new ShardStats[shardStats.size()]), shardStats.size(), shardStats.size(), 0, emptyList()
+            shardStats.toArray(new ShardStats[shardStats.size()]),
+            shardStats.size(),
+            shardStats.size(),
+            0,
+            emptyList()
         );
     }
 }

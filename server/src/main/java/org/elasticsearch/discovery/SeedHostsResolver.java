@@ -53,10 +53,17 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SeedHostsResolver extends AbstractLifecycleComponent implements ConfiguredHostsResolver, SeedHostsProvider.HostsResolver {
-    public static final Setting<Integer> DISCOVERY_SEED_RESOLVER_MAX_CONCURRENT_RESOLVERS_SETTING =
-        Setting.intSetting("discovery.seed_resolver.max_concurrent_resolvers", 10, 0, Setting.Property.NodeScope);
-    public static final Setting<TimeValue> DISCOVERY_SEED_RESOLVER_TIMEOUT_SETTING =
-        Setting.positiveTimeSetting("discovery.seed_resolver.timeout", TimeValue.timeValueSeconds(5), Setting.Property.NodeScope);
+    public static final Setting<Integer> DISCOVERY_SEED_RESOLVER_MAX_CONCURRENT_RESOLVERS_SETTING = Setting.intSetting(
+        "discovery.seed_resolver.max_concurrent_resolvers",
+        10,
+        0,
+        Setting.Property.NodeScope
+    );
+    public static final Setting<TimeValue> DISCOVERY_SEED_RESOLVER_TIMEOUT_SETTING = Setting.positiveTimeSetting(
+        "discovery.seed_resolver.timeout",
+        TimeValue.timeValueSeconds(5),
+        Setting.Property.NodeScope
+    );
 
     private static final Logger logger = LogManager.getLogger(SeedHostsResolver.class);
 
@@ -70,8 +77,7 @@ public class SeedHostsResolver extends AbstractLifecycleComponent implements Con
     private final int concurrentConnects;
     private final CancellableThreads cancellableThreads = new CancellableThreads();
 
-    public SeedHostsResolver(String nodeName, Settings settings, TransportService transportService,
-                             SeedHostsProvider seedProvider) {
+    public SeedHostsResolver(String nodeName, Settings settings, TransportService transportService, SeedHostsProvider seedProvider) {
         this.settings = settings;
         this.nodeName = nodeName;
         this.transportService = transportService;
@@ -95,15 +101,14 @@ public class SeedHostsResolver extends AbstractLifecycleComponent implements Con
             throw new IllegalArgumentException("resolve timeout must be non-negative but was [" + resolveTimeout + "]");
         }
         // create tasks to submit to the executor service; we will wait up to resolveTimeout for these tasks to complete
-        final List<Callable<TransportAddress[]>> callables =
-            hosts
-                .stream()
-                .map(hn -> (Callable<TransportAddress[]>) () -> transportService.addressesFromString(hn))
-                .collect(Collectors.toList());
+        final List<Callable<TransportAddress[]>> callables = hosts.stream()
+            .map(hn -> (Callable<TransportAddress[]>) () -> transportService.addressesFromString(hn))
+            .collect(Collectors.toList());
         final SetOnce<List<Future<TransportAddress[]>>> futures = new SetOnce<>();
         try {
-            cancellableThreads.execute(() ->
-                futures.set(executorService.get().invokeAll(callables, resolveTimeout.nanos(), TimeUnit.NANOSECONDS)));
+            cancellableThreads.execute(
+                () -> futures.set(executorService.get().invokeAll(callables, resolveTimeout.nanos(), TimeUnit.NANOSECONDS))
+            );
         } catch (CancellableThreads.ExecutionCancelledException e) {
             return Collections.emptyList();
         }
@@ -147,8 +152,17 @@ public class SeedHostsResolver extends AbstractLifecycleComponent implements Con
     protected void doStart() {
         logger.debug("using max_concurrent_resolvers [{}], resolver timeout [{}]", concurrentConnects, resolveTimeout);
         final ThreadFactory threadFactory = EsExecutors.daemonThreadFactory(settings, "[unicast_configured_hosts_resolver]");
-        executorService.set(EsExecutors.newScaling(nodeName + "/" + "unicast_configured_hosts_resolver",
-            0, concurrentConnects, 60, TimeUnit.SECONDS, threadFactory, transportService.getThreadPool().getThreadContext()));
+        executorService.set(
+            EsExecutors.newScaling(
+                nodeName + "/" + "unicast_configured_hosts_resolver",
+                0,
+                concurrentConnects,
+                60,
+                TimeUnit.SECONDS,
+                threadFactory,
+                transportService.getThreadPool().getThreadContext()
+            )
+        );
     }
 
     @Override
@@ -158,8 +172,7 @@ public class SeedHostsResolver extends AbstractLifecycleComponent implements Con
     }
 
     @Override
-    protected void doClose() {
-    }
+    protected void doClose() {}
 
     @Override
     public void resolveConfiguredHosts(Consumer<List<TransportAddress>> consumer) {

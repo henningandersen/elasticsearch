@@ -69,9 +69,13 @@ import static org.hamcrest.Matchers.notNullValue;
 public class SearchScrollIT extends ESIntegTestCase {
     @After
     public void cleanup() throws Exception {
-        assertAcked(client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().putNull("*"))
-            .setTransientSettings(Settings.builder().putNull("*")));
+        assertAcked(
+            client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().putNull("*"))
+                .setTransientSettings(Settings.builder().putNull("*"))
+        );
     }
 
     public void testSimpleScrollQueryThenFetch() throws Exception {
@@ -81,18 +85,20 @@ public class SearchScrollIT extends ESIntegTestCase {
         client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus().get();
 
         for (int i = 0; i < 100; i++) {
-            client().prepareIndex("test").setId(Integer.toString(i))
-                    .setSource(jsonBuilder().startObject().field("field", i).endObject()).get();
+            client().prepareIndex("test")
+                .setId(Integer.toString(i))
+                .setSource(jsonBuilder().startObject().field("field", i).endObject())
+                .get();
         }
 
         client().admin().indices().prepareRefresh().get();
 
         SearchResponse searchResponse = client().prepareSearch()
-                .setQuery(matchAllQuery())
-                .setSize(35)
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .addSort("field", SortOrder.ASC)
-                .get();
+            .setQuery(matchAllQuery())
+            .setSize(35)
+            .setScroll(TimeValue.timeValueMinutes(2))
+            .addSort("field", SortOrder.ASC)
+            .get();
         try {
             long counter = 0;
 
@@ -102,9 +108,7 @@ public class SearchScrollIT extends ESIntegTestCase {
                 assertThat(((Number) hit.getSortValues()[0]).longValue(), equalTo(counter++));
             }
 
-            searchResponse = client().prepareSearchScroll(searchResponse.getScrollId())
-                    .setScroll(TimeValue.timeValueMinutes(2))
-                    .get();
+            searchResponse = client().prepareSearchScroll(searchResponse.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
 
             assertThat(searchResponse.getHits().getTotalHits().value, equalTo(100L));
             assertThat(searchResponse.getHits().getHits().length, equalTo(35));
@@ -112,9 +116,7 @@ public class SearchScrollIT extends ESIntegTestCase {
                 assertThat(((Number) hit.getSortValues()[0]).longValue(), equalTo(counter++));
             }
 
-            searchResponse = client().prepareSearchScroll(searchResponse.getScrollId())
-                    .setScroll(TimeValue.timeValueMinutes(2))
-                    .get();
+            searchResponse = client().prepareSearchScroll(searchResponse.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
 
             assertThat(searchResponse.getHits().getTotalHits().value, equalTo(100L));
             assertThat(searchResponse.getHits().getHits().length, equalTo(30));
@@ -145,12 +147,12 @@ public class SearchScrollIT extends ESIntegTestCase {
         client().admin().indices().prepareRefresh().get();
 
         SearchResponse searchResponse = client().prepareSearch()
-                .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .setQuery(matchAllQuery())
-                .setSize(3)
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .addSort("field", SortOrder.ASC)
-                .get();
+            .setSearchType(SearchType.QUERY_THEN_FETCH)
+            .setQuery(matchAllQuery())
+            .setSize(3)
+            .setScroll(TimeValue.timeValueMinutes(2))
+            .addSort("field", SortOrder.ASC)
+            .get();
         try {
             long counter = 0;
 
@@ -161,9 +163,7 @@ public class SearchScrollIT extends ESIntegTestCase {
             }
 
             for (int i = 0; i < 32; i++) {
-                searchResponse = client().prepareSearchScroll(searchResponse.getScrollId())
-                        .setScroll(TimeValue.timeValueMinutes(2))
-                        .get();
+                searchResponse = client().prepareSearchScroll(searchResponse.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
 
                 assertThat(searchResponse.getHits().getTotalHits().value, equalTo(100L));
                 assertThat(searchResponse.getHits().getHits().length, equalTo(3));
@@ -173,9 +173,7 @@ public class SearchScrollIT extends ESIntegTestCase {
             }
 
             // and now, the last one is one
-            searchResponse = client().prepareSearchScroll(searchResponse.getScrollId())
-                    .setScroll(TimeValue.timeValueMinutes(2))
-                    .get();
+            searchResponse = client().prepareSearchScroll(searchResponse.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
 
             assertThat(searchResponse.getHits().getTotalHits().value, equalTo(100L));
             assertThat(searchResponse.getHits().getHits().length, equalTo(1));
@@ -184,9 +182,7 @@ public class SearchScrollIT extends ESIntegTestCase {
             }
 
             // a the last is zero
-            searchResponse = client().prepareSearchScroll(searchResponse.getScrollId())
-                    .setScroll(TimeValue.timeValueMinutes(2))
-                    .get();
+            searchResponse = client().prepareSearchScroll(searchResponse.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
 
             assertThat(searchResponse.getHits().getTotalHits().value, equalTo(100L));
             assertThat(searchResponse.getHits().getHits().length, equalTo(0));
@@ -204,29 +200,44 @@ public class SearchScrollIT extends ESIntegTestCase {
         client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus().get();
 
         for (int i = 0; i < 500; i++) {
-            client().prepareIndex("test").setId(Integer.toString(i)).setSource(
-                    jsonBuilder().startObject().field("user", "kimchy").field("postDate", System.currentTimeMillis())
-                    .field("message", "test").endObject()).get();
+            client().prepareIndex("test")
+                .setId(Integer.toString(i))
+                .setSource(
+                    jsonBuilder().startObject()
+                        .field("user", "kimchy")
+                        .field("postDate", System.currentTimeMillis())
+                        .field("message", "test")
+                        .endObject()
+                )
+                .get();
         }
 
         client().admin().indices().prepareRefresh().get();
 
         assertThat(client().prepareSearch().setSize(0).setQuery(matchAllQuery()).get().getHits().getTotalHits().value, equalTo(500L));
-        assertThat(client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
-                equalTo(500L));
-        assertThat(client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
-                equalTo(500L));
-        assertThat(client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
-                equalTo(0L));
-        assertThat(client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
-                equalTo(0L));
+        assertThat(
+            client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
+            equalTo(500L)
+        );
+        assertThat(
+            client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
+            equalTo(500L)
+        );
+        assertThat(
+            client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
+            equalTo(0L)
+        );
+        assertThat(
+            client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
+            equalTo(0L)
+        );
 
         SearchResponse searchResponse = client().prepareSearch()
-                .setQuery(queryStringQuery("user:kimchy"))
-                .setSize(35)
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .addSort("postDate", SortOrder.ASC)
-                .get();
+            .setQuery(queryStringQuery("user:kimchy"))
+            .setSize(35)
+            .setScroll(TimeValue.timeValueMinutes(2))
+            .addSort("postDate", SortOrder.ASC)
+            .get();
         try {
             do {
                 for (SearchHit searchHit : searchResponse.getHits().getHits()) {
@@ -234,20 +245,27 @@ public class SearchScrollIT extends ESIntegTestCase {
                     map.put("message", "update");
                     client().prepareIndex("test").setId(searchHit.getId()).setSource(map).get();
                 }
-                searchResponse = client().prepareSearchScroll(searchResponse.getScrollId()).setScroll(TimeValue.timeValueMinutes(2))
-                        .get();
+                searchResponse = client().prepareSearchScroll(searchResponse.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
             } while (searchResponse.getHits().getHits().length > 0);
 
             client().admin().indices().prepareRefresh().get();
             assertThat(client().prepareSearch().setSize(0).setQuery(matchAllQuery()).get().getHits().getTotalHits().value, equalTo(500L));
-            assertThat(client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
-                    equalTo(0L));
-            assertThat(client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
-                    equalTo(0L));
-            assertThat(client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
-                    equalTo(500L));
-            assertThat(client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
-                    equalTo(500L));
+            assertThat(
+                client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
+                equalTo(0L)
+            );
+            assertThat(
+                client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
+                equalTo(0L)
+            );
+            assertThat(
+                client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
+                equalTo(500L)
+            );
+            assertThat(
+                client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
+                equalTo(500L)
+            );
         } finally {
             clearScroll(searchResponse.getScrollId());
         }
@@ -260,27 +278,29 @@ public class SearchScrollIT extends ESIntegTestCase {
         client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus().get();
 
         for (int i = 0; i < 100; i++) {
-            client().prepareIndex("test").setId(Integer.toString(i)).setSource(jsonBuilder().startObject().field("field", i).endObject())
-            .get();
+            client().prepareIndex("test")
+                .setId(Integer.toString(i))
+                .setSource(jsonBuilder().startObject().field("field", i).endObject())
+                .get();
         }
 
         client().admin().indices().prepareRefresh().get();
 
         SearchResponse searchResponse1 = client().prepareSearch()
-                .setQuery(matchAllQuery())
-                .setSize(35)
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .addSort("field", SortOrder.ASC)
-                .get();
+            .setQuery(matchAllQuery())
+            .setSize(35)
+            .setScroll(TimeValue.timeValueMinutes(2))
+            .setSearchType(SearchType.QUERY_THEN_FETCH)
+            .addSort("field", SortOrder.ASC)
+            .get();
 
         SearchResponse searchResponse2 = client().prepareSearch()
-                .setQuery(matchAllQuery())
-                .setSize(35)
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .addSort("field", SortOrder.ASC)
-                .get();
+            .setQuery(matchAllQuery())
+            .setSize(35)
+            .setScroll(TimeValue.timeValueMinutes(2))
+            .setSearchType(SearchType.QUERY_THEN_FETCH)
+            .addSort("field", SortOrder.ASC)
+            .get();
 
         long counter1 = 0;
         long counter2 = 0;
@@ -297,13 +317,9 @@ public class SearchScrollIT extends ESIntegTestCase {
             assertThat(((Number) hit.getSortValues()[0]).longValue(), equalTo(counter2++));
         }
 
-        searchResponse1 = client().prepareSearchScroll(searchResponse1.getScrollId())
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .get();
+        searchResponse1 = client().prepareSearchScroll(searchResponse1.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
 
-        searchResponse2 = client().prepareSearchScroll(searchResponse2.getScrollId())
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .get();
+        searchResponse2 = client().prepareSearchScroll(searchResponse2.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
 
         assertThat(searchResponse1.getHits().getTotalHits().value, equalTo(100L));
         assertThat(searchResponse1.getHits().getHits().length, equalTo(35));
@@ -318,26 +334,32 @@ public class SearchScrollIT extends ESIntegTestCase {
         }
 
         ClearScrollResponse clearResponse = client().prepareClearScroll()
-                .addScrollId(searchResponse1.getScrollId())
-                .addScrollId(searchResponse2.getScrollId())
-                .get();
+            .addScrollId(searchResponse1.getScrollId())
+            .addScrollId(searchResponse2.getScrollId())
+            .get();
         assertThat(clearResponse.isSucceeded(), is(true));
         assertThat(clearResponse.getNumFreed(), greaterThan(0));
         assertThat(clearResponse.status(), equalTo(RestStatus.OK));
         assertToXContentResponse(clearResponse, true, clearResponse.getNumFreed());
 
-        assertThrows(client().prepareSearchScroll(searchResponse1.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)),
-                RestStatus.NOT_FOUND);
-        assertThrows(client().prepareSearchScroll(searchResponse2.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)),
-                RestStatus.NOT_FOUND);
+        assertThrows(
+            client().prepareSearchScroll(searchResponse1.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)),
+            RestStatus.NOT_FOUND
+        );
+        assertThrows(
+            client().prepareSearchScroll(searchResponse2.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)),
+            RestStatus.NOT_FOUND
+        );
     }
 
     public void testClearNonExistentScrollId() throws Exception {
         createIndex("idx");
         ClearScrollResponse response = client().prepareClearScroll()
-                .addScrollId("DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAABFnRtLWMyRzBqUUQyNk1uM0xDTjJ4S0EAAAAAAAAAARYzNkhxbWFTYVFVNmgxTGQyYUZVYV9nAA" +
-                        "AAAAAAAAEWdVcxNWZmRGZSVFN2V0xMUGF2NGx1Zw==")
-                .get();
+            .addScrollId(
+                "DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAABFnRtLWMyRzBqUUQyNk1uM0xDTjJ4S0EAAAAAAAAAARYzNkhxbWFTYVFVNmgxTGQyYUZVYV9nAA"
+                    + "AAAAAAAAEWdVcxNWZmRGZSVFN2V0xMUGF2NGx1Zw=="
+            )
+            .get();
         // Whether we actually clear a scroll, we can't know, since that information isn't serialized in the
         // free search context response, which is returned from each node we want to clear a particular scroll.
         assertThat(response.isSucceeded(), is(true));
@@ -348,18 +370,24 @@ public class SearchScrollIT extends ESIntegTestCase {
 
     public void testClearIllegalScrollId() throws Exception {
         createIndex("idx");
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> client().prepareClearScroll().addScrollId("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1").get());
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> client().prepareClearScroll().addScrollId("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1").get()
+        );
         assertEquals("Cannot parse scroll id", e.getMessage());
 
-        e = expectThrows(IllegalArgumentException.class,
-                // Fails during base64 decoding (Base64-encoded string must have at least four characters)
-                () ->  client().prepareClearScroll().addScrollId("a").get());
+        e = expectThrows(
+            IllegalArgumentException.class,
+            // Fails during base64 decoding (Base64-encoded string must have at least four characters)
+            () -> client().prepareClearScroll().addScrollId("a").get()
+        );
         assertEquals("Cannot parse scroll id", e.getMessage());
 
-        e = expectThrows(IllegalArgumentException.class,
-                // Other invalid base64
-                () ->  client().prepareClearScroll().addScrollId("abcabc").get());
+        e = expectThrows(
+            IllegalArgumentException.class,
+            // Other invalid base64
+            () -> client().prepareClearScroll().addScrollId("abcabc").get()
+        );
         assertEquals("Cannot parse scroll id", e.getMessage());
     }
 
@@ -370,27 +398,29 @@ public class SearchScrollIT extends ESIntegTestCase {
         client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus().get();
 
         for (int i = 0; i < 100; i++) {
-            client().prepareIndex("test").setId(Integer.toString(i)).setSource(jsonBuilder().startObject().field("field", i).endObject())
-            .get();
+            client().prepareIndex("test")
+                .setId(Integer.toString(i))
+                .setSource(jsonBuilder().startObject().field("field", i).endObject())
+                .get();
         }
 
         client().admin().indices().prepareRefresh().get();
 
         SearchResponse searchResponse1 = client().prepareSearch()
-                .setQuery(matchAllQuery())
-                .setSize(35)
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .addSort("field", SortOrder.ASC)
-                .get();
+            .setQuery(matchAllQuery())
+            .setSize(35)
+            .setScroll(TimeValue.timeValueMinutes(2))
+            .setSearchType(SearchType.QUERY_THEN_FETCH)
+            .addSort("field", SortOrder.ASC)
+            .get();
 
         SearchResponse searchResponse2 = client().prepareSearch()
-                .setQuery(matchAllQuery())
-                .setSize(35)
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .addSort("field", SortOrder.ASC)
-                .get();
+            .setQuery(matchAllQuery())
+            .setSize(35)
+            .setScroll(TimeValue.timeValueMinutes(2))
+            .setSearchType(SearchType.QUERY_THEN_FETCH)
+            .addSort("field", SortOrder.ASC)
+            .get();
 
         long counter1 = 0;
         long counter2 = 0;
@@ -407,13 +437,9 @@ public class SearchScrollIT extends ESIntegTestCase {
             assertThat(((Number) hit.getSortValues()[0]).longValue(), equalTo(counter2++));
         }
 
-        searchResponse1 = client().prepareSearchScroll(searchResponse1.getScrollId())
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .get();
+        searchResponse1 = client().prepareSearchScroll(searchResponse1.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
 
-        searchResponse2 = client().prepareSearchScroll(searchResponse2.getScrollId())
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .get();
+        searchResponse2 = client().prepareSearchScroll(searchResponse2.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)).get();
 
         assertThat(searchResponse1.getHits().getTotalHits().value, equalTo(100L));
         assertThat(searchResponse1.getHits().getHits().length, equalTo(35));
@@ -427,40 +453,43 @@ public class SearchScrollIT extends ESIntegTestCase {
             assertThat(((Number) hit.getSortValues()[0]).longValue(), equalTo(counter2++));
         }
 
-        ClearScrollResponse clearResponse = client().prepareClearScroll().addScrollId("_all")
-                .get();
+        ClearScrollResponse clearResponse = client().prepareClearScroll().addScrollId("_all").get();
         assertThat(clearResponse.isSucceeded(), is(true));
         assertThat(clearResponse.getNumFreed(), greaterThan(0));
         assertThat(clearResponse.status(), equalTo(RestStatus.OK));
         assertToXContentResponse(clearResponse, true, clearResponse.getNumFreed());
 
-        assertThrows(internalCluster().client().prepareSearchScroll(searchResponse1.getScrollId())
-                .setScroll(TimeValue.timeValueMinutes(2)), RestStatus.NOT_FOUND);
-        assertThrows(internalCluster().client().prepareSearchScroll(searchResponse2.getScrollId())
-                .setScroll(TimeValue.timeValueMinutes(2)), RestStatus.NOT_FOUND);
+        assertThrows(
+            internalCluster().client().prepareSearchScroll(searchResponse1.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)),
+            RestStatus.NOT_FOUND
+        );
+        assertThrows(
+            internalCluster().client().prepareSearchScroll(searchResponse2.getScrollId()).setScroll(TimeValue.timeValueMinutes(2)),
+            RestStatus.NOT_FOUND
+        );
     }
 
     /**
      * Tests that we use an optimization shrinking the batch to the size of the shard. Thus the Integer.MAX_VALUE window doesn't OOM us.
      */
     public void testDeepScrollingDoesNotBlowUp() throws Exception {
-        client().prepareIndex("index").setId("1")
-                .setSource("field", "value")
-                .setRefreshPolicy(IMMEDIATE)
-                .execute().get();
+        client().prepareIndex("index").setId("1").setSource("field", "value").setRefreshPolicy(IMMEDIATE).execute().get();
         /*
          * Disable the max result window setting for this test because it'll reject the search's unreasonable batch size. We want
          * unreasonable batch sizes to just OOM.
          */
-        client().admin().indices().prepareUpdateSettings("index")
-                .setSettings(Settings.builder().put(IndexSettings.MAX_RESULT_WINDOW_SETTING.getKey(), Integer.MAX_VALUE)).get();
+        client().admin()
+            .indices()
+            .prepareUpdateSettings("index")
+            .setSettings(Settings.builder().put(IndexSettings.MAX_RESULT_WINDOW_SETTING.getKey(), Integer.MAX_VALUE))
+            .get();
 
         for (SearchType searchType : SearchType.values()) {
             SearchRequestBuilder builder = client().prepareSearch("index")
-                    .setSearchType(searchType)
-                    .setQuery(QueryBuilders.matchAllQuery())
-                    .setSize(Integer.MAX_VALUE)
-                    .setScroll("1m");
+                .setSearchType(searchType)
+                .setQuery(QueryBuilders.matchAllQuery())
+                .setSize(Integer.MAX_VALUE)
+                .setScroll("1m");
 
             SearchResponse response = builder.get();
             try {
@@ -488,18 +517,19 @@ public class SearchScrollIT extends ESIntegTestCase {
     }
 
     public void testStringSortMissingAscTerminates() throws Exception {
-        assertAcked(prepareCreate("test")
-                .setSettings(Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-                        .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0))
-                .setMapping("no_field", "type=keyword", "some_field", "type=keyword"));
+        assertAcked(
+            prepareCreate("test").setSettings(
+                Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1).put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
+            ).setMapping("no_field", "type=keyword", "some_field", "type=keyword")
+        );
         client().prepareIndex("test").setId("1").setSource("some_field", "test").get();
         refresh();
 
         SearchResponse response = client().prepareSearch("test")
 
-                .addSort(new FieldSortBuilder("no_field").order(SortOrder.ASC).missing("_last"))
-                .setScroll("1m")
-                .get();
+            .addSort(new FieldSortBuilder("no_field").order(SortOrder.ASC).missing("_last"))
+            .setScroll("1m")
+            .get();
         assertHitCount(response, 1);
         assertSearchHits(response, "1");
 
@@ -510,9 +540,9 @@ public class SearchScrollIT extends ESIntegTestCase {
 
         response = client().prepareSearch("test")
 
-                .addSort(new FieldSortBuilder("no_field").order(SortOrder.ASC).missing("_first"))
-                .setScroll("1m")
-                .get();
+            .addSort(new FieldSortBuilder("no_field").order(SortOrder.ASC).missing("_first"))
+            .setScroll("1m")
+            .get();
         assertHitCount(response, 1);
         assertSearchHits(response, "1");
 
@@ -528,11 +558,11 @@ public class SearchScrollIT extends ESIntegTestCase {
         }
         refresh();
         SearchResponse searchResponse = client().prepareSearch()
-                .setQuery(matchAllQuery())
-                .setSize(35)
-                .setScroll(TimeValue.timeValueMinutes(2))
-                .addSort("field", SortOrder.ASC)
-                .get();
+            .setQuery(matchAllQuery())
+            .setSize(35)
+            .setScroll(TimeValue.timeValueMinutes(2))
+            .addSort("field", SortOrder.ASC)
+            .get();
         long counter = 0;
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(100L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(35));
@@ -549,52 +579,94 @@ public class SearchScrollIT extends ESIntegTestCase {
     }
 
     public void testScrollInvalidDefaultKeepAlive() throws IOException {
-        IllegalArgumentException exc = expectThrows(IllegalArgumentException.class, () ->
-            client().admin().cluster().prepareUpdateSettings()
-                .setPersistentSettings(Settings.builder().put("search.max_keep_alive", "1m").put("search.default_keep_alive", "2m")).get
-            ());
+        IllegalArgumentException exc = expectThrows(
+            IllegalArgumentException.class,
+            () -> client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().put("search.max_keep_alive", "1m").put("search.default_keep_alive", "2m"))
+                .get()
+        );
         assertThat(exc.getMessage(), containsString("was (2m > 1m)"));
 
-        assertAcked(client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "5m").put("search.max_keep_alive", "5m")).get());
+        assertAcked(
+            client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "5m").put("search.max_keep_alive", "5m"))
+                .get()
+        );
 
-        assertAcked(client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "2m")).get());
+        assertAcked(
+            client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "2m"))
+                .get()
+        );
 
-        assertAcked(client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().put("search.max_keep_alive", "2m")).get());
+        assertAcked(
+            client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().put("search.max_keep_alive", "2m"))
+                .get()
+        );
 
-
-        exc = expectThrows(IllegalArgumentException.class, () -> client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "3m")).get());
+        exc = expectThrows(
+            IllegalArgumentException.class,
+            () -> client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "3m"))
+                .get()
+        );
         assertThat(exc.getMessage(), containsString("was (3m > 2m)"));
 
-        assertAcked(client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "1m")).get());
+        assertAcked(
+            client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "1m"))
+                .get()
+        );
 
-        exc = expectThrows(IllegalArgumentException.class, () -> client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().put("search.max_keep_alive", "30s")).get());
+        exc = expectThrows(
+            IllegalArgumentException.class,
+            () -> client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().put("search.max_keep_alive", "30s"))
+                .get()
+        );
         assertThat(exc.getMessage(), containsString("was (1m > 30s)"));
     }
 
     public void testInvalidScrollKeepAlive() throws IOException {
         createIndex("test");
         for (int i = 0; i < 2; i++) {
-            client().prepareIndex("test").setId(Integer.toString(i))
-                .setSource(jsonBuilder().startObject().field("field", i).endObject()).get();
+            client().prepareIndex("test")
+                .setId(Integer.toString(i))
+                .setSource(jsonBuilder().startObject().field("field", i).endObject())
+                .get();
         }
         refresh();
-        assertAcked(client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "5m").put("search.max_keep_alive", "5m")).get());
+        assertAcked(
+            client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().put("search.default_keep_alive", "5m").put("search.max_keep_alive", "5m"))
+                .get()
+        );
 
-        Exception exc = expectThrows(Exception.class,
-            () -> client().prepareSearch()
-                .setQuery(matchAllQuery())
-                .setSize(1)
-                .setScroll(TimeValue.timeValueHours(2))
-                .get());
-        IllegalArgumentException illegalArgumentException =
-            (IllegalArgumentException) ExceptionsHelper.unwrap(exc, IllegalArgumentException.class);
+        Exception exc = expectThrows(
+            Exception.class,
+            () -> client().prepareSearch().setQuery(matchAllQuery()).setSize(1).setScroll(TimeValue.timeValueHours(2)).get()
+        );
+        IllegalArgumentException illegalArgumentException = (IllegalArgumentException) ExceptionsHelper.unwrap(
+            exc,
+            IllegalArgumentException.class
+        );
         assertNotNull(illegalArgumentException);
         assertThat(illegalArgumentException.getMessage(), containsString("Keep alive for scroll (2h) is too large"));
 
@@ -607,11 +679,11 @@ public class SearchScrollIT extends ESIntegTestCase {
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(2L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
 
-        exc = expectThrows(Exception.class,
-            () -> client().prepareSearchScroll(searchResponse.getScrollId())
-                    .setScroll(TimeValue.timeValueHours(3)).get());
-        illegalArgumentException =
-            (IllegalArgumentException) ExceptionsHelper.unwrap(exc, IllegalArgumentException.class);
+        exc = expectThrows(
+            Exception.class,
+            () -> client().prepareSearchScroll(searchResponse.getScrollId()).setScroll(TimeValue.timeValueHours(3)).get()
+        );
+        illegalArgumentException = (IllegalArgumentException) ExceptionsHelper.unwrap(exc, IllegalArgumentException.class);
         assertNotNull(illegalArgumentException);
         assertThat(illegalArgumentException.getMessage(), containsString("Keep alive for scroll (3h) is too large"));
     }

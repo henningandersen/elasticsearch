@@ -51,7 +51,9 @@ import static org.elasticsearch.index.seqno.SequenceNumbers.UNASSIGNED_SEQ_NO;
  * @see org.elasticsearch.client.Requests#deleteRequest(String)
  */
 public class DeleteRequest extends ReplicatedWriteRequest<DeleteRequest>
-        implements DocWriteRequest<DeleteRequest>, CompositeIndicesRequest {
+    implements
+        DocWriteRequest<DeleteRequest>,
+        CompositeIndicesRequest {
 
     private static final ShardId NO_SHARD_ID = null;
 
@@ -198,7 +200,7 @@ public class DeleteRequest extends ReplicatedWriteRequest<DeleteRequest>
      */
     public DeleteRequest setIfSeqNo(long seqNo) {
         if (seqNo < 0 && seqNo != UNASSIGNED_SEQ_NO) {
-            throw new IllegalArgumentException("sequence numbers must be non negative. got [" +  seqNo + "].");
+            throw new IllegalArgumentException("sequence numbers must be non negative. got [" + seqNo + "].");
         }
         ifSeqNo = seqNo;
         return this;

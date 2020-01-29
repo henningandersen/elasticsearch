@@ -47,8 +47,7 @@ public class ShardFetchRequest extends TransportRequest {
 
     private ScoreDoc lastEmittedDoc;
 
-    public ShardFetchRequest() {
-    }
+    public ShardFetchRequest() {}
 
     public ShardFetchRequest(long id, IntArrayList list, ScoreDoc lastEmittedDoc) {
         this.id = id;

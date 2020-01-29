@@ -56,6 +56,4 @@ public final class ShardUtils {
         throw new IllegalArgumentException("can't extract shard ID, can't unwrap ElasticsearchDirectoryReader");
     }
 
-
-
 }

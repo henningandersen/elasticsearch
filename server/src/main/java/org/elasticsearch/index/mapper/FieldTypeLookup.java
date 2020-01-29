@@ -54,10 +54,12 @@ class FieldTypeLookup implements Iterable<MappedFieldType> {
         maxDynamicKeyDepth = 0;
     }
 
-    private FieldTypeLookup(CopyOnWriteHashMap<String, MappedFieldType> fullNameToFieldType,
-                            CopyOnWriteHashMap<String, String> aliasToConcreteName,
-                            CopyOnWriteHashMap<String, DynamicKeyFieldMapper> dynamicKeyMappers,
-                            int maxDynamicKeyDepth) {
+    private FieldTypeLookup(
+        CopyOnWriteHashMap<String, MappedFieldType> fullNameToFieldType,
+        CopyOnWriteHashMap<String, String> aliasToConcreteName,
+        CopyOnWriteHashMap<String, DynamicKeyFieldMapper> dynamicKeyMappers,
+        int maxDynamicKeyDepth
+    ) {
         this.fullNameToFieldType = fullNameToFieldType;
         this.aliasToConcreteName = aliasToConcreteName;
         this.dynamicKeyMappers = dynamicKeyMappers;
@@ -70,9 +72,11 @@ class FieldTypeLookup implements Iterable<MappedFieldType> {
      * to use the new type from the given field mapper. Similarly if an alias already
      * exists, it will be updated to reference the field type from the new mapper.
      */
-    public FieldTypeLookup copyAndAddAll(String type,
-                                         Collection<FieldMapper> fieldMappers,
-                                         Collection<FieldAliasMapper> fieldAliasMappers) {
+    public FieldTypeLookup copyAndAddAll(
+        String type,
+        Collection<FieldMapper> fieldMappers,
+        Collection<FieldAliasMapper> fieldAliasMappers
+    ) {
         Objects.requireNonNull(type, "type must not be null");
 
         CopyOnWriteHashMap<String, MappedFieldType> fullName = this.fullNameToFieldType;
@@ -109,8 +113,10 @@ class FieldTypeLookup implements Iterable<MappedFieldType> {
         return new FieldTypeLookup(fullName, aliases, dynamicKeyMappers, maxDynamicKeyDepth);
     }
 
-    private static int getMaxDynamicKeyDepth(CopyOnWriteHashMap<String, String> aliases,
-                                             CopyOnWriteHashMap<String, DynamicKeyFieldMapper> dynamicKeyMappers) {
+    private static int getMaxDynamicKeyDepth(
+        CopyOnWriteHashMap<String, String> aliases,
+        CopyOnWriteHashMap<String, DynamicKeyFieldMapper> dynamicKeyMappers
+    ) {
         int maxFieldDepth = 0;
         for (Map.Entry<String, String> entry : aliases.entrySet()) {
             String aliasName = entry.getKey();
@@ -216,7 +222,8 @@ class FieldTypeLookup implements Iterable<MappedFieldType> {
         if (dynamicKeyMappers.isEmpty()) {
             return concreteFieldTypes;
         } else {
-            Iterator<MappedFieldType> keyedFieldTypes = dynamicKeyMappers.values().stream()
+            Iterator<MappedFieldType> keyedFieldTypes = dynamicKeyMappers.values()
+                .stream()
                 .<MappedFieldType>map(mapper -> mapper.keyedFieldType(""))
                 .iterator();
             return Iterators.concat(concreteFieldTypes, keyedFieldTypes);

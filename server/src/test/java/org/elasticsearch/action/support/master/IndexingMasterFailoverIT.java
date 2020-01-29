@@ -58,8 +58,8 @@ public class IndexingMasterFailoverIT extends ESIntegTestCase {
         logger.info("--> start 4 nodes, 3 master, 1 data");
 
         final Settings sharedSettings = Settings.builder()
-                .put("cluster.join.timeout", "10s")  // still long to induce failures but not too long so test won't time out
-                .build();
+            .put("cluster.join.timeout", "10s")  // still long to induce failures but not too long so test won't time out
+            .build();
 
         internalCluster().setBootstrapMasterNodeIndex(2);
 
@@ -71,9 +71,11 @@ public class IndexingMasterFailoverIT extends ESIntegTestCase {
         ensureStableCluster(4);
 
         // We index data with mapping changes into cluster and have master failover at same time
-        client().admin().indices().prepareCreate("myindex")
-                .setSettings(Settings.builder().put("index.number_of_shards", 1).put("index.number_of_replicas", 0))
-                .get();
+        client().admin()
+            .indices()
+            .prepareCreate("myindex")
+            .setSettings(Settings.builder().put("index.number_of_shards", 1).put("index.number_of_replicas", 0))
+            .get();
         ensureGreen("myindex");
 
         final CyclicBarrier barrier = new CyclicBarrier(2);
@@ -109,7 +111,8 @@ public class IndexingMasterFailoverIT extends ESIntegTestCase {
 
         NetworkDisruption partition = new NetworkDisruption(
             new TwoPartitions(Collections.singleton(master), otherNodes),
-            new NetworkDisconnect());
+            new NetworkDisconnect()
+        );
         internalCluster().setDisruptionScheme(partition);
 
         logger.info("--> disrupting network");

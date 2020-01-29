@@ -81,7 +81,6 @@ public class SeedHostsResolverTests extends ESTestCase {
     // close in reverse order as opened
     private Stack<Closeable> closeables;
 
-
     @Before
     public void startResolver() {
         threadPool = new TestThreadPool("node");
@@ -93,9 +92,15 @@ public class SeedHostsResolverTests extends ESTestCase {
         recreateSeedHostsResolver(transportService);
 
         final ThreadFactory threadFactory = EsExecutors.daemonThreadFactory("[" + getClass().getName() + "]");
-        executorService =
-            EsExecutors.newScaling(
-                getClass().getName() + "/" + getTestName(), 0, 2, 60, TimeUnit.SECONDS, threadFactory, threadPool.getThreadContext());
+        executorService = EsExecutors.newScaling(
+            getClass().getName() + "/" + getTestName(),
+            0,
+            2,
+            60,
+            TimeUnit.SECONDS,
+            threadFactory,
+            threadPool.getThreadContext()
+        );
         closeables = new Stack<>();
     }
 
@@ -148,9 +153,7 @@ public class SeedHostsResolverTests extends ESTestCase {
             endLatch.countDown();
         });
 
-        seedHostsResolver.resolveConfiguredHosts(resolvedAddresses -> {
-            throw new AssertionError("unexpected concurrent resolution");
-        });
+        seedHostsResolver.resolveConfiguredHosts(resolvedAddresses -> { throw new AssertionError("unexpected concurrent resolution"); });
 
         assertThat(resolvedAddressesRef.get(), nullValue());
         startLatch.countDown();
@@ -168,23 +171,27 @@ public class SeedHostsResolverTests extends ESTestCase {
             networkService,
             PageCacheRecycler.NON_RECYCLING_INSTANCE,
             new NamedWriteableRegistry(Collections.emptyList()),
-            new NoneCircuitBreakerService()) {
+            new NoneCircuitBreakerService()
+        ) {
 
             @Override
             public BoundTransportAddress boundAddress() {
                 return new BoundTransportAddress(
-                    new TransportAddress[]{
-                        new TransportAddress(loopbackAddress, 9300),
-                        new TransportAddress(loopbackAddress, 9301)
-                    },
+                    new TransportAddress[] { new TransportAddress(loopbackAddress, 9300), new TransportAddress(loopbackAddress, 9301) },
                     new TransportAddress(loopbackAddress, 9302)
                 );
             }
         };
         closeables.push(transport);
-        final TransportService transportService =
-            new TransportService(Settings.EMPTY, transport, threadPool, TransportService.NOOP_TRANSPORT_INTERCEPTOR, x -> null, null,
-                Collections.emptySet());
+        final TransportService transportService = new TransportService(
+            Settings.EMPTY,
+            transport,
+            threadPool,
+            TransportService.NOOP_TRANSPORT_INTERCEPTOR,
+            x -> null,
+            null,
+            Collections.emptySet()
+        );
         closeables.push(transportService);
         recreateSeedHostsResolver(transportService);
         List<String> hosts = IntStream.range(9300, 9310)
@@ -211,12 +218,13 @@ public class SeedHostsResolverTests extends ESTestCase {
             networkService,
             PageCacheRecycler.NON_RECYCLING_INSTANCE,
             new NamedWriteableRegistry(Collections.emptyList()),
-            new NoneCircuitBreakerService()) {
+            new NoneCircuitBreakerService()
+        ) {
 
             @Override
             public BoundTransportAddress boundAddress() {
                 return new BoundTransportAddress(
-                    new TransportAddress[]{new TransportAddress(InetAddress.getLoopbackAddress(), 9300)},
+                    new TransportAddress[] { new TransportAddress(InetAddress.getLoopbackAddress(), 9300) },
                     new TransportAddress(InetAddress.getLoopbackAddress(), 9300)
                 );
             }
@@ -229,9 +237,15 @@ public class SeedHostsResolverTests extends ESTestCase {
         };
         closeables.push(transport);
 
-        final TransportService transportService =
-            new TransportService(Settings.EMPTY, transport, threadPool, TransportService.NOOP_TRANSPORT_INTERCEPTOR, x -> null, null,
-                Collections.emptySet());
+        final TransportService transportService = new TransportService(
+            Settings.EMPTY,
+            transport,
+            threadPool,
+            TransportService.NOOP_TRANSPORT_INTERCEPTOR,
+            x -> null,
+            null,
+            Collections.emptySet()
+        );
         closeables.push(transportService);
         recreateSeedHostsResolver(transportService);
 
@@ -245,7 +259,9 @@ public class SeedHostsResolverTests extends ESTestCase {
                 Level.WARN,
                 "failed to resolve host [" + hostname + "]",
                 UnknownHostException.class,
-                unknownHostException.getMessage()));
+                unknownHostException.getMessage()
+            )
+        );
 
         try {
             Loggers.addAppender(logger, appender);
@@ -269,12 +285,13 @@ public class SeedHostsResolverTests extends ESTestCase {
             networkService,
             PageCacheRecycler.NON_RECYCLING_INSTANCE,
             new NamedWriteableRegistry(Collections.emptyList()),
-            new NoneCircuitBreakerService()) {
+            new NoneCircuitBreakerService()
+        ) {
 
             @Override
             public BoundTransportAddress boundAddress() {
                 return new BoundTransportAddress(
-                    new TransportAddress[]{new TransportAddress(InetAddress.getLoopbackAddress(), 9500)},
+                    new TransportAddress[] { new TransportAddress(InetAddress.getLoopbackAddress(), 9500) },
                     new TransportAddress(InetAddress.getLoopbackAddress(), 9500)
                 );
             }
@@ -282,11 +299,11 @@ public class SeedHostsResolverTests extends ESTestCase {
             @Override
             public TransportAddress[] addressesFromString(String address) throws UnknownHostException {
                 if ("hostname1".equals(address)) {
-                    return new TransportAddress[]{new TransportAddress(TransportAddress.META_ADDRESS, 9300)};
+                    return new TransportAddress[] { new TransportAddress(TransportAddress.META_ADDRESS, 9300) };
                 } else if ("hostname2".equals(address)) {
                     try {
                         latch.await();
-                        return new TransportAddress[]{new TransportAddress(TransportAddress.META_ADDRESS, 9300)};
+                        return new TransportAddress[] { new TransportAddress(TransportAddress.META_ADDRESS, 9300) };
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
@@ -298,9 +315,15 @@ public class SeedHostsResolverTests extends ESTestCase {
         };
         closeables.push(transport);
 
-        final TransportService transportService =
-            new TransportService(Settings.EMPTY, transport, threadPool, TransportService.NOOP_TRANSPORT_INTERCEPTOR, x -> null, null,
-                Collections.emptySet());
+        final TransportService transportService = new TransportService(
+            Settings.EMPTY,
+            transport,
+            threadPool,
+            TransportService.NOOP_TRANSPORT_INTERCEPTOR,
+            x -> null,
+            null,
+            Collections.emptySet()
+        );
         closeables.push(transportService);
         recreateSeedHostsResolver(transportService);
 
@@ -312,7 +335,9 @@ public class SeedHostsResolverTests extends ESTestCase {
                 getTestName(),
                 logger.getName(),
                 Level.WARN,
-                "timed out after [" + SeedHostsResolver.getResolveTimeout(Settings.EMPTY) + "] resolving host [hostname2]"));
+                "timed out after [" + SeedHostsResolver.getResolveTimeout(Settings.EMPTY) + "] resolving host [hostname2]"
+            )
+        );
 
         try {
             Loggers.addAppender(logger, appender);
@@ -338,12 +363,13 @@ public class SeedHostsResolverTests extends ESTestCase {
             networkService,
             PageCacheRecycler.NON_RECYCLING_INSTANCE,
             new NamedWriteableRegistry(Collections.emptyList()),
-            new NoneCircuitBreakerService()) {
+            new NoneCircuitBreakerService()
+        ) {
 
             @Override
             public BoundTransportAddress boundAddress() {
                 return new BoundTransportAddress(
-                    new TransportAddress[]{new TransportAddress(InetAddress.getLoopbackAddress(), 9500)},
+                    new TransportAddress[] { new TransportAddress(InetAddress.getLoopbackAddress(), 9500) },
                     new TransportAddress(InetAddress.getLoopbackAddress(), 9500)
                 );
             }
@@ -351,7 +377,7 @@ public class SeedHostsResolverTests extends ESTestCase {
             @Override
             public TransportAddress[] addressesFromString(String address) throws UnknownHostException {
                 if ("hostname1".equals(address)) {
-                    return new TransportAddress[]{new TransportAddress(TransportAddress.META_ADDRESS, 9300)};
+                    return new TransportAddress[] { new TransportAddress(TransportAddress.META_ADDRESS, 9300) };
                 } else if ("hostname2".equals(address)) {
                     try {
                         conditionLatch.countDown();
@@ -368,12 +394,20 @@ public class SeedHostsResolverTests extends ESTestCase {
         };
         closeables.push(transport);
 
-        final TransportService transportService =
-            new TransportService(Settings.EMPTY, transport, threadPool, TransportService.NOOP_TRANSPORT_INTERCEPTOR, x -> null, null,
-                Collections.emptySet());
+        final TransportService transportService = new TransportService(
+            Settings.EMPTY,
+            transport,
+            threadPool,
+            TransportService.NOOP_TRANSPORT_INTERCEPTOR,
+            x -> null,
+            null,
+            Collections.emptySet()
+        );
         closeables.push(transportService);
-        recreateSeedHostsResolver(transportService,
-            Settings.builder().put(SeedHostsResolver.DISCOVERY_SEED_RESOLVER_TIMEOUT_SETTING.getKey(), "10m").build());
+        recreateSeedHostsResolver(
+            transportService,
+            Settings.builder().put(SeedHostsResolver.DISCOVERY_SEED_RESOLVER_TIMEOUT_SETTING.getKey(), "10m").build()
+        );
 
         final PlainActionFuture<List<TransportAddress>> fut = new PlainActionFuture<>();
         threadPool.generic().execute((() -> fut.onResponse(seedHostsResolver.resolveHosts(Arrays.asList("hostname1", "hostname2")))));
@@ -391,23 +425,29 @@ public class SeedHostsResolverTests extends ESTestCase {
             new NetworkService(Collections.emptyList()),
             PageCacheRecycler.NON_RECYCLING_INSTANCE,
             new NamedWriteableRegistry(Collections.emptyList()),
-            new NoneCircuitBreakerService()) {
+            new NoneCircuitBreakerService()
+        ) {
             @Override
             public BoundTransportAddress boundAddress() {
                 return new BoundTransportAddress(
-                    new TransportAddress[]{new TransportAddress(InetAddress.getLoopbackAddress(), 9300)},
+                    new TransportAddress[] { new TransportAddress(InetAddress.getLoopbackAddress(), 9300) },
                     new TransportAddress(InetAddress.getLoopbackAddress(), 9300)
                 );
             }
         };
         closeables.push(transport);
 
-        final TransportService transportService =
-            new TransportService(Settings.EMPTY, transport, threadPool, TransportService.NOOP_TRANSPORT_INTERCEPTOR, x -> null, null,
-                Collections.emptySet());
+        final TransportService transportService = new TransportService(
+            Settings.EMPTY,
+            transport,
+            threadPool,
+            TransportService.NOOP_TRANSPORT_INTERCEPTOR,
+            x -> null,
+            null,
+            Collections.emptySet()
+        );
         closeables.push(transportService);
         recreateSeedHostsResolver(transportService);
-
 
         final Logger logger = LogManager.getLogger(SeedHostsResolver.class);
         final MockLogAppender appender = new MockLogAppender();
@@ -417,12 +457,15 @@ public class SeedHostsResolverTests extends ESTestCase {
                 getTestName(),
                 logger.getName(),
                 Level.WARN,
-                "failed to resolve host [127.0.0.1:9300:9300]"));
+                "failed to resolve host [127.0.0.1:9300:9300]"
+            )
+        );
 
         try {
             Loggers.addAppender(logger, appender);
             final List<TransportAddress> transportAddresses = seedHostsResolver.resolveHosts(
-                Arrays.asList("127.0.0.1:9300:9300", "127.0.0.1:9301"));
+                Arrays.asList("127.0.0.1:9300:9300", "127.0.0.1:9301")
+            );
             assertThat(transportAddresses, hasSize(1)); // only one of the two is valid and will be used
             assertThat(transportAddresses.get(0).getAddress(), equalTo("127.0.0.1"));
             assertThat(transportAddresses.get(0).getPort(), equalTo(9301));

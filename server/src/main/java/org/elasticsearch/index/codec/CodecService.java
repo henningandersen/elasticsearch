@@ -50,10 +50,8 @@ public class CodecService {
             codecs.put(DEFAULT_CODEC, new Lucene84Codec());
             codecs.put(BEST_COMPRESSION_CODEC, new Lucene84Codec(Mode.BEST_COMPRESSION));
         } else {
-            codecs.put(DEFAULT_CODEC,
-                    new PerFieldMappingPostingFormatCodec(Mode.BEST_SPEED, mapperService, logger));
-            codecs.put(BEST_COMPRESSION_CODEC,
-                    new PerFieldMappingPostingFormatCodec(Mode.BEST_COMPRESSION, mapperService, logger));
+            codecs.put(DEFAULT_CODEC, new PerFieldMappingPostingFormatCodec(Mode.BEST_SPEED, mapperService, logger));
+            codecs.put(BEST_COMPRESSION_CODEC, new PerFieldMappingPostingFormatCodec(Mode.BEST_COMPRESSION, mapperService, logger));
         }
         codecs.put(LUCENE_DEFAULT_CODEC, Codec.getDefault());
         for (String codec : Codec.availableCodecs()) {

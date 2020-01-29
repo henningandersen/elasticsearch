@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-
 public class IndexFieldMapper extends MetadataFieldMapper {
 
     public static final String NAME = "_index";
@@ -77,8 +76,8 @@ public class IndexFieldMapper extends MetadataFieldMapper {
 
     public static class TypeParser implements MetadataFieldMapper.TypeParser {
         @Override
-        public MetadataFieldMapper.Builder<?,?> parse(String name, Map<String, Object> node,
-                                                      ParserContext parserContext) throws MapperParsingException {
+        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             throw new MapperParsingException(NAME + " is not configurable");
         }
 
@@ -127,16 +126,15 @@ public class IndexFieldMapper extends MetadataFieldMapper {
          */
         @Override
         public Query termQuery(Object value, @Nullable QueryShardContext context) {
-            String pattern = value instanceof BytesRef
-                ? ((BytesRef) value).utf8ToString()
-                : value.toString();
+            String pattern = value instanceof BytesRef ? ((BytesRef) value).utf8ToString() : value.toString();
             if (context.indexMatches(pattern)) {
                 // No need to OR these clauses - we can only logically be
                 // running in the context of just one of these index names.
                 return Queries.newMatchAllQuery();
             } else {
-                return Queries.newMatchNoDocsQuery("The index [" + context.getFullyQualifiedIndex().getName() +
-                    "] doesn't match the provided value [" + value + "].");
+                return Queries.newMatchNoDocsQuery(
+                    "The index [" + context.getFullyQualifiedIndex().getName() + "] doesn't match the provided value [" + value + "]."
+                );
             }
         }
 
@@ -146,9 +144,7 @@ public class IndexFieldMapper extends MetadataFieldMapper {
                 return super.termsQuery(values, context);
             }
             for (Object value : values) {
-                String pattern = value instanceof BytesRef
-                    ? ((BytesRef) value).utf8ToString()
-                    : value.toString();
+                String pattern = value instanceof BytesRef ? ((BytesRef) value).utf8ToString() : value.toString();
                 if (context.indexMatches(pattern)) {
                     // No need to OR these clauses - we can only logically be
                     // running in the context of just one of these index names.
@@ -156,32 +152,31 @@ public class IndexFieldMapper extends MetadataFieldMapper {
                 }
             }
             // None of the listed index names are this one
-            return Queries.newMatchNoDocsQuery("The index [" + context.getFullyQualifiedIndex().getName() +
-                "] doesn't match the provided values [" + values + "].");
+            return Queries.newMatchNoDocsQuery(
+                "The index [" + context.getFullyQualifiedIndex().getName() + "] doesn't match the provided values [" + values + "]."
+            );
         }
 
         @Override
-        public Query prefixQuery(String value,
-                                 @Nullable MultiTermQuery.RewriteMethod method,
-                                 QueryShardContext context) {
+        public Query prefixQuery(String value, @Nullable MultiTermQuery.RewriteMethod method, QueryShardContext context) {
             String pattern = value + "*";
             if (context.indexMatches(pattern)) {
                 return Queries.newMatchAllQuery();
             } else {
-                return Queries.newMatchNoDocsQuery("The index [" + context.getFullyQualifiedIndex().getName() +
-                    "] doesn't match the provided prefix [" + value + "].");
+                return Queries.newMatchNoDocsQuery(
+                    "The index [" + context.getFullyQualifiedIndex().getName() + "] doesn't match the provided prefix [" + value + "]."
+                );
             }
         }
 
         @Override
-        public Query wildcardQuery(String value,
-                                   @Nullable MultiTermQuery.RewriteMethod method,
-                                   QueryShardContext context) {
+        public Query wildcardQuery(String value, @Nullable MultiTermQuery.RewriteMethod method, QueryShardContext context) {
             if (context.indexMatches(value)) {
                 return Queries.newMatchAllQuery();
             } else {
-                return Queries.newMatchNoDocsQuery("The index [" + context.getFullyQualifiedIndex().getName()
-                    + "] doesn't match the provided pattern [" + value + "].");
+                return Queries.newMatchNoDocsQuery(
+                    "The index [" + context.getFullyQualifiedIndex().getName() + "] doesn't match the provided pattern [" + value + "]."
+                );
             }
         }
 

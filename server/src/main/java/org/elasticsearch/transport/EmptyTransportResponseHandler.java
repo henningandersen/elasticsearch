@@ -38,12 +38,10 @@ public class EmptyTransportResponseHandler implements TransportResponseHandler<T
     }
 
     @Override
-    public void handleResponse(TransportResponse.Empty response) {
-    }
+    public void handleResponse(TransportResponse.Empty response) {}
 
     @Override
-    public void handleException(TransportException exp) {
-    }
+    public void handleException(TransportException exp) {}
 
     @Override
     public String executor() {

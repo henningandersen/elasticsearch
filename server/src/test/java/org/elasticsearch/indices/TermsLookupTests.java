@@ -79,11 +79,9 @@ public class TermsLookupTests extends ESTestCase {
     }
 
     public static TermsLookup randomTermsLookup() {
-        return new TermsLookup(
-            randomAlphaOfLength(10),
-            randomAlphaOfLength(10),
-            randomAlphaOfLength(10).replace('.', '_')
-        ).routing(randomBoolean() ? randomAlphaOfLength(10) : null);
+        return new TermsLookup(randomAlphaOfLength(10), randomAlphaOfLength(10), randomAlphaOfLength(10).replace('.', '_')).routing(
+            randomBoolean() ? randomAlphaOfLength(10) : null
+        );
     }
 
 }

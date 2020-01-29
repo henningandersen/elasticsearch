@@ -62,13 +62,16 @@ class MinAggregator extends NumericMetricsAggregator.SingleValue {
 
     DoubleArray mins;
 
-    MinAggregator(String name,
-                    ValuesSourceConfig<ValuesSource.Numeric> config,
-                    ValuesSource.Numeric valuesSource,
-                    SearchContext context,
-                    Aggregator parent,
-                    List<PipelineAggregator> pipelineAggregators,
-                    Map<String, Object> metaData) throws IOException {
+    MinAggregator(
+        String name,
+        ValuesSourceConfig<ValuesSource.Numeric> config,
+        ValuesSource.Numeric valuesSource,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         if (valuesSource != null) {
@@ -90,8 +93,7 @@ class MinAggregator extends NumericMetricsAggregator.SingleValue {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         if (valuesSource == null) {
             if (parent == null) {
                 return LeafBucketCollector.NO_OP_COLLECTOR;
@@ -163,7 +165,6 @@ class MinAggregator extends NumericMetricsAggregator.SingleValue {
         Releasables.close(mins);
     }
 
-
     /**
      * Returns a converter for point values if early termination is applicable to
      * the context or <code>null</code> otherwise.
@@ -172,10 +173,12 @@ class MinAggregator extends NumericMetricsAggregator.SingleValue {
      * @param parent The parent aggregator.
      * @param config The config for the values source metric.
      */
-    static Function<byte[], Number> getPointReaderOrNull(SearchContext context, Aggregator parent,
-                                                                ValuesSourceConfig<ValuesSource.Numeric> config) {
-        if (context.query() != null &&
-                context.query().getClass() != MatchAllDocsQuery.class) {
+    static Function<byte[], Number> getPointReaderOrNull(
+        SearchContext context,
+        Aggregator parent,
+        ValuesSourceConfig<ValuesSource.Numeric> config
+    ) {
+        if (context.query() != null && context.query().getClass() != MatchAllDocsQuery.class) {
             return null;
         }
         if (parent != null) {

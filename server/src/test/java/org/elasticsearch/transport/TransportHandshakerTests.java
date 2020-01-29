@@ -62,8 +62,17 @@ public class TransportHandshakerTests extends ESTestCase {
         channel = mock(TcpChannel.class);
         requestSender = mock(TransportHandshaker.HandshakeRequestSender.class);
         responseSender = mock(TransportHandshaker.HandshakeResponseSender.class);
-        remoteNode = new DiscoveryNode(nodeId, nodeId, nodeId, "host", "host_address", buildNewFakeTransportAddress(),
-            Collections.emptyMap(), Collections.emptySet(), Version.CURRENT);
+        remoteNode = new DiscoveryNode(
+            nodeId,
+            nodeId,
+            nodeId,
+            "host",
+            "host_address",
+            buildNewFakeTransportAddress(),
+            Collections.emptyMap(),
+            Collections.emptySet(),
+            Version.CURRENT
+        );
         threadPool = new TestThreadPool("thread-poll");
         clusterName = new ClusterName("cluster");
         localNode = new DiscoveryNode("local-node-id", new TransportAddress(InetAddress.getLocalHost(), 0), Version.CURRENT);
@@ -93,9 +102,8 @@ public class TransportHandshakerTests extends ESTestCase {
         StreamInput input = bytesStreamOutput.bytes().streamInput();
         handshaker.handleHandshake(Version.CURRENT, mockChannel, reqId, input);
 
-
         ArgumentCaptor<TransportResponse> responseCaptor = ArgumentCaptor.forClass(TransportResponse.class);
-        verify(responseSender).sendResponse(eq(Version.CURRENT),  eq(mockChannel), responseCaptor.capture(), eq(reqId));
+        verify(responseSender).sendResponse(eq(Version.CURRENT), eq(mockChannel), responseCaptor.capture(), eq(reqId));
 
         TransportResponseHandler<TransportHandshaker.HandshakeResponse> handler = handshaker.removeHandlerForHandshake(reqId);
         handler.handleResponse((TransportHandshaker.HandshakeResponse) responseCaptor.getValue());
@@ -152,7 +160,6 @@ public class TransportHandshakerTests extends ESTestCase {
         assertEquals(1031, futureHandshakeStream.available());
         handshaker.handleHandshake(Version.CURRENT, mockChannel, reqId, futureHandshakeStream);
         assertEquals(0, futureHandshakeStream.available());
-
 
         ArgumentCaptor<TransportResponse> responseCaptor = ArgumentCaptor.forClass(TransportResponse.class);
         verify(responseSender).sendResponse(eq(Version.CURRENT), eq(mockChannel), responseCaptor.capture(), eq(reqId));

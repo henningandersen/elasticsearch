@@ -50,8 +50,7 @@ import static org.hamcrest.Matchers.notNullValue;
 public class GetIndexIT extends ESIntegTestCase {
     @Override
     protected void setupSuiteScopeCluster() throws Exception {
-        assertAcked(prepareCreate("idx").addAlias(new Alias("alias_idx"))
-                .setSettings(Settings.builder().put("number_of_shards", 1)).get());
+        assertAcked(prepareCreate("idx").addAlias(new Alias("alias_idx")).setSettings(Settings.builder().put("number_of_shards", 1)).get());
         ensureSearchable("idx");
         createIndex("empty_idx");
         ensureSearchable("idx", "empty_idx");
@@ -78,8 +77,12 @@ public class GetIndexIT extends ESIntegTestCase {
     }
 
     public void testUnknownIndexWithAllowNoIndices() {
-        GetIndexResponse response = client().admin().indices().prepareGetIndex()
-            .addIndices("missing_idx").setIndicesOptions(IndicesOptions.LENIENT_EXPAND_OPEN).get();
+        GetIndexResponse response = client().admin()
+            .indices()
+            .prepareGetIndex()
+            .addIndices("missing_idx")
+            .setIndicesOptions(IndicesOptions.LENIENT_EXPAND_OPEN)
+            .get();
         assertThat(response.indices(), notNullValue());
         assertThat(response.indices().length, equalTo(0));
         assertThat(response.mappings(), notNullValue());
@@ -98,8 +101,10 @@ public class GetIndexIT extends ESIntegTestCase {
     }
 
     public void testSimpleMapping() {
-        GetIndexResponse response = runWithRandomFeatureMethod(client().admin().indices().prepareGetIndex().addIndices("idx"),
-                Feature.MAPPINGS);
+        GetIndexResponse response = runWithRandomFeatureMethod(
+            client().admin().indices().prepareGetIndex().addIndices("idx"),
+            Feature.MAPPINGS
+        );
         String[] indices = response.indices();
         assertThat(indices, notNullValue());
         assertThat(indices.length, equalTo(1));
@@ -110,8 +115,10 @@ public class GetIndexIT extends ESIntegTestCase {
     }
 
     public void testSimpleAlias() {
-        GetIndexResponse response = runWithRandomFeatureMethod(client().admin().indices().prepareGetIndex().addIndices("idx"),
-                Feature.ALIASES);
+        GetIndexResponse response = runWithRandomFeatureMethod(
+            client().admin().indices().prepareGetIndex().addIndices("idx"),
+            Feature.ALIASES
+        );
         String[] indices = response.indices();
         assertThat(indices, notNullValue());
         assertThat(indices.length, equalTo(1));
@@ -122,8 +129,10 @@ public class GetIndexIT extends ESIntegTestCase {
     }
 
     public void testSimpleSettings() {
-        GetIndexResponse response = runWithRandomFeatureMethod(client().admin().indices().prepareGetIndex().addIndices("idx"),
-                Feature.SETTINGS);
+        GetIndexResponse response = runWithRandomFeatureMethod(
+            client().admin().indices().prepareGetIndex().addIndices("idx"),
+            Feature.SETTINGS
+        );
         String[] indices = response.indices();
         assertThat(indices, notNullValue());
         assertThat(indices.length, equalTo(1));
@@ -139,8 +148,10 @@ public class GetIndexIT extends ESIntegTestCase {
         for (int i = 0; i < numFeatures; i++) {
             features.add(randomFrom(Feature.values()));
         }
-        GetIndexResponse response = runWithRandomFeatureMethod(client().admin().indices().prepareGetIndex().addIndices("idx"),
-                features.toArray(new Feature[features.size()]));
+        GetIndexResponse response = runWithRandomFeatureMethod(
+            client().admin().indices().prepareGetIndex().addIndices("idx"),
+            features.toArray(new Feature[features.size()])
+        );
         String[] indices = response.indices();
         assertThat(indices, notNullValue());
         assertThat(indices.length, equalTo(1));
@@ -168,8 +179,10 @@ public class GetIndexIT extends ESIntegTestCase {
         for (int i = 0; i < numFeatures; i++) {
             features.add(randomFrom(Feature.values()));
         }
-        GetIndexResponse response = runWithRandomFeatureMethod(client().admin().indices().prepareGetIndex().addIndices("empty_idx"),
-                features.toArray(new Feature[features.size()]));
+        GetIndexResponse response = runWithRandomFeatureMethod(
+            client().admin().indices().prepareGetIndex().addIndices("empty_idx"),
+            features.toArray(new Feature[features.size()])
+        );
         String[] indices = response.indices();
         assertThat(indices, notNullValue());
         assertThat(indices.length, equalTo(1));
@@ -191,8 +204,12 @@ public class GetIndexIT extends ESIntegTestCase {
         for (String block : Arrays.asList(SETTING_BLOCKS_READ, SETTING_BLOCKS_WRITE, SETTING_READ_ONLY, SETTING_READ_ONLY_ALLOW_DELETE)) {
             try {
                 enableIndexBlock("idx", block);
-                GetIndexResponse response = client().admin().indices().prepareGetIndex().addIndices("idx")
-                        .addFeatures(Feature.MAPPINGS, Feature.ALIASES).get();
+                GetIndexResponse response = client().admin()
+                    .indices()
+                    .prepareGetIndex()
+                    .addIndices("idx")
+                    .addFeatures(Feature.MAPPINGS, Feature.ALIASES)
+                    .get();
                 String[] indices = response.indices();
                 assertThat(indices, notNullValue());
                 assertThat(indices.length, equalTo(1));
@@ -206,8 +223,10 @@ public class GetIndexIT extends ESIntegTestCase {
 
         try {
             enableIndexBlock("idx", SETTING_BLOCKS_METADATA);
-            assertBlocked(client().admin().indices().prepareGetIndex().addIndices("idx").addFeatures(Feature.MAPPINGS, Feature.ALIASES),
-                INDEX_METADATA_BLOCK);
+            assertBlocked(
+                client().admin().indices().prepareGetIndex().addIndices("idx").addFeatures(Feature.MAPPINGS, Feature.ALIASES),
+                INDEX_METADATA_BLOCK
+            );
         } finally {
             disableIndexBlock("idx", SETTING_BLOCKS_METADATA);
         }

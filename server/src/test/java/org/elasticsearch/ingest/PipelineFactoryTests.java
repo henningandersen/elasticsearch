@@ -48,8 +48,10 @@ public class PipelineFactoryTests extends ESTestCase {
         Map<String, Object> pipelineConfig = new HashMap<>();
         pipelineConfig.put(Pipeline.DESCRIPTION_KEY, "_description");
         pipelineConfig.put(Pipeline.VERSION_KEY, versionString);
-        pipelineConfig.put(Pipeline.PROCESSORS_KEY,
-                Arrays.asList(Collections.singletonMap("test", processorConfig0), Collections.singletonMap("test", processorConfig1)));
+        pipelineConfig.put(
+            Pipeline.PROCESSORS_KEY,
+            Arrays.asList(Collections.singletonMap("test", processorConfig0), Collections.singletonMap("test", processorConfig1))
+        );
         Map<String, Processor.Factory> processorRegistry = Collections.singletonMap("test", new TestProcessor.Factory());
         Pipeline pipeline = Pipeline.create("_id", pipelineConfig, processorRegistry, scriptService);
         assertThat(pipeline.getId(), equalTo("_id"));
@@ -142,8 +144,7 @@ public class PipelineFactoryTests extends ESTestCase {
         Map<String, Object> pipelineConfig = new HashMap<>();
         pipelineConfig.put(Pipeline.DESCRIPTION_KEY, "_description");
         pipelineConfig.put(Pipeline.VERSION_KEY, versionString);
-        pipelineConfig.put(Pipeline.PROCESSORS_KEY,
-                Collections.singletonList(Collections.singletonMap("test", processorConfig)));
+        pipelineConfig.put(Pipeline.PROCESSORS_KEY, Collections.singletonList(Collections.singletonMap("test", processorConfig)));
 
         Pipeline pipeline = Pipeline.create("_id", pipelineConfig, processorRegistry, scriptService);
         assertThat(pipeline.getId(), equalTo("_id"));
@@ -192,8 +193,11 @@ public class PipelineFactoryTests extends ESTestCase {
     public void testFlattenProcessors() throws Exception {
         TestProcessor testProcessor = new TestProcessor(ingestDocument -> {});
         CompoundProcessor processor1 = new CompoundProcessor(testProcessor, testProcessor);
-        CompoundProcessor processor2 =
-                new CompoundProcessor(false, Collections.singletonList(testProcessor), Collections.singletonList(testProcessor));
+        CompoundProcessor processor2 = new CompoundProcessor(
+            false,
+            Collections.singletonList(testProcessor),
+            Collections.singletonList(testProcessor)
+        );
         Pipeline pipeline = new Pipeline("_id", "_description", version, new CompoundProcessor(processor1, processor2));
         List<Processor> flattened = pipeline.flattenAllProcessors();
         assertThat(flattened.size(), equalTo(4));

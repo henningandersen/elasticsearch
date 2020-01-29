@@ -98,11 +98,12 @@ public class ScriptQuerySearchIT extends ESIntegTestCase {
 
     @Override
     public Settings indexSettings() {
-        return Settings.builder().put(super.indexSettings())
-                // aggressive filter caching so that we can assert on the number of iterations of the script filters
-                .put(IndexModule.INDEX_QUERY_CACHE_ENABLED_SETTING.getKey(), true)
-                .put(IndexModule.INDEX_QUERY_CACHE_EVERYTHING_SETTING.getKey(), true)
-                .build();
+        return Settings.builder()
+            .put(super.indexSettings())
+            // aggressive filter caching so that we can assert on the number of iterations of the script filters
+            .put(IndexModule.INDEX_QUERY_CACHE_ENABLED_SETTING.getKey(), true)
+            .put(IndexModule.INDEX_QUERY_CACHE_EVERYTHING_SETTING.getKey(), true)
+            .build();
     }
 
     public void testCustomScriptBinaryField() throws Exception {
@@ -110,28 +111,29 @@ public class ScriptQuerySearchIT extends ESIntegTestCase {
         final byte[] randomBytesDoc2 = getRandomBytes(16);
 
         assertAcked(
-                client().admin().indices().prepareCreate("my-index")
-                        .setMapping(createMappingSource("binary"))
-                        .setSettings(indexSettings())
+            client().admin().indices().prepareCreate("my-index").setMapping(createMappingSource("binary")).setSettings(indexSettings())
         );
-        client().prepareIndex("my-index").setId("1")
-                .setSource(jsonBuilder().startObject().field("binaryData",
-                        Base64.getEncoder().encodeToString(randomBytesDoc1)).endObject())
-                .get();
+        client().prepareIndex("my-index")
+            .setId("1")
+            .setSource(jsonBuilder().startObject().field("binaryData", Base64.getEncoder().encodeToString(randomBytesDoc1)).endObject())
+            .get();
         flush();
-        client().prepareIndex("my-index").setId("2")
-                .setSource(jsonBuilder().startObject().field("binaryData",
-                        Base64.getEncoder().encodeToString(randomBytesDoc2)).endObject())
-                .get();
+        client().prepareIndex("my-index")
+            .setId("2")
+            .setSource(jsonBuilder().startObject().field("binaryData", Base64.getEncoder().encodeToString(randomBytesDoc2)).endObject())
+            .get();
         flush();
         refresh();
 
         SearchResponse response = client().prepareSearch()
-                .setQuery(scriptQuery(
-                        new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['binaryData'].get(0).length > 15", emptyMap())))
-                .addScriptField("sbinaryData",
-                        new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['binaryData'].get(0).length", emptyMap()))
-                .get();
+            .setQuery(
+                scriptQuery(new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['binaryData'].get(0).length > 15", emptyMap()))
+            )
+            .addScriptField(
+                "sbinaryData",
+                new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['binaryData'].get(0).length", emptyMap())
+            )
+            .get();
 
         assertThat(response.getHits().getTotalHits().value, equalTo(1L));
         assertThat(response.getHits().getAt(0).getId(), equalTo("2"));
@@ -146,39 +148,43 @@ public class ScriptQuerySearchIT extends ESIntegTestCase {
     }
 
     private XContentBuilder createMappingSource(String fieldType) throws IOException {
-        return XContentFactory.jsonBuilder().startObject().startObject("_doc")
-                .startObject("properties")
-                .startObject("binaryData")
-                .field("type", fieldType)
-                .field("doc_values", "true")
-                .endObject()
-                .endObject()
-                .endObject().endObject();
+        return XContentFactory.jsonBuilder()
+            .startObject()
+            .startObject("_doc")
+            .startObject("properties")
+            .startObject("binaryData")
+            .field("type", fieldType)
+            .field("doc_values", "true")
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject();
     }
 
     public void testCustomScriptBoost() throws Exception {
         createIndex("test");
-        client().prepareIndex("test").setId("1")
-                .setSource(jsonBuilder().startObject().field("test", "value beck").field("num1", 1.0f).endObject())
-                .get();
+        client().prepareIndex("test")
+            .setId("1")
+            .setSource(jsonBuilder().startObject().field("test", "value beck").field("num1", 1.0f).endObject())
+            .get();
         flush();
-        client().prepareIndex("test").setId("2")
-                .setSource(jsonBuilder().startObject().field("test", "value beck").field("num1", 2.0f).endObject())
-                .get();
+        client().prepareIndex("test")
+            .setId("2")
+            .setSource(jsonBuilder().startObject().field("test", "value beck").field("num1", 2.0f).endObject())
+            .get();
         flush();
-        client().prepareIndex("test").setId("3")
-                .setSource(jsonBuilder().startObject().field("test", "value beck").field("num1", 3.0f).endObject())
-                .get();
+        client().prepareIndex("test")
+            .setId("3")
+            .setSource(jsonBuilder().startObject().field("test", "value beck").field("num1", 3.0f).endObject())
+            .get();
         refresh();
 
         logger.info("running doc['num1'].value > 1");
         SearchResponse response = client().prepareSearch()
-                .setQuery(scriptQuery(
-                        new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value > 1", Collections.emptyMap())))
-                .addSort("num1", SortOrder.ASC)
-                .addScriptField("sNum1",
-                        new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value", Collections.emptyMap()))
-                .get();
+            .setQuery(scriptQuery(new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value > 1", Collections.emptyMap())))
+            .addSort("num1", SortOrder.ASC)
+            .addScriptField("sNum1", new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value", Collections.emptyMap()))
+            .get();
 
         assertThat(response.getHits().getTotalHits().value, equalTo(2L));
         assertThat(response.getHits().getAt(0).getId(), equalTo("2"));
@@ -190,13 +196,11 @@ public class ScriptQuerySearchIT extends ESIntegTestCase {
         params.put("param1", 2);
 
         logger.info("running doc['num1'].value > param1");
-        response = client()
-                .prepareSearch()
-                .setQuery(scriptQuery(new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value > param1", params)))
-                .addSort("num1", SortOrder.ASC)
-                .addScriptField("sNum1",
-                        new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value", Collections.emptyMap()))
-                .get();
+        response = client().prepareSearch()
+            .setQuery(scriptQuery(new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value > param1", params)))
+            .addSort("num1", SortOrder.ASC)
+            .addScriptField("sNum1", new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value", Collections.emptyMap()))
+            .get();
 
         assertThat(response.getHits().getTotalHits().value, equalTo(1L));
         assertThat(response.getHits().getAt(0).getId(), equalTo("3"));
@@ -205,13 +209,11 @@ public class ScriptQuerySearchIT extends ESIntegTestCase {
         params = new HashMap<>();
         params.put("param1", -1);
         logger.info("running doc['num1'].value > param1");
-        response = client()
-                .prepareSearch()
-                .setQuery(scriptQuery(new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value > param1", params)))
-                .addSort("num1", SortOrder.ASC)
-                .addScriptField("sNum1",
-                        new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value", Collections.emptyMap()))
-                .get();
+        response = client().prepareSearch()
+            .setQuery(scriptQuery(new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value > param1", params)))
+            .addSort("num1", SortOrder.ASC)
+            .addScriptField("sNum1", new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value", Collections.emptyMap()))
+            .get();
 
         assertThat(response.getHits().getTotalHits().value, equalTo(3L));
         assertThat(response.getHits().getAt(0).getId(), equalTo("1"));

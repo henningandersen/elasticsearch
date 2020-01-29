@@ -57,20 +57,18 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
     public void testPrimaryShardNoDecisionOnIndexCreation() throws IOException {
         final String indexName = "test-idx";
         Settings settings = Settings.builder()
-                                .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
-                                .build();
+            .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
+            .build();
         AllocationDecider decider = new TestAllocateDecision(Decision.NO);
         // if deciders say NO to allocating a primary shard, then the cluster health should be RED
-        runAllocationTest(
-            settings, indexName, Collections.singleton(decider), ClusterHealthStatus.RED
-        );
+        runAllocationTest(settings, indexName, Collections.singleton(decider), ClusterHealthStatus.RED);
     }
 
     public void testPrimaryShardThrottleDecisionOnIndexCreation() throws IOException {
         final String indexName = "test-idx";
         Settings settings = Settings.builder()
-                                .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
-                                .build();
+            .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
+            .build();
         AllocationDecider decider = new TestAllocateDecision(Decision.THROTTLE) {
             // the only allocation decider that implements this is ShardsLimitAllocationDecider and it always
             // returns only YES or NO, never THROTTLE
@@ -80,16 +78,14 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
             }
         };
         // if deciders THROTTLE allocating a primary shard, stay in YELLOW state
-        runAllocationTest(
-            settings, indexName, Collections.singleton(decider), ClusterHealthStatus.YELLOW
-        );
+        runAllocationTest(settings, indexName, Collections.singleton(decider), ClusterHealthStatus.YELLOW);
     }
 
     public void testPrimaryShardYesDecisionOnIndexCreation() throws IOException {
         final String indexName = "test-idx";
         Settings settings = Settings.builder()
-                                .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
-                                .build();
+            .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toAbsolutePath().toString())
+            .build();
         AllocationDecider decider = new TestAllocateDecision(Decision.YES) {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
@@ -101,9 +97,7 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
             }
         };
         // if deciders say YES to allocating primary shards, stay in YELLOW state
-        ClusterState clusterState = runAllocationTest(
-            settings, indexName, Collections.singleton(decider), ClusterHealthStatus.YELLOW
-        );
+        ClusterState clusterState = runAllocationTest(settings, indexName, Collections.singleton(decider), ClusterHealthStatus.YELLOW);
         // make sure primaries are initialized
         RoutingTable routingTable = clusterState.routingTable();
         for (IndexShardRoutingTable indexShardRoutingTable : routingTable.index(indexName)) {
@@ -111,10 +105,12 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
         }
     }
 
-    private ClusterState runAllocationTest(final Settings settings,
-                                           final String indexName,
-                                           final Set<AllocationDecider> allocationDeciders,
-                                           final ClusterHealthStatus expectedStatus) throws IOException {
+    private ClusterState runAllocationTest(
+        final Settings settings,
+        final String indexName,
+        final Set<AllocationDecider> allocationDeciders,
+        final ClusterHealthStatus expectedStatus
+    ) throws IOException {
 
         final String clusterName = "test-cluster";
         final AllocationService allocationService = newAllocationService(settings, allocationDeciders);
@@ -122,20 +118,15 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
         logger.info("Building initial routing table");
         final int numShards = randomIntBetween(1, 5);
         MetaData metaData = MetaData.builder()
-                                .put(IndexMetaData.builder(indexName)
-                                         .settings(settings(Version.CURRENT))
-                                         .numberOfShards(numShards)
-                                         .numberOfReplicas(1))
-                                .build();
+            .put(IndexMetaData.builder(indexName).settings(settings(Version.CURRENT)).numberOfShards(numShards).numberOfReplicas(1))
+            .build();
 
-        RoutingTable routingTable = RoutingTable.builder()
-                                        .addAsNew(metaData.index(indexName))
-                                        .build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metaData.index(indexName)).build();
 
         ClusterState clusterState = ClusterState.builder(new ClusterName(clusterName))
-                                        .metaData(metaData)
-                                        .routingTable(routingTable)
-                                        .build();
+            .metaData(metaData)
+            .routingTable(routingTable)
+            .build();
 
         logger.info("--> adding nodes");
         // we need at least as many nodes as shards for the THROTTLE case, because
@@ -159,10 +150,12 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
     }
 
     private static AllocationService newAllocationService(Settings settings, Set<AllocationDecider> deciders) {
-        return new AllocationService(new AllocationDeciders(deciders),
-                                     new TestGatewayAllocator(),
-                                     new BalancedShardsAllocator(settings),
-                                     EmptyClusterInfoService.INSTANCE);
+        return new AllocationService(
+            new AllocationDeciders(deciders),
+            new TestGatewayAllocator(),
+            new BalancedShardsAllocator(settings),
+            EmptyClusterInfoService.INSTANCE
+        );
     }
 
 }

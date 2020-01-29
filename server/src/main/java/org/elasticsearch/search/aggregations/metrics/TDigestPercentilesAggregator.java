@@ -31,16 +31,19 @@ import java.util.Map;
 
 class TDigestPercentilesAggregator extends AbstractTDigestPercentilesAggregator {
 
-    TDigestPercentilesAggregator(String name,
-                                 ValuesSource valuesSource,
-                                    SearchContext context,
-                                    Aggregator parent,
-                                    double[] percents,
-                                    double compression,
-                                    boolean keyed,
-                                    DocValueFormat formatter,
-                                    List<PipelineAggregator> pipelineAggregators,
-                                    Map<String, Object> metaData) throws IOException {
+    TDigestPercentilesAggregator(
+        String name,
+        ValuesSource valuesSource,
+        SearchContext context,
+        Aggregator parent,
+        double[] percents,
+        double compression,
+        boolean keyed,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, valuesSource, context, parent, percents, compression, keyed, formatter, pipelineAggregators, metaData);
     }
 
@@ -66,7 +69,14 @@ class TDigestPercentilesAggregator extends AbstractTDigestPercentilesAggregator 
 
     @Override
     public InternalAggregation buildEmptyAggregation() {
-        return new InternalTDigestPercentiles(name, keys, new TDigestState(compression), keyed,
-            formatter, pipelineAggregators(), metaData());
+        return new InternalTDigestPercentiles(
+            name,
+            keys,
+            new TDigestState(compression),
+            keyed,
+            formatter,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 }

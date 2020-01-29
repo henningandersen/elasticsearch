@@ -42,8 +42,7 @@ import java.util.List;
 public class AggregationPhase implements SearchPhase {
 
     @Inject
-    public AggregationPhase() {
-    }
+    public AggregationPhase() {}
 
     @Override
     public void preProcess(SearchContext context) {
@@ -61,11 +60,14 @@ public class AggregationPhase implements SearchPhase {
                 context.aggregations().aggregators(aggregators);
                 if (!collectors.isEmpty()) {
                     Collector collector = MultiBucketCollector.wrap(collectors);
-                    ((BucketCollector)collector).preCollection();
+                    ((BucketCollector) collector).preCollection();
                     if (context.getProfilers() != null) {
-                        collector = new InternalProfileCollector(collector, CollectorResult.REASON_AGGREGATION,
-                                // TODO: report on child aggs as well
-                                Collections.emptyList());
+                        collector = new InternalProfileCollector(
+                            collector,
+                            CollectorResult.REASON_AGGREGATION,
+                            // TODO: report on child aggs as well
+                            Collections.emptyList()
+                        );
                     }
                     context.queryCollectors().put(AggregationPhase.class, collector);
                 }
@@ -106,9 +108,11 @@ public class AggregationPhase implements SearchPhase {
                     collector = globalsCollector;
                 } else {
                     InternalProfileCollector profileCollector = new InternalProfileCollector(
-                            globalsCollector, CollectorResult.REASON_AGGREGATION_GLOBAL,
-                            // TODO: report on sub collectors
-                            Collections.emptyList());
+                        globalsCollector,
+                        CollectorResult.REASON_AGGREGATION_GLOBAL,
+                        // TODO: report on sub collectors
+                        Collections.emptyList()
+                    );
                     collector = profileCollector;
                     // start a new profile with this collector
                     context.getProfilers().addQueryProfiler().setCollector(profileCollector);
@@ -138,9 +142,14 @@ public class AggregationPhase implements SearchPhase {
             if (pipelineAggregator instanceof SiblingPipelineAggregator) {
                 siblingPipelineAggregators.add((SiblingPipelineAggregator) pipelineAggregator);
             } else {
-                throw new AggregationExecutionException("Invalid pipeline aggregation named [" + pipelineAggregator.name()
-                    + "] of type [" + pipelineAggregator.getWriteableName() + "]. Only sibling pipeline aggregations are "
-                    + "allowed at the top level");
+                throw new AggregationExecutionException(
+                    "Invalid pipeline aggregation named ["
+                        + pipelineAggregator.name()
+                        + "] of type ["
+                        + pipelineAggregator.getWriteableName()
+                        + "]. Only sibling pipeline aggregations are "
+                        + "allowed at the top level"
+                );
             }
         }
         context.queryResult().aggregations(new InternalAggregations(aggregations, siblingPipelineAggregators));

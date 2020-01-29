@@ -88,8 +88,14 @@ public abstract class AliasAction {
         /**
          * Build the operation.
          */
-        public Add(String index, String alias, @Nullable String filter, @Nullable String indexRouting,
-                   @Nullable String searchRouting, @Nullable Boolean writeIndex) {
+        public Add(
+            String index,
+            String alias,
+            @Nullable String filter,
+            @Nullable String indexRouting,
+            @Nullable String searchRouting,
+            @Nullable Boolean writeIndex
+        ) {
             super(index);
             if (false == Strings.hasText(alias)) {
                 throw new IllegalArgumentException("[alias] is required");
@@ -121,8 +127,12 @@ public abstract class AliasAction {
         boolean apply(NewAliasValidator aliasValidator, MetaData.Builder metadata, IndexMetaData index) {
             aliasValidator.validate(alias, indexRouting, filter, writeIndex);
 
-            AliasMetaData newAliasMd = AliasMetaData.newAliasMetaDataBuilder(alias).filter(filter).indexRouting(indexRouting)
-                    .searchRouting(searchRouting).writeIndex(writeIndex).build();
+            AliasMetaData newAliasMd = AliasMetaData.newAliasMetaDataBuilder(alias)
+                .filter(filter)
+                .indexRouting(indexRouting)
+                .searchRouting(searchRouting)
+                .writeIndex(writeIndex)
+                .build();
 
             // Check if this alias already exists
             AliasMetaData currentAliasMd = index.getAliases().get(alias);

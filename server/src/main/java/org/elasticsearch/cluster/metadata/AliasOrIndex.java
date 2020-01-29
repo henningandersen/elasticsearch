@@ -97,7 +97,6 @@ public interface AliasOrIndex {
             return referenceIndexMetaDatas;
         }
 
-
         @Nullable
         public IndexMetaData getWriteIndex() {
             return writeIndex.get();
@@ -110,7 +109,7 @@ public interface AliasOrIndex {
          * and filters)
          */
         public Iterable<Tuple<String, AliasMetaData>> getConcreteIndexAndAliasMetaDatas() {
-            return () -> new Iterator<Tuple<String,AliasMetaData>>() {
+            return () -> new Iterator<Tuple<String, AliasMetaData>>() {
 
                 int index = 0;
 
@@ -140,18 +139,23 @@ public interface AliasOrIndex {
                 .filter(idxMeta -> Boolean.TRUE.equals(idxMeta.getAliases().get(aliasName).writeIndex()))
                 .collect(Collectors.toList());
 
-            if (writeIndices.isEmpty() && referenceIndexMetaDatas.size() == 1
-                    && referenceIndexMetaDatas.get(0).getAliases().get(aliasName).writeIndex() == null) {
+            if (writeIndices.isEmpty()
+                && referenceIndexMetaDatas.size() == 1
+                && referenceIndexMetaDatas.get(0).getAliases().get(aliasName).writeIndex() == null) {
                 writeIndices.add(referenceIndexMetaDatas.get(0));
             }
 
             if (writeIndices.size() == 1) {
                 writeIndex.set(writeIndices.get(0));
             } else if (writeIndices.size() > 1) {
-                List<String> writeIndicesStrings = writeIndices.stream()
-                    .map(i -> i.getIndex().getName()).collect(Collectors.toList());
-                throw new IllegalStateException("alias [" + aliasName + "] has more than one write index [" +
-                    Strings.collectionToCommaDelimitedString(writeIndicesStrings) + "]");
+                List<String> writeIndicesStrings = writeIndices.stream().map(i -> i.getIndex().getName()).collect(Collectors.toList());
+                throw new IllegalStateException(
+                    "alias ["
+                        + aliasName
+                        + "] has more than one write index ["
+                        + Strings.collectionToCommaDelimitedString(writeIndicesStrings)
+                        + "]"
+                );
             }
         }
     }

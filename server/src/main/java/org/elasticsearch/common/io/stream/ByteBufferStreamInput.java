@@ -138,6 +138,5 @@ public class ByteBufferStreamInput extends StreamInput {
     }
 
     @Override
-    public void close() throws IOException {
-    }
+    public void close() throws IOException {}
 }

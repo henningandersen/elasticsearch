@@ -32,8 +32,13 @@ public class AvgBucketPipelineAggregator extends BucketMetricsPipelineAggregator
     private int count = 0;
     private double sum = 0;
 
-    AvgBucketPipelineAggregator(String name, String[] bucketsPaths, GapPolicy gapPolicy, DocValueFormat format,
-            Map<String, Object> metaData) {
+    AvgBucketPipelineAggregator(
+        String name,
+        String[] bucketsPaths,
+        GapPolicy gapPolicy,
+        DocValueFormat format,
+        Map<String, Object> metaData
+    ) {
         super(name, bucketsPaths, gapPolicy, format, metaData);
     }
 

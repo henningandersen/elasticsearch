@@ -33,13 +33,26 @@ import java.util.Map;
  */
 public abstract class NonCollectingAggregator extends AggregatorBase {
 
-    protected NonCollectingAggregator(String name, SearchContext context, Aggregator parent, AggregatorFactories subFactories,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    protected NonCollectingAggregator(
+        String name,
+        SearchContext context,
+        Aggregator parent,
+        AggregatorFactories subFactories,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, subFactories, context, parent, pipelineAggregators, metaData);
     }
 
-    protected NonCollectingAggregator(String name, SearchContext context, Aggregator parent,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    protected NonCollectingAggregator(
+        String name,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         this(name, context, parent, AggregatorFactories.EMPTY, pipelineAggregators, metaData);
     }
 

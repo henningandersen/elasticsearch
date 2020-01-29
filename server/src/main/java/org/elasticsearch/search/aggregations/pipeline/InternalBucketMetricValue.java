@@ -40,8 +40,14 @@ public class InternalBucketMetricValue extends InternalNumericMetricsAggregation
     private double value;
     private String[] keys;
 
-    public InternalBucketMetricValue(String name, String[] keys, double value, DocValueFormat formatter,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    public InternalBucketMetricValue(
+        String name,
+        String[] keys,
+        double value,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.keys = keys;
         this.value = value;
@@ -128,7 +134,6 @@ public class InternalBucketMetricValue extends InternalNumericMetricsAggregation
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         InternalBucketMetricValue other = (InternalBucketMetricValue) obj;
-        return Objects.equals(value, other.value)
-                && Arrays.equals(keys, other.keys);
+        return Objects.equals(value, other.value) && Arrays.equals(keys, other.keys);
     }
 }

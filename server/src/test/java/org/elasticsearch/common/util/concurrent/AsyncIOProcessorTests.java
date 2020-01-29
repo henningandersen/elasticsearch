@@ -173,8 +173,7 @@ public class AsyncIOProcessorTests extends ESTestCase {
     public void testNullArguments() {
         AsyncIOProcessor<Object> processor = new AsyncIOProcessor<Object>(logger, scaledRandomIntBetween(1, 2024), threadContext) {
             @Override
-            protected void write(List<Tuple<Object, Consumer<Exception>>> candidates) throws IOException {
-            }
+            protected void write(List<Tuple<Object, Consumer<Exception>>> candidates) throws IOException {}
         };
 
         expectThrows(NullPointerException.class, () -> processor.put(null, (e) -> {}));
@@ -189,8 +188,11 @@ public class AsyncIOProcessorTests extends ESTestCase {
         AtomicInteger notified = new AtomicInteger(0);
 
         CountDownLatch writeDelay = new CountDownLatch(1);
-        AsyncIOProcessor<Object> processor = new AsyncIOProcessor<Object>(logger, scaledRandomIntBetween(threadCount - 1, 2024),
-            threadContext) {
+        AsyncIOProcessor<Object> processor = new AsyncIOProcessor<Object>(
+            logger,
+            scaledRandomIntBetween(threadCount - 1, 2024),
+            threadContext
+        ) {
             @Override
             protected void write(List<Tuple<Object, Consumer<Exception>>> candidates) throws IOException {
                 try {

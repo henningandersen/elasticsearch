@@ -51,27 +51,36 @@ public class GeoShapeFieldMapper extends AbstractGeometryFieldMapper<Geometry, G
 
     public static class Builder extends AbstractGeometryFieldMapper.Builder<AbstractGeometryFieldMapper.Builder, GeoShapeFieldMapper> {
         public Builder(String name) {
-            super (name, new GeoShapeFieldType(), new GeoShapeFieldType());
+            super(name, new GeoShapeFieldType(), new GeoShapeFieldType());
         }
 
         @Override
         public GeoShapeFieldMapper build(BuilderContext context) {
             setupFieldType(context);
-            return new GeoShapeFieldMapper(name, fieldType, defaultFieldType, ignoreMalformed(context), coerce(context),
-                ignoreZValue(), context.indexSettings(), multiFieldsBuilder.build(this, context), copyTo);
+            return new GeoShapeFieldMapper(
+                name,
+                fieldType,
+                defaultFieldType,
+                ignoreMalformed(context),
+                coerce(context),
+                ignoreZValue(),
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                copyTo
+            );
         }
 
         @Override
         protected void setupFieldType(BuilderContext context) {
             super.setupFieldType(context);
 
-            GeoShapeFieldType fieldType = (GeoShapeFieldType)fieldType();
+            GeoShapeFieldType fieldType = (GeoShapeFieldType) fieldType();
             boolean orientation = fieldType.orientation == ShapeBuilder.Orientation.RIGHT;
 
             GeometryParser geometryParser = new GeometryParser(orientation, coerce(context).value(), ignoreZValue().value());
 
             fieldType.setGeometryIndexer(new GeoShapeIndexer(orientation, fieldType.name()));
-            fieldType.setGeometryParser( (parser, mapper) -> geometryParser.parse(parser));
+            fieldType.setGeometryParser((parser, mapper) -> geometryParser.parse(parser));
             fieldType.setGeometryQueryBuilder(new VectorGeoShapeQueryProcessor());
         }
     }
@@ -96,21 +105,37 @@ public class GeoShapeFieldMapper extends AbstractGeometryFieldMapper<Geometry, G
         }
     }
 
-    public GeoShapeFieldMapper(String simpleName, MappedFieldType fieldType, MappedFieldType defaultFieldType,
-                               Explicit<Boolean> ignoreMalformed, Explicit<Boolean> coerce,
-                               Explicit<Boolean> ignoreZValue, Settings indexSettings,
-                               MultiFields multiFields, CopyTo copyTo) {
-        super(simpleName, fieldType, defaultFieldType, ignoreMalformed, coerce, ignoreZValue, indexSettings,
-            multiFields, copyTo);
+    public GeoShapeFieldMapper(
+        String simpleName,
+        MappedFieldType fieldType,
+        MappedFieldType defaultFieldType,
+        Explicit<Boolean> ignoreMalformed,
+        Explicit<Boolean> coerce,
+        Explicit<Boolean> ignoreZValue,
+        Settings indexSettings,
+        MultiFields multiFields,
+        CopyTo copyTo
+    ) {
+        super(simpleName, fieldType, defaultFieldType, ignoreMalformed, coerce, ignoreZValue, indexSettings, multiFields, copyTo);
     }
 
     @Override
     protected void doMerge(Mapper mergeWith) {
         if (mergeWith instanceof LegacyGeoShapeFieldMapper) {
             LegacyGeoShapeFieldMapper legacy = (LegacyGeoShapeFieldMapper) mergeWith;
-            throw new IllegalArgumentException("[" + fieldType().name() + "] with field mapper [" + fieldType().typeName() + "] " +
-                "using [BKD] strategy cannot be merged with " + "[" + legacy.fieldType().typeName() + "] with [" +
-                legacy.fieldType().strategy() + "] strategy");
+            throw new IllegalArgumentException(
+                "["
+                    + fieldType().name()
+                    + "] with field mapper ["
+                    + fieldType().typeName()
+                    + "] "
+                    + "using [BKD] strategy cannot be merged with "
+                    + "["
+                    + legacy.fieldType().typeName()
+                    + "] with ["
+                    + legacy.fieldType().strategy()
+                    + "] strategy"
+            );
         }
         super.doMerge(mergeWith);
     }

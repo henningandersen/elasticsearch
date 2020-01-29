@@ -19,13 +19,13 @@
 package org.elasticsearch.cluster.coordination;
 
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.cluster.coordination.ClusterStatePublisher;
 import org.elasticsearch.common.io.stream.StreamInput;
 
 import java.io.IOException;
 
 /**
- * Thrown when failing to publish a cluster state. See {@link ClusterStatePublisher} for more details.
+ * Thrown when failing to publish a cluster state. See {@link
+ * org.elasticsearch.cluster.coordination.ClusterStatePublisher} for more details.
  */
 public class FailedToCommitClusterStateException extends ElasticsearchException {
 

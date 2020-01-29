@@ -39,8 +39,7 @@ public class RecoveryStats implements ToXContentFragment, Writeable {
     private final AtomicInteger currentAsTarget = new AtomicInteger();
     private final AtomicLong throttleTimeInNanos = new AtomicLong();
 
-    public RecoveryStats() {
-    }
+    public RecoveryStats() {}
 
     public RecoveryStats(StreamInput in) throws IOException {
         currentAsSource.set(in.readVInt());
@@ -130,7 +129,12 @@ public class RecoveryStats implements ToXContentFragment, Writeable {
 
     @Override
     public String toString() {
-        return "recoveryStats, currentAsSource [" + currentAsSource() + "],currentAsTarget ["
-                + currentAsTarget() + "], throttle [" + throttleTime() + "]";
+        return "recoveryStats, currentAsSource ["
+            + currentAsSource()
+            + "],currentAsTarget ["
+            + currentAsTarget()
+            + "], throttle ["
+            + throttleTime()
+            + "]";
     }
 }

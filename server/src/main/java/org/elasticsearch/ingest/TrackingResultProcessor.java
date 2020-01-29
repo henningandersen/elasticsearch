@@ -46,30 +46,39 @@ public final class TrackingResultProcessor implements Processor {
         if (actualProcessor instanceof PipelineProcessor) {
             PipelineProcessor pipelineProcessor = ((PipelineProcessor) actualProcessor);
             Pipeline pipeline = pipelineProcessor.getPipeline(ingestDocument);
-            //runtime check for cycles against a copy of the document. This is needed to properly handle conditionals around pipelines
+            // runtime check for cycles against a copy of the document. This is needed to properly handle conditionals around pipelines
             IngestDocument ingestDocumentCopy = new IngestDocument(ingestDocument);
-            ingestDocumentCopy.executePipeline(pipelineProcessor.getPipeline(ingestDocument), (result, e) -> {
-                // do nothing, let the tracking processors throw the exception while recording the path up to the failure
-                if (e instanceof ElasticsearchException) {
-                    ElasticsearchException elasticsearchException = (ElasticsearchException) e;
-                    //else do nothing, let the tracking processors throw the exception while recording the path up to the failure
-                    if (elasticsearchException.getCause() instanceof IllegalStateException) {
-                        if (ignoreFailure) {
-                            processorResultList.add(new SimulateProcessorResult(pipelineProcessor.getTag(),
-                                new IngestDocument(ingestDocument), e));
-                        } else {
-                            processorResultList.add(new SimulateProcessorResult(pipelineProcessor.getTag(), e));
+            ingestDocumentCopy.executePipeline(
+                pipelineProcessor.getPipeline(ingestDocument),
+                (result, e) -> {
+                    // do nothing, let the tracking processors throw the exception while recording the path up to the failure
+                    if (e instanceof ElasticsearchException) {
+                        ElasticsearchException elasticsearchException = (ElasticsearchException) e;
+                        // else do nothing, let the tracking processors throw the exception while recording the path up to the failure
+                        if (elasticsearchException.getCause() instanceof IllegalStateException) {
+                            if (ignoreFailure) {
+                                processorResultList.add(
+                                    new SimulateProcessorResult(pipelineProcessor.getTag(), new IngestDocument(ingestDocument), e)
+                                );
+                            } else {
+                                processorResultList.add(new SimulateProcessorResult(pipelineProcessor.getTag(), e));
+                            }
+                            handler.accept(null, elasticsearchException);
                         }
-                        handler.accept(null, elasticsearchException);
+                    } else {
+                        // now that we know that there are no cycles between pipelines, decorate the processors for this pipeline and
+                        // execute it
+                        CompoundProcessor verbosePipelineProcessor = decorate(pipeline.getCompoundProcessor(), processorResultList);
+                        Pipeline verbosePipeline = new Pipeline(
+                            pipeline.getId(),
+                            pipeline.getDescription(),
+                            pipeline.getVersion(),
+                            verbosePipelineProcessor
+                        );
+                        ingestDocument.executePipeline(verbosePipeline, handler);
                     }
-                } else {
-                    //now that we know that there are no cycles between pipelines, decorate the processors for this pipeline and execute it
-                    CompoundProcessor verbosePipelineProcessor = decorate(pipeline.getCompoundProcessor(), processorResultList);
-                    Pipeline verbosePipeline = new Pipeline(pipeline.getId(), pipeline.getDescription(), pipeline.getVersion(),
-                        verbosePipelineProcessor);
-                    ingestDocument.executePipeline(verbosePipeline, handler);
                 }
-            });
+            );
             return;
         }
 
@@ -144,4 +153,3 @@ public final class TrackingResultProcessor implements Processor {
         return new CompoundProcessor(compoundProcessor.isIgnoreFailure(), processors, onFailureProcessors);
     }
 }
-

@@ -48,7 +48,7 @@ public class SnapshotFiles {
      * @param snapshot   snapshot name
      * @param indexFiles index files
      */
-    public SnapshotFiles(String snapshot, List<FileInfo> indexFiles ) {
+    public SnapshotFiles(String snapshot, List<FileInfo> indexFiles) {
         this.snapshot = snapshot;
         this.indexFiles = indexFiles;
     }
@@ -78,7 +78,7 @@ public class SnapshotFiles {
     private FileInfo findPhysicalIndexFile(String physicalName) {
         if (physicalFiles == null) {
             Map<String, FileInfo> files = new HashMap<>();
-            for(FileInfo fileInfo : indexFiles) {
+            for (FileInfo fileInfo : indexFiles) {
                 files.put(fileInfo.physicalName(), fileInfo);
             }
             this.physicalFiles = files;

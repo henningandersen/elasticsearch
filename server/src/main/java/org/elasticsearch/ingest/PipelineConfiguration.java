@@ -56,6 +56,7 @@ public final class PipelineConfiguration extends AbstractDiffable<PipelineConfig
     public static ContextParser<Void, PipelineConfiguration> getParser() {
         return (parser, context) -> PARSER.apply(parser, null).build();
     }
+
     private static class Builder {
 
         private String id;

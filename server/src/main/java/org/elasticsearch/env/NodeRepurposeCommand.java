@@ -103,9 +103,12 @@ public class NodeRepurposeCommand extends ElasticsearchNodeCommand {
             return;
         }
 
-        final Set<String> indexUUIDs = Sets.union(indexUUIDsFor(indexPaths),
+        final Set<String> indexUUIDs = Sets.union(
+            indexUUIDsFor(indexPaths),
             StreamSupport.stream(metaData.indices().values().spliterator(), false)
-                .map(imd -> imd.value.getIndexUUID()).collect(Collectors.toSet()));
+                .map(imd -> imd.value.getIndexUUID())
+                .collect(Collectors.toSet())
+        );
 
         outputVerboseInformation(terminal, indexPaths, indexUUIDs, metaData);
 
@@ -172,6 +175,7 @@ public class NodeRepurposeCommand extends ElasticsearchNodeCommand {
             terminal.println("Use -v to see list of paths and indices affected");
         }
     }
+
     private String toIndexName(String uuid, MetaData metaData) {
         if (metaData != null) {
             for (ObjectObjectCursor<String, IndexMetaData> indexMetaData : metaData.indices()) {
@@ -188,8 +192,7 @@ public class NodeRepurposeCommand extends ElasticsearchNodeCommand {
     }
 
     static String noMasterMessage(int indexes, int shards, int indexMetaData) {
-        return "Found " + indexes + " indices ("
-                + shards + " shards and " + indexMetaData + " index meta data) to clean up";
+        return "Found " + indexes + " indices (" + shards + " shards and " + indexMetaData + " index meta data) to clean up";
     }
 
     static String shardMessage(int shards, int indices) {
@@ -216,7 +219,7 @@ public class NodeRepurposeCommand extends ElasticsearchNodeCommand {
         return Arrays.stream(paths).flatMap(Collection::stream).map(Path::getParent).collect(Collectors.toSet());
     }
 
-    //package-private for testing
+    // package-private for testing
     OptionParser getParser() {
         return parser;
     }

@@ -42,15 +42,18 @@ public class AbstractRangeAggregatorFactory<R extends Range> extends ValuesSourc
     private final R[] ranges;
     private final boolean keyed;
 
-    public AbstractRangeAggregatorFactory(String name,
-                                            ValuesSourceConfig<Numeric> config,
-                                            R[] ranges,
-                                            boolean keyed,
-                                            InternalRange.Factory<?, ?> rangeFactory,
-                                            QueryShardContext queryShardContext,
-                                            AggregatorFactory parent,
-                                            AggregatorFactories.Builder subFactoriesBuilder,
-                                            Map<String, Object> metaData) throws IOException {
+    public AbstractRangeAggregatorFactory(
+        String name,
+        ValuesSourceConfig<Numeric> config,
+        R[] ranges,
+        boolean keyed,
+        InternalRange.Factory<?, ?> rangeFactory,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.ranges = ranges;
         this.keyed = keyed;
@@ -58,23 +61,37 @@ public class AbstractRangeAggregatorFactory<R extends Range> extends ValuesSourc
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return new Unmapped<>(name, ranges, keyed, config.format(), searchContext, parent, rangeFactory, pipelineAggregators, metaData);
     }
 
     @Override
-    protected Aggregator doCreateInternal(Numeric valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        return new RangeAggregator(name, factories, valuesSource, config.format(), rangeFactory, ranges, keyed, searchContext, parent,
-                pipelineAggregators, metaData);
+    protected Aggregator doCreateInternal(
+        Numeric valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new RangeAggregator(
+            name,
+            factories,
+            valuesSource,
+            config.format(),
+            rangeFactory,
+            ranges,
+            keyed,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
-
 
 }

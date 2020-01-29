@@ -68,18 +68,20 @@ public class PeerRecoverySourceService extends AbstractLifecycleComponent implem
     final OngoingRecoveries ongoingRecoveries = new OngoingRecoveries();
 
     @Inject
-    public PeerRecoverySourceService(TransportService transportService, IndicesService indicesService,
-                                     RecoverySettings recoverySettings) {
+    public PeerRecoverySourceService(TransportService transportService, IndicesService indicesService, RecoverySettings recoverySettings) {
         this.transportService = transportService;
         this.indicesService = indicesService;
         this.recoverySettings = recoverySettings;
-        transportService.registerRequestHandler(Actions.START_RECOVERY, ThreadPool.Names.GENERIC, StartRecoveryRequest::new,
-            new StartRecoveryTransportRequestHandler());
+        transportService.registerRequestHandler(
+            Actions.START_RECOVERY,
+            ThreadPool.Names.GENERIC,
+            StartRecoveryRequest::new,
+            new StartRecoveryTransportRequestHandler()
+        );
     }
 
     @Override
-    protected void doStart() {
-    }
+    protected void doStart() {}
 
     @Override
     protected void doStop() {
@@ -87,12 +89,10 @@ public class PeerRecoverySourceService extends AbstractLifecycleComponent implem
     }
 
     @Override
-    protected void doClose() {
-    }
+    protected void doClose() {}
 
     @Override
-    public void beforeIndexShardClosed(ShardId shardId, @Nullable IndexShard indexShard,
-                                       Settings indexSettings) {
+    public void beforeIndexShardClosed(ShardId shardId, @Nullable IndexShard indexShard, Settings indexSettings) {
         if (indexShard != null) {
             ongoingRecoveries.cancel(indexShard, "shard is closed");
         }
@@ -108,16 +108,23 @@ public class PeerRecoverySourceService extends AbstractLifecycleComponent implem
             throw new DelayRecoveryException("source shard [" + routingEntry + "] is not an active primary");
         }
 
-        if (request.isPrimaryRelocation() && (routingEntry.relocating() == false ||
-            routingEntry.relocatingNodeId().equals(request.targetNode().getId()) == false)) {
-            logger.debug("delaying recovery of {} as source shard is not marked yet as relocating to {}",
-                request.shardId(), request.targetNode());
+        if (request.isPrimaryRelocation()
+            && (routingEntry.relocating() == false || routingEntry.relocatingNodeId().equals(request.targetNode().getId()) == false)) {
+            logger.debug(
+                "delaying recovery of {} as source shard is not marked yet as relocating to {}",
+                request.shardId(),
+                request.targetNode()
+            );
             throw new DelayRecoveryException("source shard is not marked yet as relocating to [" + request.targetNode() + "]");
         }
 
         RecoverySourceHandler handler = ongoingRecoveries.addNewRecovery(request, shard);
-        logger.trace("[{}][{}] starting recovery to {}", request.shardId().getIndex().getName(), request.shardId().id(),
-            request.targetNode());
+        logger.trace(
+            "[{}][{}] starting recovery to {}",
+            request.shardId().getIndex().getName(),
+            request.shardId().id(),
+            request.targetNode()
+        );
         handler.recoverToTarget(ActionListener.runAfter(listener, () -> ongoingRecoveries.remove(shard, handler)));
     }
 
@@ -210,8 +217,10 @@ public class PeerRecoverySourceService extends AbstractLifecycleComponent implem
             synchronized RecoverySourceHandler addNewRecovery(StartRecoveryRequest request, IndexShard shard) {
                 for (RecoverySourceHandler existingHandler : recoveryHandlers) {
                     if (existingHandler.getRequest().targetAllocationId().equals(request.targetAllocationId())) {
-                        throw new DelayRecoveryException("recovery with same target already registered, waiting for " +
-                            "previous recovery attempt to be cancelled or completed");
+                        throw new DelayRecoveryException(
+                            "recovery with same target already registered, waiting for "
+                                + "previous recovery attempt to be cancelled or completed"
+                        );
                     }
                 }
                 RecoverySourceHandler handler = createRecoverySourceHandler(request, shard);
@@ -221,11 +230,22 @@ public class PeerRecoverySourceService extends AbstractLifecycleComponent implem
 
             private RecoverySourceHandler createRecoverySourceHandler(StartRecoveryRequest request, IndexShard shard) {
                 RecoverySourceHandler handler;
-                final RemoteRecoveryTargetHandler recoveryTarget =
-                    new RemoteRecoveryTargetHandler(request.recoveryId(), request.shardId(), transportService,
-                        request.targetNode(), recoverySettings, throttleTime -> shard.recoveryStats().addThrottleTime(throttleTime));
-                handler = new RecoverySourceHandler(shard, recoveryTarget, shard.getThreadPool(), request,
-                    Math.toIntExact(recoverySettings.getChunkSize().getBytes()), recoverySettings.getMaxConcurrentFileChunks());
+                final RemoteRecoveryTargetHandler recoveryTarget = new RemoteRecoveryTargetHandler(
+                    request.recoveryId(),
+                    request.shardId(),
+                    transportService,
+                    request.targetNode(),
+                    recoverySettings,
+                    throttleTime -> shard.recoveryStats().addThrottleTime(throttleTime)
+                );
+                handler = new RecoverySourceHandler(
+                    shard,
+                    recoveryTarget,
+                    shard.getThreadPool(),
+                    request,
+                    Math.toIntExact(recoverySettings.getChunkSize().getBytes()),
+                    recoverySettings.getMaxConcurrentFileChunks()
+                );
                 return handler;
             }
         }

@@ -82,8 +82,12 @@ public class QueryProfilerTests extends ESTestCase {
         }
         reader = w.getReader();
         w.close();
-        searcher = new ContextIndexSearcher(reader, IndexSearcher.getDefaultSimilarity(),
-            IndexSearcher.getDefaultQueryCache(), ALWAYS_CACHE_POLICY);
+        searcher = new ContextIndexSearcher(
+            reader,
+            IndexSearcher.getDefaultSimilarity(),
+            IndexSearcher.getDefaultQueryCache(),
+            ALWAYS_CACHE_POLICY
+        );
     }
 
     @After
@@ -276,7 +280,7 @@ public class QueryProfilerTests extends ESTestCase {
         s.setQueryCache(null);
         Weight weight = s.createWeight(s.rewrite(new DummyQuery()), randomFrom(ScoreMode.values()), 1f);
         // exception when getting the scorer
-        expectThrows(UnsupportedOperationException.class, () ->  weight.scorer(s.getIndexReader().leaves().get(0)));
+        expectThrows(UnsupportedOperationException.class, () -> weight.scorer(s.getIndexReader().leaves().get(0)));
         // no exception, means scorerSupplier is delegated
         weight.scorerSupplier(s.getIndexReader().leaves().get(0));
         reader.close();

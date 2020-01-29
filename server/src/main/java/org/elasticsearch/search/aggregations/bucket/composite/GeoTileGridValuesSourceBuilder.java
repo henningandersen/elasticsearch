@@ -48,8 +48,11 @@ public class GeoTileGridValuesSourceBuilder extends CompositeValuesSourceBuilder
     static {
         PARSER = new ObjectParser<>(GeoTileGridValuesSourceBuilder.TYPE);
         PARSER.declareInt(GeoTileGridValuesSourceBuilder::precision, new ParseField("precision"));
-        PARSER.declareField(((p, builder, context) -> builder.geoBoundingBox(GeoBoundingBox.parseBoundingBox(p))),
-            GeoBoundingBox.BOUNDS_FIELD, ObjectParser.ValueType.OBJECT);
+        PARSER.declareField(
+            ((p, builder, context) -> builder.geoBoundingBox(GeoBoundingBox.parseBoundingBox(p))),
+            GeoBoundingBox.BOUNDS_FIELD,
+            ObjectParser.ValueType.OBJECT
+        );
         CompositeValuesSourceParserHelper.declareValuesSourceFields(PARSER, ValueType.NUMERIC);
     }
 
@@ -123,8 +126,7 @@ public class GeoTileGridValuesSourceBuilder extends CompositeValuesSourceBuilder
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         GeoTileGridValuesSourceBuilder other = (GeoTileGridValuesSourceBuilder) obj;
-        return Objects.equals(precision,other.precision)
-            && Objects.equals(geoBoundingBox, other.geoBoundingBox);
+        return Objects.equals(precision, other.precision) && Objects.equals(geoBoundingBox, other.geoBoundingBox);
     }
 
     @Override
@@ -138,8 +140,15 @@ public class GeoTileGridValuesSourceBuilder extends CompositeValuesSourceBuilder
             // is specified in the builder.
             final MappedFieldType fieldType = config.fieldContext() != null ? config.fieldContext().fieldType() : null;
             CellIdSource cellIdSource = new CellIdSource(geoPoint, precision, geoBoundingBox, GeoTileUtils::longEncode);
-            return new CompositeValuesSourceConfig(name, fieldType, cellIdSource, DocValueFormat.GEOTILE, order(),
-                missingBucket(), script() != null);
+            return new CompositeValuesSourceConfig(
+                name,
+                fieldType,
+                cellIdSource,
+                DocValueFormat.GEOTILE,
+                order(),
+                missingBucket(),
+                script() != null
+            );
         } else {
             throw new IllegalArgumentException("invalid source, expected geo_point, got " + orig.getClass().getSimpleName());
         }

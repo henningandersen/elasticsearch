@@ -86,7 +86,8 @@ public class FinalPipelineIT extends ESIntegTestCase {
         // this asserts that the final_pipeline was used, without us having to actually create the pipeline etc.
         final IllegalArgumentException e = expectThrows(
             IllegalArgumentException.class,
-            () -> client().prepareIndex("index").setId("1").setSource(Map.of("field", "value")).get());
+            () -> client().prepareIndex("index").setId("1").setSource(Map.of("field", "value")).get()
+        );
         assertThat(e, hasToString(containsString("pipeline with id [final_pipeline] does not exist")));
     }
 
@@ -97,10 +98,7 @@ public class FinalPipelineIT extends ESIntegTestCase {
             .putPipeline(new PutPipelineRequest("request_pipeline", requestPipelineBody, XContentType.JSON))
             .actionGet();
         final BytesReference finalPipelineBody = new BytesArray("{\"processors\": [{\"final\": {\"exists\":\"request\"}}]}");
-        client().admin()
-            .cluster()
-            .putPipeline(new PutPipelineRequest("final_pipeline", finalPipelineBody, XContentType.JSON))
-            .actionGet();
+        client().admin().cluster().putPipeline(new PutPipelineRequest("final_pipeline", finalPipelineBody, XContentType.JSON)).actionGet();
         final Settings settings = Settings.builder().put(IndexSettings.FINAL_PIPELINE.getKey(), "final_pipeline").build();
         createIndex("index", settings);
         final IndexRequestBuilder index = client().prepareIndex("index").setId("1");
@@ -126,10 +124,7 @@ public class FinalPipelineIT extends ESIntegTestCase {
             .putPipeline(new PutPipelineRequest("default_pipeline", defaultPipelineBody, XContentType.JSON))
             .actionGet();
         final BytesReference finalPipelineBody = new BytesArray("{\"processors\": [{\"final\": {\"exists\":\"default\"}}]}");
-        client().admin()
-            .cluster()
-            .putPipeline(new PutPipelineRequest("final_pipeline", finalPipelineBody, XContentType.JSON))
-            .actionGet();
+        client().admin().cluster().putPipeline(new PutPipelineRequest("final_pipeline", finalPipelineBody, XContentType.JSON)).actionGet();
         final Settings settings = Settings.builder()
             .put(IndexSettings.DEFAULT_PIPELINE.getKey(), "default_pipeline")
             .put(IndexSettings.FINAL_PIPELINE.getKey(), "final_pipeline")
@@ -157,10 +152,7 @@ public class FinalPipelineIT extends ESIntegTestCase {
             .putPipeline(new PutPipelineRequest("default_pipeline", defaultPipelineBody, XContentType.JSON))
             .actionGet();
         final BytesReference finalPipelineBody = new BytesArray("{\"processors\": [{\"final\": {\"exists\":\"default\"}}]}");
-        client().admin()
-            .cluster()
-            .putPipeline(new PutPipelineRequest("final_pipeline", finalPipelineBody, XContentType.JSON))
-            .actionGet();
+        client().admin().cluster().putPipeline(new PutPipelineRequest("final_pipeline", finalPipelineBody, XContentType.JSON)).actionGet();
         final int lowOrder = randomIntBetween(0, Integer.MAX_VALUE - 1);
         final int highOrder = randomIntBetween(lowOrder + 1, Integer.MAX_VALUE);
         final int finalPipelineOrder;
@@ -172,16 +164,16 @@ public class FinalPipelineIT extends ESIntegTestCase {
             defaultPipelineOrder = highOrder;
             finalPipelineOrder = lowOrder;
         }
-        final Settings defaultPipelineSettings =
-            Settings.builder().put(IndexSettings.DEFAULT_PIPELINE.getKey(), "default_pipeline").build();
+        final Settings defaultPipelineSettings = Settings.builder()
+            .put(IndexSettings.DEFAULT_PIPELINE.getKey(), "default_pipeline")
+            .build();
         admin().indices()
             .preparePutTemplate("default")
             .setPatterns(List.of("index*"))
             .setOrder(defaultPipelineOrder)
             .setSettings(defaultPipelineSettings)
             .get();
-        final Settings finalPipelineSettings =
-            Settings.builder().put(IndexSettings.FINAL_PIPELINE.getKey(), "final_pipeline").build();
+        final Settings finalPipelineSettings = Settings.builder().put(IndexSettings.FINAL_PIPELINE.getKey(), "final_pipeline").build();
         admin().indices()
             .preparePutTemplate("final")
             .setPatterns(List.of("index*"))
@@ -206,16 +198,18 @@ public class FinalPipelineIT extends ESIntegTestCase {
     public void testHighOrderFinalPipelinePreferred() throws IOException {
         final int lowOrder = randomIntBetween(0, Integer.MAX_VALUE - 1);
         final int highOrder = randomIntBetween(lowOrder + 1, Integer.MAX_VALUE);
-        final Settings lowOrderFinalPipelineSettings =
-            Settings.builder().put(IndexSettings.FINAL_PIPELINE.getKey(), "low_order_final_pipeline").build();
+        final Settings lowOrderFinalPipelineSettings = Settings.builder()
+            .put(IndexSettings.FINAL_PIPELINE.getKey(), "low_order_final_pipeline")
+            .build();
         admin().indices()
             .preparePutTemplate("low_order")
             .setPatterns(List.of("index*"))
             .setOrder(lowOrder)
             .setSettings(lowOrderFinalPipelineSettings)
             .get();
-        final Settings highOrderFinalPipelineSettings =
-            Settings.builder().put(IndexSettings.FINAL_PIPELINE.getKey(), "high_order_final_pipeline").build();
+        final Settings highOrderFinalPipelineSettings = Settings.builder()
+            .put(IndexSettings.FINAL_PIPELINE.getKey(), "high_order_final_pipeline")
+            .build();
         admin().indices()
             .preparePutTemplate("high_order")
             .setPatterns(List.of("index*"))
@@ -226,7 +220,8 @@ public class FinalPipelineIT extends ESIntegTestCase {
         // this asserts that the high_order_final_pipeline was selected, without us having to actually create the pipeline etc.
         final IllegalArgumentException e = expectThrows(
             IllegalArgumentException.class,
-            () -> client().prepareIndex("index").setId("1").setSource(Map.of("field", "value")).get());
+            () -> client().prepareIndex("index").setId("1").setSource(Map.of("field", "value")).get()
+        );
         assertThat(e, hasToString(containsString("pipeline with id [high_order_final_pipeline] does not exist")));
     }
 
@@ -242,66 +237,59 @@ public class FinalPipelineIT extends ESIntegTestCase {
             final NamedXContentRegistry xContentRegistry,
             final Environment environment,
             final NodeEnvironment nodeEnvironment,
-            final NamedWriteableRegistry namedWriteableRegistry) {
+            final NamedWriteableRegistry namedWriteableRegistry
+        ) {
             return List.of();
         }
 
         @Override
         public Map<String, Processor.Factory> getProcessors(Processor.Parameters parameters) {
-            return Map.of(
-                "default",
-                (factories, tag, config) ->
-                    new AbstractProcessor(tag) {
+            return Map.of("default", (factories, tag, config) -> new AbstractProcessor(tag) {
 
-                        @Override
-                        public IngestDocument execute(final IngestDocument ingestDocument) throws Exception {
-                            ingestDocument.setFieldValue("default", true);
-                            return ingestDocument;
-                        }
+                @Override
+                public IngestDocument execute(final IngestDocument ingestDocument) throws Exception {
+                    ingestDocument.setFieldValue("default", true);
+                    return ingestDocument;
+                }
 
-                        @Override
-                        public String getType() {
-                            return "default";
-                        }
-                    },
-                "final",
-                (processorFactories, tag, config) -> {
-                    final String exists = (String) config.remove("exists");
-                    return new AbstractProcessor(tag) {
-                        @Override
-                        public IngestDocument execute(final IngestDocument ingestDocument) throws Exception {
-                            // this asserts that this pipeline is the final pipeline executed
-                            if (exists != null) {
-                                if (ingestDocument.getSourceAndMetadata().containsKey(exists) == false) {
-                                    throw new AssertionError(
-                                        "expected document to contain [" + exists + "] but was [" + ingestDocument.getSourceAndMetadata());
-                                }
+                @Override
+                public String getType() {
+                    return "default";
+                }
+            }, "final", (processorFactories, tag, config) -> {
+                final String exists = (String) config.remove("exists");
+                return new AbstractProcessor(tag) {
+                    @Override
+                    public IngestDocument execute(final IngestDocument ingestDocument) throws Exception {
+                        // this asserts that this pipeline is the final pipeline executed
+                        if (exists != null) {
+                            if (ingestDocument.getSourceAndMetadata().containsKey(exists) == false) {
+                                throw new AssertionError(
+                                    "expected document to contain [" + exists + "] but was [" + ingestDocument.getSourceAndMetadata()
+                                );
                             }
-                            ingestDocument.setFieldValue("final", true);
-                            return ingestDocument;
                         }
-
-                        @Override
-                        public String getType() {
-                            return "final";
-                        }
-                    };
-                },
-                "request",
-                (processorFactories, tag, config) ->
-                    new AbstractProcessor(tag) {
-                        @Override
-                        public IngestDocument execute(final IngestDocument ingestDocument) throws Exception {
-                            ingestDocument.setFieldValue("request", true);
-                            return ingestDocument;
-                        }
-
-                        @Override
-                        public String getType() {
-                            return "request";
-                        }
+                        ingestDocument.setFieldValue("final", true);
+                        return ingestDocument;
                     }
-            );
+
+                    @Override
+                    public String getType() {
+                        return "final";
+                    }
+                };
+            }, "request", (processorFactories, tag, config) -> new AbstractProcessor(tag) {
+                @Override
+                public IngestDocument execute(final IngestDocument ingestDocument) throws Exception {
+                    ingestDocument.setFieldValue("request", true);
+                    return ingestDocument;
+                }
+
+                @Override
+                public String getType() {
+                    return "request";
+                }
+            });
         }
     }
 

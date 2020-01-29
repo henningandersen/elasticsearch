@@ -86,8 +86,11 @@ public class IndicesServiceCloseTests extends ESTestCase {
             .put(IndicesQueryCache.INDICES_QUERIES_CACHE_ALL_SEGMENTS_SETTING.getKey(), true)
             .build();
 
-        Node node = new MockNode(settings,
-                Arrays.asList(MockNioTransportPlugin.class, MockHttpTransport.TestPlugin.class, InternalSettingsPlugin.class), true);
+        Node node = new MockNode(
+            settings,
+            Arrays.asList(MockNioTransportPlugin.class, MockHttpTransport.TestPlugin.class, InternalSettingsPlugin.class),
+            true
+        );
         node.start();
         return node;
     }
@@ -107,8 +110,13 @@ public class IndicesServiceCloseTests extends ESTestCase {
         IndicesService indicesService = node.injector().getInstance(IndicesService.class);
         assertEquals(1, indicesService.indicesRefCount.refCount());
 
-        assertAcked(node.client().admin().indices().prepareCreate("test")
-                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0)));
+        assertAcked(
+            node.client()
+                .admin()
+                .indices()
+                .prepareCreate("test")
+                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0))
+        );
 
         assertEquals(2, indicesService.indicesRefCount.refCount());
         assertFalse(indicesService.awaitClose(0, TimeUnit.MILLISECONDS));
@@ -123,8 +131,13 @@ public class IndicesServiceCloseTests extends ESTestCase {
         IndicesService indicesService = node.injector().getInstance(IndicesService.class);
         assertEquals(1, indicesService.indicesRefCount.refCount());
 
-        assertAcked(node.client().admin().indices().prepareCreate("test")
-                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0)));
+        assertAcked(
+            node.client()
+                .admin()
+                .indices()
+                .prepareCreate("test")
+                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0))
+        );
 
         assertEquals(2, indicesService.indicesRefCount.refCount());
 
@@ -147,8 +160,13 @@ public class IndicesServiceCloseTests extends ESTestCase {
         IndicesService indicesService = node.injector().getInstance(IndicesService.class);
         assertEquals(1, indicesService.indicesRefCount.refCount());
 
-        assertAcked(node.client().admin().indices().prepareCreate("test")
-                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0)));
+        assertAcked(
+            node.client()
+                .admin()
+                .indices()
+                .prepareCreate("test")
+                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0))
+        );
         node.client().prepareIndex("test").setId("1").setSource(Collections.emptyMap()).get();
         ElasticsearchAssertions.assertAllSuccessful(node.client().admin().indices().prepareRefresh("test").get());
 
@@ -171,10 +189,18 @@ public class IndicesServiceCloseTests extends ESTestCase {
         IndicesService indicesService = node.injector().getInstance(IndicesService.class);
         assertEquals(1, indicesService.indicesRefCount.refCount());
 
-        assertAcked(node.client().admin().indices().prepareCreate("test")
-                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1)
+        assertAcked(
+            node.client()
+                .admin()
+                .indices()
+                .prepareCreate("test")
+                .setSettings(
+                    Settings.builder()
+                        .put(SETTING_NUMBER_OF_SHARDS, 1)
                         .put(SETTING_NUMBER_OF_REPLICAS, 0)
-                        .put(IndexModule.INDEX_QUERY_CACHE_EVERYTHING_SETTING.getKey(), true)));
+                        .put(IndexModule.INDEX_QUERY_CACHE_EVERYTHING_SETTING.getKey(), true)
+                )
+        );
         node.client().prepareIndex("test").setId("1").setSource(Collections.singletonMap("foo", 3L)).get();
         ElasticsearchAssertions.assertAllSuccessful(node.client().admin().indices().prepareRefresh("test").get());
 
@@ -206,10 +232,18 @@ public class IndicesServiceCloseTests extends ESTestCase {
         IndicesService indicesService = node.injector().getInstance(IndicesService.class);
         assertEquals(1, indicesService.indicesRefCount.refCount());
 
-        assertAcked(node.client().admin().indices().prepareCreate("test")
-                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1)
+        assertAcked(
+            node.client()
+                .admin()
+                .indices()
+                .prepareCreate("test")
+                .setSettings(
+                    Settings.builder()
+                        .put(SETTING_NUMBER_OF_SHARDS, 1)
                         .put(SETTING_NUMBER_OF_REPLICAS, 0)
-                        .put(IndexModule.INDEX_QUERY_CACHE_EVERYTHING_SETTING.getKey(), true)));
+                        .put(IndexModule.INDEX_QUERY_CACHE_EVERYTHING_SETTING.getKey(), true)
+                )
+        );
         node.client().prepareIndex("test").setId("1").setSource(Collections.singletonMap("foo", 3L)).get();
         ElasticsearchAssertions.assertAllSuccessful(node.client().admin().indices().prepareRefresh("test").get());
 
@@ -240,10 +274,18 @@ public class IndicesServiceCloseTests extends ESTestCase {
         IndicesService indicesService = node.injector().getInstance(IndicesService.class);
         assertEquals(1, indicesService.indicesRefCount.refCount());
 
-        assertAcked(node.client().admin().indices().prepareCreate("test")
-                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1)
+        assertAcked(
+            node.client()
+                .admin()
+                .indices()
+                .prepareCreate("test")
+                .setSettings(
+                    Settings.builder()
+                        .put(SETTING_NUMBER_OF_SHARDS, 1)
                         .put(SETTING_NUMBER_OF_REPLICAS, 0)
-                        .put(IndexModule.INDEX_QUERY_CACHE_EVERYTHING_SETTING.getKey(), true)));
+                        .put(IndexModule.INDEX_QUERY_CACHE_EVERYTHING_SETTING.getKey(), true)
+                )
+        );
         node.client().prepareIndex("test").setId("1").setSource(Collections.singletonMap("foo", 3L)).get();
         ElasticsearchAssertions.assertAllSuccessful(node.client().admin().indices().prepareRefresh("test").get());
 

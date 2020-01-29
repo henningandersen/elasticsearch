@@ -65,8 +65,13 @@ public class MetaDataIndexAliasesService {
     private final NamedXContentRegistry xContentRegistry;
 
     @Inject
-    public MetaDataIndexAliasesService(ClusterService clusterService, IndicesService indicesService,
-            AliasValidator aliasValidator, MetaDataDeleteIndexService deleteIndexService, NamedXContentRegistry xContentRegistry) {
+    public MetaDataIndexAliasesService(
+        ClusterService clusterService,
+        IndicesService indicesService,
+        AliasValidator aliasValidator,
+        MetaDataDeleteIndexService deleteIndexService,
+        NamedXContentRegistry xContentRegistry
+    ) {
         this.clusterService = clusterService;
         this.indicesService = indicesService;
         this.aliasValidator = aliasValidator;
@@ -74,9 +79,12 @@ public class MetaDataIndexAliasesService {
         this.xContentRegistry = xContentRegistry;
     }
 
-    public void indicesAliases(final IndicesAliasesClusterStateUpdateRequest request,
-                               final ActionListener<ClusterStateUpdateResponse> listener) {
-        clusterService.submitStateUpdateTask("index-aliases",
+    public void indicesAliases(
+        final IndicesAliasesClusterStateUpdateRequest request,
+        final ActionListener<ClusterStateUpdateResponse> listener
+    ) {
+        clusterService.submitStateUpdateTask(
+            "index-aliases",
             new AckedClusterStateUpdateTask<ClusterStateUpdateResponse>(Priority.URGENT, request, listener) {
                 @Override
                 protected ClusterStateUpdateResponse newResponse(boolean acknowledged) {
@@ -87,13 +95,14 @@ public class MetaDataIndexAliasesService {
                 public ClusterState execute(ClusterState currentState) {
                     return applyAliasActions(currentState, request.actions());
                 }
-            });
+            }
+        );
     }
 
-     /**
-     * Handles the cluster state transition to a version that reflects the provided {@link AliasAction}s.
-     */
-     public ClusterState applyAliasActions(ClusterState currentState, Iterable<AliasAction> actions) {
+    /**
+    * Handles the cluster state transition to a version that reflects the provided {@link AliasAction}s.
+    */
+    public ClusterState applyAliasActions(ClusterState currentState, Iterable<AliasAction> actions) {
         List<Index> indicesToClose = new ArrayList<>();
         Map<String, IndexService> indices = new HashMap<>();
         try {
@@ -151,8 +160,12 @@ public class MetaDataIndexAliasesService {
                         }
                         // the context is only used for validation so it's fine to pass fake values for the shard id and the current
                         // timestamp
-                        aliasValidator.validateAliasFilter(alias, filter, indexService.newQueryShardContext(0, null, () -> 0L, null),
-                                xContentRegistry);
+                        aliasValidator.validateAliasFilter(
+                            alias,
+                            filter,
+                            indexService.newQueryShardContext(0, null, () -> 0L, null),
+                            xContentRegistry
+                        );
                     }
                 };
                 if (action.apply(newAliasValidator, metadata, index)) {

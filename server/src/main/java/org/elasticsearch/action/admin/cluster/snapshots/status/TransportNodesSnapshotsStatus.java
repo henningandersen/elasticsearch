@@ -53,10 +53,11 @@ import static java.util.Collections.unmodifiableMap;
 /**
  * Transport action that collects snapshot shard statuses from data nodes
  */
-public class TransportNodesSnapshotsStatus extends TransportNodesAction<TransportNodesSnapshotsStatus.Request,
-                                                                        TransportNodesSnapshotsStatus.NodesSnapshotStatus,
-                                                                        TransportNodesSnapshotsStatus.NodeRequest,
-                                                                        TransportNodesSnapshotsStatus.NodeSnapshotStatus> {
+public class TransportNodesSnapshotsStatus extends TransportNodesAction<
+    TransportNodesSnapshotsStatus.Request,
+    TransportNodesSnapshotsStatus.NodesSnapshotStatus,
+    TransportNodesSnapshotsStatus.NodeRequest,
+    TransportNodesSnapshotsStatus.NodeSnapshotStatus> {
 
     public static final String ACTION_NAME = SnapshotsStatusAction.NAME + "[nodes]";
     public static final ActionType<NodesSnapshotStatus> TYPE = new ActionType<>(ACTION_NAME, NodesSnapshotStatus::new);
@@ -64,11 +65,24 @@ public class TransportNodesSnapshotsStatus extends TransportNodesAction<Transpor
     private final SnapshotShardsService snapshotShardsService;
 
     @Inject
-    public TransportNodesSnapshotsStatus(ThreadPool threadPool, ClusterService clusterService,
-                                         TransportService transportService, SnapshotShardsService snapshotShardsService,
-                                         ActionFilters actionFilters) {
-        super(ACTION_NAME, threadPool, clusterService, transportService, actionFilters,
-            Request::new, NodeRequest::new, ThreadPool.Names.GENERIC, NodeSnapshotStatus.class);
+    public TransportNodesSnapshotsStatus(
+        ThreadPool threadPool,
+        ClusterService clusterService,
+        TransportService transportService,
+        SnapshotShardsService snapshotShardsService,
+        ActionFilters actionFilters
+    ) {
+        super(
+            ACTION_NAME,
+            threadPool,
+            clusterService,
+            transportService,
+            actionFilters,
+            Request::new,
+            NodeRequest::new,
+            ThreadPool.Names.GENERIC,
+            NodeSnapshotStatus.class
+        );
         this.snapshotShardsService = snapshotShardsService;
     }
 
@@ -166,7 +180,6 @@ public class TransportNodesSnapshotsStatus extends TransportNodesAction<Transpor
         }
     }
 
-
     public static class NodeRequest extends BaseNodeRequest {
 
         private List<Snapshot> snapshots;
@@ -200,7 +213,7 @@ public class TransportNodesSnapshotsStatus extends TransportNodesAction<Transpor
                 int numberOfShards = in.readVInt();
                 Map<ShardId, SnapshotIndexShardStatus> shardMapBuilder = new HashMap<>(numberOfShards);
                 for (int j = 0; j < numberOfShards; j++) {
-                    ShardId shardId =  new ShardId(in);
+                    ShardId shardId = new ShardId(in);
                     SnapshotIndexShardStatus status = new SnapshotIndexShardStatus(in);
                     shardMapBuilder.put(shardId, status);
                 }

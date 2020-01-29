@@ -44,7 +44,10 @@ public class MultiBucketAggregatorWrapperTests extends ESTestCase {
 
     public void testNoNullScorerIsDelegated() throws Exception {
         LeafReaderContext leafReaderContext = MemoryIndex.fromDocument(Collections.emptyList(), new MockAnalyzer(random()))
-                .createSearcher().getIndexReader().leaves().get(0);
+            .createSearcher()
+            .getIndexReader()
+            .leaves()
+            .get(0);
         BigArrays bigArrays = new MockBigArrays(new MockPageCacheRecycler(Settings.EMPTY), new NoneCircuitBreakerService());
         QueryShardContext queryShardContext = mock(QueryShardContext.class);
         when(queryShardContext.bigArrays()).thenReturn(bigArrays);

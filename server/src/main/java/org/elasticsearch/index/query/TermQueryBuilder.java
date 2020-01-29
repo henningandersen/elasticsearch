@@ -108,8 +108,10 @@ public class TermQueryBuilder extends BaseTermQueryBuilder<TermQueryBuilder> {
                         } else if (AbstractQueryBuilder.BOOST_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                             boost = parser.floatValue();
                         } else {
-                            throw new ParsingException(parser.getTokenLocation(),
-                                    "[term] query does not support [" + currentFieldName + "]");
+                            throw new ParsingException(
+                                parser.getTokenLocation(),
+                                "[term] query does not support [" + currentFieldName + "]"
+                            );
                         }
                     }
                 }
@@ -129,16 +131,16 @@ public class TermQueryBuilder extends BaseTermQueryBuilder<TermQueryBuilder> {
         }
         return termQuery;
     }
-    
+
     @Override
     protected QueryBuilder doRewrite(QueryRewriteContext queryRewriteContext) throws IOException {
         if ("_index".equals(fieldName)) {
-            // Special-case optimisation for canMatch phase:  
+            // Special-case optimisation for canMatch phase:
             // We can skip querying this shard if the index name doesn't match the value of this query on the "_index" field.
             QueryShardContext shardContext = queryRewriteContext.convertToShardContext();
             if (shardContext != null && shardContext.indexMatches(BytesRefs.toString(value)) == false) {
                 return new MatchNoneQueryBuilder();
-            }            
+            }
         }
         return super.doRewrite(queryRewriteContext);
     }

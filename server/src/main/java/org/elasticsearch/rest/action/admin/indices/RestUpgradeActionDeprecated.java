@@ -37,16 +37,15 @@ import static org.elasticsearch.rest.RestRequest.Method.POST;
 public class RestUpgradeActionDeprecated extends BaseRestHandler {
 
     private static final DeprecationLogger deprecationLogger = new DeprecationLogger(
-        LogManager.getLogger(RestUpgradeActionDeprecated.class));
+        LogManager.getLogger(RestUpgradeActionDeprecated.class)
+    );
 
     public static final String UPGRADE_API_DEPRECATION_MESSAGE =
         "The _upgrade API is no longer useful and will be removed. Instead, see _reindex API.";
 
     public RestUpgradeActionDeprecated(RestController controller) {
-        controller.registerAsDeprecatedHandler(POST, "/_upgrade", this,
-            UPGRADE_API_DEPRECATION_MESSAGE, deprecationLogger);
-        controller.registerAsDeprecatedHandler(POST, "/{index}/_upgrade", this,
-            UPGRADE_API_DEPRECATION_MESSAGE, deprecationLogger);
+        controller.registerAsDeprecatedHandler(POST, "/_upgrade", this, UPGRADE_API_DEPRECATION_MESSAGE, deprecationLogger);
+        controller.registerAsDeprecatedHandler(POST, "/{index}/_upgrade", this, UPGRADE_API_DEPRECATION_MESSAGE, deprecationLogger);
     }
 
     @Override

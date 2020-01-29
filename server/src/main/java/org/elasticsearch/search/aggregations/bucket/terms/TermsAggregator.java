@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.elasticsearch.search.aggregations.bucket.terms;
 
 import org.elasticsearch.ElasticsearchException;
@@ -86,8 +85,12 @@ public abstract class TermsAggregator extends DeferableBucketAggregator {
         }
 
         public BucketCountThresholds(BucketCountThresholds bucketCountThresholds) {
-            this(bucketCountThresholds.minDocCount, bucketCountThresholds.shardMinDocCount, bucketCountThresholds.requiredSize,
-                    bucketCountThresholds.shardSize);
+            this(
+                bucketCountThresholds.minDocCount,
+                bucketCountThresholds.shardMinDocCount,
+                bucketCountThresholds.requiredSize,
+                bucketCountThresholds.shardSize
+            );
         }
 
         public void ensureValidity() {
@@ -171,9 +174,9 @@ public abstract class TermsAggregator extends DeferableBucketAggregator {
             }
             BucketCountThresholds other = (BucketCountThresholds) obj;
             return Objects.equals(requiredSize, other.requiredSize)
-                    && Objects.equals(shardSize, other.shardSize)
-                    && Objects.equals(minDocCount, other.minDocCount)
-                    && Objects.equals(shardMinDocCount, other.shardMinDocCount);
+                && Objects.equals(shardSize, other.shardSize)
+                && Objects.equals(minDocCount, other.minDocCount)
+                && Objects.equals(shardMinDocCount, other.shardMinDocCount);
         }
     }
 
@@ -183,9 +186,19 @@ public abstract class TermsAggregator extends DeferableBucketAggregator {
     protected final Set<Aggregator> aggsUsedForSorting = new HashSet<>();
     protected final SubAggCollectionMode collectMode;
 
-    public TermsAggregator(String name, AggregatorFactories factories, SearchContext context, Aggregator parent,
-            BucketCountThresholds bucketCountThresholds, BucketOrder order, DocValueFormat format, SubAggCollectionMode collectMode,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    public TermsAggregator(
+        String name,
+        AggregatorFactories factories,
+        SearchContext context,
+        Aggregator parent,
+        BucketCountThresholds bucketCountThresholds,
+        BucketOrder order,
+        DocValueFormat format,
+        SubAggCollectionMode collectMode,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData);
         this.bucketCountThresholds = bucketCountThresholds;
         this.order = InternalOrder.validate(order, this);
@@ -201,7 +214,7 @@ public abstract class TermsAggregator extends DeferableBucketAggregator {
             this.collectMode = collectMode;
         }
         // Don't defer any child agg if we are dependent on it for pruning results
-        if (order instanceof Aggregation){
+        if (order instanceof Aggregation) {
             AggregationPath path = ((Aggregation) order).path();
             aggsUsedForSorting.add(path.resolveTopmostAggregator(this));
         } else if (order instanceof CompoundOrder) {
@@ -288,8 +301,7 @@ public abstract class TermsAggregator extends DeferableBucketAggregator {
 
     @Override
     protected boolean shouldDefer(Aggregator aggregator) {
-        return collectMode == SubAggCollectionMode.BREADTH_FIRST
-                && !aggsUsedForSorting.contains(aggregator);
+        return collectMode == SubAggCollectionMode.BREADTH_FIRST && !aggsUsedForSorting.contains(aggregator);
     }
 
 }

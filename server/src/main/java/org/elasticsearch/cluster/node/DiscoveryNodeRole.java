@@ -79,9 +79,7 @@ public abstract class DiscoveryNodeRole {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DiscoveryNodeRole that = (DiscoveryNodeRole) o;
-        return roleName.equals(that.roleName) &&
-            roleNameAbbreviation.equals(that.roleNameAbbreviation) &&
-            isKnownRole == that.isKnownRole;
+        return roleName.equals(that.roleName) && roleNameAbbreviation.equals(that.roleNameAbbreviation) && isKnownRole == that.isKnownRole;
     }
 
     @Override
@@ -91,11 +89,15 @@ public abstract class DiscoveryNodeRole {
 
     @Override
     public final String toString() {
-        return "DiscoveryNodeRole{" +
-                "roleName='" + roleName + '\'' +
-                ", roleNameAbbreviation='" + roleNameAbbreviation + '\'' +
-                (isKnownRole ? "" : ", isKnownRole=false") +
-                '}';
+        return "DiscoveryNodeRole{"
+            + "roleName='"
+            + roleName
+            + '\''
+            + ", roleNameAbbreviation='"
+            + roleNameAbbreviation
+            + '\''
+            + (isKnownRole ? "" : ", isKnownRole=false")
+            + '}';
     }
 
     /**

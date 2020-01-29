@@ -59,12 +59,14 @@ public final class GlobalOrdinalsIndexFieldData extends AbstractIndexComponent i
     private final AtomicOrdinalsFieldData[] segmentAfd;
     private final Function<SortedSetDocValues, ScriptDocValues<?>> scriptFunction;
 
-    protected GlobalOrdinalsIndexFieldData(IndexSettings indexSettings,
-                                           String fieldName,
-                                           AtomicOrdinalsFieldData[] segmentAfd,
-                                           OrdinalMap ordinalMap,
-                                           long memorySizeInBytes,
-                                           Function<SortedSetDocValues, ScriptDocValues<?>> scriptFunction) {
+    protected GlobalOrdinalsIndexFieldData(
+        IndexSettings indexSettings,
+        String fieldName,
+        AtomicOrdinalsFieldData[] segmentAfd,
+        OrdinalMap ordinalMap,
+        long memorySizeInBytes,
+        Function<SortedSetDocValues, ScriptDocValues<?>> scriptFunction
+    ) {
         super(indexSettings);
         this.fieldName = fieldName;
         this.memorySizeInBytes = memorySizeInBytes;
@@ -218,7 +220,6 @@ public final class GlobalOrdinalsIndexFieldData extends AbstractIndexComponent i
                 public long ramBytesUsed() {
                     return segmentAfd[context.ord].ramBytesUsed();
                 }
-
 
                 @Override
                 public Collection<Accountable> getChildResources() {

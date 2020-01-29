@@ -93,8 +93,13 @@ public final class ChecksumBlobStoreFormat<T extends ToXContent> {
      * @param reader         prototype object that can deserialize T from XContent
      * @param compress       true if the content should be compressed
      */
-    public ChecksumBlobStoreFormat(String codec, String blobNameFormat, CheckedFunction<XContentParser, T, IOException> reader,
-                                   NamedXContentRegistry namedXContentRegistry, boolean compress) {
+    public ChecksumBlobStoreFormat(
+        String codec,
+        String blobNameFormat,
+        CheckedFunction<XContentParser, T, IOException> reader,
+        NamedXContentRegistry namedXContentRegistry,
+        boolean compress
+    ) {
         this.reader = reader;
         this.blobNameFormat = blobNameFormat;
         this.namedXContentRegistry = namedXContentRegistry;
@@ -127,14 +132,19 @@ public final class ChecksumBlobStoreFormat<T extends ToXContent> {
     public T readBlob(BlobContainer blobContainer, String blobName) throws IOException {
         final BytesReference bytes = Streams.readFully(blobContainer.readBlob(blobName));
         final String resourceDesc = "ChecksumBlobStoreFormat.readBlob(blob=\"" + blobName + "\")";
-        try (ByteArrayIndexInput indexInput =
-                 new ByteArrayIndexInput(resourceDesc, BytesReference.toBytes(bytes))) {
+        try (ByteArrayIndexInput indexInput = new ByteArrayIndexInput(resourceDesc, BytesReference.toBytes(bytes))) {
             CodecUtil.checksumEntireFile(indexInput);
             CodecUtil.checkHeader(indexInput, codec, VERSION, VERSION);
             long filePointer = indexInput.getFilePointer();
             long contentSize = indexInput.length() - CodecUtil.footerLength() - filePointer;
-            try (XContentParser parser = XContentHelper.createParser(namedXContentRegistry, LoggingDeprecationHandler.INSTANCE,
-                bytes.slice((int) filePointer, (int) contentSize), XContentType.SMILE)) {
+            try (
+                XContentParser parser = XContentHelper.createParser(
+                    namedXContentRegistry,
+                    LoggingDeprecationHandler.INSTANCE,
+                    bytes.slice((int) filePointer, (int) contentSize),
+                    XContentType.SMILE
+                )
+            ) {
                 return reader.apply(parser);
             }
         } catch (CorruptIndexException | IndexFormatTooOldException | IndexFormatTooNewException ex) {

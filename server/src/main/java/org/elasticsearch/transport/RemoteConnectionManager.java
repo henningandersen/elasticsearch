@@ -52,9 +52,12 @@ public class RemoteConnectionManager implements Closeable {
         });
     }
 
-    public void connectToNode(DiscoveryNode node, ConnectionProfile connectionProfile,
-                              ConnectionManager.ConnectionValidator connectionValidator,
-                              ActionListener<Void> listener) throws ConnectTransportException {
+    public void connectToNode(
+        DiscoveryNode node,
+        ConnectionProfile connectionProfile,
+        ConnectionManager.ConnectionValidator connectionValidator,
+        ActionListener<Void> listener
+    ) throws ConnectTransportException {
         connectionManager.connectToNode(node, connectionProfile, connectionValidator, listener);
     }
 
@@ -76,7 +79,8 @@ public class RemoteConnectionManager implements Closeable {
             throw new NoSuchRemoteClusterException(clusterAlias);
         } else {
             long curr;
-            while ((curr = counter.incrementAndGet()) == Long.MIN_VALUE);
+            while ((curr = counter.incrementAndGet()) == Long.MIN_VALUE)
+                ;
             return localConnections.get(Math.floorMod(curr, localConnections.size()));
         }
     }
@@ -127,14 +131,19 @@ public class RemoteConnectionManager implements Closeable {
 
         @Override
         public void sendRequest(long requestId, String action, TransportRequest request, TransportRequestOptions options)
-            throws IOException, TransportException {
-            connection.sendRequest(requestId, TransportActionProxy.getProxyAction(action),
-                TransportActionProxy.wrapRequest(targetNode, request), options);
+            throws IOException,
+            TransportException {
+            connection.sendRequest(
+                requestId,
+                TransportActionProxy.getProxyAction(action),
+                TransportActionProxy.wrapRequest(targetNode, request),
+                options
+            );
         }
 
         @Override
         public void close() {
-            assert false: "proxy connections must not be closed";
+            assert false : "proxy connections must not be closed";
         }
 
         @Override

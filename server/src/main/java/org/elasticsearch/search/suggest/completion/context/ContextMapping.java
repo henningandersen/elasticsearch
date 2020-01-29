@@ -54,7 +54,8 @@ public abstract class ContextMapping<T extends ToXContent> implements ToXContent
     protected final String name;
 
     public enum Type {
-        CATEGORY, GEO;
+        CATEGORY,
+        GEO;
 
         public static Type fromString(String type) {
             if (type.equalsIgnoreCase("category")) {
@@ -95,8 +96,8 @@ public abstract class ContextMapping<T extends ToXContent> implements ToXContent
     /**
      * Parses a set of index-time contexts.
      */
-    public abstract Set<String> parseContext(ParseContext parseContext, XContentParser parser)
-            throws IOException, ElasticsearchParseException;
+    public abstract Set<String> parseContext(ParseContext parseContext, XContentParser parser) throws IOException,
+        ElasticsearchParseException;
 
     /**
      * Retrieves a set of context from a <code>document</code> at index-time.
@@ -147,8 +148,11 @@ public abstract class ContextMapping<T extends ToXContent> implements ToXContent
     /**
      * Verifies that all field paths specified in contexts point to the fields with correct mappings
      */
-    public static void validateContextPaths(Version indexVersionCreated, List<FieldMapper> fieldMappers,
-                                            Function<String, MappedFieldType> fieldResolver) {
+    public static void validateContextPaths(
+        Version indexVersionCreated,
+        List<FieldMapper> fieldMappers,
+        Function<String, MappedFieldType> fieldResolver
+    ) {
         for (FieldMapper fieldMapper : fieldMappers) {
             if (CompletionFieldMapper.CONTENT_TYPE.equals(fieldMapper.typeName())) {
                 CompletionFieldMapper.CompletionFieldType fieldType = ((CompletionFieldMapper) fieldMapper).fieldType();
@@ -226,11 +230,7 @@ public abstract class ContextMapping<T extends ToXContent> implements ToXContent
 
         @Override
         public String toString() {
-            return "QueryContext{" +
-                    "context='" + context + '\'' +
-                    ", boost=" + boost +
-                    ", isPrefix=" + isPrefix +
-                    '}';
+            return "QueryContext{" + "context='" + context + '\'' + ", boost=" + boost + ", isPrefix=" + isPrefix + '}';
         }
     }
 }

@@ -261,7 +261,6 @@ public class NodesStatsRequest extends BaseNodesRequest<NodesStatsRequest> {
         return this;
     }
 
-
     public boolean discovery() {
         return this.discovery;
     }

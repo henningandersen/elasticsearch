@@ -26,19 +26,15 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class TermsAggregatorFactoryTests extends ESTestCase {
     public void testSubAggCollectMode() throws Exception {
-        assertThat(TermsAggregatorFactory.subAggCollectionMode(Integer.MAX_VALUE, -1),
-            equalTo(Aggregator.SubAggCollectionMode.DEPTH_FIRST));
-        assertThat(TermsAggregatorFactory.subAggCollectionMode(10, -1),
-            equalTo(Aggregator.SubAggCollectionMode.BREADTH_FIRST));
-        assertThat(TermsAggregatorFactory.subAggCollectionMode(10, 5),
-            equalTo(Aggregator.SubAggCollectionMode.DEPTH_FIRST));
-        assertThat(TermsAggregatorFactory.subAggCollectionMode(10, 10),
-            equalTo(Aggregator.SubAggCollectionMode.DEPTH_FIRST));
-        assertThat(TermsAggregatorFactory.subAggCollectionMode(10, 100),
-            equalTo(Aggregator.SubAggCollectionMode.BREADTH_FIRST));
-        assertThat(TermsAggregatorFactory.subAggCollectionMode(1, 2),
-            equalTo(Aggregator.SubAggCollectionMode.BREADTH_FIRST));
-        assertThat(TermsAggregatorFactory.subAggCollectionMode(1, 100),
-            equalTo(Aggregator.SubAggCollectionMode.BREADTH_FIRST));
+        assertThat(
+            TermsAggregatorFactory.subAggCollectionMode(Integer.MAX_VALUE, -1),
+            equalTo(Aggregator.SubAggCollectionMode.DEPTH_FIRST)
+        );
+        assertThat(TermsAggregatorFactory.subAggCollectionMode(10, -1), equalTo(Aggregator.SubAggCollectionMode.BREADTH_FIRST));
+        assertThat(TermsAggregatorFactory.subAggCollectionMode(10, 5), equalTo(Aggregator.SubAggCollectionMode.DEPTH_FIRST));
+        assertThat(TermsAggregatorFactory.subAggCollectionMode(10, 10), equalTo(Aggregator.SubAggCollectionMode.DEPTH_FIRST));
+        assertThat(TermsAggregatorFactory.subAggCollectionMode(10, 100), equalTo(Aggregator.SubAggCollectionMode.BREADTH_FIRST));
+        assertThat(TermsAggregatorFactory.subAggCollectionMode(1, 2), equalTo(Aggregator.SubAggCollectionMode.BREADTH_FIRST));
+        assertThat(TermsAggregatorFactory.subAggCollectionMode(1, 100), equalTo(Aggregator.SubAggCollectionMode.BREADTH_FIRST));
     }
 }

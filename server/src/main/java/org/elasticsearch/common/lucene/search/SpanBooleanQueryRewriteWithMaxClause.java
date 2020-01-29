@@ -95,15 +95,20 @@ public class SpanBooleanQueryRewriteWithMaxClause extends SpanMultiTermQueryWrap
                     final TermsEnum termsEnum = getTermsEnum(query, terms, null);
                     assert termsEnum != null;
 
-                    if (termsEnum == TermsEnum.EMPTY)
-                        continue;
+                    if (termsEnum == TermsEnum.EMPTY) continue;
 
                     BytesRef bytes;
                     while ((bytes = termsEnum.next()) != null) {
                         if (queries.size() >= maxExpansions) {
                             if (hardLimit) {
-                                throw new RuntimeException("[" + query.toString() + " ] " +
-                                    "exceeds maxClauseCount [ Boolean maxClauseCount is set to " + BooleanQuery.getMaxClauseCount() + "]");
+                                throw new RuntimeException(
+                                    "["
+                                        + query.toString()
+                                        + " ] "
+                                        + "exceeds maxClauseCount [ Boolean maxClauseCount is set to "
+                                        + BooleanQuery.getMaxClauseCount()
+                                        + "]"
+                                );
                             } else {
                                 return queries;
                             }

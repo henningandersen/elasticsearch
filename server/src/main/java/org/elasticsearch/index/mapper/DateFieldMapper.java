@@ -145,7 +145,7 @@ public final class DateFieldMapper extends FieldMapper {
 
         @Override
         public DateFieldType fieldType() {
-            return (DateFieldType)fieldType;
+            return (DateFieldType) fieldType;
         }
 
         public Builder ignoreMalformed(boolean ignoreMalformed) {
@@ -207,8 +207,15 @@ public final class DateFieldMapper extends FieldMapper {
         @Override
         public DateFieldMapper build(BuilderContext context) {
             setupFieldType(context);
-            return new DateFieldMapper(name, fieldType, defaultFieldType, ignoreMalformed(context),
-                context.indexSettings(), multiFieldsBuilder.build(this, context), copyTo);
+            return new DateFieldMapper(
+                name,
+                fieldType,
+                defaultFieldType,
+                ignoreMalformed(context),
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                copyTo
+            );
         }
     }
 
@@ -221,7 +228,8 @@ public final class DateFieldMapper extends FieldMapper {
         }
 
         @Override
-        public Mapper.Builder<?,?> parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
+        public Mapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             Builder builder = new Builder(name);
             builder.withResolution(resolution);
             TypeParsers.parseField(builder, name, node, parserContext);
@@ -357,16 +365,21 @@ public final class DateFieldMapper extends FieldMapper {
         }
 
         @Override
-        public Query rangeQuery(Object lowerTerm, Object upperTerm, boolean includeLower, boolean includeUpper, ShapeRelation relation,
-                                @Nullable ZoneId timeZone, @Nullable DateMathParser forcedDateParser, QueryShardContext context) {
+        public Query rangeQuery(
+            Object lowerTerm,
+            Object upperTerm,
+            boolean includeLower,
+            boolean includeUpper,
+            ShapeRelation relation,
+            @Nullable ZoneId timeZone,
+            @Nullable DateMathParser forcedDateParser,
+            QueryShardContext context
+        ) {
             failIfNotIndexed();
             if (relation == ShapeRelation.DISJOINT) {
-                throw new IllegalArgumentException("Field [" + name() + "] of type [" + typeName() +
-                        "] does not support DISJOINT ranges");
+                throw new IllegalArgumentException("Field [" + name() + "] of type [" + typeName() + "] does not support DISJOINT ranges");
             }
-            DateMathParser parser = forcedDateParser == null
-                    ? dateMathParser
-                    : forcedDateParser;
+            DateMathParser parser = forcedDateParser == null ? dateMathParser : forcedDateParser;
             long l, u;
             if (lowerTerm == null) {
                 l = Long.MIN_VALUE;
@@ -392,8 +405,13 @@ public final class DateFieldMapper extends FieldMapper {
             return query;
         }
 
-        public long parseToLong(Object value, boolean roundUp,
-                                @Nullable ZoneId zone, @Nullable DateMathParser forcedDateParser, QueryRewriteContext context) {
+        public long parseToLong(
+            Object value,
+            boolean roundUp,
+            @Nullable ZoneId zone,
+            @Nullable DateMathParser forcedDateParser,
+            QueryRewriteContext context
+        ) {
             DateMathParser dateParser = dateMathParser();
             if (forcedDateParser != null) {
                 dateParser = forcedDateParser;
@@ -410,9 +428,16 @@ public final class DateFieldMapper extends FieldMapper {
         }
 
         @Override
-        public Relation isFieldWithinQuery(IndexReader reader,
-                                           Object from, Object to, boolean includeLower, boolean includeUpper,
-                                           ZoneId timeZone, DateMathParser dateParser, QueryRewriteContext context) throws IOException {
+        public Relation isFieldWithinQuery(
+            IndexReader reader,
+            Object from,
+            Object to,
+            boolean includeLower,
+            boolean includeUpper,
+            ZoneId timeZone,
+            DateMathParser dateParser,
+            QueryRewriteContext context
+        ) throws IOException {
             if (dateParser == null) {
                 dateParser = this.dateMathParser;
             }
@@ -492,13 +517,14 @@ public final class DateFieldMapper extends FieldMapper {
     private Explicit<Boolean> ignoreMalformed;
 
     private DateFieldMapper(
-            String simpleName,
-            MappedFieldType fieldType,
-            MappedFieldType defaultFieldType,
-            Explicit<Boolean> ignoreMalformed,
-            Settings indexSettings,
-            MultiFields multiFields,
-            CopyTo copyTo) {
+        String simpleName,
+        MappedFieldType fieldType,
+        MappedFieldType defaultFieldType,
+        Explicit<Boolean> ignoreMalformed,
+        Settings indexSettings,
+        MultiFields multiFields,
+        CopyTo copyTo
+    ) {
         super(simpleName, fieldType, defaultFieldType, indexSettings, multiFields, copyTo);
         this.ignoreMalformed = ignoreMalformed;
     }
@@ -586,13 +612,11 @@ public final class DateFieldMapper extends FieldMapper {
             builder.field("null_value", fieldType().nullValueAsString());
         }
 
-        if (includeDefaults
-                || fieldType().dateTimeFormatter().pattern().equals(DEFAULT_DATE_TIME_FORMATTER.pattern()) == false) {
+        if (includeDefaults || fieldType().dateTimeFormatter().pattern().equals(DEFAULT_DATE_TIME_FORMATTER.pattern()) == false) {
             builder.field("format", fieldType().dateTimeFormatter().pattern());
         }
 
-        if (includeDefaults
-            || fieldType().dateTimeFormatter().locale().equals(DEFAULT_DATE_TIME_FORMATTER.locale()) == false) {
+        if (includeDefaults || fieldType().dateTimeFormatter().locale().equals(DEFAULT_DATE_TIME_FORMATTER.locale()) == false) {
             builder.field("locale", fieldType().dateTimeFormatter().locale());
         }
     }

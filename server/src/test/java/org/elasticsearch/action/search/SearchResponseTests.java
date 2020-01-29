@@ -68,7 +68,8 @@ public class SearchResponseTests extends ESTestCase {
     }
 
     private final NamedWriteableRegistry namedWriteableRegistry = new NamedWriteableRegistry(
-            new SearchModule(Settings.EMPTY, emptyList()).getNamedWriteables());
+        new SearchModule(Settings.EMPTY, emptyList()).getNamedWriteables()
+    );
     private AggregationsTests aggregationsTests = new AggregationsTests();
 
     @Before
@@ -115,14 +116,29 @@ public class SearchResponseTests extends ESTestCase {
             InternalAggregations aggregations = aggregationsTests.createTestInstance();
             Suggest suggest = SuggestTests.createTestItem();
             SearchProfileShardResults profileShardResults = SearchProfileShardResultsTests.createTestItem();
-            internalSearchResponse = new InternalSearchResponse(hits, aggregations, suggest, profileShardResults,
-                timedOut, terminatedEarly, numReducePhases);
+            internalSearchResponse = new InternalSearchResponse(
+                hits,
+                aggregations,
+                suggest,
+                profileShardResults,
+                timedOut,
+                terminatedEarly,
+                numReducePhases
+            );
         } else {
             internalSearchResponse = InternalSearchResponse.empty();
         }
 
-        return new SearchResponse(internalSearchResponse, null, totalShards, successfulShards, skippedShards, tookInMillis,
-            shardSearchFailures, randomBoolean() ? randomClusters() : SearchResponse.Clusters.EMPTY);
+        return new SearchResponse(
+            internalSearchResponse,
+            null,
+            totalShards,
+            successfulShards,
+            skippedShards,
+            tookInMillis,
+            shardSearchFailures,
+            randomBoolean() ? randomClusters() : SearchResponse.Clusters.EMPTY
+        );
     }
 
     static SearchResponse.Clusters randomClusters() {
@@ -194,11 +210,15 @@ public class SearchResponseTests extends ESTestCase {
                 assertEquals(originalFailure.shard(), parsedFailure.shard());
                 assertEquals(originalFailure.shardId(), parsedFailure.shardId());
                 String originalMsg = originalFailure.getCause().getMessage();
-                assertEquals(parsedFailure.getCause().getMessage(), "Elasticsearch exception [type=parsing_exception, reason=" +
-                        originalMsg + "]");
+                assertEquals(
+                    parsedFailure.getCause().getMessage(),
+                    "Elasticsearch exception [type=parsing_exception, reason=" + originalMsg + "]"
+                );
                 String nestedMsg = originalFailure.getCause().getCause().getMessage();
-                assertEquals(parsedFailure.getCause().getCause().getMessage(),
-                        "Elasticsearch exception [type=illegal_argument_exception, reason=" + nestedMsg + "]");
+                assertEquals(
+                    parsedFailure.getCause().getCause().getMessage(),
+                    "Elasticsearch exception [type=illegal_argument_exception, reason=" + nestedMsg + "]"
+                );
             }
             assertEquals(XContentParser.Token.END_OBJECT, parser.currentToken());
             assertNull(parser.nextToken());
@@ -211,11 +231,23 @@ public class SearchResponseTests extends ESTestCase {
         SearchHit[] hits = new SearchHit[] { hit };
         {
             SearchResponse response = new SearchResponse(
-                    new InternalSearchResponse(new SearchHits(hits, new TotalHits(100, TotalHits.Relation.EQUAL_TO), 1.5f), null, null,
-                        null, false, null, 1),
-                        null, 0
-            , 0, 0, 0,
-                    ShardSearchFailure.EMPTY_ARRAY, SearchResponse.Clusters.EMPTY);
+                new InternalSearchResponse(
+                    new SearchHits(hits, new TotalHits(100, TotalHits.Relation.EQUAL_TO), 1.5f),
+                    null,
+                    null,
+                    null,
+                    false,
+                    null,
+                    1
+                ),
+                null,
+                0,
+                0,
+                0,
+                0,
+                ShardSearchFailure.EMPTY_ARRAY,
+                SearchResponse.Clusters.EMPTY
+            );
             StringBuilder expectedString = new StringBuilder();
             expectedString.append("{");
             {
@@ -240,11 +272,23 @@ public class SearchResponseTests extends ESTestCase {
         }
         {
             SearchResponse response = new SearchResponse(
-                    new InternalSearchResponse(
-                        new SearchHits(hits, new TotalHits(100, TotalHits.Relation.EQUAL_TO), 1.5f), null, null, null, false, null, 1
-                    ),
-                null, 0, 0, 0, 0, ShardSearchFailure.EMPTY_ARRAY,
-                new SearchResponse.Clusters(5, 3, 2));
+                new InternalSearchResponse(
+                    new SearchHits(hits, new TotalHits(100, TotalHits.Relation.EQUAL_TO), 1.5f),
+                    null,
+                    null,
+                    null,
+                    false,
+                    null,
+                    1
+                ),
+                null,
+                0,
+                0,
+                0,
+                0,
+                ShardSearchFailure.EMPTY_ARRAY,
+                new SearchResponse.Clusters(5, 3, 2)
+            );
             StringBuilder expectedString = new StringBuilder();
             expectedString.append("{");
             {

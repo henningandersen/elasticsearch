@@ -38,15 +38,22 @@ import org.elasticsearch.indices.breaker.CircuitBreakerService;
 import java.io.IOException;
 
 public abstract class AbstractIndexOrdinalsFieldData extends AbstractIndexFieldData<AtomicOrdinalsFieldData>
-        implements IndexOrdinalsFieldData {
+    implements
+        IndexOrdinalsFieldData {
 
     private final double minFrequency, maxFrequency;
     private final int minSegmentSize;
     protected final CircuitBreakerService breakerService;
 
-    protected AbstractIndexOrdinalsFieldData(IndexSettings indexSettings, String fieldName,
-            IndexFieldDataCache cache, CircuitBreakerService breakerService,
-            double minFrequency, double maxFrequency, int minSegmentSize) {
+    protected AbstractIndexOrdinalsFieldData(
+        IndexSettings indexSettings,
+        String fieldName,
+        IndexFieldDataCache cache,
+        CircuitBreakerService breakerService,
+        double minFrequency,
+        double maxFrequency,
+        int minSegmentSize
+    ) {
         super(indexSettings, fieldName, cache);
         this.breakerService = breakerService;
         this.minFrequency = minFrequency;
@@ -107,8 +114,14 @@ public abstract class AbstractIndexOrdinalsFieldData extends AbstractIndexFieldD
 
     @Override
     public IndexOrdinalsFieldData localGlobalDirect(DirectoryReader indexReader) throws Exception {
-        return GlobalOrdinalsBuilder.build(indexReader, this, indexSettings, breakerService, logger,
-                AbstractAtomicOrdinalsFieldData.DEFAULT_SCRIPT_FUNCTION);
+        return GlobalOrdinalsBuilder.build(
+            indexReader,
+            this,
+            indexSettings,
+            breakerService,
+            logger,
+            AbstractAtomicOrdinalsFieldData.DEFAULT_SCRIPT_FUNCTION
+        );
     }
 
     @Override
@@ -125,12 +138,8 @@ public abstract class AbstractIndexOrdinalsFieldData extends AbstractIndexFieldD
             docCount = reader.maxDoc();
         }
         if (docCount >= minSegmentSize) {
-            final int minFreq = minFrequency > 1.0
-                    ? (int) minFrequency
-                    : (int)(docCount * minFrequency);
-            final int maxFreq = maxFrequency > 1.0
-                    ? (int) maxFrequency
-                    : (int)(docCount * maxFrequency);
+            final int minFreq = minFrequency > 1.0 ? (int) minFrequency : (int) (docCount * minFrequency);
+            final int maxFreq = maxFrequency > 1.0 ? (int) maxFrequency : (int) (docCount * maxFrequency);
             if (minFreq > 1 || maxFreq < docCount) {
                 iterator = new FrequencyFilter(iterator, minFreq, maxFreq);
             }
@@ -147,6 +156,7 @@ public abstract class AbstractIndexOrdinalsFieldData extends AbstractIndexFieldD
 
         private int minFreq;
         private int maxFreq;
+
         FrequencyFilter(TermsEnum delegate, int minFreq, int maxFreq) {
             super(delegate, false);
             this.minFreq = minFreq;

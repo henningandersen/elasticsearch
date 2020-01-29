@@ -67,8 +67,11 @@ public abstract class PipelineAggregationBuilder implements NamedWriteable, Base
      * Internal: Validates the state of this factory (makes sure the factory is properly
      * configured)
      */
-    protected abstract void validate(AggregatorFactory parent, Collection<AggregationBuilder> aggregationBuilders,
-            Collection<PipelineAggregationBuilder> pipelineAggregatorBuilders);
+    protected abstract void validate(
+        AggregatorFactory parent,
+        Collection<AggregationBuilder> aggregationBuilders,
+        Collection<PipelineAggregationBuilder> pipelineAggregatorBuilders
+    );
 
     /**
      * Creates the pipeline aggregator

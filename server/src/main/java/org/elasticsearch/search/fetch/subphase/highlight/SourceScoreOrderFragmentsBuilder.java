@@ -39,11 +39,13 @@ public class SourceScoreOrderFragmentsBuilder extends ScoreOrderFragmentsBuilder
 
     private final QueryShardContext context;
 
-    public SourceScoreOrderFragmentsBuilder(MappedFieldType fieldType,
-                                            QueryShardContext context,
-                                            String[] preTags,
-                                            String[] postTags,
-                                            BoundaryScanner boundaryScanner) {
+    public SourceScoreOrderFragmentsBuilder(
+        MappedFieldType fieldType,
+        QueryShardContext context,
+        String[] preTags,
+        String[] postTags,
+        BoundaryScanner boundaryScanner
+    ) {
         super(preTags, postTags, boundaryScanner);
         this.fieldType = fieldType;
         this.context = context;
@@ -64,8 +66,15 @@ public class SourceScoreOrderFragmentsBuilder extends ScoreOrderFragmentsBuilder
     }
 
     @Override
-    protected String makeFragment( StringBuilder buffer, int[] index, Field[] values, WeightedFragInfo fragInfo,
-            String[] preTags, String[] postTags, Encoder encoder ){
+    protected String makeFragment(
+        StringBuilder buffer,
+        int[] index,
+        Field[] values,
+        WeightedFragInfo fragInfo,
+        String[] preTags,
+        String[] postTags,
+        Encoder encoder
+    ) {
         WeightedFragInfo weightedFragInfo = FragmentBuilderHelper.fixWeightedFragInfo(fieldType, values, fragInfo);
         return super.makeFragment(buffer, index, values, weightedFragInfo, preTags, postTags, encoder);
     }

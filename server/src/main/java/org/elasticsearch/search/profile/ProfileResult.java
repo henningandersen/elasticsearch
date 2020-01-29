@@ -74,7 +74,7 @@ public final class ProfileResult implements Writeable, ToXContentObject {
     /**
      * Read from a stream.
      */
-    public ProfileResult(StreamInput in) throws IOException{
+    public ProfileResult(StreamInput in) throws IOException {
         this.type = in.readString();
         this.description = in.readString();
         this.nodeTime = in.readLong();
@@ -174,9 +174,9 @@ public final class ProfileResult implements Writeable, ToXContentObject {
         ensureExpectedToken(XContentParser.Token.START_OBJECT, token, parser::getTokenLocation);
         String currentFieldName = null;
         String type = null, description = null;
-        Map<String, Long> timings =  new HashMap<>();
+        Map<String, Long> timings = new HashMap<>();
         List<ProfileResult> children = new ArrayList<>();
-        while((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {

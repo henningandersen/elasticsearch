@@ -105,7 +105,6 @@ public final class FileSystemUtils {
         }
     }
 
-
     /**
      * Check that a directory exists, is a directory and is readable
      * by the current user

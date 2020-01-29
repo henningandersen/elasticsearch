@@ -138,10 +138,13 @@ public class SerialDiffPipelineAggregationBuilder extends AbstractPipelineAggreg
     protected PipelineAggregator createInternal(Map<String, Object> metaData) {
         return new SerialDiffPipelineAggregator(name, bucketsPaths, formatter(), gapPolicy, lag, metaData);
     }
-    
+
     @Override
-    public void doValidate(AggregatorFactory parent, Collection<AggregationBuilder> aggFactories,
-            Collection<PipelineAggregationBuilder> pipelineAggregatoractories) {        
+    public void doValidate(
+        AggregatorFactory parent,
+        Collection<AggregationBuilder> aggFactories,
+        Collection<PipelineAggregationBuilder> pipelineAggregatoractories
+    ) {
         validateSequentiallyOrderedParentAggs(parent, NAME, name);
     }
 
@@ -174,21 +177,31 @@ public class SerialDiffPipelineAggregationBuilder extends AbstractPipelineAggreg
                 } else if (GAP_POLICY.match(currentFieldName, parser.getDeprecationHandler())) {
                     gapPolicy = GapPolicy.parse(parser.text(), parser.getTokenLocation());
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else if (token == XContentParser.Token.VALUE_NUMBER) {
                 if (LAG.match(currentFieldName, parser.getDeprecationHandler())) {
                     lag = parser.intValue(true);
                     if (lag <= 0) {
-                        throw new ParsingException(parser.getTokenLocation(),
-                                "Lag must be a positive, non-zero integer.  Value supplied was" +
-                                lag + " in [" + reducerName + "]: ["
-                                        + currentFieldName + "].");
+                        throw new ParsingException(
+                            parser.getTokenLocation(),
+                            "Lag must be a positive, non-zero integer.  Value supplied was"
+                                + lag
+                                + " in ["
+                                + reducerName
+                                + "]: ["
+                                + currentFieldName
+                                + "]."
+                        );
                     }
-                }  else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "].");
+                } else {
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else if (token == XContentParser.Token.START_ARRAY) {
                 if (BUCKETS_PATH.match(currentFieldName, parser.getDeprecationHandler())) {
@@ -199,22 +212,28 @@ public class SerialDiffPipelineAggregationBuilder extends AbstractPipelineAggreg
                     }
                     bucketsPaths = paths.toArray(new String[paths.size()]);
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else {
-                throw new ParsingException(parser.getTokenLocation(), "Unexpected token " + token + " in [" + reducerName + "].",
-                        parser.getTokenLocation());
+                throw new ParsingException(
+                    parser.getTokenLocation(),
+                    "Unexpected token " + token + " in [" + reducerName + "].",
+                    parser.getTokenLocation()
+                );
             }
         }
 
         if (bucketsPaths == null) {
-            throw new ParsingException(parser.getTokenLocation(),
-                    "Missing required field [" + BUCKETS_PATH.getPreferredName() + "] for derivative aggregation [" + reducerName + "]");
+            throw new ParsingException(
+                parser.getTokenLocation(),
+                "Missing required field [" + BUCKETS_PATH.getPreferredName() + "] for derivative aggregation [" + reducerName + "]"
+            );
         }
 
-        SerialDiffPipelineAggregationBuilder factory =
-                new SerialDiffPipelineAggregationBuilder(reducerName, bucketsPaths[0]);
+        SerialDiffPipelineAggregationBuilder factory = new SerialDiffPipelineAggregationBuilder(reducerName, bucketsPaths[0]);
         if (lag != null) {
             factory.lag(lag);
         }
@@ -238,9 +257,7 @@ public class SerialDiffPipelineAggregationBuilder extends AbstractPipelineAggreg
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         SerialDiffPipelineAggregationBuilder other = (SerialDiffPipelineAggregationBuilder) obj;
-        return Objects.equals(format, other.format)
-                && Objects.equals(gapPolicy, other.gapPolicy)
-                && Objects.equals(lag, other.lag);
+        return Objects.equals(format, other.format) && Objects.equals(gapPolicy, other.gapPolicy) && Objects.equals(lag, other.lag);
     }
 
     @Override

@@ -171,7 +171,7 @@ public class RepositoriesMetaData extends AbstractNamedDiffable<Custom> implemen
         this.repositories = List.of(repository);
     }
 
-    public static NamedDiff<Custom> readDiffFrom(StreamInput in) throws  IOException {
+    public static NamedDiff<Custom> readDiffFrom(StreamInput in) throws IOException {
         return readDiffFrom(Custom.class, TYPE, in);
     }
 
@@ -223,8 +223,11 @@ public class RepositoriesMetaData extends AbstractNamedDiffable<Custom> implemen
                             }
                             pendingGeneration = parser.longValue();
                         } else {
-                            throw new ElasticsearchParseException("failed to parse repository [{}], unknown field [{}]",
-                                name, currentFieldName);
+                            throw new ElasticsearchParseException(
+                                "failed to parse repository [{}], unknown field [{}]",
+                                name,
+                                currentFieldName
+                            );
                         }
                     } else {
                         throw new ElasticsearchParseException("failed to parse repository [{}]", name);

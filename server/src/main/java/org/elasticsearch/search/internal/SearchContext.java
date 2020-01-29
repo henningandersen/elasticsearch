@@ -18,7 +18,6 @@
  */
 package org.elasticsearch.search.internal;
 
-
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.FieldDoc;
 import org.apache.lucene.search.Query;
@@ -365,7 +364,7 @@ public abstract class SearchContext extends AbstractRefCounted implements Releas
 
     public void clearReleasables(Lifetime lifetime) {
         if (clearables != null) {
-            List<List<Releasable>>releasables = new ArrayList<>();
+            List<List<Releasable>> releasables = new ArrayList<>();
             for (Lifetime lc : Lifetime.values()) {
                 if (lc.compareTo(lifetime) > 0) {
                     break;
@@ -383,8 +382,7 @@ public abstract class SearchContext extends AbstractRefCounted implements Releas
      * @return true if the request contains only suggest
      */
     public final boolean hasOnlySuggest() {
-        return request().source() != null
-            && request().source().isSuggestOnly();
+        return request().source() != null && request().source().isSuggestOnly();
     }
 
     /**

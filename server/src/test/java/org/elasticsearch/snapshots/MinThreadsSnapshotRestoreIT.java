@@ -42,10 +42,11 @@ public class MinThreadsSnapshotRestoreIT extends AbstractSnapshotIntegTestCase {
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
-        return Settings.builder().put(super.nodeSettings(nodeOrdinal))
-                   .put("thread_pool.snapshot.core", 2)
-                   .put("thread_pool.snapshot.max", 2)
-                   .build();
+        return Settings.builder()
+            .put(super.nodeSettings(nodeOrdinal))
+            .put("thread_pool.snapshot.core", 2)
+            .put("thread_pool.snapshot.max", 2)
+            .build();
     }
 
     @Override
@@ -56,11 +57,19 @@ public class MinThreadsSnapshotRestoreIT extends AbstractSnapshotIntegTestCase {
     public void testConcurrentSnapshotDeletionsNotAllowed() throws Exception {
         logger.info("--> creating repository");
         final String repo = "test-repo";
-        assertAcked(client().admin().cluster().preparePutRepository(repo).setType("mock").setSettings(
-            Settings.builder()
-                .put("location", randomRepoPath())
-                .put("random", randomAlphaOfLength(10))
-                .put("wait_after_unblock", 200)).get());
+        assertAcked(
+            client().admin()
+                .cluster()
+                .preparePutRepository(repo)
+                .setType("mock")
+                .setSettings(
+                    Settings.builder()
+                        .put("location", randomRepoPath())
+                        .put("random", randomAlphaOfLength(10))
+                        .put("wait_after_unblock", 200)
+                )
+                .get()
+        );
 
         logger.info("--> snapshot twice");
         final String index = "test-idx1";
@@ -81,10 +90,9 @@ public class MinThreadsSnapshotRestoreIT extends AbstractSnapshotIntegTestCase {
         client().admin().cluster().prepareCreateSnapshot(repo, snapshot2).setWaitForCompletion(true).get();
 
         String blockedNode = internalCluster().getMasterName();
-        ((MockRepository)internalCluster().getInstance(RepositoriesService.class, blockedNode).repository(repo)).blockOnDataFiles(true);
+        ((MockRepository) internalCluster().getInstance(RepositoriesService.class, blockedNode).repository(repo)).blockOnDataFiles(true);
         logger.info("--> start deletion of first snapshot");
-        ActionFuture<AcknowledgedResponse> future =
-            client().admin().cluster().prepareDeleteSnapshot(repo, snapshot2).execute();
+        ActionFuture<AcknowledgedResponse> future = client().admin().cluster().prepareDeleteSnapshot(repo, snapshot2).execute();
         logger.info("--> waiting for block to kick in on node [{}]", blockedNode);
         waitForBlock(blockedNode, repo, TimeValue.timeValueSeconds(10));
 
@@ -110,11 +118,19 @@ public class MinThreadsSnapshotRestoreIT extends AbstractSnapshotIntegTestCase {
     public void testSnapshottingWithInProgressDeletionNotAllowed() throws Exception {
         logger.info("--> creating repository");
         final String repo = "test-repo";
-        assertAcked(client().admin().cluster().preparePutRepository(repo).setType("mock").setSettings(
-            Settings.builder()
-                .put("location", randomRepoPath())
-                .put("random", randomAlphaOfLength(10))
-                .put("wait_after_unblock", 200)).get());
+        assertAcked(
+            client().admin()
+                .cluster()
+                .preparePutRepository(repo)
+                .setType("mock")
+                .setSettings(
+                    Settings.builder()
+                        .put("location", randomRepoPath())
+                        .put("random", randomAlphaOfLength(10))
+                        .put("wait_after_unblock", 200)
+                )
+                .get()
+        );
 
         logger.info("--> snapshot");
         final String index = "test-idx";
@@ -127,7 +143,7 @@ public class MinThreadsSnapshotRestoreIT extends AbstractSnapshotIntegTestCase {
         client().admin().cluster().prepareCreateSnapshot(repo, snapshot1).setWaitForCompletion(true).get();
 
         String blockedNode = internalCluster().getMasterName();
-        ((MockRepository)internalCluster().getInstance(RepositoriesService.class, blockedNode).repository(repo)).blockOnDataFiles(true);
+        ((MockRepository) internalCluster().getInstance(RepositoriesService.class, blockedNode).repository(repo)).blockOnDataFiles(true);
         logger.info("--> start deletion of snapshot");
         ActionFuture<AcknowledgedResponse> future = client().admin().cluster().prepareDeleteSnapshot(repo, snapshot1).execute();
         logger.info("--> waiting for block to kick in on node [{}]", blockedNode);
@@ -156,11 +172,19 @@ public class MinThreadsSnapshotRestoreIT extends AbstractSnapshotIntegTestCase {
     public void testRestoreWithInProgressDeletionsNotAllowed() throws Exception {
         logger.info("--> creating repository");
         final String repo = "test-repo";
-        assertAcked(client().admin().cluster().preparePutRepository(repo).setType("mock").setSettings(
-            Settings.builder()
-                .put("location", randomRepoPath())
-                .put("random", randomAlphaOfLength(10))
-                .put("wait_after_unblock", 200)).get());
+        assertAcked(
+            client().admin()
+                .cluster()
+                .preparePutRepository(repo)
+                .setType("mock")
+                .setSettings(
+                    Settings.builder()
+                        .put("location", randomRepoPath())
+                        .put("random", randomAlphaOfLength(10))
+                        .put("wait_after_unblock", 200)
+                )
+                .get()
+        );
 
         logger.info("--> snapshot");
         final String index = "test-idx";
@@ -182,7 +206,7 @@ public class MinThreadsSnapshotRestoreIT extends AbstractSnapshotIntegTestCase {
         client().admin().indices().prepareClose(index, index2).get();
 
         String blockedNode = internalCluster().getMasterName();
-        ((MockRepository)internalCluster().getInstance(RepositoriesService.class, blockedNode).repository(repo)).blockOnDataFiles(true);
+        ((MockRepository) internalCluster().getInstance(RepositoriesService.class, blockedNode).repository(repo)).blockOnDataFiles(true);
         logger.info("--> start deletion of snapshot");
         ActionFuture<AcknowledgedResponse> future = client().admin().cluster().prepareDeleteSnapshot(repo, snapshot2).execute();
         logger.info("--> waiting for block to kick in on node [{}]", blockedNode);

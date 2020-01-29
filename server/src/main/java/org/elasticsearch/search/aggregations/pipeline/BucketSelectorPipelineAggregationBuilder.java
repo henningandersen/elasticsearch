@@ -139,8 +139,10 @@ public class BucketSelectorPipelineAggregationBuilder extends AbstractPipelineAg
                 } else if (Script.SCRIPT_PARSE_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                     script = Script.parse(parser);
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else if (token == XContentParser.Token.START_ARRAY) {
                 if (BUCKETS_PATH.match(currentFieldName, parser.getDeprecationHandler())) {
@@ -154,8 +156,10 @@ public class BucketSelectorPipelineAggregationBuilder extends AbstractPipelineAg
                         bucketsPathsMap.put("_value" + i, paths.get(i));
                     }
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else if (token == XContentParser.Token.START_OBJECT) {
                 if (Script.SCRIPT_PARSE_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
@@ -167,8 +171,10 @@ public class BucketSelectorPipelineAggregationBuilder extends AbstractPipelineAg
                         bucketsPathsMap.put(entry.getKey(), String.valueOf(entry.getValue()));
                     }
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + reducerName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else {
                 throw new ParsingException(parser.getTokenLocation(), "Unexpected token " + token + " in [" + reducerName + "].");
@@ -176,17 +182,28 @@ public class BucketSelectorPipelineAggregationBuilder extends AbstractPipelineAg
         }
 
         if (bucketsPathsMap == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Missing required field [" + BUCKETS_PATH.getPreferredName()
-                    + "] for bucket_selector aggregation [" + reducerName + "]");
+            throw new ParsingException(
+                parser.getTokenLocation(),
+                "Missing required field [" + BUCKETS_PATH.getPreferredName() + "] for bucket_selector aggregation [" + reducerName + "]"
+            );
         }
 
         if (script == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Missing required field [" + Script.SCRIPT_PARSE_FIELD.getPreferredName()
-                    + "] for bucket_selector aggregation [" + reducerName + "]");
+            throw new ParsingException(
+                parser.getTokenLocation(),
+                "Missing required field ["
+                    + Script.SCRIPT_PARSE_FIELD.getPreferredName()
+                    + "] for bucket_selector aggregation ["
+                    + reducerName
+                    + "]"
+            );
         }
 
-        BucketSelectorPipelineAggregationBuilder factory =
-                new BucketSelectorPipelineAggregationBuilder(reducerName, bucketsPathsMap, script);
+        BucketSelectorPipelineAggregationBuilder factory = new BucketSelectorPipelineAggregationBuilder(
+            reducerName,
+            bucketsPathsMap,
+            script
+        );
         if (gapPolicy != null) {
             factory.gapPolicy(gapPolicy);
         }

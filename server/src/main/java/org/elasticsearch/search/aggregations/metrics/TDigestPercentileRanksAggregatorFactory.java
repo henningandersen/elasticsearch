@@ -33,22 +33,24 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-class TDigestPercentileRanksAggregatorFactory
-        extends ValuesSourceAggregatorFactory<ValuesSource> {
+class TDigestPercentileRanksAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSource> {
 
     private final double[] percents;
     private final double compression;
     private final boolean keyed;
 
-    TDigestPercentileRanksAggregatorFactory(String name,
-                                                ValuesSourceConfig<ValuesSource> config,
-                                                double[] percents,
-                                                double compression,
-                                                boolean keyed,
-                                                QueryShardContext queryShardContext,
-                                                AggregatorFactory parent,
-                                                AggregatorFactories.Builder subFactoriesBuilder,
-                                                Map<String, Object> metaData) throws IOException {
+    TDigestPercentileRanksAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource> config,
+        double[] percents,
+        double compression,
+        boolean keyed,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.percents = percents;
         this.compression = compression;
@@ -56,23 +58,47 @@ class TDigestPercentileRanksAggregatorFactory
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        return new TDigestPercentileRanksAggregator(name, null, searchContext, parent, percents, compression, keyed, config.format(),
-                pipelineAggregators, metaData);
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new TDigestPercentileRanksAggregator(
+            name,
+            null,
+            searchContext,
+            parent,
+            percents,
+            compression,
+            keyed,
+            config.format(),
+            pipelineAggregators,
+            metaData
+        );
     }
 
     @Override
-    protected Aggregator doCreateInternal(ValuesSource valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        return new TDigestPercentileRanksAggregator(name, valuesSource, searchContext, parent,
-            percents, compression, keyed, config.format(), pipelineAggregators, metaData);
+    protected Aggregator doCreateInternal(
+        ValuesSource valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new TDigestPercentileRanksAggregator(
+            name,
+            valuesSource,
+            searchContext,
+            parent,
+            percents,
+            compression,
+            keyed,
+            config.format(),
+            pipelineAggregators,
+            metaData
+        );
     }
 
 }

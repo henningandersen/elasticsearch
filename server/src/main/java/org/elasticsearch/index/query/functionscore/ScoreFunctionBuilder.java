@@ -38,8 +38,7 @@ public abstract class ScoreFunctionBuilder<FB extends ScoreFunctionBuilder<FB>> 
     /**
      * Standard empty constructor.
      */
-    public ScoreFunctionBuilder() {
-    }
+    public ScoreFunctionBuilder() {}
 
     /**
      * Read from a stream.

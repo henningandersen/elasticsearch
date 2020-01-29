@@ -152,7 +152,10 @@ public class WorkerBulkByScrollTaskStateTests extends ESTestCase {
             }
         };
         try {
-            workerState.delayPrepareBulkRequest(threadPool, timeValueNanos(System.nanoTime()), batchSizeForMaxDelay,
+            workerState.delayPrepareBulkRequest(
+                threadPool,
+                timeValueNanos(System.nanoTime()),
+                batchSizeForMaxDelay,
                 new AbstractRunnable() {
                     @Override
                     protected void doRun() throws Exception {
@@ -227,8 +230,8 @@ public class WorkerBulkByScrollTaskStateTests extends ESTestCase {
             // Have the task use the thread pool to delay a task that does nothing
             workerState.delayPrepareBulkRequest(threadPool, timeValueSeconds(0), 1, new AbstractRunnable() {
                 @Override
-                protected void doRun() throws Exception {
-                }
+                protected void doRun() throws Exception {}
+
                 @Override
                 public void onFailure(Exception e) {
                     throw new UnsupportedOperationException();
@@ -247,7 +250,9 @@ public class WorkerBulkByScrollTaskStateTests extends ESTestCase {
 
         int total = between(0, 1000000);
         workerState.rethrottle(1);
-        assertThat((double) workerState.perfectlyThrottledBatchTime(total),
-                closeTo(TimeUnit.SECONDS.toNanos(total), TimeUnit.SECONDS.toNanos(1)));
+        assertThat(
+            (double) workerState.perfectlyThrottledBatchTime(total),
+            closeTo(TimeUnit.SECONDS.toNanos(total), TimeUnit.SECONDS.toNanos(1))
+        );
     }
 }

@@ -78,14 +78,15 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
         // terms query or lookup query
         if (randomBoolean()) {
             // make between 0 and 5 different values of the same type
-            String fieldName = randomValueOtherThanMany(choice ->
-                    choice.equals(GEO_POINT_FIELD_NAME) ||
-                    choice.equals(GEO_POINT_ALIAS_FIELD_NAME) ||
-                    choice.equals(GEO_SHAPE_FIELD_NAME) ||
-                    choice.equals(INT_RANGE_FIELD_NAME) ||
-                    choice.equals(DATE_RANGE_FIELD_NAME) ||
-                    choice.equals(DATE_NANOS_FIELD_NAME), // TODO: needs testing for date_nanos type
-                () -> getRandomFieldName());
+            String fieldName = randomValueOtherThanMany(
+                choice -> choice.equals(GEO_POINT_FIELD_NAME)
+                    || choice.equals(GEO_POINT_ALIAS_FIELD_NAME)
+                    || choice.equals(GEO_SHAPE_FIELD_NAME)
+                    || choice.equals(INT_RANGE_FIELD_NAME)
+                    || choice.equals(DATE_RANGE_FIELD_NAME)
+                    || choice.equals(DATE_NANOS_FIELD_NAME), // TODO: needs testing for date_nanos type
+                () -> getRandomFieldName()
+            );
             Object[] values = new Object[randomInt(5)];
             for (int i = 0; i < values.length; i++) {
                 values[i] = getRandomValueForFieldName(fieldName);
@@ -93,7 +94,7 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
             query = new TermsQueryBuilder(fieldName, values);
         } else {
             // right now the mock service returns us a list of strings
-            query = new TermsQueryBuilder(randomBoolean() ? randomAlphaOfLengthBetween(1,10) : STRING_FIELD_NAME, randomTermsLookup());
+            query = new TermsQueryBuilder(randomBoolean() ? randomAlphaOfLengthBetween(1, 10) : STRING_FIELD_NAME, randomTermsLookup());
         }
         return query;
     }
@@ -110,21 +111,24 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
             assertThat(query, instanceOf(MatchNoDocsQuery.class));
             MatchNoDocsQuery matchNoDocsQuery = (MatchNoDocsQuery) query;
             assertThat(matchNoDocsQuery.toString(), containsString("No terms supplied for \"terms\" query."));
-        } else if (queryBuilder.termsLookup() != null && randomTerms.size() == 0){
+        } else if (queryBuilder.termsLookup() != null && randomTerms.size() == 0) {
             assertThat(query, instanceOf(MatchNoDocsQuery.class));
             MatchNoDocsQuery matchNoDocsQuery = (MatchNoDocsQuery) query;
             assertThat(matchNoDocsQuery.toString(), containsString("No terms supplied for \"terms\" query."));
         } else {
-            assertThat(query, either(instanceOf(TermInSetQuery.class))
-                    .or(instanceOf(PointInSetQuery.class))
-                    .or(instanceOf(ConstantScoreQuery.class)));
+            assertThat(
+                query,
+                either(instanceOf(TermInSetQuery.class)).or(instanceOf(PointInSetQuery.class)).or(instanceOf(ConstantScoreQuery.class))
+            );
             if (query instanceof ConstantScoreQuery) {
                 assertThat(((ConstantScoreQuery) query).getQuery(), instanceOf(BooleanQuery.class));
             }
 
             // we only do the check below for string fields (otherwise we'd have to decode the values)
-            if (queryBuilder.fieldName().equals(INT_FIELD_NAME) || queryBuilder.fieldName().equals(DOUBLE_FIELD_NAME)
-                    || queryBuilder.fieldName().equals(BOOLEAN_FIELD_NAME) || queryBuilder.fieldName().equals(DATE_FIELD_NAME)) {
+            if (queryBuilder.fieldName().equals(INT_FIELD_NAME)
+                || queryBuilder.fieldName().equals(DOUBLE_FIELD_NAME)
+                || queryBuilder.fieldName().equals(BOOLEAN_FIELD_NAME)
+                || queryBuilder.fieldName().equals(DATE_FIELD_NAME)) {
                 return;
             }
 
@@ -137,8 +141,10 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
             }
 
             String fieldName = expectedFieldName(queryBuilder.fieldName());
-            TermInSetQuery expected = new TermInSetQuery(fieldName,
-                    terms.stream().filter(Objects::nonNull).map(Object::toString).map(BytesRef::new).collect(Collectors.toList()));
+            TermInSetQuery expected = new TermInSetQuery(
+                fieldName,
+                terms.stream().filter(Objects::nonNull).map(Object::toString).map(BytesRef::new).collect(Collectors.toList())
+            );
             assertEquals(expected, query);
         }
     }
@@ -173,20 +179,20 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
     }
 
     public void testBothValuesAndLookupSet() throws IOException {
-        String query = "{\n" +
-                "  \"terms\": {\n" +
-                "    \"field\": [\n" +
-                "      \"blue\",\n" +
-                "      \"pill\"\n" +
-                "    ],\n" +
-                "    \"field_lookup\": {\n" +
-                "      \"index\": \"pills\",\n" +
-                "      \"type\": \"red\",\n" +
-                "      \"id\": \"3\",\n" +
-                "      \"path\": \"white rabbit\"\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+        String query = "{\n"
+            + "  \"terms\": {\n"
+            + "    \"field\": [\n"
+            + "      \"blue\",\n"
+            + "      \"pill\"\n"
+            + "    ],\n"
+            + "    \"field_lookup\": {\n"
+            + "      \"index\": \"pills\",\n"
+            + "      \"type\": \"red\",\n"
+            + "      \"id\": \"3\",\n"
+            + "      \"path\": \"white rabbit\"\n"
+            + "    }\n"
+            + "  }\n"
+            + "}";
 
         ParsingException e = expectThrows(ParsingException.class, () -> parseQuery(query));
         assertThat(e.getMessage(), containsString("[" + TermsQueryBuilder.NAME + "] query does not support more than one field."));
@@ -204,31 +210,30 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
         } catch (IOException ex) {
             throw new ElasticsearchException("boom", ex);
         }
-        return new GetResponse(new GetResult(getRequest.index(), getRequest.id(), 0, 1, 0, true,
-            new BytesArray(json), null, null));
+        return new GetResponse(new GetResult(getRequest.index(), getRequest.id(), 0, 1, 0, true, new BytesArray(json), null, null));
     }
 
     public void testNumeric() throws IOException {
         {
-            TermsQueryBuilder builder = new TermsQueryBuilder("foo", new int[]{1, 3, 4});
+            TermsQueryBuilder builder = new TermsQueryBuilder("foo", new int[] { 1, 3, 4 });
             TermsQueryBuilder copy = (TermsQueryBuilder) assertSerialization(builder);
             List<Object> values = copy.values();
             assertEquals(Arrays.asList(1L, 3L, 4L), values);
         }
         {
-            TermsQueryBuilder builder = new TermsQueryBuilder("foo", new double[]{1, 3, 4});
+            TermsQueryBuilder builder = new TermsQueryBuilder("foo", new double[] { 1, 3, 4 });
             TermsQueryBuilder copy = (TermsQueryBuilder) assertSerialization(builder);
             List<Object> values = copy.values();
             assertEquals(Arrays.asList(1d, 3d, 4d), values);
         }
         {
-            TermsQueryBuilder builder = new TermsQueryBuilder("foo", new float[]{1, 3, 4});
+            TermsQueryBuilder builder = new TermsQueryBuilder("foo", new float[] { 1, 3, 4 });
             TermsQueryBuilder copy = (TermsQueryBuilder) assertSerialization(builder);
             List<Object> values = copy.values();
             assertEquals(Arrays.asList(1f, 3f, 4f), values);
         }
         {
-            TermsQueryBuilder builder = new TermsQueryBuilder("foo", new long[]{1, 3, 4});
+            TermsQueryBuilder builder = new TermsQueryBuilder("foo", new long[] { 1, 3, 4 });
             TermsQueryBuilder copy = (TermsQueryBuilder) assertSerialization(builder);
             List<Object> values = copy.values();
             assertEquals(Arrays.asList(1L, 3L, 4L), values);
@@ -236,21 +241,20 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
     }
 
     public void testTermsQueryWithMultipleFields() throws IOException {
-        String query = Strings.toString(XContentFactory.jsonBuilder().startObject()
-                .startObject("terms").array("foo", 123).array("bar", 456).endObject()
-                .endObject());
+        String query = Strings.toString(
+            XContentFactory.jsonBuilder().startObject().startObject("terms").array("foo", 123).array("bar", 456).endObject().endObject()
+        );
         ParsingException e = expectThrows(ParsingException.class, () -> parseQuery(query));
         assertEquals("[" + TermsQueryBuilder.NAME + "] query does not support multiple fields", e.getMessage());
     }
 
     public void testFromJson() throws IOException {
-        String json =
-                "{\n" +
-                "  \"terms\" : {\n" +
-                "    \"user\" : [ \"kimchy\", \"elasticsearch\" ],\n" +
-                "    \"boost\" : 1.0\n" +
-                "  }\n" +
-                "}";
+        String json = "{\n"
+            + "  \"terms\" : {\n"
+            + "    \"user\" : [ \"kimchy\", \"elasticsearch\" ],\n"
+            + "    \"boost\" : 1.0\n"
+            + "  }\n"
+            + "}";
 
         TermsQueryBuilder parsed = (TermsQueryBuilder) parseQuery(json);
         checkGeneratedJson(json, parsed);
@@ -260,20 +264,22 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
     @Override
     public void testMustRewrite() throws IOException {
         TermsQueryBuilder termsQueryBuilder = new TermsQueryBuilder(STRING_FIELD_NAME, randomTermsLookup());
-        UnsupportedOperationException e = expectThrows(UnsupportedOperationException.class,
-                () -> termsQueryBuilder.toQuery(createShardContext()));
+        UnsupportedOperationException e = expectThrows(
+            UnsupportedOperationException.class,
+            () -> termsQueryBuilder.toQuery(createShardContext())
+        );
         assertEquals("query must be rewritten first", e.getMessage());
-        assertEquals(rewriteAndFetch(termsQueryBuilder, createShardContext()), new TermsQueryBuilder(STRING_FIELD_NAME,
-            randomTerms.stream().filter(x -> x != null).collect(Collectors.toList()))); // terms lookup removes null values
+        assertEquals(
+            rewriteAndFetch(termsQueryBuilder, createShardContext()),
+            new TermsQueryBuilder(STRING_FIELD_NAME, randomTerms.stream().filter(x -> x != null).collect(Collectors.toList()))
+        ); // terms lookup removes null values
     }
 
     public void testGeo() throws Exception {
         TermsQueryBuilder query = new TermsQueryBuilder(GEO_POINT_FIELD_NAME, "2,3");
         QueryShardContext context = createShardContext();
-        QueryShardException e = expectThrows(QueryShardException.class,
-                () -> query.toQuery(context));
-        assertEquals("Geo fields do not support exact searching, use dedicated geo queries instead: [mapped_geo_point]",
-                e.getMessage());
+        QueryShardException e = expectThrows(QueryShardException.class, () -> query.toQuery(context));
+        assertEquals("Geo fields do not support exact searching, use dedicated geo queries instead: [mapped_geo_point]", e.getMessage());
     }
 
     public void testSerializationFailsUnlessFetched() throws IOException {
@@ -312,22 +318,22 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
         builder.doToQuery(createShardContext());
         assertWarnings(QueryShardContext.TYPES_DEPRECATION_MESSAGE);
     }
-    
+
     public void testRewriteIndexQueryToMatchNone() throws IOException {
         TermsQueryBuilder query = new TermsQueryBuilder("_index", "does_not_exist", "also_does_not_exist");
         QueryShardContext queryShardContext = createShardContext();
         QueryBuilder rewritten = query.rewrite(queryShardContext);
         assertThat(rewritten, instanceOf(MatchNoneQueryBuilder.class));
-    }      
-    
+    }
+
     public void testRewriteIndexQueryToNotMatchNone() throws IOException {
         // At least one name is good
         TermsQueryBuilder query = new TermsQueryBuilder("_index", "does_not_exist", getIndex().getName());
         QueryShardContext queryShardContext = createShardContext();
         QueryBuilder rewritten = query.rewrite(queryShardContext);
         assertThat(rewritten, instanceOf(TermsQueryBuilder.class));
-    }      
-    
+    }
+
     @Override
     protected QueryBuilder parseQuery(XContentParser parser) throws IOException {
         QueryBuilder query = super.parseQuery(parser);

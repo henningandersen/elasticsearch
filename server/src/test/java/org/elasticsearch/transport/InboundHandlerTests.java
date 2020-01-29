@@ -59,8 +59,13 @@ public class InboundHandlerTests extends ESTestCase {
         channel = new FakeTcpChannel(randomBoolean(), buildNewFakeTransportAddress().address(), buildNewFakeTransportAddress().address());
         NamedWriteableRegistry namedWriteableRegistry = new NamedWriteableRegistry(Collections.emptyList());
         InboundMessage.Reader reader = new InboundMessage.Reader(version, namedWriteableRegistry, threadPool.getThreadContext());
-        TransportHandshaker handshaker = new TransportHandshaker(new ClusterName("cluster-name"), version, threadPool, (n, c, r, v) -> {
-        }, (v, c, r, r_id) -> { });
+        TransportHandshaker handshaker = new TransportHandshaker(
+            new ClusterName("cluster-name"),
+            version,
+            threadPool,
+            (n, c, r, v) -> {},
+            (v, c, r, r_id) -> {}
+        );
         TransportKeepAlive keepAlive = new TransportKeepAlive(threadPool, TcpChannel::sendMessage);
         OutboundHandler outboundHandler = new OutboundHandler("node", version, threadPool, BigArrays.NON_RECYCLING_INSTANCE);
         handler = new InboundHandler(threadPool, outboundHandler, reader, new NoneCircuitBreakerService(), handshaker, keepAlive);
@@ -74,8 +79,15 @@ public class InboundHandlerTests extends ESTestCase {
 
     public void testPing() throws Exception {
         AtomicReference<TransportChannel> channelCaptor = new AtomicReference<>();
-        RequestHandlerRegistry<TestRequest> registry = new RequestHandlerRegistry<>("test-request", TestRequest::new, taskManager,
-            (request, channel, task) -> channelCaptor.set(channel), ThreadPool.Names.SAME, false, true);
+        RequestHandlerRegistry<TestRequest> registry = new RequestHandlerRegistry<>(
+            "test-request",
+            TestRequest::new,
+            taskManager,
+            (request, channel, task) -> channelCaptor.set(channel),
+            ThreadPool.Names.SAME,
+            false,
+            true
+        );
         handler.registerRequestHandler(registry);
 
         handler.inboundMessage(channel, BytesArray.EMPTY);
@@ -118,15 +130,29 @@ public class InboundHandlerTests extends ESTestCase {
                 return new TestResponse(in);
             }
         }, null, action));
-        RequestHandlerRegistry<TestRequest> registry = new RequestHandlerRegistry<>(action, TestRequest::new, taskManager,
+        RequestHandlerRegistry<TestRequest> registry = new RequestHandlerRegistry<>(
+            action,
+            TestRequest::new,
+            taskManager,
             (request, channel, task) -> {
                 channelCaptor.set(channel);
                 requestCaptor.set(request);
-            }, ThreadPool.Names.SAME, false, true);
+            },
+            ThreadPool.Names.SAME,
+            false,
+            true
+        );
         handler.registerRequestHandler(registry);
         String requestValue = randomAlphaOfLength(10);
-        OutboundMessage.Request request = new OutboundMessage.Request(threadPool.getThreadContext(),
-            new TestRequest(requestValue), version, action, requestId, false, isCompressed);
+        OutboundMessage.Request request = new OutboundMessage.Request(
+            threadPool.getThreadContext(),
+            new TestRequest(requestValue),
+            version,
+            action,
+            requestId,
+            false,
+            isCompressed
+        );
 
         BytesReference bytes = request.serialize(new BytesStreamOutput());
         handler.inboundMessage(channel, bytes.slice(6, bytes.length() - 6));

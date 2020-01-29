@@ -49,8 +49,7 @@ import java.util.function.Supplier;
  */
 public class GeoShapeQueryBuilder extends AbstractGeometryQueryBuilder<GeoShapeQueryBuilder> {
     public static final String NAME = "geo_shape";
-    private static final DeprecationLogger deprecationLogger = new DeprecationLogger(
-        LogManager.getLogger(GeoShapeQueryBuilder.class));
+    private static final DeprecationLogger deprecationLogger = new DeprecationLogger(LogManager.getLogger(GeoShapeQueryBuilder.class));
 
     protected static final ParseField STRATEGY_FIELD = new ParseField("strategy");
 
@@ -136,8 +135,15 @@ public class GeoShapeQueryBuilder extends AbstractGeometryQueryBuilder<GeoShapeQ
             throw new IllegalArgumentException("No Shape Relation defined");
         }
         if (SpatialStrategy.TERM.equals(strategy) && relation != ShapeRelation.INTERSECTS) {
-            throw new IllegalArgumentException("current strategy [" + strategy.getStrategyName() + "] only supports relation ["
-                + ShapeRelation.INTERSECTS.getRelationName() + "] found relation [" + relation.getRelationName() + "]");
+            throw new IllegalArgumentException(
+                "current strategy ["
+                    + strategy.getStrategyName()
+                    + "] only supports relation ["
+                    + ShapeRelation.INTERSECTS.getRelationName()
+                    + "] found relation ["
+                    + relation.getRelationName()
+                    + "]"
+            );
         }
         this.relation = relation;
         return this;
@@ -154,12 +160,20 @@ public class GeoShapeQueryBuilder extends AbstractGeometryQueryBuilder<GeoShapeQ
      */
     public GeoShapeQueryBuilder strategy(SpatialStrategy strategy) {
         if (strategy != null && strategy == SpatialStrategy.TERM && relation != ShapeRelation.INTERSECTS) {
-            throw new IllegalArgumentException("strategy [" + strategy.getStrategyName() + "] only supports relation ["
-                + ShapeRelation.INTERSECTS.getRelationName() + "] found relation [" + relation.getRelationName() + "]");
+            throw new IllegalArgumentException(
+                "strategy ["
+                    + strategy.getStrategyName()
+                    + "] only supports relation ["
+                    + ShapeRelation.INTERSECTS.getRelationName()
+                    + "] found relation ["
+                    + relation.getRelationName()
+                    + "]"
+            );
         }
         this.strategy = strategy;
         return this;
     }
+
     /**
      * @return The spatial strategy to use for building the geo shape Query
      */
@@ -190,16 +204,17 @@ public class GeoShapeQueryBuilder extends AbstractGeometryQueryBuilder<GeoShapeQ
     }
 
     @Override
-    protected GeoShapeQueryBuilder newShapeQueryBuilder(String fieldName, Supplier<Geometry> shapeSupplier,
-                                                        String indexedShapeId) {
+    protected GeoShapeQueryBuilder newShapeQueryBuilder(String fieldName, Supplier<Geometry> shapeSupplier, String indexedShapeId) {
         return new GeoShapeQueryBuilder(fieldName, shapeSupplier, indexedShapeId);
     }
 
     @Override
     public Query buildShapeQuery(QueryShardContext context, MappedFieldType fieldType) {
         if (fieldType.typeName().equals(GeoShapeFieldMapper.CONTENT_TYPE) == false) {
-            throw new QueryShardException(context,
-                "Field [" + fieldName + "] is not of type [" + queryFieldType() + "] but of type [" + fieldType.typeName() + "]");
+            throw new QueryShardException(
+                context,
+                "Field [" + fieldName + "] is not of type [" + queryFieldType() + "] but of type [" + fieldType.typeName() + "]"
+            );
         }
 
         final AbstractGeometryFieldMapper.AbstractGeometryFieldType ft = (AbstractGeometryFieldMapper.AbstractGeometryFieldType) fieldType;
@@ -208,8 +223,7 @@ public class GeoShapeQueryBuilder extends AbstractGeometryQueryBuilder<GeoShapeQ
 
     @Override
     protected boolean doEquals(GeoShapeQueryBuilder other) {
-        return super.doEquals((AbstractGeometryQueryBuilder)other)
-            && Objects.equals(strategy, other.strategy);
+        return super.doEquals((AbstractGeometryQueryBuilder) other) && Objects.equals(strategy, other.strategy);
     }
 
     @Override
@@ -219,7 +233,7 @@ public class GeoShapeQueryBuilder extends AbstractGeometryQueryBuilder<GeoShapeQ
 
     @Override
     protected GeoShapeQueryBuilder doRewrite(QueryRewriteContext queryRewriteContext) throws IOException {
-        GeoShapeQueryBuilder builder = (GeoShapeQueryBuilder)super.doRewrite(queryRewriteContext);
+        GeoShapeQueryBuilder builder = (GeoShapeQueryBuilder) super.doRewrite(queryRewriteContext);
         builder.strategy(strategy);
         return builder;
     }
@@ -248,8 +262,10 @@ public class GeoShapeQueryBuilder extends AbstractGeometryQueryBuilder<GeoShapeQ
     }
 
     public static GeoShapeQueryBuilder fromXContent(XContentParser parser) throws IOException {
-        ParsedGeoShapeQueryParams pgsqp =
-            (ParsedGeoShapeQueryParams) AbstractGeometryQueryBuilder.parsedParamsFromXContent(parser, new ParsedGeoShapeQueryParams());
+        ParsedGeoShapeQueryParams pgsqp = (ParsedGeoShapeQueryParams) AbstractGeometryQueryBuilder.parsedParamsFromXContent(
+            parser,
+            new ParsedGeoShapeQueryParams()
+        );
 
         GeoShapeQueryBuilder builder;
 

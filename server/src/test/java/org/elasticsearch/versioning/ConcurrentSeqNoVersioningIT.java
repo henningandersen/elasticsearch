@@ -68,7 +68,6 @@ import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcke
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-
 /**
  * This test stress tests CAS updates using sequence number based versioning (ifPrimaryTerm/ifSeqNo).
  *
@@ -133,32 +132,31 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
     public void testSeqNoCASLinearizability() {
         final int disruptTimeSeconds = scaledRandomIntBetween(1, 8);
 
-        assertAcked(prepareCreate("test")
-            .setSettings(Settings.builder()
-                .put(indexSettings())
-                .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1 + randomInt(2))
-                .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, randomInt(3))
-            ));
+        assertAcked(
+            prepareCreate("test").setSettings(
+                Settings.builder()
+                    .put(indexSettings())
+                    .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1 + randomInt(2))
+                    .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, randomInt(3))
+            )
+        );
 
         ensureGreen();
 
         int numberOfKeys = randomIntBetween(1, 10);
 
         logger.info("--> Indexing initial doc for {} keys", numberOfKeys);
-        List<Partition> partitions =
-            IntStream.range(0, numberOfKeys)
-                .mapToObj(i -> client().prepareIndex("test").setId("ID:" + i).setSource("value", -1).get())
-                .map(response ->
-                    new Partition(response.getId(), new Version(response.getPrimaryTerm(), response.getSeqNo())))
-                .collect(Collectors.toList());
+        List<Partition> partitions = IntStream.range(0, numberOfKeys)
+            .mapToObj(i -> client().prepareIndex("test").setId("ID:" + i).setSource("value", -1).get())
+            .map(response -> new Partition(response.getId(), new Version(response.getPrimaryTerm(), response.getSeqNo())))
+            .collect(Collectors.toList());
 
         int threadCount = randomIntBetween(3, 20);
         CyclicBarrier roundBarrier = new CyclicBarrier(threadCount + 1); // +1 for main thread.
 
-        List<CASUpdateThread> threads =
-            IntStream.range(0, threadCount)
-                .mapToObj(i -> new CASUpdateThread(i, roundBarrier, partitions, disruptTimeSeconds + 1))
-                .collect(Collectors.toList());
+        List<CASUpdateThread> threads = IntStream.range(0, threadCount)
+            .mapToObj(i -> new CASUpdateThread(i, roundBarrier, partitions, disruptTimeSeconds + 1))
+            .collect(Collectors.toList());
 
         logger.info("--> Starting {} threads", threadCount);
         threads.forEach(Thread::start);
@@ -184,8 +182,7 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
             }
         } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
             logger.error("Timed out, dumping stack traces of all threads:");
-            threads.forEach(
-                thread -> logger.info(thread.toString() + ":\n" + ExceptionsHelper.formatStackTrace(thread.getStackTrace())));
+            threads.forEach(thread -> logger.info(thread.toString() + ":\n" + ExceptionsHelper.formatStackTrace(thread.getStackTrace())));
             throw new RuntimeException(e);
         } finally {
             logger.info("--> terminating test");
@@ -196,7 +193,6 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
 
         partitions.forEach(Partition::assertLinearizable);
     }
-
 
     private class CASUpdateThread extends Thread {
         private final CyclicBarrier roundBarrier;
@@ -219,7 +215,7 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
                 try {
                     roundBarrier.await(70, TimeUnit.SECONDS);
 
-                    int numberOfUpdates = randomIntBetween(3, 13)  * partitions.size();
+                    int numberOfUpdates = randomIntBetween(3, 13) * partitions.size();
                     for (int i = 0; i < numberOfUpdates; ++i) {
                         final int keyIndex = random.nextInt(partitions.size());
                         final Partition partition = partitions.get(keyIndex);
@@ -280,7 +276,8 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
                             }
                             logger.info(
                                 new ParameterizedMessage("Received failure for request [{}], version [{}]", indexRequest, version),
-                                e);
+                                e
+                            );
                             if (stop) {
                                 // interrupt often comes as a RuntimeException so check to stop here too.
                                 return;
@@ -335,8 +332,7 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Version version = (Version) o;
-            return primaryTerm == version.primaryTerm &&
-                seqNo == version.seqNo;
+            return primaryTerm == version.primaryTerm && seqNo == version.seqNo;
         }
 
         @Override
@@ -347,8 +343,7 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
         @Override
         public int compareTo(Version other) {
             int termCompare = Long.compare(primaryTerm, other.primaryTerm);
-            if (termCompare != 0)
-                return termCompare;
+            if (termCompare != 0) return termCompare;
             return Long.compare(seqNo, other.seqNo);
         }
 
@@ -396,8 +391,7 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
         }
 
         public void consume(Version version) {
-            if (version == null)
-                return;
+            if (version == null) return;
             this.current.updateAndGet(current -> version.compareTo(current) <= 0 ? current : version);
         }
     }
@@ -442,8 +436,13 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
         }
 
         public void assertLinearizable() {
-            logger.info("--> Linearizability checking history of size: {} for key: {} and initialVersion: {}: {}", history.size(),
-                id, initialVersion, history);
+            logger.info(
+                "--> Linearizability checking history of size: {} for key: {} and initialVersion: {}: {}",
+                history.size(),
+                id,
+                initialVersion,
+                history
+            );
             LinearizabilityChecker.SequentialSpec spec = new CASSequentialSpec(initialVersion);
             boolean linearizable = false;
             try {
@@ -464,8 +463,12 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
                 String serializedHistory = base64Serialize(history);
                 if (linearizable == false) {
                     // we dump base64 encoded data, since the nature of this test is that it does not reproduce even with same seed.
-                    logger.error("Linearizability check failed. Spec: {}, initial version: {}, serialized history: {}",
-                        spec, initialVersion, serializedHistory);
+                    logger.error(
+                        "Linearizability check failed. Spec: {}, initial version: {}, serialized history: {}",
+                        spec,
+                        initialVersion,
+                        serializedHistory
+                    );
                 }
             }
             assertTrue("Must be linearizable", linearizable);
@@ -488,8 +491,7 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
         public Optional<Object> nextState(Object currentState, Object input, Object output) {
             State state = (State) currentState;
             if (output instanceof IndexResponseHistoryOutput) {
-                if (input.equals(state.safeVersion) ||
-                    (state.lastFailed && ((Version) input).compareTo(state.safeVersion) > 0)) {
+                if (input.equals(state.safeVersion) || (state.lastFailed && ((Version) input).compareTo(state.safeVersion) > 0)) {
                     return Optional.of(casSuccess(((IndexResponseHistoryOutput) output).getVersion()));
                 } else {
                     return Optional.empty();
@@ -518,8 +520,7 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             State that = (State) o;
-            return lastFailed == that.lastFailed &&
-                safeVersion.equals(that.safeVersion);
+            return lastFailed == that.lastFailed && safeVersion.equals(that.safeVersion);
         }
 
         @Override
@@ -529,10 +530,7 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
 
         @Override
         public String toString() {
-            return "State{" +
-                "safeVersion=" + safeVersion +
-                ", lastFailed=" + lastFailed +
-                '}';
+            return "State{" + "safeVersion=" + safeVersion + ", lastFailed=" + lastFailed + '}';
         }
     }
 
@@ -593,6 +591,7 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
      */
     private static class CASFailureHistoryOutput implements HistoryOutput {
         private Version outputVersion;
+
         private CASFailureHistoryOutput(VersionConflictEngineException exception) {
             this(parseException(exception.getMessage()));
         }
@@ -644,11 +643,9 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
      */
     private static class FailureHistoryOutput implements HistoryOutput {
 
-        private FailureHistoryOutput() {
-        }
+        private FailureHistoryOutput() {}
 
-        private FailureHistoryOutput(@SuppressWarnings("unused") StreamInput streamInput) {
-        }
+        private FailureHistoryOutput(@SuppressWarnings("unused") StreamInput streamInput) {}
 
         @Override
         public Version getVersion() {
@@ -706,8 +703,11 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
     }
 
     private static LinearizabilityChecker.Event readEvent(StreamInput input) throws IOException {
-        return new LinearizabilityChecker.Event(input.readEnum(LinearizabilityChecker.EventType.class),
-            input.readNamedWriteable(NamedWriteable.class), input.readInt());
+        return new LinearizabilityChecker.Event(
+            input.readEnum(LinearizabilityChecker.EventType.class),
+            input.readNamedWriteable(NamedWriteable.class),
+            input.readInt()
+        );
     }
 
     @SuppressForbidden(reason = "system err is ok for a command line tool")
@@ -727,23 +727,26 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
         LinearizabilityChecker.History history = readHistory(is);
 
         Version initialVersion = new Version(primaryTerm, seqNo);
-        boolean result =
-            new LinearizabilityChecker().isLinearizable(new CASSequentialSpec(initialVersion), history,
-                missingResponseGenerator());
+        boolean result = new LinearizabilityChecker().isLinearizable(
+            new CASSequentialSpec(initialVersion),
+            history,
+            missingResponseGenerator()
+        );
 
-        System.out.println(LinearizabilityChecker.visualize(new CASSequentialSpec(initialVersion), history,
-            missingResponseGenerator()));
+        System.out.println(LinearizabilityChecker.visualize(new CASSequentialSpec(initialVersion), history, missingResponseGenerator()));
 
         System.out.println("Linearizable?: " + result);
     }
 
     private static NamedWriteableRegistry createNamedWriteableRegistry() {
-        return new NamedWriteableRegistry(Arrays.asList(
-            new NamedWriteableRegistry.Entry(NamedWriteable.class, "version", Version::new),
-            new NamedWriteableRegistry.Entry(NamedWriteable.class, "index", IndexResponseHistoryOutput::new),
-            new NamedWriteableRegistry.Entry(NamedWriteable.class, "casfail", CASFailureHistoryOutput::new),
-            new NamedWriteableRegistry.Entry(NamedWriteable.class, "fail", FailureHistoryOutput::new)
-        ));
+        return new NamedWriteableRegistry(
+            Arrays.asList(
+                new NamedWriteableRegistry.Entry(NamedWriteable.class, "version", Version::new),
+                new NamedWriteableRegistry.Entry(NamedWriteable.class, "index", IndexResponseHistoryOutput::new),
+                new NamedWriteableRegistry.Entry(NamedWriteable.class, "casfail", CASFailureHistoryOutput::new),
+                new NamedWriteableRegistry.Entry(NamedWriteable.class, "fail", FailureHistoryOutput::new)
+            )
+        );
     }
 
     public void testSequentialSpec() {
@@ -758,44 +761,46 @@ public class ConcurrentSeqNoVersioningIT extends AbstractDisruptionTestCase {
 
         assertThat(spec.initialState(), equalTo(casSuccess(version1)));
 
-        assertThat(spec.nextState(casSuccess(version1), version1, new IndexResponseHistoryOutput(version2)),
-            equalTo(Optional.of(casSuccess(version2))));
-        assertThat(spec.nextState(casFail(version1), version2, new IndexResponseHistoryOutput(version3)),
-            equalTo(Optional.of(casSuccess(version3))));
-        assertThat(spec.nextState(casSuccess(version1), version2, new IndexResponseHistoryOutput(version3)),
-            equalTo(Optional.empty()));
-        assertThat(spec.nextState(casSuccess(version2), version1, new IndexResponseHistoryOutput(version3)),
-            equalTo(Optional.empty()));
-        assertThat(spec.nextState(casFail(version2), version1, new IndexResponseHistoryOutput(version3)),
-            equalTo(Optional.empty()));
+        assertThat(
+            spec.nextState(casSuccess(version1), version1, new IndexResponseHistoryOutput(version2)),
+            equalTo(Optional.of(casSuccess(version2)))
+        );
+        assertThat(
+            spec.nextState(casFail(version1), version2, new IndexResponseHistoryOutput(version3)),
+            equalTo(Optional.of(casSuccess(version3)))
+        );
+        assertThat(spec.nextState(casSuccess(version1), version2, new IndexResponseHistoryOutput(version3)), equalTo(Optional.empty()));
+        assertThat(spec.nextState(casSuccess(version2), version1, new IndexResponseHistoryOutput(version3)), equalTo(Optional.empty()));
+        assertThat(spec.nextState(casFail(version2), version1, new IndexResponseHistoryOutput(version3)), equalTo(Optional.empty()));
 
         // for version conflicts, we keep state version with lastFailed set, regardless of input/output version.
-        versions.forEach(stateVersion ->
-            versions.forEach(inputVersion ->
-                versions.forEach(outputVersion -> {
-                    assertThat(spec.nextState(casSuccess(stateVersion), inputVersion, new CASFailureHistoryOutput(outputVersion)),
-                        equalTo(Optional.of(casFail(stateVersion))));
-                    assertThat(spec.nextState(casFail(stateVersion), inputVersion, new CASFailureHistoryOutput(outputVersion)),
-                        equalTo(Optional.of(casFail(stateVersion))));
-                })
-            )
-        );
+        versions.forEach(stateVersion -> versions.forEach(inputVersion -> versions.forEach(outputVersion -> {
+            assertThat(
+                spec.nextState(casSuccess(stateVersion), inputVersion, new CASFailureHistoryOutput(outputVersion)),
+                equalTo(Optional.of(casFail(stateVersion)))
+            );
+            assertThat(
+                spec.nextState(casFail(stateVersion), inputVersion, new CASFailureHistoryOutput(outputVersion)),
+                equalTo(Optional.of(casFail(stateVersion)))
+            );
+        })));
 
         // for non version conflict failures, we keep state version with lastFailed set, regardless of input version.
-        versions.forEach(stateVersion ->
-                versions.forEach(inputVersion -> {
-                        assertThat(spec.nextState(casSuccess(stateVersion), inputVersion, new FailureHistoryOutput()),
-                            equalTo(Optional.of(casFail(stateVersion))));
-                        assertThat(spec.nextState(casFail(stateVersion), inputVersion, new FailureHistoryOutput()),
-                            equalTo(Optional.of(casFail(stateVersion))));
-                })
-        );
+        versions.forEach(stateVersion -> versions.forEach(inputVersion -> {
+            assertThat(
+                spec.nextState(casSuccess(stateVersion), inputVersion, new FailureHistoryOutput()),
+                equalTo(Optional.of(casFail(stateVersion)))
+            );
+            assertThat(
+                spec.nextState(casFail(stateVersion), inputVersion, new FailureHistoryOutput()),
+                equalTo(Optional.of(casFail(stateVersion)))
+            );
+        }));
     }
 
     private Version futureVersion(Version version) {
-        Version futureVersion = version.nextSeqNo(randomIntBetween(1,10));
-        if (randomBoolean())
-            futureVersion = futureVersion.nextTerm();
+        Version futureVersion = version.nextSeqNo(randomIntBetween(1, 10));
+        if (randomBoolean()) futureVersion = futureVersion.nextTerm();
         return futureVersion;
     }
- }
+}

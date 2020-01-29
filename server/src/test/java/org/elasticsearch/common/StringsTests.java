@@ -62,17 +62,18 @@ public class StringsTests extends ESTestCase {
         if (randomBoolean()) {
             if (randomBoolean()) {
                 error = false;
-                toXContent  = (builder, params) -> builder.field("ok", "here").field("catastrophe", "");
+                toXContent = (builder, params) -> builder.field("ok", "here").field("catastrophe", "");
             } else {
                 error = true;
-                toXContent  = (builder, params) ->
-                        builder.startObject().field("ok", "here").field("catastrophe", "").endObject();
+                toXContent = (builder, params) -> builder.startObject().field("ok", "here").field("catastrophe", "").endObject();
             }
         } else {
             if (randomBoolean()) {
                 error = false;
-                toXContent = (ToXContentObject) (builder, params) ->
-                        builder.startObject().field("ok", "here").field("catastrophe", "").endObject();
+                toXContent = (ToXContentObject) (builder, params) -> builder.startObject()
+                    .field("ok", "here")
+                    .field("catastrophe", "")
+                    .endObject();
             } else {
                 error = true;
                 toXContent = (ToXContentObject) (builder, params) -> builder.field("ok", "here").field("catastrophe", "");
@@ -92,10 +93,10 @@ public class StringsTests extends ESTestCase {
     public void testSplitStringToSet() {
         assertEquals(Strings.tokenizeByCommaToSet(null), Sets.newHashSet());
         assertEquals(Strings.tokenizeByCommaToSet(""), Sets.newHashSet());
-        assertEquals(Strings.tokenizeByCommaToSet("a,b,c"), Sets.newHashSet("a","b","c"));
-        assertEquals(Strings.tokenizeByCommaToSet("a, b, c"), Sets.newHashSet("a","b","c"));
-        assertEquals(Strings.tokenizeByCommaToSet(" a ,  b, c  "), Sets.newHashSet("a","b","c"));
-        assertEquals(Strings.tokenizeByCommaToSet("aa, bb, cc"), Sets.newHashSet("aa","bb","cc"));
+        assertEquals(Strings.tokenizeByCommaToSet("a,b,c"), Sets.newHashSet("a", "b", "c"));
+        assertEquals(Strings.tokenizeByCommaToSet("a, b, c"), Sets.newHashSet("a", "b", "c"));
+        assertEquals(Strings.tokenizeByCommaToSet(" a ,  b, c  "), Sets.newHashSet("a", "b", "c"));
+        assertEquals(Strings.tokenizeByCommaToSet("aa, bb, cc"), Sets.newHashSet("aa", "bb", "cc"));
         assertEquals(Strings.tokenizeByCommaToSet(" a "), Sets.newHashSet("a"));
         assertEquals(Strings.tokenizeByCommaToSet("   a   "), Sets.newHashSet("a"));
         assertEquals(Strings.tokenizeByCommaToSet("   aa   "), Sets.newHashSet("aa"));

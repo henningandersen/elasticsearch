@@ -53,7 +53,8 @@ public interface ShapeParser {
     static ShapeBuilder parse(XContentParser parser, AbstractGeometryFieldMapper shapeMapper) throws IOException {
         if (parser.currentToken() == XContentParser.Token.VALUE_NULL) {
             return null;
-        } if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
+        }
+        if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
             return GeoJsonParser.parse(parser, shapeMapper);
         } else if (parser.currentToken() == XContentParser.Token.VALUE_STRING) {
             return GeoWKTParser.parse(parser, shapeMapper);
@@ -73,8 +74,14 @@ public interface ShapeParser {
     }
 
     static ShapeBuilder parse(Object value) throws IOException {
-        try (XContentParser parser = new MapXContentParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE,
-                Collections.singletonMap("value", value), null)) {
+        try (
+            XContentParser parser = new MapXContentParser(
+                NamedXContentRegistry.EMPTY,
+                LoggingDeprecationHandler.INSTANCE,
+                Collections.singletonMap("value", value),
+                null
+            )
+        ) {
             parser.nextToken(); // start object
             parser.nextToken(); // field name
             parser.nextToken(); // field value

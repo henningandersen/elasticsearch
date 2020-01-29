@@ -42,8 +42,9 @@ import static org.elasticsearch.tasks.TaskInfoTests.randomTaskInfo;
  */
 public class TaskResultTests extends ESTestCase {
     public void testBinaryRoundTrip() throws IOException {
-        NamedWriteableRegistry registry = new NamedWriteableRegistry(Collections.singletonList(
-            new NamedWriteableRegistry.Entry(Task.Status.class, RawTaskStatus.NAME, RawTaskStatus::new)));
+        NamedWriteableRegistry registry = new NamedWriteableRegistry(
+            Collections.singletonList(new NamedWriteableRegistry.Entry(Task.Status.class, RawTaskStatus.NAME, RawTaskStatus::new))
+        );
         TaskResult result = randomTaskResult();
         TaskResult read;
         try (BytesStreamOutput out = new BytesStreamOutput()) {
@@ -66,8 +67,7 @@ public class TaskResultTests extends ESTestCase {
         TaskResult read;
         try (XContentBuilder builder = XContentBuilder.builder(randomFrom(XContentType.values()).xContent())) {
             result.toXContent(builder, ToXContent.EMPTY_PARAMS);
-            try (XContentBuilder shuffled = shuffleXContent(builder);
-                 XContentParser parser = createParser(shuffled)) {
+            try (XContentBuilder shuffled = shuffleXContent(builder); XContentParser parser = createParser(shuffled)) {
                 read = TaskResult.PARSER.apply(parser, null);
             }
         } catch (IOException e) {

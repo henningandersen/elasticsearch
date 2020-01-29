@@ -51,11 +51,13 @@ public class GetIndexResponse extends ActionResponse implements ToXContentObject
     private ImmutableOpenMap<String, Settings> defaultSettings = ImmutableOpenMap.of();
     private String[] indices;
 
-    public GetIndexResponse(String[] indices,
-                     ImmutableOpenMap<String, MappingMetaData> mappings,
-                     ImmutableOpenMap<String, List<AliasMetaData>> aliases,
-                     ImmutableOpenMap<String, Settings> settings,
-                     ImmutableOpenMap<String, Settings> defaultSettings) {
+    public GetIndexResponse(
+        String[] indices,
+        ImmutableOpenMap<String, MappingMetaData> mappings,
+        ImmutableOpenMap<String, List<AliasMetaData>> aliases,
+        ImmutableOpenMap<String, Settings> settings,
+        ImmutableOpenMap<String, Settings> defaultSettings
+    ) {
         this.indices = indices;
         // to have deterministic order
         Arrays.sort(indices);
@@ -88,8 +90,7 @@ public class GetIndexResponse extends ActionResponse implements ToXContentObject
                     String type = in.readString();
                     assert MapperService.SINGLE_MAPPING_NAME.equals(type) : "Expected [_doc] but got [" + type + "]";
                     mappingsMapBuilder.put(index, new MappingMetaData(in));
-                }
-                else {
+                } else {
                     mappingsMapBuilder.put(index, MappingMetaData.EMPTY_MAPPINGS);
                 }
             } else {
@@ -287,24 +288,17 @@ public class GetIndexResponse extends ActionResponse implements ToXContentObject
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o== null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         GetIndexResponse that = (GetIndexResponse) o;
-        return Arrays.equals(indices, that.indices) &&
-            Objects.equals(aliases, that.aliases) &&
-            Objects.equals(mappings, that.mappings) &&
-            Objects.equals(settings, that.settings) &&
-            Objects.equals(defaultSettings, that.defaultSettings);
+        return Arrays.equals(indices, that.indices)
+            && Objects.equals(aliases, that.aliases)
+            && Objects.equals(mappings, that.mappings)
+            && Objects.equals(settings, that.settings)
+            && Objects.equals(defaultSettings, that.defaultSettings);
     }
 
     @Override
     public int hashCode() {
-        return
-            Objects.hash(
-                Arrays.hashCode(indices),
-                aliases,
-                mappings,
-                settings,
-                defaultSettings
-            );
+        return Objects.hash(Arrays.hashCode(indices), aliases, mappings, settings, defaultSettings);
     }
 }

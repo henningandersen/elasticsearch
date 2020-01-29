@@ -29,8 +29,13 @@ import java.util.Map;
 public class GeoHashGridTests extends GeoGridTestCase<InternalGeoHashGridBucket, InternalGeoHashGrid> {
 
     @Override
-    protected InternalGeoHashGrid createInternalGeoGrid(String name, int size, List<InternalGeoGridBucket> buckets,
-                                                        List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    protected InternalGeoHashGrid createInternalGeoGrid(
+        String name,
+        int size,
+        List<InternalGeoGridBucket> buckets,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         return new InternalGeoHashGrid(name, size, buckets, pipelineAggregators, metaData);
     }
 

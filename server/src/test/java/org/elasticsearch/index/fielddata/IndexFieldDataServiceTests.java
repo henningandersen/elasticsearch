@@ -68,8 +68,12 @@ public class IndexFieldDataServiceTests extends ESSingleNodeTestCase {
     public void testGetForFieldDefaults() {
         final IndexService indexService = createIndex("test");
         final IndicesService indicesService = getInstanceFromNode(IndicesService.class);
-        final IndexFieldDataService ifdService = new IndexFieldDataService(indexService.getIndexSettings(),
-            indicesService.getIndicesFieldDataCache(), indicesService.getCircuitBreakerService(), indexService.mapperService());
+        final IndexFieldDataService ifdService = new IndexFieldDataService(
+            indexService.getIndexSettings(),
+            indicesService.getIndicesFieldDataCache(),
+            indicesService.getCircuitBreakerService(),
+            indexService.mapperService()
+        );
         final BuilderContext ctx = new BuilderContext(indexService.getIndexSettings().getSettings(), new ContentPath(1));
         final MappedFieldType stringMapper = new KeywordFieldMapper.Builder("string").build(ctx).fieldType();
         ifdService.clear();
@@ -77,24 +81,24 @@ public class IndexFieldDataServiceTests extends ESSingleNodeTestCase {
         assertTrue(fd instanceof SortedSetDVOrdinalsIndexFieldData);
 
         for (MappedFieldType mapper : Arrays.asList(
-                new NumberFieldMapper.Builder("int", NumberFieldMapper.NumberType.BYTE).build(ctx).fieldType(),
-                new NumberFieldMapper.Builder("int", NumberFieldMapper.NumberType.SHORT).build(ctx).fieldType(),
-                new NumberFieldMapper.Builder("int", NumberFieldMapper.NumberType.INTEGER).build(ctx).fieldType(),
-                new NumberFieldMapper.Builder("long", NumberFieldMapper.NumberType.LONG).build(ctx).fieldType()
-                )) {
+            new NumberFieldMapper.Builder("int", NumberFieldMapper.NumberType.BYTE).build(ctx).fieldType(),
+            new NumberFieldMapper.Builder("int", NumberFieldMapper.NumberType.SHORT).build(ctx).fieldType(),
+            new NumberFieldMapper.Builder("int", NumberFieldMapper.NumberType.INTEGER).build(ctx).fieldType(),
+            new NumberFieldMapper.Builder("long", NumberFieldMapper.NumberType.LONG).build(ctx).fieldType()
+        )) {
             ifdService.clear();
             fd = ifdService.getForField(mapper);
             assertTrue(fd instanceof SortedNumericDVIndexFieldData);
         }
 
-        final MappedFieldType floatMapper = new NumberFieldMapper.Builder("float", NumberFieldMapper.NumberType.FLOAT)
-                .build(ctx).fieldType();
+        final MappedFieldType floatMapper = new NumberFieldMapper.Builder("float", NumberFieldMapper.NumberType.FLOAT).build(ctx)
+            .fieldType();
         ifdService.clear();
         fd = ifdService.getForField(floatMapper);
         assertTrue(fd instanceof SortedNumericDVIndexFieldData);
 
-        final MappedFieldType doubleMapper = new NumberFieldMapper.Builder("double", NumberFieldMapper.NumberType.DOUBLE)
-                .build(ctx).fieldType();
+        final MappedFieldType doubleMapper = new NumberFieldMapper.Builder("double", NumberFieldMapper.NumberType.DOUBLE).build(ctx)
+            .fieldType();
         ifdService.clear();
         fd = ifdService.getForField(doubleMapper);
         assertTrue(fd instanceof SortedNumericDVIndexFieldData);
@@ -104,8 +108,12 @@ public class IndexFieldDataServiceTests extends ESSingleNodeTestCase {
         final IndexService indexService = createIndex("test");
         final IndicesService indicesService = getInstanceFromNode(IndicesService.class);
         // copy the ifdService since we can set the listener only once.
-        final IndexFieldDataService ifdService = new IndexFieldDataService(indexService.getIndexSettings(),
-            indicesService.getIndicesFieldDataCache(), indicesService.getCircuitBreakerService(), indexService.mapperService());
+        final IndexFieldDataService ifdService = new IndexFieldDataService(
+            indexService.getIndexSettings(),
+            indicesService.getIndicesFieldDataCache(),
+            indicesService.getCircuitBreakerService(),
+            indexService.mapperService()
+        );
 
         final BuilderContext ctx = new BuilderContext(indexService.getIndexSettings().getSettings(), new ContentPath(1));
         final MappedFieldType mapper1 = new TextFieldMapper.Builder("field_1").fielddata(true).build(ctx).fieldType();
@@ -164,8 +172,12 @@ public class IndexFieldDataServiceTests extends ESSingleNodeTestCase {
         final IndexService indexService = createIndex("test");
         final IndicesService indicesService = getInstanceFromNode(IndicesService.class);
         // copy the ifdService since we can set the listener only once.
-        final IndexFieldDataService ifdService = new IndexFieldDataService(indexService.getIndexSettings(),
-                indicesService.getIndicesFieldDataCache(), indicesService.getCircuitBreakerService(), indexService.mapperService());
+        final IndexFieldDataService ifdService = new IndexFieldDataService(
+            indexService.getIndexSettings(),
+            indicesService.getIndicesFieldDataCache(),
+            indicesService.getCircuitBreakerService(),
+            indexService.mapperService()
+        );
 
         final BuilderContext ctx = new BuilderContext(indexService.getIndexSettings().getSettings(), new ContentPath(1));
         final MappedFieldType mapper1 = new TextFieldMapper.Builder("s").fielddata(true).build(ctx).fieldType();
@@ -215,8 +227,12 @@ public class IndexFieldDataServiceTests extends ESSingleNodeTestCase {
     public void testSetCacheListenerTwice() {
         final IndexService indexService = createIndex("test");
         final IndicesService indicesService = getInstanceFromNode(IndicesService.class);
-        final IndexFieldDataService shardPrivateService = new IndexFieldDataService(indexService.getIndexSettings(),
-            indicesService.getIndicesFieldDataCache(), indicesService.getCircuitBreakerService(), indexService.mapperService());
+        final IndexFieldDataService shardPrivateService = new IndexFieldDataService(
+            indexService.getIndexSettings(),
+            indicesService.getIndicesFieldDataCache(),
+            indicesService.getCircuitBreakerService(),
+            indexService.mapperService()
+        );
         // set it the first time...
         shardPrivateService.setListener(new IndexFieldDataCache.Listener() {
             @Override
@@ -252,8 +268,12 @@ public class IndexFieldDataServiceTests extends ESSingleNodeTestCase {
         ThreadPool threadPool = new TestThreadPool("random_threadpool_name");
         try {
             IndicesFieldDataCache cache = new IndicesFieldDataCache(Settings.EMPTY, null);
-            IndexFieldDataService ifds =
-                new IndexFieldDataService(IndexSettingsModule.newIndexSettings("test", Settings.EMPTY), cache, null, null);
+            IndexFieldDataService ifds = new IndexFieldDataService(
+                IndexSettingsModule.newIndexSettings("test", Settings.EMPTY),
+                cache,
+                null,
+                null
+            );
             ft.setName("some_long");
             ft.setHasDocValues(true);
             ifds.getForField(ft); // no exception

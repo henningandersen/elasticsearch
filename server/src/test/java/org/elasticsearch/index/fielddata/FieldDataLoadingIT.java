@@ -29,14 +29,21 @@ import static org.hamcrest.Matchers.greaterThan;
 public class FieldDataLoadingIT extends ESIntegTestCase {
 
     public void testEagerGlobalOrdinalsFieldDataLoading() throws Exception {
-        assertAcked(prepareCreate("test")
-                .setMapping(jsonBuilder().startObject().startObject("_doc").startObject("properties")
-                        .startObject("name")
-                        .field("type", "text")
-                        .field("fielddata", true)
-                        .field("eager_global_ordinals", true)
-                        .endObject()
-                        .endObject().endObject().endObject()));
+        assertAcked(
+            prepareCreate("test").setMapping(
+                jsonBuilder().startObject()
+                    .startObject("_doc")
+                    .startObject("properties")
+                    .startObject("name")
+                    .field("type", "text")
+                    .field("fielddata", true)
+                    .field("eager_global_ordinals", true)
+                    .endObject()
+                    .endObject()
+                    .endObject()
+                    .endObject()
+            )
+        );
         ensureGreen();
 
         client().prepareIndex("test").setId("1").setSource("name", "name").get();

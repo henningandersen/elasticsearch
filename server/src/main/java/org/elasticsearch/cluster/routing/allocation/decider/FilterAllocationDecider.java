@@ -71,15 +71,18 @@ public class FilterAllocationDecider extends AllocationDecider {
     private static final String CLUSTER_ROUTING_REQUIRE_GROUP_PREFIX = "cluster.routing.allocation.require";
     private static final String CLUSTER_ROUTING_INCLUDE_GROUP_PREFIX = "cluster.routing.allocation.include";
     private static final String CLUSTER_ROUTING_EXCLUDE_GROUP_PREFIX = "cluster.routing.allocation.exclude";
-    public static final Setting.AffixSetting<String> CLUSTER_ROUTING_REQUIRE_GROUP_SETTING =
-        Setting.prefixKeySetting(CLUSTER_ROUTING_REQUIRE_GROUP_PREFIX + ".", key ->
-            Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.NodeScope));
-    public static final Setting.AffixSetting<String> CLUSTER_ROUTING_INCLUDE_GROUP_SETTING =
-        Setting.prefixKeySetting(CLUSTER_ROUTING_INCLUDE_GROUP_PREFIX + ".", key ->
-            Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.NodeScope));
-    public static final Setting.AffixSetting<String>CLUSTER_ROUTING_EXCLUDE_GROUP_SETTING =
-        Setting.prefixKeySetting(CLUSTER_ROUTING_EXCLUDE_GROUP_PREFIX + ".", key ->
-            Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.NodeScope));
+    public static final Setting.AffixSetting<String> CLUSTER_ROUTING_REQUIRE_GROUP_SETTING = Setting.prefixKeySetting(
+        CLUSTER_ROUTING_REQUIRE_GROUP_PREFIX + ".",
+        key -> Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.NodeScope)
+    );
+    public static final Setting.AffixSetting<String> CLUSTER_ROUTING_INCLUDE_GROUP_SETTING = Setting.prefixKeySetting(
+        CLUSTER_ROUTING_INCLUDE_GROUP_PREFIX + ".",
+        key -> Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.NodeScope)
+    );
+    public static final Setting.AffixSetting<String> CLUSTER_ROUTING_EXCLUDE_GROUP_SETTING = Setting.prefixKeySetting(
+        CLUSTER_ROUTING_EXCLUDE_GROUP_PREFIX + ".",
+        key -> Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.NodeScope)
+    );
 
     private volatile DiscoveryNodeFilters clusterRequireFilters;
     private volatile DiscoveryNodeFilters clusterIncludeFilters;
@@ -102,9 +105,9 @@ public class FilterAllocationDecider extends AllocationDecider {
             // this is a setting that can only be set within the system!
             IndexMetaData indexMd = allocation.metaData().getIndexSafe(shardRouting.index());
             DiscoveryNodeFilters initialRecoveryFilters = indexMd.getInitialRecoveryFilters();
-            if (initialRecoveryFilters != null  &&
-                shardRouting.recoverySource().getType() == RecoverySource.Type.LOCAL_SHARDS &&
-                initialRecoveryFilters.match(node.node()) == false) {
+            if (initialRecoveryFilters != null
+                && shardRouting.recoverySource().getType() == RecoverySource.Type.LOCAL_SHARDS
+                && initialRecoveryFilters.match(node.node()) == false) {
                 String explanation =
                     "initial allocation of the shrunken index is only allowed on nodes [%s] that hold a copy of every shard in the index";
                 return allocation.decision(Decision.NO, NAME, explanation, initialRecoveryFilters);
@@ -157,20 +160,35 @@ public class FilterAllocationDecider extends AllocationDecider {
     private Decision shouldIndexFilter(IndexMetaData indexMd, DiscoveryNode node, RoutingAllocation allocation) {
         if (indexMd.requireFilters() != null) {
             if (indexMd.requireFilters().match(node) == false) {
-                return allocation.decision(Decision.NO, NAME, "node does not match index setting [%s] filters [%s]",
-                    IndexMetaData.INDEX_ROUTING_REQUIRE_GROUP_PREFIX, indexMd.requireFilters());
+                return allocation.decision(
+                    Decision.NO,
+                    NAME,
+                    "node does not match index setting [%s] filters [%s]",
+                    IndexMetaData.INDEX_ROUTING_REQUIRE_GROUP_PREFIX,
+                    indexMd.requireFilters()
+                );
             }
         }
         if (indexMd.includeFilters() != null) {
             if (indexMd.includeFilters().match(node) == false) {
-                return allocation.decision(Decision.NO, NAME, "node does not match index setting [%s] filters [%s]",
-                    IndexMetaData.INDEX_ROUTING_INCLUDE_GROUP_PREFIX, indexMd.includeFilters());
+                return allocation.decision(
+                    Decision.NO,
+                    NAME,
+                    "node does not match index setting [%s] filters [%s]",
+                    IndexMetaData.INDEX_ROUTING_INCLUDE_GROUP_PREFIX,
+                    indexMd.includeFilters()
+                );
             }
         }
         if (indexMd.excludeFilters() != null) {
             if (indexMd.excludeFilters().match(node)) {
-                return allocation.decision(Decision.NO, NAME, "node matches index setting [%s] filters [%s]",
-                    IndexMetaData.INDEX_ROUTING_EXCLUDE_GROUP_SETTING.getKey(), indexMd.excludeFilters());
+                return allocation.decision(
+                    Decision.NO,
+                    NAME,
+                    "node matches index setting [%s] filters [%s]",
+                    IndexMetaData.INDEX_ROUTING_EXCLUDE_GROUP_SETTING.getKey(),
+                    indexMd.excludeFilters()
+                );
             }
         }
         return null;
@@ -179,20 +197,35 @@ public class FilterAllocationDecider extends AllocationDecider {
     private Decision shouldClusterFilter(DiscoveryNode node, RoutingAllocation allocation) {
         if (clusterRequireFilters != null) {
             if (clusterRequireFilters.match(node) == false) {
-                return allocation.decision(Decision.NO, NAME, "node does not match cluster setting [%s] filters [%s]",
-                    CLUSTER_ROUTING_REQUIRE_GROUP_PREFIX, clusterRequireFilters);
+                return allocation.decision(
+                    Decision.NO,
+                    NAME,
+                    "node does not match cluster setting [%s] filters [%s]",
+                    CLUSTER_ROUTING_REQUIRE_GROUP_PREFIX,
+                    clusterRequireFilters
+                );
             }
         }
         if (clusterIncludeFilters != null) {
             if (clusterIncludeFilters.match(node) == false) {
-                return allocation.decision(Decision.NO, NAME, "node does not cluster setting [%s] filters [%s]",
-                    CLUSTER_ROUTING_INCLUDE_GROUP_PREFIX, clusterIncludeFilters);
+                return allocation.decision(
+                    Decision.NO,
+                    NAME,
+                    "node does not cluster setting [%s] filters [%s]",
+                    CLUSTER_ROUTING_INCLUDE_GROUP_PREFIX,
+                    clusterIncludeFilters
+                );
             }
         }
         if (clusterExcludeFilters != null) {
             if (clusterExcludeFilters.match(node)) {
-                return allocation.decision(Decision.NO, NAME, "node matches cluster setting [%s] filters [%s]",
-                    CLUSTER_ROUTING_EXCLUDE_GROUP_PREFIX, clusterExcludeFilters);
+                return allocation.decision(
+                    Decision.NO,
+                    NAME,
+                    "node matches cluster setting [%s] filters [%s]",
+                    CLUSTER_ROUTING_EXCLUDE_GROUP_PREFIX,
+                    clusterExcludeFilters
+                );
             }
         }
         return null;
@@ -201,9 +234,11 @@ public class FilterAllocationDecider extends AllocationDecider {
     private void setClusterRequireFilters(Map<String, String> filters) {
         clusterRequireFilters = DiscoveryNodeFilters.buildFromKeyValue(AND, filters);
     }
+
     private void setClusterIncludeFilters(Map<String, String> filters) {
         clusterIncludeFilters = DiscoveryNodeFilters.buildFromKeyValue(OR, filters);
     }
+
     private void setClusterExcludeFilters(Map<String, String> filters) {
         clusterExcludeFilters = DiscoveryNodeFilters.buildFromKeyValue(OR, filters);
     }

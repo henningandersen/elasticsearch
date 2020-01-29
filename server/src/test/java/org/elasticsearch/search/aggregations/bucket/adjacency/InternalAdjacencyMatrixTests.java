@@ -66,8 +66,12 @@ public class InternalAdjacencyMatrixTests extends InternalMultiBucketAggregation
     }
 
     @Override
-    protected InternalAdjacencyMatrix createTestInstance(String name, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData, InternalAggregations aggregations) {
+    protected InternalAdjacencyMatrix createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        InternalAggregations aggregations
+    ) {
         final List<InternalAdjacencyMatrix.InternalBucket> buckets = new ArrayList<>();
         for (int i = 0; i < keys.size(); ++i) {
             String key = keys.get(i);
@@ -83,15 +87,16 @@ public class InternalAdjacencyMatrixTests extends InternalMultiBucketAggregation
         for (InternalAdjacencyMatrix input : inputs) {
             for (InternalAdjacencyMatrix.InternalBucket bucket : input.getBuckets()) {
                 if (bucket.getDocCount() > 0) {
-                    expectedCounts.compute(bucket.getKeyAsString(),
-                        (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount());
+                    expectedCounts.compute(
+                        bucket.getKeyAsString(),
+                        (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount()
+                    );
                 }
             }
         }
         final Map<String, Long> actualCounts = new TreeMap<>();
         for (InternalAdjacencyMatrix.InternalBucket bucket : reduced.getBuckets()) {
-            actualCounts.compute(bucket.getKeyAsString(),
-                    (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount());
+            actualCounts.compute(bucket.getKeyAsString(), (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount());
         }
         assertEquals(expectedCounts, actualCounts);
     }
@@ -113,24 +118,25 @@ public class InternalAdjacencyMatrixTests extends InternalMultiBucketAggregation
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 2)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            buckets = new ArrayList<>(buckets);
-            buckets.add(new InternalAdjacencyMatrix.InternalBucket(randomAlphaOfLength(10), randomNonNegativeLong(),
-                    InternalAggregations.EMPTY));
-            break;
-        case 2:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
-        default:
-            throw new AssertionError("Illegal randomisation branch");
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                buckets = new ArrayList<>(buckets);
+                buckets.add(
+                    new InternalAdjacencyMatrix.InternalBucket(randomAlphaOfLength(10), randomNonNegativeLong(), InternalAggregations.EMPTY)
+                );
+                break;
+            case 2:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
+            default:
+                throw new AssertionError("Illegal randomisation branch");
         }
         return new InternalAdjacencyMatrix(name, buckets, pipelineAggregators, metaData);
     }

@@ -42,8 +42,7 @@ public class QuerySearchRequest extends TransportRequest implements IndicesReque
 
     private OriginalIndices originalIndices;
 
-    public QuerySearchRequest() {
-    }
+    public QuerySearchRequest() {}
 
     public QuerySearchRequest(OriginalIndices originalIndices, long id, AggregatedDfs dfs) {
         this.id = id;

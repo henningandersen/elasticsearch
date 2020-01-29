@@ -48,10 +48,15 @@ class ValueCountAggregator extends NumericMetricsAggregator.SingleValue {
     // a count per bucket
     LongArray counts;
 
-    ValueCountAggregator(String name, ValuesSource valuesSource,
-            SearchContext aggregationContext, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData)
-            throws IOException {
+    ValueCountAggregator(
+        String name,
+        ValuesSource valuesSource,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, aggregationContext, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         if (valuesSource != null) {
@@ -60,8 +65,7 @@ class ValueCountAggregator extends NumericMetricsAggregator.SingleValue {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         if (valuesSource == null) {
             return LeafBucketCollector.NO_OP_COLLECTOR;
         }

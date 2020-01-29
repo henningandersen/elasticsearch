@@ -145,9 +145,8 @@ public class SearchCancellationIT extends ESIntegTestCase {
         indexTestData();
 
         logger.info("Executing search");
-        ActionFuture<SearchResponse> searchResponse = client().prepareSearch("test").setQuery(
-            scriptQuery(new Script(
-                ScriptType.INLINE, "mockscript", SCRIPT_NAME, Collections.emptyMap())))
+        ActionFuture<SearchResponse> searchResponse = client().prepareSearch("test")
+            .setQuery(scriptQuery(new Script(ScriptType.INLINE, "mockscript", SCRIPT_NAME, Collections.emptyMap())))
             .execute();
 
         awaitForBlock(plugins);
@@ -164,9 +163,8 @@ public class SearchCancellationIT extends ESIntegTestCase {
 
         logger.info("Executing search");
         ActionFuture<SearchResponse> searchResponse = client().prepareSearch("test")
-            .addScriptField("test_field",
-                new Script(ScriptType.INLINE, "mockscript", SCRIPT_NAME, Collections.emptyMap())
-            ).execute();
+            .addScriptField("test_field", new Script(ScriptType.INLINE, "mockscript", SCRIPT_NAME, Collections.emptyMap()))
+            .execute();
 
         awaitForBlock(plugins);
         cancelSearch(SearchAction.NAME);
@@ -184,9 +182,7 @@ public class SearchCancellationIT extends ESIntegTestCase {
         ActionFuture<SearchResponse> searchResponse = client().prepareSearch("test")
             .setScroll(TimeValue.timeValueSeconds(10))
             .setSize(5)
-            .setQuery(
-                scriptQuery(new Script(
-                    ScriptType.INLINE, "mockscript", SCRIPT_NAME, Collections.emptyMap())))
+            .setQuery(scriptQuery(new Script(ScriptType.INLINE, "mockscript", SCRIPT_NAME, Collections.emptyMap())))
             .execute();
 
         awaitForBlock(plugins);
@@ -199,7 +195,6 @@ public class SearchCancellationIT extends ESIntegTestCase {
             client().prepareClearScroll().addScrollId(response.getScrollId()).get();
         }
     }
-
 
     public void testCancellationOfScrollSearchesOnFollowupRequests() throws Exception {
 
@@ -214,9 +209,7 @@ public class SearchCancellationIT extends ESIntegTestCase {
         SearchResponse searchResponse = client().prepareSearch("test")
             .setScroll(keepAlive)
             .setSize(2)
-            .setQuery(
-                scriptQuery(new Script(
-                    ScriptType.INLINE, "mockscript", SCRIPT_NAME, Collections.emptyMap())))
+            .setQuery(scriptQuery(new Script(ScriptType.INLINE, "mockscript", SCRIPT_NAME, Collections.emptyMap())))
             .get();
 
         assertNotNull(searchResponse.getScrollId());
@@ -230,7 +223,8 @@ public class SearchCancellationIT extends ESIntegTestCase {
         String scrollId = searchResponse.getScrollId();
         logger.info("Executing scroll with id {}", scrollId);
         ActionFuture<SearchResponse> scrollResponse = client().prepareSearchScroll(searchResponse.getScrollId())
-            .setScroll(keepAlive).execute();
+            .setScroll(keepAlive)
+            .execute();
 
         awaitForBlock(plugins);
         cancelSearch(SearchScrollAction.NAME);
@@ -244,7 +238,6 @@ public class SearchCancellationIT extends ESIntegTestCase {
         logger.info("Cleaning scroll with id {}", scrollId);
         client().prepareClearScroll().addScrollId(scrollId).get();
     }
-
 
     public static class ScriptedBlockPlugin extends MockScriptPlugin {
         static final String SCRIPT_NAME = "search_block";

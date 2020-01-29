@@ -54,8 +54,14 @@ final class TermVectorsWriter {
         response = termVectorsResponse;
     }
 
-    void setFields(Fields termVectorsByField, Set<String> selectedFields, EnumSet<Flag> flags, Fields topLevelFields,
-                   @Nullable AggregatedDfs dfs, @Nullable TermVectorsFilter termVectorsFilter) throws IOException {
+    void setFields(
+        Fields termVectorsByField,
+        Set<String> selectedFields,
+        EnumSet<Flag> flags,
+        Fields topLevelFields,
+        @Nullable AggregatedDfs dfs,
+        @Nullable TermVectorsFilter termVectorsFilter
+    ) throws IOException {
         int numFieldsWritten = 0;
         PostingsEnum docsAndPosEnum = null;
         PostingsEnum docsEnum = null;
@@ -141,12 +147,13 @@ final class TermVectorsWriter {
             numFieldsWritten++;
         }
         response.setTermVectorsField(output);
-        response.setHeader(writeHeader(numFieldsWritten, flags.contains(Flag.TermStatistics),
-            flags.contains(Flag.FieldStatistics), hasScores));
+        response.setHeader(
+            writeHeader(numFieldsWritten, flags.contains(Flag.TermStatistics), flags.contains(Flag.FieldStatistics), hasScores)
+        );
     }
 
-    private BytesReference writeHeader(int numFieldsWritten, boolean getTermStatistics,
-                                       boolean getFieldStatistics, boolean scores) throws IOException {
+    private BytesReference writeHeader(int numFieldsWritten, boolean getTermStatistics, boolean getFieldStatistics, boolean scores)
+        throws IOException {
         // now, write the information about offset of the terms in the
         // termVectors field
         BytesStreamOutput header = new BytesStreamOutput();
@@ -174,8 +181,13 @@ final class TermVectorsWriter {
         return docsEnum;
     }
 
-    private PostingsEnum writeTermWithDocsAndPos(TermsEnum iterator, PostingsEnum docsAndPosEnum, boolean positions,
-                                                         boolean offsets, boolean payloads) throws IOException {
+    private PostingsEnum writeTermWithDocsAndPos(
+        TermsEnum iterator,
+        PostingsEnum docsAndPosEnum,
+        boolean positions,
+        boolean offsets,
+        boolean payloads
+    ) throws IOException {
         docsAndPosEnum = iterator.postings(docsAndPosEnum, PostingsEnum.ALL);
         // for each term (iterator next) in this field (field)
         // iterate over the docs (should only be one)
@@ -230,7 +242,7 @@ final class TermVectorsWriter {
     }
 
     private void startField(String fieldName, long termsSize, boolean writePositions, boolean writeOffsets, boolean writePayloads)
-            throws IOException {
+        throws IOException {
         fields.add(fieldName);
         fieldOffset.add(output.position());
         output.writeVLong(termsSize);
@@ -310,15 +322,50 @@ final class TermVectorsWriter {
 
     /** Implements an empty {@link Terms}. */
     private static final Terms EMPTY_TERMS = new Terms() {
-        @Override public TermsEnum iterator() throws IOException { return TermsEnum.EMPTY; }
-        @Override public long size() throws IOException { return 0; }
-        @Override public long getSumTotalTermFreq() throws IOException { return 0; }
-        @Override public long getSumDocFreq() throws IOException { return 0; }
-        @Override public int getDocCount() throws IOException { return 0; }
-        @Override public boolean hasFreqs() { return false; }
-        @Override public boolean hasOffsets() { return false; }
-        @Override public boolean hasPositions() { return false; }
-        @Override public boolean hasPayloads() { return false; }
+        @Override
+        public TermsEnum iterator() throws IOException {
+            return TermsEnum.EMPTY;
+        }
+
+        @Override
+        public long size() throws IOException {
+            return 0;
+        }
+
+        @Override
+        public long getSumTotalTermFreq() throws IOException {
+            return 0;
+        }
+
+        @Override
+        public long getSumDocFreq() throws IOException {
+            return 0;
+        }
+
+        @Override
+        public int getDocCount() throws IOException {
+            return 0;
+        }
+
+        @Override
+        public boolean hasFreqs() {
+            return false;
+        }
+
+        @Override
+        public boolean hasOffsets() {
+            return false;
+        }
+
+        @Override
+        public boolean hasPositions() {
+            return false;
+        }
+
+        @Override
+        public boolean hasPayloads() {
+            return false;
+        }
     };
 
 }

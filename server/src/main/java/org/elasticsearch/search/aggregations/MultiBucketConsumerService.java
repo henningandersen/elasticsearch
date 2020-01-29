@@ -38,14 +38,19 @@ import java.util.function.IntConsumer;
  */
 public class MultiBucketConsumerService {
     public static final int DEFAULT_MAX_BUCKETS = 10000;
-    public static final Setting<Integer> MAX_BUCKET_SETTING =
-        Setting.intSetting("search.max_buckets", DEFAULT_MAX_BUCKETS, 0, Setting.Property.NodeScope, Setting.Property.Dynamic);
+    public static final Setting<Integer> MAX_BUCKET_SETTING = Setting.intSetting(
+        "search.max_buckets",
+        DEFAULT_MAX_BUCKETS,
+        0,
+        Setting.Property.NodeScope,
+        Setting.Property.Dynamic
+    );
 
     private volatile int maxBucket;
 
     public MultiBucketConsumerService(ClusterService clusterService, Settings settings) {
-       this.maxBucket = MAX_BUCKET_SETTING.get(settings);
-       clusterService.getClusterSettings().addSettingsUpdateConsumer(MAX_BUCKET_SETTING, this::setMaxBucket);
+        this.maxBucket = MAX_BUCKET_SETTING.get(settings);
+        clusterService.getClusterSettings().addSettingsUpdateConsumer(MAX_BUCKET_SETTING, this::setMaxBucket);
     }
 
     private void setMaxBucket(int maxBucket) {
@@ -105,9 +110,16 @@ public class MultiBucketConsumerService {
         public void accept(int value) {
             count += value;
             if (count > limit) {
-                throw new TooManyBucketsException("Trying to create too many buckets. Must be less than or equal to: [" + limit
-                    + "] but was [" + count + "]. This limit can be set by changing the [" +
-                    MAX_BUCKET_SETTING.getKey() + "] cluster level setting.", limit);
+                throw new TooManyBucketsException(
+                    "Trying to create too many buckets. Must be less than or equal to: ["
+                        + limit
+                        + "] but was ["
+                        + count
+                        + "]. This limit can be set by changing the ["
+                        + MAX_BUCKET_SETTING.getKey()
+                        + "] cluster level setting.",
+                    limit
+                );
             }
         }
 

@@ -57,8 +57,13 @@ public class ConstantIndexFieldData extends AbstractIndexOrdinalsFieldData {
         }
 
         @Override
-        public IndexFieldData<?> build(IndexSettings indexSettings, MappedFieldType fieldType, IndexFieldDataCache cache,
-                CircuitBreakerService breakerService, MapperService mapperService) {
+        public IndexFieldData<?> build(
+            IndexSettings indexSettings,
+            MappedFieldType fieldType,
+            IndexFieldDataCache cache,
+            CircuitBreakerService breakerService,
+            MapperService mapperService
+        ) {
             return new ConstantIndexFieldData(indexSettings, fieldType.name(), valueFunction.apply(mapperService));
         }
 
@@ -72,7 +77,6 @@ public class ConstantIndexFieldData extends AbstractIndexOrdinalsFieldData {
             super(DEFAULT_SCRIPT_FUNCTION);
             this.value = value;
         }
-
 
         @Override
         public long ramBytesUsed() {
@@ -121,24 +125,27 @@ public class ConstantIndexFieldData extends AbstractIndexOrdinalsFieldData {
         }
 
         @Override
-        public void close() {
-        }
+        public void close() {}
 
     }
 
     private final ConstantAtomicFieldData atomicFieldData;
 
     private ConstantIndexFieldData(IndexSettings indexSettings, String name, String value) {
-        super(indexSettings, name, null, null,
-                TextFieldMapper.Defaults.FIELDDATA_MIN_FREQUENCY,
-                TextFieldMapper.Defaults.FIELDDATA_MAX_FREQUENCY,
-                TextFieldMapper.Defaults.FIELDDATA_MIN_SEGMENT_SIZE);
+        super(
+            indexSettings,
+            name,
+            null,
+            null,
+            TextFieldMapper.Defaults.FIELDDATA_MIN_FREQUENCY,
+            TextFieldMapper.Defaults.FIELDDATA_MAX_FREQUENCY,
+            TextFieldMapper.Defaults.FIELDDATA_MIN_SEGMENT_SIZE
+        );
         atomicFieldData = new ConstantAtomicFieldData(value);
     }
 
     @Override
-    public void clear() {
-    }
+    public void clear() {}
 
     @Override
     public final AtomicOrdinalsFieldData load(LeafReaderContext context) {
@@ -146,14 +153,17 @@ public class ConstantIndexFieldData extends AbstractIndexOrdinalsFieldData {
     }
 
     @Override
-    public AtomicOrdinalsFieldData loadDirect(LeafReaderContext context)
-            throws Exception {
+    public AtomicOrdinalsFieldData loadDirect(LeafReaderContext context) throws Exception {
         return atomicFieldData;
     }
 
     @Override
-    public SortField sortField(@Nullable Object missingValue, MultiValueMode sortMode, XFieldComparatorSource.Nested nested,
-            boolean reverse) {
+    public SortField sortField(
+        @Nullable Object missingValue,
+        MultiValueMode sortMode,
+        XFieldComparatorSource.Nested nested,
+        boolean reverse
+    ) {
         final XFieldComparatorSource source = new BytesRefFieldComparatorSource(this, missingValue, sortMode, nested);
         return new SortField(getFieldName(), source, reverse);
     }

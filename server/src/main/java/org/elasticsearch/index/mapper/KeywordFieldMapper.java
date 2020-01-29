@@ -101,8 +101,9 @@ public final class KeywordFieldMapper extends FieldMapper {
         @Override
         public Builder indexOptions(IndexOptions indexOptions) {
             if (indexOptions.compareTo(IndexOptions.DOCS_AND_FREQS) > 0) {
-                throw new IllegalArgumentException("The [keyword] field does not support positions, got [index_options]="
-                        + indexOptionToString(indexOptions));
+                throw new IllegalArgumentException(
+                    "The [keyword] field does not support positions, got [index_options]=" + indexOptionToString(indexOptions)
+                );
             }
             return super.indexOptions(indexOptions);
         }
@@ -143,14 +144,21 @@ public final class KeywordFieldMapper extends FieldMapper {
                 fieldType().setSearchAnalyzer(new NamedAnalyzer("whitespace", AnalyzerScope.INDEX, new WhitespaceAnalyzer()));
             }
             return new KeywordFieldMapper(
-                    name, fieldType, defaultFieldType, ignoreAbove,
-                    context.indexSettings(), multiFieldsBuilder.build(this, context), copyTo);
+                name,
+                fieldType,
+                defaultFieldType,
+                ignoreAbove,
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                copyTo
+            );
         }
     }
 
     public static class TypeParser implements Mapper.TypeParser {
         @Override
-        public Mapper.Builder<?,?> parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
+        public Mapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             KeywordFieldMapper.Builder builder = new KeywordFieldMapper.Builder(name);
             parseField(builder, name, node, parserContext);
             for (Iterator<Map.Entry<String, Object>> iterator = node.entrySet().iterator(); iterator.hasNext();) {
@@ -212,8 +220,7 @@ public final class KeywordFieldMapper extends FieldMapper {
                 return false;
             }
             KeywordFieldType other = (KeywordFieldType) o;
-            return Objects.equals(normalizer, other.normalizer) &&
-                splitQueriesOnWhitespace == other.splitQueriesOnWhitespace;
+            return Objects.equals(normalizer, other.normalizer) && splitQueriesOnWhitespace == other.splitQueriesOnWhitespace;
         }
 
         @Override
@@ -304,9 +311,15 @@ public final class KeywordFieldMapper extends FieldMapper {
 
     private int ignoreAbove;
 
-    protected KeywordFieldMapper(String simpleName, MappedFieldType fieldType, MappedFieldType defaultFieldType,
-                                 int ignoreAbove, Settings indexSettings,
-                                 MultiFields multiFields, CopyTo copyTo) {
+    protected KeywordFieldMapper(
+        String simpleName,
+        MappedFieldType fieldType,
+        MappedFieldType defaultFieldType,
+        int ignoreAbove,
+        Settings indexSettings,
+        MultiFields multiFields,
+        CopyTo copyTo
+    ) {
         super(simpleName, fieldType, defaultFieldType, indexSettings, multiFields, copyTo);
         assert fieldType.indexOptions().compareTo(IndexOptions.DOCS_AND_FREQS) <= 0;
         this.ignoreAbove = ignoreAbove;
@@ -339,7 +352,7 @@ public final class KeywordFieldMapper extends FieldMapper {
             if (parser.currentToken() == XContentParser.Token.VALUE_NULL) {
                 value = fieldType().nullValueAsString();
             } else {
-                value =  parser.textOrNull();
+                value = parser.textOrNull();
             }
         }
 
@@ -353,15 +366,25 @@ public final class KeywordFieldMapper extends FieldMapper {
                 final CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
                 ts.reset();
                 if (ts.incrementToken() == false) {
-                  throw new IllegalStateException("The normalization token stream is "
-                      + "expected to produce exactly 1 token, but got 0 for analyzer "
-                      + normalizer + " and input \"" + value + "\"");
+                    throw new IllegalStateException(
+                        "The normalization token stream is "
+                            + "expected to produce exactly 1 token, but got 0 for analyzer "
+                            + normalizer
+                            + " and input \""
+                            + value
+                            + "\""
+                    );
                 }
                 final String newValue = termAtt.toString();
                 if (ts.incrementToken()) {
-                  throw new IllegalStateException("The normalization token stream is "
-                      + "expected to produce exactly 1 token, but got 2+ for analyzer "
-                      + normalizer + " and input \"" + value + "\"");
+                    throw new IllegalStateException(
+                        "The normalization token stream is "
+                            + "expected to produce exactly 1 token, but got 2+ for analyzer "
+                            + normalizer
+                            + " and input \""
+                            + value
+                            + "\""
+                    );
                 }
                 ts.end();
                 value = newValue;
@@ -370,7 +393,7 @@ public final class KeywordFieldMapper extends FieldMapper {
 
         // convert to utf8 only once before feeding postings/dv/stored fields
         final BytesRef binaryValue = new BytesRef(value);
-        if (fieldType().indexOptions() != IndexOptions.NONE || fieldType().stored())  {
+        if (fieldType().indexOptions() != IndexOptions.NONE || fieldType().stored()) {
             Field field = new Field(fieldType().name(), binaryValue, fieldType());
             fields.add(field);
 
@@ -383,6 +406,7 @@ public final class KeywordFieldMapper extends FieldMapper {
             fields.add(new SortedSetDocValuesField(fieldType().name(), binaryValue));
         }
     }
+
     @Override
     protected String contentType() {
         return CONTENT_TYPE;

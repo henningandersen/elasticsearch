@@ -45,16 +45,10 @@ public class IntervalBuilderTests extends ESTestCase {
 
     public void testOrdered() throws IOException {
 
-        CannedTokenStream ts = new CannedTokenStream(
-            new Token("term1", 1, 2),
-            new Token("term2", 3, 4),
-            new Token("term3", 5, 6)
-        );
+        CannedTokenStream ts = new CannedTokenStream(new Token("term1", 1, 2), new Token("term2", 3, 4), new Token("term3", 5, 6));
 
         IntervalsSource source = BUILDER.analyzeText(new CachingTokenFilter(ts), -1, true);
-        IntervalsSource expected = Intervals.ordered(
-            Intervals.term("term1"), Intervals.term("term2"), Intervals.term("term3")
-        );
+        IntervalsSource expected = Intervals.ordered(Intervals.term("term1"), Intervals.term("term2"), Intervals.term("term3"));
 
         assertEquals(expected, source);
 
@@ -62,16 +56,10 @@ public class IntervalBuilderTests extends ESTestCase {
 
     public void testUnordered() throws IOException {
 
-        CannedTokenStream ts = new CannedTokenStream(
-            new Token("term1", 1, 2),
-            new Token("term2", 3, 4),
-            new Token("term3", 5, 6)
-        );
+        CannedTokenStream ts = new CannedTokenStream(new Token("term1", 1, 2), new Token("term2", 3, 4), new Token("term3", 5, 6));
 
         IntervalsSource source = BUILDER.analyzeText(new CachingTokenFilter(ts), -1, false);
-        IntervalsSource expected = Intervals.unordered(
-            Intervals.term("term1"), Intervals.term("term2"), Intervals.term("term3")
-        );
+        IntervalsSource expected = Intervals.unordered(Intervals.term("term1"), Intervals.term("term2"), Intervals.term("term3"));
 
         assertEquals(expected, source);
 
@@ -79,16 +67,10 @@ public class IntervalBuilderTests extends ESTestCase {
 
     public void testPhrase() throws IOException {
 
-        CannedTokenStream ts = new CannedTokenStream(
-            new Token("term1", 1, 2),
-            new Token("term2", 3, 4),
-            new Token("term3", 5, 6)
-        );
+        CannedTokenStream ts = new CannedTokenStream(new Token("term1", 1, 2), new Token("term2", 3, 4), new Token("term3", 5, 6));
 
         IntervalsSource source = BUILDER.analyzeText(new CachingTokenFilter(ts), 0, true);
-        IntervalsSource expected = Intervals.phrase(
-            Intervals.term("term1"), Intervals.term("term2"), Intervals.term("term3")
-        );
+        IntervalsSource expected = Intervals.phrase(Intervals.term("term1"), Intervals.term("term2"), Intervals.term("term3"));
 
         assertEquals(expected, source);
 
@@ -96,15 +78,10 @@ public class IntervalBuilderTests extends ESTestCase {
 
     public void testPhraseWithStopword() throws IOException {
 
-        CannedTokenStream ts = new CannedTokenStream(
-            new Token("term1", 1, 1, 2),
-            new Token("term3", 2, 5, 6)
-        );
+        CannedTokenStream ts = new CannedTokenStream(new Token("term1", 1, 1, 2), new Token("term3", 2, 5, 6));
 
         IntervalsSource source = BUILDER.analyzeText(new CachingTokenFilter(ts), 0, true);
-        IntervalsSource expected = Intervals.phrase(
-            Intervals.term("term1"), Intervals.extend(Intervals.term("term3"), 1, 0)
-        );
+        IntervalsSource expected = Intervals.phrase(Intervals.term("term1"), Intervals.extend(Intervals.term("term3"), 1, 0));
 
         assertEquals(expected, source);
 
@@ -127,7 +104,9 @@ public class IntervalBuilderTests extends ESTestCase {
 
         IntervalsSource source = BUILDER.analyzeText(new CachingTokenFilter(ts), -1, true);
         IntervalsSource expected = Intervals.ordered(
-            Intervals.term("term1"), Intervals.or(Intervals.term("term2"), Intervals.term("term4")), Intervals.term("term3")
+            Intervals.term("term1"),
+            Intervals.or(Intervals.term("term2"), Intervals.term("term4")),
+            Intervals.term("term3")
         );
 
         assertEquals(expected, source);
@@ -193,9 +172,8 @@ public class IntervalBuilderTests extends ESTestCase {
             Intervals.term("term1"),
             Intervals.or(
                 Intervals.extend(Intervals.term("term2"), 1, 0),
-                Intervals.phrase(
-                    Intervals.extend(Intervals.term("term3"), 1, 0),
-                    Intervals.extend(Intervals.term("term4"), 2, 0))),
+                Intervals.phrase(Intervals.extend(Intervals.term("term3"), 1, 0), Intervals.extend(Intervals.term("term4"), 2, 0))
+            ),
             Intervals.term("term5")
         );
 

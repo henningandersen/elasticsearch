@@ -19,7 +19,6 @@
 
 package org.elasticsearch.index.fielddata;
 
-
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.fielddata.plain.DocValuesIndexFieldData;
 

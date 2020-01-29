@@ -144,12 +144,19 @@ public abstract class AbstractIndicesClusterStateServiceTestCase extends ESTestC
 
                         if (shard.routingEntry().primary() && shard.routingEntry().active()) {
                             IndexShardRoutingTable shardRoutingTable = state.routingTable().shardRoutingTable(shard.shardId());
-                            Set<String> inSyncIds = state.metaData().index(shard.shardId().getIndex())
+                            Set<String> inSyncIds = state.metaData()
+                                .index(shard.shardId().getIndex())
                                 .inSyncAllocationIds(shard.shardId().id());
-                            assertThat(shard.routingEntry() + " isn't updated with in-sync aIDs", shard.inSyncAllocationIds,
-                                equalTo(inSyncIds));
-                            assertThat(shard.routingEntry() + " isn't updated with routing table", shard.routingTable,
-                                equalTo(shardRoutingTable));
+                            assertThat(
+                                shard.routingEntry() + " isn't updated with in-sync aIDs",
+                                shard.inSyncAllocationIds,
+                                equalTo(inSyncIds)
+                            );
+                            assertThat(
+                                shard.routingEntry() + " isn't updated with routing table",
+                                shard.routingTable,
+                                equalTo(shardRoutingTable)
+                            );
                         }
                     }
                 }
@@ -194,9 +201,10 @@ public abstract class AbstractIndicesClusterStateServiceTestCase extends ESTestC
 
         @Override
         public synchronized MockIndexService createIndex(
-                IndexMetaData indexMetaData,
-                List<IndexEventListener> buildInIndexListener,
-                boolean writeDanglingIndices) throws IOException {
+            IndexMetaData indexMetaData,
+            List<IndexEventListener> buildInIndexListener,
+            boolean writeDanglingIndices
+        ) throws IOException {
             MockIndexService indexService = new MockIndexService(new IndexSettings(indexMetaData, Settings.EMPTY));
             indices = Maps.copyMapWithAddedEntry(indices, indexMetaData.getIndexUUID(), indexService);
             return indexService;
@@ -229,14 +237,15 @@ public abstract class AbstractIndicesClusterStateServiceTestCase extends ESTestC
 
         @Override
         public MockIndexShard createShard(
-                final ShardRouting shardRouting,
-                final RecoveryState recoveryState,
-                final PeerRecoveryTargetService recoveryTargetService,
-                final PeerRecoveryTargetService.RecoveryListener recoveryListener,
-                final RepositoriesService repositoriesService,
-                final Consumer<IndexShard.ShardFailure> onShardFailure,
-                final Consumer<ShardId> globalCheckpointSyncer,
-                final RetentionLeaseSyncer retentionLeaseSyncer) throws IOException {
+            final ShardRouting shardRouting,
+            final RecoveryState recoveryState,
+            final PeerRecoveryTargetService recoveryTargetService,
+            final PeerRecoveryTargetService.RecoveryListener recoveryListener,
+            final RepositoriesService repositoriesService,
+            final Consumer<IndexShard.ShardFailure> onShardFailure,
+            final Consumer<ShardId> globalCheckpointSyncer,
+            final RetentionLeaseSyncer retentionLeaseSyncer
+        ) throws IOException {
             failRandomly();
             MockIndexService indexService = indexService(recoveryState.getShardId().getIndex());
             MockIndexShard indexShard = indexService.createShard(shardRouting);
@@ -286,7 +295,7 @@ public abstract class AbstractIndicesClusterStateServiceTestCase extends ESTestC
         @Override
         public void updateMetaData(final IndexMetaData currentIndexMetaData, final IndexMetaData newIndexMetaData) {
             indexSettings.updateIndexMetaData(newIndexMetaData);
-            for (MockIndexShard shard: shards.values()) {
+            for (MockIndexShard shard : shards.values()) {
                 shard.updateTerm(newIndexMetaData.primaryTerm(shard.shardId().id()));
             }
         }
@@ -351,18 +360,22 @@ public abstract class AbstractIndicesClusterStateServiceTestCase extends ESTestC
         }
 
         @Override
-        public void updateShardState(ShardRouting shardRouting,
-                                     long newPrimaryTerm,
-                                     BiConsumer<IndexShard, ActionListener<ResyncTask>> primaryReplicaSyncer,
-                                     long applyingClusterStateVersion,
-                                     Set<String> inSyncAllocationIds,
-                                     IndexShardRoutingTable routingTable) throws IOException {
+        public void updateShardState(
+            ShardRouting shardRouting,
+            long newPrimaryTerm,
+            BiConsumer<IndexShard, ActionListener<ResyncTask>> primaryReplicaSyncer,
+            long applyingClusterStateVersion,
+            Set<String> inSyncAllocationIds,
+            IndexShardRoutingTable routingTable
+        ) throws IOException {
             failRandomly();
             assertThat(this.shardId(), equalTo(shardRouting.shardId()));
             assertTrue("current: " + this.shardRouting + ", got: " + shardRouting, this.shardRouting.isSameAllocation(shardRouting));
             if (this.shardRouting.active()) {
-                assertTrue("an active shard must stay active, current: " + this.shardRouting + ", got: " + shardRouting,
-                    shardRouting.active());
+                assertTrue(
+                    "an active shard must stay active, current: " + this.shardRouting + ", got: " + shardRouting,
+                    shardRouting.active()
+                );
             }
             if (this.shardRouting.primary()) {
                 assertTrue("a primary shard can't be demoted", shardRouting.primary());
@@ -372,8 +385,10 @@ public abstract class AbstractIndicesClusterStateServiceTestCase extends ESTestC
             } else if (shardRouting.primary()) {
                 // note: it's ok for a replica in post recovery to be started and promoted at once
                 // this can happen when the primary failed after we sent the start shard message
-                assertTrue("a replica can only be promoted when active. current: " + this.shardRouting + " new: " + shardRouting,
-                    shardRouting.active());
+                assertTrue(
+                    "a replica can only be promoted when active. current: " + this.shardRouting + " new: " + shardRouting,
+                    shardRouting.active()
+                );
             }
             this.shardRouting = shardRouting;
             if (shardRouting.primary()) {

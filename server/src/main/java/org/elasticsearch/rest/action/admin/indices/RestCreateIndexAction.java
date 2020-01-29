@@ -52,8 +52,7 @@ public class RestCreateIndexAction extends BaseRestHandler {
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(request.param("index"));
 
         if (request.hasContent()) {
-            Map<String, Object> sourceAsMap = XContentHelper.convertToMap(request.requiredContent(), false,
-                request.getXContentType()).v2();
+            Map<String, Object> sourceAsMap = XContentHelper.convertToMap(request.requiredContent(), false, request.getXContentType()).v2();
             sourceAsMap = prepareMappings(sourceAsMap);
             createIndexRequest.source(sourceAsMap, LoggingDeprecationHandler.INSTANCE);
         }
@@ -64,10 +63,8 @@ public class RestCreateIndexAction extends BaseRestHandler {
         return channel -> client.admin().indices().create(createIndexRequest, new RestToXContentListener<>(channel));
     }
 
-
     static Map<String, Object> prepareMappings(Map<String, Object> source) {
-        if (source.containsKey("mappings") == false
-            || (source.get("mappings") instanceof Map) == false) {
+        if (source.containsKey("mappings") == false || (source.get("mappings") instanceof Map) == false) {
             return source;
         }
 

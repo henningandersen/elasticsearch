@@ -52,11 +52,7 @@ public class TaskStorageRetryIT extends ESSingleNodeTestCase {
      */
     @Override
     protected Settings nodeSettings() {
-        return Settings.builder()
-                .put(super.nodeSettings())
-                .put("thread_pool.write.size", 2)
-                .put("thread_pool.write.queue_size", 0)
-                .build();
+        return Settings.builder().put(super.nodeSettings()).put("thread_pool.write.size", 2).put("thread_pool.write.queue_size", 0).build();
     }
 
     public void testRetry() throws Exception {
@@ -74,8 +70,7 @@ public class TaskStorageRetryIT extends ESSingleNodeTestCase {
         });
         barrier.await();
         Task task;
-        PlainListenableActionFuture<TestTaskPlugin.NodesResponse> future =
-                PlainListenableActionFuture.newListenableFuture();
+        PlainListenableActionFuture<TestTaskPlugin.NodesResponse> future = PlainListenableActionFuture.newListenableFuture();
         try {
             logger.info("start a task that will store its results");
             TestTaskPlugin.NodesRequest req = new TestTaskPlugin.NodesRequest("foo");
@@ -85,9 +80,10 @@ public class TaskStorageRetryIT extends ESSingleNodeTestCase {
 
             logger.info("verify that the task has started and is still running");
             assertBusy(() -> {
-                GetTaskResponse runningTask = client().admin().cluster()
-                        .prepareGetTask(new TaskId(nodeClient().getLocalNodeId(), task.getId()))
-                        .get();
+                GetTaskResponse runningTask = client().admin()
+                    .cluster()
+                    .prepareGetTask(new TaskId(nodeClient().getLocalNodeId(), task.getId()))
+                    .get();
                 assertNotNull(runningTask.getTask());
                 assertFalse(runningTask.getTask().isCompleted());
                 assertEquals(emptyMap(), runningTask.getTask().getErrorAsMap());
@@ -103,13 +99,13 @@ public class TaskStorageRetryIT extends ESSingleNodeTestCase {
         future.get(10, TimeUnit.SECONDS);
 
         logger.info("check that it was written successfully");
-        GetTaskResponse finishedTask = client().admin().cluster()
-                .prepareGetTask(new TaskId(nodeClient().getLocalNodeId(), task.getId()))
-                .get();
+        GetTaskResponse finishedTask = client().admin()
+            .cluster()
+            .prepareGetTask(new TaskId(nodeClient().getLocalNodeId(), task.getId()))
+            .get();
         assertTrue(finishedTask.getTask().isCompleted());
         assertEquals(emptyMap(), finishedTask.getTask().getErrorAsMap());
-        assertEquals(singletonMap("failure_count", 0),
-                finishedTask.getTask().getResponseAsMap());
+        assertEquals(singletonMap("failure_count", 0), finishedTask.getTask().getResponseAsMap());
     }
 
     /**
@@ -124,4 +120,3 @@ public class TaskStorageRetryIT extends ESSingleNodeTestCase {
         return (NodeClient) client();
     }
 }
-

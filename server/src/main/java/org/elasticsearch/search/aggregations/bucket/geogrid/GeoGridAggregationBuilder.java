@@ -47,7 +47,8 @@ import java.util.Map;
 import java.util.Objects;
 
 public abstract class GeoGridAggregationBuilder extends ValuesSourceAggregationBuilder<ValuesSource.GeoPoint, GeoGridAggregationBuilder>
-        implements MultiBucketAggregationBuilder {
+    implements
+        MultiBucketAggregationBuilder {
     /* recognized field names in JSON */
     static final ParseField FIELD_PRECISION = new ParseField("precision");
     static final ParseField FIELD_SIZE = new ParseField("size");
@@ -58,7 +59,6 @@ public abstract class GeoGridAggregationBuilder extends ValuesSourceAggregationB
     protected int shardSize;
     private GeoBoundingBox geoBoundingBox = new GeoBoundingBox(new GeoPoint(Double.NaN, Double.NaN), new GeoPoint(Double.NaN, Double.NaN));
 
-
     @FunctionalInterface
     protected interface PrecisionParser {
         int parse(XContentParser parser) throws IOException;
@@ -67,14 +67,18 @@ public abstract class GeoGridAggregationBuilder extends ValuesSourceAggregationB
     public static ObjectParser<GeoGridAggregationBuilder, Void> createParser(String name, PrecisionParser precisionParser) {
         ObjectParser<GeoGridAggregationBuilder, Void> parser = new ObjectParser<>(name);
         ValuesSourceParserHelper.declareGeoFields(parser, false, false);
-        parser.declareField((p, builder, context) -> builder.precision(precisionParser.parse(p)), FIELD_PRECISION,
-            org.elasticsearch.common.xcontent.ObjectParser.ValueType.INT);
+        parser.declareField(
+            (p, builder, context) -> builder.precision(precisionParser.parse(p)),
+            FIELD_PRECISION,
+            org.elasticsearch.common.xcontent.ObjectParser.ValueType.INT
+        );
         parser.declareInt(GeoGridAggregationBuilder::size, FIELD_SIZE);
         parser.declareInt(GeoGridAggregationBuilder::shardSize, FIELD_SHARD_SIZE);
-        parser.declareField((p, builder, context) -> {
-                builder.setGeoBoundingBox(GeoBoundingBox.parseBoundingBox(p));
-            },
-            GeoBoundingBox.BOUNDS_FIELD, org.elasticsearch.common.xcontent.ObjectParser.ValueType.OBJECT);
+        parser.declareField(
+            (p, builder, context) -> { builder.setGeoBoundingBox(GeoBoundingBox.parseBoundingBox(p)); },
+            GeoBoundingBox.BOUNDS_FIELD,
+            org.elasticsearch.common.xcontent.ObjectParser.ValueType.OBJECT
+        );
         return parser;
     }
 
@@ -124,9 +128,16 @@ public abstract class GeoGridAggregationBuilder extends ValuesSourceAggregationB
      * Creates a new instance of the {@link ValuesSourceAggregatorFactory}-derived class specific to the geo aggregation.
      */
     protected abstract ValuesSourceAggregatorFactory<ValuesSource.GeoPoint> createFactory(
-        String name, ValuesSourceConfig<ValuesSource.GeoPoint> config, int precision, int requiredSize, int shardSize,
-        GeoBoundingBox geoBoundingBox, QueryShardContext queryShardContext, AggregatorFactory parent,
-        Builder subFactoriesBuilder, Map<String, Object> metaData
+        String name,
+        ValuesSourceConfig<ValuesSource.GeoPoint> config,
+        int precision,
+        int requiredSize,
+        int shardSize,
+        GeoBoundingBox geoBoundingBox,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder,
+        Map<String, Object> metaData
     ) throws IOException;
 
     public int precision() {
@@ -135,8 +146,7 @@ public abstract class GeoGridAggregationBuilder extends ValuesSourceAggregationB
 
     public GeoGridAggregationBuilder size(int size) {
         if (size <= 0) {
-            throw new IllegalArgumentException(
-                    "[size] must be greater than 0. Found [" + size + "] in [" + name + "]");
+            throw new IllegalArgumentException("[size] must be greater than 0. Found [" + size + "] in [" + name + "]");
         }
         this.requiredSize = size;
         return this;
@@ -148,12 +158,11 @@ public abstract class GeoGridAggregationBuilder extends ValuesSourceAggregationB
 
     public GeoGridAggregationBuilder shardSize(int shardSize) {
         if (shardSize <= 0) {
-            throw new IllegalArgumentException(
-                    "[shardSize] must be greater than 0. Found [" + shardSize + "] in [" + name + "]");
-            }
+            throw new IllegalArgumentException("[shardSize] must be greater than 0. Found [" + shardSize + "] in [" + name + "]");
+        }
         this.shardSize = shardSize;
         return this;
-        }
+    }
 
     public int shardSize() {
         return shardSize;
@@ -170,10 +179,12 @@ public abstract class GeoGridAggregationBuilder extends ValuesSourceAggregationB
     }
 
     @Override
-    protected ValuesSourceAggregatorFactory<ValuesSource.GeoPoint> innerBuild(QueryShardContext queryShardContext,
-                                                                                ValuesSourceConfig<ValuesSource.GeoPoint> config,
-                                                                                AggregatorFactory parent, Builder subFactoriesBuilder)
-                    throws IOException {
+    protected ValuesSourceAggregatorFactory<ValuesSource.GeoPoint> innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource.GeoPoint> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         int shardSize = this.shardSize;
 
         int requiredSize = this.requiredSize;
@@ -186,14 +197,25 @@ public abstract class GeoGridAggregationBuilder extends ValuesSourceAggregationB
 
         if (requiredSize <= 0 || shardSize <= 0) {
             throw new ElasticsearchException(
-                    "parameters [required_size] and [shard_size] must be > 0 in " + getType() + " aggregation [" + name + "].");
+                "parameters [required_size] and [shard_size] must be > 0 in " + getType() + " aggregation [" + name + "]."
+            );
         }
 
         if (shardSize < requiredSize) {
             shardSize = requiredSize;
         }
-        return createFactory(name, config, precision, requiredSize, shardSize, geoBoundingBox, queryShardContext, parent,
-                subFactoriesBuilder, metaData);
+        return createFactory(
+            name,
+            config,
+            precision,
+            requiredSize,
+            shardSize,
+            geoBoundingBox,
+            queryShardContext,
+            parent,
+            subFactoriesBuilder,
+            metaData
+        );
     }
 
     @Override

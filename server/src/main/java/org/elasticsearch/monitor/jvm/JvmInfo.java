@@ -102,8 +102,10 @@ public class JvmInfo implements Writeable, ToXContentFragment {
         long configuredInitialHeapSize = -1;
         long configuredMaxHeapSize = -1;
         try {
-            @SuppressWarnings("unchecked") Class<? extends PlatformManagedObject> clazz =
-                    (Class<? extends PlatformManagedObject>)Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
+            @SuppressWarnings("unchecked")
+            Class<? extends PlatformManagedObject> clazz = (Class<? extends PlatformManagedObject>) Class.forName(
+                "com.sun.management.HotSpotDiagnosticMXBean"
+            );
             Class<?> vmOptionClazz = Class.forName("com.sun.management.VMOption");
             PlatformManagedObject hotSpotDiagnosticMXBean = ManagementFactory.getPlatformMXBean(clazz);
             Method vmOptionMethod = clazz.getMethod("getVMOption", String.class);
@@ -112,44 +114,37 @@ public class JvmInfo implements Writeable, ToXContentFragment {
             try {
                 Object onErrorObject = vmOptionMethod.invoke(hotSpotDiagnosticMXBean, "OnError");
                 onError = (String) valueMethod.invoke(onErrorObject);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
 
             try {
                 Object onOutOfMemoryErrorObject = vmOptionMethod.invoke(hotSpotDiagnosticMXBean, "OnOutOfMemoryError");
                 onOutOfMemoryError = (String) valueMethod.invoke(onOutOfMemoryErrorObject);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
 
             try {
                 Object useCompressedOopsVmOptionObject = vmOptionMethod.invoke(hotSpotDiagnosticMXBean, "UseCompressedOops");
                 useCompressedOops = (String) valueMethod.invoke(useCompressedOopsVmOptionObject);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
 
             try {
                 Object useG1GCVmOptionObject = vmOptionMethod.invoke(hotSpotDiagnosticMXBean, "UseG1GC");
                 useG1GC = (String) valueMethod.invoke(useG1GCVmOptionObject);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
 
             try {
                 Object initialHeapSizeVmOptionObject = vmOptionMethod.invoke(hotSpotDiagnosticMXBean, "InitialHeapSize");
                 configuredInitialHeapSize = Long.parseLong((String) valueMethod.invoke(initialHeapSizeVmOptionObject));
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
 
             try {
                 Object maxHeapSizeVmOptionObject = vmOptionMethod.invoke(hotSpotDiagnosticMXBean, "MaxHeapSize");
                 configuredMaxHeapSize = Long.parseLong((String) valueMethod.invoke(maxHeapSizeVmOptionObject));
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
 
             try {
                 Object useSerialGCVmOptionObject = vmOptionMethod.invoke(hotSpotDiagnosticMXBean, "UseSerialGC");
                 useSerialGC = (String) valueMethod.invoke(useSerialGCVmOptionObject);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
 
         } catch (Exception ignored) {
 
@@ -159,28 +154,29 @@ public class JvmInfo implements Writeable, ToXContentFragment {
         final Boolean usingBundledJdk = bundledJdk ? usingBundledJdk() : null;
 
         INSTANCE = new JvmInfo(
-                ProcessHandle.current().pid(),
-                System.getProperty("java.version"),
-                runtimeMXBean.getVmName(),
-                runtimeMXBean.getVmVersion(),
-                runtimeMXBean.getVmVendor(),
-                bundledJdk,
-                usingBundledJdk,
-                runtimeMXBean.getStartTime(),
-                configuredInitialHeapSize,
-                configuredMaxHeapSize,
-                mem,
-                inputArguments,
-                bootClassPath,
-                classPath,
-                systemProperties,
-                gcCollectors,
-                memoryPools,
-                onError,
-                onOutOfMemoryError,
-                useCompressedOops,
-                useG1GC,
-                useSerialGC);
+            ProcessHandle.current().pid(),
+            System.getProperty("java.version"),
+            runtimeMXBean.getVmName(),
+            runtimeMXBean.getVmVersion(),
+            runtimeMXBean.getVmVendor(),
+            bundledJdk,
+            usingBundledJdk,
+            runtimeMXBean.getStartTime(),
+            configuredInitialHeapSize,
+            configuredMaxHeapSize,
+            mem,
+            inputArguments,
+            bootClassPath,
+            classPath,
+            systemProperties,
+            gcCollectors,
+            memoryPools,
+            onError,
+            onOutOfMemoryError,
+            useCompressedOops,
+            useG1GC,
+            useSerialGC
+        );
     }
 
     @SuppressForbidden(reason = "PathUtils#get")
@@ -230,11 +226,30 @@ public class JvmInfo implements Writeable, ToXContentFragment {
     private final String useG1GC;
     private final String useSerialGC;
 
-    private JvmInfo(long pid, String version, String vmName, String vmVersion, String vmVendor, boolean bundledJdk, Boolean usingBundledJdk,
-                    long startTime, long configuredInitialHeapSize, long configuredMaxHeapSize, Mem mem, String[] inputArguments,
-                    String bootClassPath, String classPath, Map<String, String> systemProperties, String[] gcCollectors,
-                    String[] memoryPools, String onError, String onOutOfMemoryError, String useCompressedOops, String useG1GC,
-                    String useSerialGC) {
+    private JvmInfo(
+        long pid,
+        String version,
+        String vmName,
+        String vmVersion,
+        String vmVendor,
+        boolean bundledJdk,
+        Boolean usingBundledJdk,
+        long startTime,
+        long configuredInitialHeapSize,
+        long configuredMaxHeapSize,
+        Mem mem,
+        String[] inputArguments,
+        String bootClassPath,
+        String classPath,
+        Map<String, String> systemProperties,
+        String[] gcCollectors,
+        String[] memoryPools,
+        String onError,
+        String onOutOfMemoryError,
+        String useCompressedOops,
+        String useG1GC,
+        String useSerialGC
+    ) {
         this.pid = pid;
         this.version = version;
         this.vmName = vmName;
@@ -284,7 +299,7 @@ public class JvmInfo implements Writeable, ToXContentFragment {
         gcCollectors = in.readStringArray();
         memoryPools = in.readStringArray();
         useCompressedOops = in.readString();
-        //the following members are only used locally for bootstrap checks, never serialized nor printed out
+        // the following members are only used locally for bootstrap checks, never serialized nor printed out
         this.configuredMaxHeapSize = -1;
         this.configuredInitialHeapSize = -1;
         this.onError = null;

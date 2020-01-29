@@ -37,12 +37,13 @@ public abstract class AggregationScript implements ScorerAware {
     public static final ScriptContext<Factory> CONTEXT = new ScriptContext<>("aggs", Factory.class);
 
     private static final Map<String, String> DEPRECATIONS = Map.of(
-            "doc",
-            "Accessing variable [doc] via [params.doc] from within an aggregation-script "
-                    + "is deprecated in favor of directly accessing [doc].",
-            "_doc",
-            "Accessing variable [doc] via [params._doc] from within an aggregation-script "
-                    + "is deprecated in favor of directly accessing [doc].");
+        "doc",
+        "Accessing variable [doc] via [params.doc] from within an aggregation-script "
+            + "is deprecated in favor of directly accessing [doc].",
+        "_doc",
+        "Accessing variable [doc] via [params._doc] from within an aggregation-script "
+            + "is deprecated in favor of directly accessing [doc]."
+    );
 
     /**
      * The generic runtime parameters for the script.

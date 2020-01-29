@@ -27,7 +27,6 @@ import org.elasticsearch.test.ESTestCase;
 
 import java.io.IOException;
 
-
 public abstract class QueryContextTestCase<QC extends ToXContent> extends ESTestCase {
     private static final int NUMBER_OF_RUNS = 20;
 

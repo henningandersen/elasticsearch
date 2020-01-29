@@ -53,8 +53,14 @@ public class DocumentMapperParser {
     private final Map<String, Mapper.TypeParser> typeParsers;
     private final Map<String, MetadataFieldMapper.TypeParser> rootTypeParsers;
 
-    public DocumentMapperParser(IndexSettings indexSettings, MapperService mapperService, NamedXContentRegistry xContentRegistry,
-            SimilarityService similarityService, MapperRegistry mapperRegistry, Supplier<QueryShardContext> queryShardContextSupplier) {
+    public DocumentMapperParser(
+        IndexSettings indexSettings,
+        MapperService mapperService,
+        NamedXContentRegistry xContentRegistry,
+        SimilarityService similarityService,
+        MapperRegistry mapperRegistry,
+        Supplier<QueryShardContext> queryShardContextSupplier
+    ) {
         this.mapperService = mapperService;
         this.xContentRegistry = xContentRegistry;
         this.similarityService = similarityService;
@@ -65,8 +71,13 @@ public class DocumentMapperParser {
     }
 
     public Mapper.TypeParser.ParserContext parserContext() {
-        return new Mapper.TypeParser.ParserContext(similarityService::getSimilarity, mapperService,
-                typeParsers::get, indexVersionCreated, queryShardContextSupplier);
+        return new Mapper.TypeParser.ParserContext(
+            similarityService::getSimilarity,
+            mapperService,
+            typeParsers::get,
+            indexVersionCreated,
+            queryShardContextSupplier
+        );
     }
 
     public DocumentMapper parse(@Nullable String type, CompressedXContent source) throws MapperParsingException {
@@ -83,7 +94,7 @@ public class DocumentMapperParser {
         return parse(type, mapping);
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     private DocumentMapper parse(String type, Map<String, Object> mapping) throws MapperParsingException {
         if (type == null) {
             throw new MapperParsingException("Failed to derive type");
@@ -92,10 +103,12 @@ public class DocumentMapperParser {
         Mapper.TypeParser.ParserContext parserContext = parserContext();
         // parse RootObjectMapper
         DocumentMapper.Builder docBuilder = new DocumentMapper.Builder(
-                (RootObjectMapper.Builder) rootObjectTypeParser.parse(type, mapping, parserContext), mapperService);
+            (RootObjectMapper.Builder) rootObjectTypeParser.parse(type, mapping, parserContext),
+            mapperService
+        );
         Iterator<Map.Entry<String, Object>> iterator = mapping.entrySet().iterator();
         // parse DocumentMapper
-        while(iterator.hasNext()) {
+        while (iterator.hasNext()) {
             Map.Entry<String, Object> entry = iterator.next();
             String fieldName = entry.getKey();
             Object fieldNode = entry.getValue();
@@ -138,8 +151,11 @@ public class DocumentMapperParser {
     }
 
     public static void checkNoRemainingFields(String fieldName, Map<?, ?> fieldNodeMap, Version indexVersionCreated) {
-        checkNoRemainingFields(fieldNodeMap, indexVersionCreated,
-                "Mapping definition for [" + fieldName + "] has unsupported parameters: ");
+        checkNoRemainingFields(
+            fieldNodeMap,
+            indexVersionCreated,
+            "Mapping definition for [" + fieldName + "] has unsupported parameters: "
+        );
     }
 
     public static void checkNoRemainingFields(Map<?, ?> fieldNodeMap, Version indexVersionCreated, String message) {
@@ -158,8 +174,9 @@ public class DocumentMapperParser {
 
     private Tuple<String, Map<String, Object>> extractMapping(String type, String source) throws MapperParsingException {
         Map<String, Object> root;
-        try (XContentParser parser = XContentType.JSON.xContent()
-                .createParser(xContentRegistry, LoggingDeprecationHandler.INSTANCE, source)) {
+        try (
+            XContentParser parser = XContentType.JSON.xContent().createParser(xContentRegistry, LoggingDeprecationHandler.INSTANCE, source)
+        ) {
             root = parser.mapOrdered();
         } catch (Exception e) {
             throw new MapperParsingException("failed to parse mapping definition", e);
@@ -180,7 +197,7 @@ public class DocumentMapperParser {
      *
      * @return A tuple of the form (type, normalized mappings).
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     private Tuple<String, Map<String, Object>> extractMapping(String type, Map<String, Object> root) throws MapperParsingException {
         if (root.size() == 0) {
             if (type != null) {

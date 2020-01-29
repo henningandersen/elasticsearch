@@ -41,8 +41,15 @@ public class FilterAggregatorFactory extends AggregatorFactory {
     private Weight weight;
     private Query filter;
 
-    public FilterAggregatorFactory(String name, QueryBuilder filterBuilder, QueryShardContext queryShardContext,
-            AggregatorFactory parent, AggregatorFactories.Builder subFactoriesBuilder, Map<String, Object> metaData) throws IOException {
+    public FilterAggregatorFactory(
+        String name,
+        QueryBuilder filterBuilder,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, queryShardContext, parent, subFactoriesBuilder, metaData);
         filter = filterBuilder.toQuery(queryShardContext);
     }
@@ -52,7 +59,7 @@ public class FilterAggregatorFactory extends AggregatorFactory {
      * necessary. This is done lazily so that the {@link Weight} is only created
      * if the aggregation collects documents reducing the overhead of the
      * aggregation in the case where no documents are collected.
-     * 
+     *
      * Note that as aggregations are initialsed and executed in a serial manner,
      * no concurrency considerations are necessary here.
      */
@@ -69,11 +76,13 @@ public class FilterAggregatorFactory extends AggregatorFactory {
     }
 
     @Override
-    public Aggregator createInternal(SearchContext searchContext,
-                                        Aggregator parent,
-                                        boolean collectsFromSingleBucket,
-                                        List<PipelineAggregator> pipelineAggregators,
-                                        Map<String, Object> metaData) throws IOException {
+    public Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return new FilterAggregator(name, () -> this.getWeight(), factories, searchContext, parent, pipelineAggregators, metaData);
     }
 

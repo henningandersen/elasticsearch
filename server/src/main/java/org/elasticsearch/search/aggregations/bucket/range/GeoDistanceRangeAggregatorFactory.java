@@ -43,8 +43,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class GeoDistanceRangeAggregatorFactory
-        extends ValuesSourceAggregatorFactory<ValuesSource.GeoPoint> {
+public class GeoDistanceRangeAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSource.GeoPoint> {
 
     private final InternalRange.Factory<InternalGeoDistance.Bucket, InternalGeoDistance> rangeFactory = InternalGeoDistance.FACTORY;
     private final GeoPoint origin;
@@ -53,9 +52,20 @@ public class GeoDistanceRangeAggregatorFactory
     private final GeoDistance distanceType;
     private final boolean keyed;
 
-    public GeoDistanceRangeAggregatorFactory(String name, ValuesSourceConfig<ValuesSource.GeoPoint> config, GeoPoint origin,
-            Range[] ranges, DistanceUnit unit, GeoDistance distanceType, boolean keyed, QueryShardContext queryShardContext,
-            AggregatorFactory parent, AggregatorFactories.Builder subFactoriesBuilder, Map<String, Object> metaData) throws IOException {
+    public GeoDistanceRangeAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource.GeoPoint> config,
+        GeoPoint origin,
+        Range[] ranges,
+        DistanceUnit unit,
+        GeoDistance distanceType,
+        boolean keyed,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.origin = origin;
         this.ranges = ranges;
@@ -65,25 +75,48 @@ public class GeoDistanceRangeAggregatorFactory
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        return new RangeAggregator.Unmapped<>(name, ranges, keyed, config.format(), searchContext, parent,
-            rangeFactory, pipelineAggregators, metaData);
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new RangeAggregator.Unmapped<>(
+            name,
+            ranges,
+            keyed,
+            config.format(),
+            searchContext,
+            parent,
+            rangeFactory,
+            pipelineAggregators,
+            metaData
+        );
     }
 
     @Override
-    protected Aggregator doCreateInternal(final ValuesSource.GeoPoint valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator doCreateInternal(
+        final ValuesSource.GeoPoint valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         DistanceSource distanceSource = new DistanceSource(valuesSource, distanceType, origin, unit);
-        return new RangeAggregator(name, factories, distanceSource, config.format(), rangeFactory, ranges, keyed, searchContext,
-                parent,
-                pipelineAggregators, metaData);
+        return new RangeAggregator(
+            name,
+            factories,
+            distanceSource,
+            config.format(),
+            rangeFactory,
+            ranges,
+            keyed,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
 
     private static class DistanceSource extends ValuesSource.Numeric {
@@ -93,8 +126,12 @@ public class GeoDistanceRangeAggregatorFactory
         private final DistanceUnit units;
         private final org.elasticsearch.common.geo.GeoPoint origin;
 
-        DistanceSource(ValuesSource.GeoPoint source, GeoDistance distanceType,
-                org.elasticsearch.common.geo.GeoPoint origin, DistanceUnit units) {
+        DistanceSource(
+            ValuesSource.GeoPoint source,
+            GeoDistance distanceType,
+            org.elasticsearch.common.geo.GeoPoint origin,
+            DistanceUnit units
+        ) {
             this.source = source;
             // even if the geo points are unique, there's no guarantee the
             // distances are

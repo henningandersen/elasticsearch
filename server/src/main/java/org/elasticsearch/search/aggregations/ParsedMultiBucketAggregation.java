@@ -34,8 +34,9 @@ import java.util.function.Supplier;
 
 import static org.elasticsearch.common.xcontent.XContentParserUtils.ensureExpectedToken;
 
-public abstract class ParsedMultiBucketAggregation<B extends ParsedMultiBucketAggregation.Bucket>
-        extends ParsedAggregation implements MultiBucketsAggregation {
+public abstract class ParsedMultiBucketAggregation<B extends ParsedMultiBucketAggregation.Bucket> extends ParsedAggregation
+    implements
+        MultiBucketsAggregation {
 
     protected final List<B> buckets = new ArrayList<>();
     protected boolean keyed = false;
@@ -58,9 +59,11 @@ public abstract class ParsedMultiBucketAggregation<B extends ParsedMultiBucketAg
         return builder;
     }
 
-    protected static void declareMultiBucketAggregationFields(final ObjectParser<? extends ParsedMultiBucketAggregation, Void> objectParser,
-                                                  final CheckedFunction<XContentParser, ParsedBucket, IOException> bucketParser,
-                                                  final CheckedFunction<XContentParser, ParsedBucket, IOException> keyedBucketParser) {
+    protected static void declareMultiBucketAggregationFields(
+        final ObjectParser<? extends ParsedMultiBucketAggregation, Void> objectParser,
+        final CheckedFunction<XContentParser, ParsedBucket, IOException> bucketParser,
+        final CheckedFunction<XContentParser, ParsedBucket, IOException> keyedBucketParser
+    ) {
         declareAggregationFields(objectParser);
         objectParser.declareField((parser, aggregation, context) -> {
             XContentParser.Token token = parser.currentToken();
@@ -144,11 +147,12 @@ public abstract class ParsedMultiBucketAggregation<B extends ParsedMultiBucketAg
             return builder.field(CommonFields.KEY.getPreferredName(), getKey());
         }
 
-        protected static <B extends ParsedBucket> B parseXContent(final XContentParser parser,
-                                                                  final boolean keyed,
-                                                                  final Supplier<B> bucketSupplier,
-                                                                  final CheckedBiConsumer<XContentParser, B, IOException> keyConsumer)
-                                                                        throws IOException {
+        protected static <B extends ParsedBucket> B parseXContent(
+            final XContentParser parser,
+            final boolean keyed,
+            final Supplier<B> bucketSupplier,
+            final CheckedBiConsumer<XContentParser, B, IOException> keyConsumer
+        ) throws IOException {
             final B bucket = bucketSupplier.get();
             bucket.setKeyed(keyed);
             XContentParser.Token token = parser.currentToken();
@@ -174,8 +178,12 @@ public abstract class ParsedMultiBucketAggregation<B extends ParsedMultiBucketAg
                     if (CommonFields.KEY.getPreferredName().equals(currentFieldName)) {
                         keyConsumer.accept(parser, bucket);
                     } else {
-                        XContentParserUtils.parseTypedKeysObject(parser, Aggregation.TYPED_KEYS_DELIMITER, Aggregation.class,
-                            aggregations::add);
+                        XContentParserUtils.parseTypedKeysObject(
+                            parser,
+                            Aggregation.TYPED_KEYS_DELIMITER,
+                            Aggregation.class,
+                            aggregations::add
+                        );
                     }
                 }
             }

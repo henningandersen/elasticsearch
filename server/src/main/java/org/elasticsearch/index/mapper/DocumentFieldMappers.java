@@ -42,11 +42,13 @@ public final class DocumentFieldMappers implements Iterable<Mapper> {
         analyzers.put(key, value);
     }
 
-    public DocumentFieldMappers(Collection<FieldMapper> mappers,
-                                Collection<FieldAliasMapper> aliasMappers,
-                                Analyzer defaultIndex,
-                                Analyzer defaultSearch,
-                                Analyzer defaultSearchQuote) {
+    public DocumentFieldMappers(
+        Collection<FieldMapper> mappers,
+        Collection<FieldAliasMapper> aliasMappers,
+        Analyzer defaultIndex,
+        Analyzer defaultSearch,
+        Analyzer defaultSearchQuote
+    ) {
         Map<String, Mapper> fieldMappers = new HashMap<>();
         Map<String, Analyzer> indexAnalyzers = new HashMap<>();
         Map<String, Analyzer> searchAnalyzers = new HashMap<>();

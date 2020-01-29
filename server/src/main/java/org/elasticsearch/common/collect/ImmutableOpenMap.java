@@ -128,7 +128,9 @@ public final class ImmutableOpenMap<KType, VType> implements Iterable<ObjectObje
         final Iterator<ObjectCursor<KType>> iterator = map.keys().iterator();
         return new Iterator<KType>() {
             @Override
-            public boolean hasNext() { return iterator.hasNext(); }
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
 
             @Override
             public KType next() {
@@ -156,7 +158,9 @@ public final class ImmutableOpenMap<KType, VType> implements Iterable<ObjectObje
         final Iterator<ObjectCursor<VType>> iterator = map.values().iterator();
         return new Iterator<VType>() {
             @Override
-            public boolean hasNext() { return iterator.hasNext(); }
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
 
             @Override
             public VType next() {
@@ -193,7 +197,7 @@ public final class ImmutableOpenMap<KType, VType> implements Iterable<ObjectObje
         return map.hashCode();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private static final ImmutableOpenMap EMPTY = new ImmutableOpenMap(new ObjectObjectHashMap());
 
     @SuppressWarnings("unchecked")
@@ -246,8 +250,6 @@ public final class ImmutableOpenMap<KType, VType> implements Iterable<ObjectObje
             this.map = null; // nullify the map, so any operation post build will fail! (hackish, but safest)
             return new ImmutableOpenMap<>(map);
         }
-
-
 
         /**
          * Puts all the entries in the map to the builder.

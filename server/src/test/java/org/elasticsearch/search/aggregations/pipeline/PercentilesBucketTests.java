@@ -51,17 +51,17 @@ public class PercentilesBucketTests extends AbstractBucketMetricsTestCase<Percen
     public void testPercentsFromMixedArray() throws Exception {
         XContentBuilder content = XContentFactory.jsonBuilder()
             .startObject()
-                .startObject("name")
-                    .startObject("percentiles_bucket")
-                        .field("buckets_path", "test")
-                        .array("percents", 0, 20.0, 50, 75.99)
-                    .endObject()
-                .endObject()
+            .startObject("name")
+            .startObject("percentiles_bucket")
+            .field("buckets_path", "test")
+            .array("percents", 0, 20.0, 50, 75.99)
+            .endObject()
+            .endObject()
             .endObject();
 
         PercentilesBucketPipelineAggregationBuilder builder = (PercentilesBucketPipelineAggregationBuilder) parse(createParser(content));
 
-        assertThat(builder.getPercents(), equalTo(new double[]{0.0, 20.0, 50.0, 75.99}));
+        assertThat(builder.getPercents(), equalTo(new double[] { 0.0, 20.0, 50.0, 75.99 }));
     }
 
     public void testValidate() {
@@ -72,19 +72,31 @@ public class PercentilesBucketTests extends AbstractBucketMetricsTestCase<Percen
         aggBuilders.add(multiBucketAgg);
 
         // First try to point to a non-existent agg
-        final PercentilesBucketPipelineAggregationBuilder builder = new PercentilesBucketPipelineAggregationBuilder("name",
-                "invalid_agg>metric");
-        IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-                () -> builder.validate(null, aggBuilders, Collections.emptySet()));
-        assertEquals(PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
-                + " aggregation does not exist for aggregation [name]: invalid_agg>metric", ex.getMessage());
+        final PercentilesBucketPipelineAggregationBuilder builder = new PercentilesBucketPipelineAggregationBuilder(
+            "name",
+            "invalid_agg>metric"
+        );
+        IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> builder.validate(null, aggBuilders, Collections.emptySet())
+        );
+        assertEquals(
+            PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
+                + " aggregation does not exist for aggregation [name]: invalid_agg>metric",
+            ex.getMessage()
+        );
 
         // Now try to point to a single bucket agg
         PercentilesBucketPipelineAggregationBuilder builder2 = new PercentilesBucketPipelineAggregationBuilder("name", "global>metric");
         ex = expectThrows(IllegalArgumentException.class, () -> builder2.validate(null, aggBuilders, Collections.emptySet()));
-        assertEquals("The first aggregation in " + PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
-                + " must be a multi-bucket aggregation for aggregation [name] found :" + GlobalAggregationBuilder.class.getName()
-                + " for buckets path: global>metric", ex.getMessage());
+        assertEquals(
+            "The first aggregation in "
+                + PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
+                + " must be a multi-bucket aggregation for aggregation [name] found :"
+                + GlobalAggregationBuilder.class.getName()
+                + " for buckets path: global>metric",
+            ex.getMessage()
+        );
 
         // Now try to point to a valid multi-bucket agg (no exception should be
         // thrown)

@@ -88,8 +88,9 @@ public class WriteableIngestDocumentTests extends AbstractXContentTestCase<Write
             otherIngestMetadata = Collections.unmodifiableMap(ingestMetadata);
         }
 
-        WriteableIngestDocument otherIngestDocument =
-                new WriteableIngestDocument(new IngestDocument(otherSourceAndMetadata, otherIngestMetadata));
+        WriteableIngestDocument otherIngestDocument = new WriteableIngestDocument(
+            new IngestDocument(otherSourceAndMetadata, otherIngestMetadata)
+        );
         if (changed) {
             assertThat(ingestDocument, not(equalTo(otherIngestDocument)));
             assertThat(otherIngestDocument, not(equalTo(ingestDocument)));
@@ -98,7 +99,8 @@ public class WriteableIngestDocumentTests extends AbstractXContentTestCase<Write
             assertThat(otherIngestDocument, equalTo(ingestDocument));
             assertThat(ingestDocument.hashCode(), equalTo(otherIngestDocument.hashCode()));
             WriteableIngestDocument thirdIngestDocument = new WriteableIngestDocument(
-                    new IngestDocument(Collections.unmodifiableMap(sourceAndMetadata), Collections.unmodifiableMap(ingestMetadata)));
+                new IngestDocument(Collections.unmodifiableMap(sourceAndMetadata), Collections.unmodifiableMap(ingestMetadata))
+            );
             assertThat(thirdIngestDocument, equalTo(ingestDocument));
             assertThat(ingestDocument, equalTo(thirdIngestDocument));
             assertThat(ingestDocument.hashCode(), equalTo(thirdIngestDocument.hashCode()));
@@ -116,8 +118,9 @@ public class WriteableIngestDocumentTests extends AbstractXContentTestCase<Write
         for (int i = 0; i < numFields; i++) {
             ingestMetadata.put(randomAlphaOfLengthBetween(5, 10), randomAlphaOfLengthBetween(5, 10));
         }
-        WriteableIngestDocument writeableIngestDocument =
-                new WriteableIngestDocument(new IngestDocument(sourceAndMetadata, ingestMetadata));
+        WriteableIngestDocument writeableIngestDocument = new WriteableIngestDocument(
+            new IngestDocument(sourceAndMetadata, ingestMetadata)
+        );
 
         BytesStreamOutput out = new BytesStreamOutput();
         writeableIngestDocument.writeTo(out);
@@ -146,7 +149,7 @@ public class WriteableIngestDocumentTests extends AbstractXContentTestCase<Write
         for (Map.Entry<IngestDocument.MetaData, Object> metadata : metadataMap.entrySet()) {
             String fieldName = metadata.getKey().getFieldName();
             if (metadata.getValue() == null) {
-               assertThat(toXContentDoc.containsKey(fieldName), is(false));
+                assertThat(toXContentDoc.containsKey(fieldName), is(false));
             } else {
                 assertThat(toXContentDoc.get(fieldName), equalTo(metadata.getValue().toString()));
             }
@@ -181,16 +184,11 @@ public class WriteableIngestDocumentTests extends AbstractXContentTestCase<Write
     @Override
     protected Predicate<String> getRandomFieldsExcludeFilter() {
         // We cannot have random fields in the _source field and _ingest field
-        return field ->
-            field.startsWith(
-                new StringJoiner(".")
-                    .add(WriteableIngestDocument.DOC_FIELD)
-                    .add(WriteableIngestDocument.SOURCE_FIELD).toString()
-            ) ||
-            field.startsWith(
-                new StringJoiner(".")
-                    .add(WriteableIngestDocument.DOC_FIELD)
-                    .add(WriteableIngestDocument.INGEST_FIELD).toString()
+        return field -> field.startsWith(
+            new StringJoiner(".").add(WriteableIngestDocument.DOC_FIELD).add(WriteableIngestDocument.SOURCE_FIELD).toString()
+        )
+            || field.startsWith(
+                new StringJoiner(".").add(WriteableIngestDocument.DOC_FIELD).add(WriteableIngestDocument.INGEST_FIELD).toString()
             );
     }
 }

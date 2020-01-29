@@ -95,8 +95,7 @@ public interface DocValueFormat extends NamedWriteable {
         }
 
         @Override
-        public void writeTo(StreamOutput out) {
-        }
+        public void writeTo(StreamOutput out) {}
 
         @Override
         public Long format(long value) {
@@ -154,14 +153,13 @@ public interface DocValueFormat extends NamedWriteable {
         }
 
         @Override
-        public void writeTo(StreamOutput out) {
-        }
+        public void writeTo(StreamOutput out) {}
 
         @Override
         public String format(BytesRef value) {
             return Base64.getEncoder()
-                    .withoutPadding()
-                    .encodeToString(Arrays.copyOfRange(value.bytes, value.offset, value.offset + value.length));
+                .withoutPadding()
+                .encodeToString(Arrays.copyOfRange(value.bytes, value.offset, value.offset + value.length));
         }
 
         @Override
@@ -244,8 +242,7 @@ public interface DocValueFormat extends NamedWriteable {
         }
 
         @Override
-        public void writeTo(StreamOutput out) {
-        }
+        public void writeTo(StreamOutput out) {}
 
         @Override
         public String format(long value) {
@@ -266,8 +263,7 @@ public interface DocValueFormat extends NamedWriteable {
         }
 
         @Override
-        public void writeTo(StreamOutput out) {
-        }
+        public void writeTo(StreamOutput out) {}
 
         @Override
         public String format(long value) {
@@ -288,8 +284,7 @@ public interface DocValueFormat extends NamedWriteable {
         }
 
         @Override
-        public void writeTo(StreamOutput out) {
-        }
+        public void writeTo(StreamOutput out) {}
 
         @Override
         public Boolean format(long value) {
@@ -304,10 +299,10 @@ public interface DocValueFormat extends NamedWriteable {
         @Override
         public long parseLong(String value, boolean roundUp, LongSupplier now) {
             switch (value) {
-            case "false":
-                return 0;
-            case "true":
-                return 1;
+                case "false":
+                    return 0;
+                case "true":
+                    return 1;
             }
             throw new IllegalArgumentException("Cannot parse boolean [" + value + "], expected either [true] or [false]");
         }
@@ -326,8 +321,7 @@ public interface DocValueFormat extends NamedWriteable {
         }
 
         @Override
-        public void writeTo(StreamOutput out) {
-        }
+        public void writeTo(StreamOutput out) {}
 
         @Override
         public String format(BytesRef value) {

@@ -33,17 +33,24 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-class HDRPercentileRanksAggregatorFactory
-        extends ValuesSourceAggregatorFactory<ValuesSource> {
+class HDRPercentileRanksAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSource> {
 
     private final double[] values;
     private final int numberOfSignificantValueDigits;
     private final boolean keyed;
 
-    HDRPercentileRanksAggregatorFactory(String name, ValuesSourceConfig<ValuesSource> config, double[] values,
-                                        int numberOfSignificantValueDigits, boolean keyed, QueryShardContext queryShardContext,
-                                        AggregatorFactory parent, AggregatorFactories.Builder subFactoriesBuilder,
-                                        Map<String, Object> metaData) throws IOException {
+    HDRPercentileRanksAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource> config,
+        double[] values,
+        int numberOfSignificantValueDigits,
+        boolean keyed,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.values = values;
         this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
@@ -51,23 +58,47 @@ class HDRPercentileRanksAggregatorFactory
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        return new HDRPercentileRanksAggregator(name, null, searchContext, parent, values, numberOfSignificantValueDigits, keyed,
-                config.format(), pipelineAggregators, metaData);
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new HDRPercentileRanksAggregator(
+            name,
+            null,
+            searchContext,
+            parent,
+            values,
+            numberOfSignificantValueDigits,
+            keyed,
+            config.format(),
+            pipelineAggregators,
+            metaData
+        );
     }
 
     @Override
-    protected Aggregator doCreateInternal(ValuesSource valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        return new HDRPercentileRanksAggregator(name, valuesSource, searchContext, parent, values, numberOfSignificantValueDigits, keyed,
-                config.format(), pipelineAggregators, metaData);
+    protected Aggregator doCreateInternal(
+        ValuesSource valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new HDRPercentileRanksAggregator(
+            name,
+            valuesSource,
+            searchContext,
+            parent,
+            values,
+            numberOfSignificantValueDigits,
+            keyed,
+            config.format(),
+            pipelineAggregators,
+            metaData
+        );
     }
 
 }

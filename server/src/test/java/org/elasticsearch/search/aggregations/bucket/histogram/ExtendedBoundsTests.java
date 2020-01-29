@@ -92,12 +92,28 @@ public class ExtendedBoundsTests extends ESTestCase {
 
     public void testParseAndValidate() {
         long now = randomLong();
-        Settings indexSettings = Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-                .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1).put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1).build();
-        QueryShardContext qsc = new QueryShardContext(0,
-                new IndexSettings(IndexMetaData.builder("foo").settings(indexSettings).build(), indexSettings),
-                BigArrays.NON_RECYCLING_INSTANCE, null, null, null, null, null, xContentRegistry(), writableRegistry(),
-                null, null, () -> now, null, null);
+        Settings indexSettings = Settings.builder()
+            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+            .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
+            .build();
+        QueryShardContext qsc = new QueryShardContext(
+            0,
+            new IndexSettings(IndexMetaData.builder("foo").settings(indexSettings).build(), indexSettings),
+            BigArrays.NON_RECYCLING_INSTANCE,
+            null,
+            null,
+            null,
+            null,
+            null,
+            xContentRegistry(),
+            writableRegistry(),
+            null,
+            null,
+            () -> now,
+            null,
+            null
+        );
         DateFormatter formatter = DateFormatter.forPattern("dateOptionalTime");
         DocValueFormat format = new DocValueFormat.DateTime(formatter, ZoneOffset.UTC, DateFieldMapper.Resolution.MILLISECONDS);
 
@@ -115,15 +131,23 @@ public class ExtendedBoundsTests extends ESTestCase {
         assertNull(parsed.getMin());
         assertEquals(now, (long) parsed.getMax());
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> new ExtendedBounds(100L, 90L).parseAndValidate("test", qsc, format));
-        assertEquals("[extended_bounds.min][100] cannot be greater than [extended_bounds.max][90] for histogram aggregation [test]",
-                e.getMessage());
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> new ExtendedBounds(100L, 90L).parseAndValidate("test", qsc, format)
+        );
+        assertEquals(
+            "[extended_bounds.min][100] cannot be greater than [extended_bounds.max][90] for histogram aggregation [test]",
+            e.getMessage()
+        );
 
-        e = expectThrows(IllegalArgumentException.class,
-                () -> unparsed(new ExtendedBounds(100L, 90L)).parseAndValidate("test", qsc, format));
-        assertEquals("[extended_bounds.min][100] cannot be greater than [extended_bounds.max][90] for histogram aggregation [test]",
-                e.getMessage());
+        e = expectThrows(
+            IllegalArgumentException.class,
+            () -> unparsed(new ExtendedBounds(100L, 90L)).parseAndValidate("test", qsc, format)
+        );
+        assertEquals(
+            "[extended_bounds.min][100] cannot be greater than [extended_bounds.max][90] for histogram aggregation [test]",
+            e.getMessage()
+        );
     }
 
     public void testTransportRoundTrip() throws IOException {

@@ -45,24 +45,25 @@ public class DateFormattersTests extends ESTestCase {
         DateFormatter dateFormatter = DateFormatters.forPattern("YYYY-ww");
 
         // first week of 2016 starts on Monday 2016-01-04 as previous week in 2016 has only 3 days
-        assertThat(DateFormatters.from(dateFormatter.parse("2016-01")) ,
-            equalTo(ZonedDateTime.of(2016,01,04, 0,0,0,0,ZoneOffset.UTC)));
+        assertThat(
+            DateFormatters.from(dateFormatter.parse("2016-01")),
+            equalTo(ZonedDateTime.of(2016, 01, 04, 0, 0, 0, 0, ZoneOffset.UTC))
+        );
 
         // first week of 2015 starts on Monday 2014-12-29 because 4days belong to 2019
-        assertThat(DateFormatters.from(dateFormatter.parse("2015-01")) ,
-            equalTo(ZonedDateTime.of(2014,12,29, 0,0,0,0,ZoneOffset.UTC)));
-
+        assertThat(
+            DateFormatters.from(dateFormatter.parse("2015-01")),
+            equalTo(ZonedDateTime.of(2014, 12, 29, 0, 0, 0, 0, ZoneOffset.UTC))
+        );
 
         // as per WeekFields.ISO first week starts on Monday and has minimum 4 days
-         dateFormatter = DateFormatters.forPattern("YYYY");
+        dateFormatter = DateFormatters.forPattern("YYYY");
 
         // first week of 2016 starts on Monday 2016-01-04 as previous week in 2016 has only 3 days
-        assertThat(DateFormatters.from(dateFormatter.parse("2016")) ,
-            equalTo(ZonedDateTime.of(2016,01,04, 0,0,0,0,ZoneOffset.UTC)));
+        assertThat(DateFormatters.from(dateFormatter.parse("2016")), equalTo(ZonedDateTime.of(2016, 01, 04, 0, 0, 0, 0, ZoneOffset.UTC)));
 
         // first week of 2015 starts on Monday 2014-12-29 because 4days belong to 2019
-        assertThat(DateFormatters.from(dateFormatter.parse("2015")) ,
-            equalTo(ZonedDateTime.of(2014,12,29, 0,0,0,0,ZoneOffset.UTC)));
+        assertThat(DateFormatters.from(dateFormatter.parse("2015")), equalTo(ZonedDateTime.of(2014, 12, 29, 0, 0, 0, 0, ZoneOffset.UTC)));
     }
 
     // this is not in the duelling tests, because the epoch millis parser in joda time drops the milliseconds after the comma
@@ -122,8 +123,6 @@ public class DateFormattersTests extends ESTestCase {
         assertThat(e.getMessage(), is("failed to parse date field [1234.1234567890] with format [epoch_second]"));
     }
 
-
-
     public void testEpochMilliParsersWithDifferentFormatters() {
         DateFormatter formatter = DateFormatter.forPattern("strict_date_optional_time||epoch_millis");
         TemporalAccessor accessor = formatter.parse("123");
@@ -133,9 +132,11 @@ public class DateFormattersTests extends ESTestCase {
 
     public void testParsersWithMultipleInternalFormats() throws Exception {
         ZonedDateTime first = DateFormatters.from(
-            DateFormatters.forPattern("strict_date_optional_time_nanos").parse("2018-05-15T17:14:56+0100"));
+            DateFormatters.forPattern("strict_date_optional_time_nanos").parse("2018-05-15T17:14:56+0100")
+        );
         ZonedDateTime second = DateFormatters.from(
-            DateFormatters.forPattern("strict_date_optional_time_nanos").parse("2018-05-15T17:14:56+01:00"));
+            DateFormatters.forPattern("strict_date_optional_time_nanos").parse("2018-05-15T17:14:56+01:00")
+        );
         assertThat(first, is(second));
     }
 
@@ -153,11 +154,12 @@ public class DateFormattersTests extends ESTestCase {
     }
 
     public void testEqualsAndHashcode() {
-        assertThat(DateFormatters.forPattern("strict_date_optional_time"),
-            sameInstance(DateFormatters.forPattern("strict_date_optional_time")));
+        assertThat(
+            DateFormatters.forPattern("strict_date_optional_time"),
+            sameInstance(DateFormatters.forPattern("strict_date_optional_time"))
+        );
         assertThat(DateFormatters.forPattern("YYYY"), equalTo(DateFormatters.forPattern("YYYY")));
-        assertThat(DateFormatters.forPattern("YYYY").hashCode(),
-            is(DateFormatters.forPattern("YYYY").hashCode()));
+        assertThat(DateFormatters.forPattern("YYYY").hashCode(), is(DateFormatters.forPattern("YYYY").hashCode()));
 
         // different timezone, thus not equals
         assertThat(DateFormatters.forPattern("YYYY").withZone(ZoneId.of("CET")), not(equalTo(DateFormatters.forPattern("YYYY"))));
@@ -311,8 +313,13 @@ public class DateFormattersTests extends ESTestCase {
 
     public void testRoundupFormatterZone() {
         ZoneId zoneId = randomZone();
-        String format = randomFrom("epoch_second", "epoch_millis", "strict_date_optional_time", "uuuu-MM-dd'T'HH:mm:ss.SSS",
-            "strict_date_optional_time||date_optional_time");
+        String format = randomFrom(
+            "epoch_second",
+            "epoch_millis",
+            "strict_date_optional_time",
+            "uuuu-MM-dd'T'HH:mm:ss.SSS",
+            "strict_date_optional_time||date_optional_time"
+        );
         JavaDateFormatter formatter = (JavaDateFormatter) DateFormatter.forPattern(format).withZone(zoneId);
         JavaDateFormatter roundUpFormatter = formatter.getRoundupParser();
         assertThat(roundUpFormatter.zone(), is(zoneId));
@@ -321,8 +328,13 @@ public class DateFormattersTests extends ESTestCase {
 
     public void testRoundupFormatterLocale() {
         Locale locale = randomLocale(random());
-        String format = randomFrom("epoch_second", "epoch_millis", "strict_date_optional_time", "uuuu-MM-dd'T'HH:mm:ss.SSS",
-            "strict_date_optional_time||date_optional_time");
+        String format = randomFrom(
+            "epoch_second",
+            "epoch_millis",
+            "strict_date_optional_time",
+            "uuuu-MM-dd'T'HH:mm:ss.SSS",
+            "strict_date_optional_time||date_optional_time"
+        );
         JavaDateFormatter formatter = (JavaDateFormatter) DateFormatter.forPattern(format).withLocale(locale);
         JavaDateFormatter roundupParser = formatter.getRoundupParser();
         assertThat(roundupParser.locale(), is(locale));
@@ -331,8 +343,7 @@ public class DateFormattersTests extends ESTestCase {
 
     public void test0MillisAreFormatted() {
         DateFormatter formatter = DateFormatter.forPattern("strict_date_time");
-        Clock clock = Clock.fixed(ZonedDateTime.of(2019, 02, 8, 11, 43, 00, 0,
-            ZoneOffset.UTC).toInstant(), ZoneOffset.UTC);
+        Clock clock = Clock.fixed(ZonedDateTime.of(2019, 02, 8, 11, 43, 00, 0, ZoneOffset.UTC).toInstant(), ZoneOffset.UTC);
         String formatted = formatter.formatMillis(clock.millis());
         assertThat(formatted, is("2019-02-08T11:43:00.000Z"));
     }

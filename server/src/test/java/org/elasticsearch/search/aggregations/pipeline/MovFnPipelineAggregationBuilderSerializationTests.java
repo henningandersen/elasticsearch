@@ -55,4 +55,3 @@ public class MovFnPipelineAggregationBuilderSerializationTests extends AbstractS
         return false;
     }
 }
-

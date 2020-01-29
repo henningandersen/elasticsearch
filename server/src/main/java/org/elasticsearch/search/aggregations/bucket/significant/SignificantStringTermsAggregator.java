@@ -51,20 +51,43 @@ public class SignificantStringTermsAggregator extends StringTermsAggregator {
     protected final SignificantTermsAggregatorFactory termsAggFactory;
     private final SignificanceHeuristic significanceHeuristic;
 
-    public SignificantStringTermsAggregator(String name, AggregatorFactories factories, ValuesSource valuesSource, DocValueFormat format,
-            BucketCountThresholds bucketCountThresholds, IncludeExclude.StringFilter includeExclude, SearchContext aggregationContext,
-            Aggregator parent, SignificanceHeuristic significanceHeuristic, SignificantTermsAggregatorFactory termsAggFactory,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    public SignificantStringTermsAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource valuesSource,
+        DocValueFormat format,
+        BucketCountThresholds bucketCountThresholds,
+        IncludeExclude.StringFilter includeExclude,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        SignificanceHeuristic significanceHeuristic,
+        SignificantTermsAggregatorFactory termsAggFactory,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
 
-        super(name, factories, valuesSource, null, format, bucketCountThresholds, includeExclude, aggregationContext, parent,
-                SubAggCollectionMode.BREADTH_FIRST, false, pipelineAggregators, metaData);
+        super(
+            name,
+            factories,
+            valuesSource,
+            null,
+            format,
+            bucketCountThresholds,
+            includeExclude,
+            aggregationContext,
+            parent,
+            SubAggCollectionMode.BREADTH_FIRST,
+            false,
+            pipelineAggregators,
+            metaData
+        );
         this.significanceHeuristic = significanceHeuristic;
         this.termsAggFactory = termsAggFactory;
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         return new LeafBucketCollectorBase(super.getLeafCollector(ctx, sub), null) {
             @Override
             public void collect(int doc, long bucket) throws IOException {
@@ -129,9 +152,18 @@ public class SignificantStringTermsAggregator extends StringTermsAggregator {
             bucket.aggregations = bucketAggregations(bucket.bucketOrd);
         }
 
-        return new SignificantStringTerms( name, bucketCountThresholds.getRequiredSize(),
-                bucketCountThresholds.getMinDocCount(), pipelineAggregators(),
-                metaData(), format, subsetSize, supersetSize, significanceHeuristic, Arrays.asList(list));
+        return new SignificantStringTerms(
+            name,
+            bucketCountThresholds.getRequiredSize(),
+            bucketCountThresholds.getMinDocCount(),
+            pipelineAggregators(),
+            metaData(),
+            format,
+            subsetSize,
+            supersetSize,
+            significanceHeuristic,
+            Arrays.asList(list)
+        );
     }
 
     @Override
@@ -140,8 +172,18 @@ public class SignificantStringTermsAggregator extends StringTermsAggregator {
         ContextIndexSearcher searcher = context.searcher();
         IndexReader topReader = searcher.getIndexReader();
         int supersetSize = topReader.numDocs();
-        return new SignificantStringTerms(name, bucketCountThresholds.getRequiredSize(), bucketCountThresholds.getMinDocCount(),
-                pipelineAggregators(), metaData(), format, 0, supersetSize, significanceHeuristic, emptyList());
+        return new SignificantStringTerms(
+            name,
+            bucketCountThresholds.getRequiredSize(),
+            bucketCountThresholds.getMinDocCount(),
+            pipelineAggregators(),
+            metaData(),
+            format,
+            0,
+            supersetSize,
+            significanceHeuristic,
+            emptyList()
+        );
     }
 
     @Override
@@ -150,4 +192,3 @@ public class SignificantStringTermsAggregator extends StringTermsAggregator {
     }
 
 }
-

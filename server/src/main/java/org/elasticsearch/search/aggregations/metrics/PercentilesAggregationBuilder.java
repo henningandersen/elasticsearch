@@ -56,8 +56,10 @@ public class PercentilesAggregationBuilder extends LeafOnly<ValuesSource, Percen
         Double compression;
     }
 
-    private static final ObjectParser<TDigestOptions, Void> TDIGEST_OPTIONS_PARSER =
-            new ObjectParser<>(PercentilesMethod.TDIGEST.getParseField().getPreferredName(), TDigestOptions::new);
+    private static final ObjectParser<TDigestOptions, Void> TDIGEST_OPTIONS_PARSER = new ObjectParser<>(
+        PercentilesMethod.TDIGEST.getParseField().getPreferredName(),
+        TDigestOptions::new
+    );
     static {
         TDIGEST_OPTIONS_PARSER.declareDouble((opts, compression) -> opts.compression = compression, COMPRESSION_FIELD);
     }
@@ -66,12 +68,15 @@ public class PercentilesAggregationBuilder extends LeafOnly<ValuesSource, Percen
         Integer numberOfSigDigits;
     }
 
-    private static final ObjectParser<HDROptions, Void> HDR_OPTIONS_PARSER =
-            new ObjectParser<>(PercentilesMethod.HDR.getParseField().getPreferredName(), HDROptions::new);
+    private static final ObjectParser<HDROptions, Void> HDR_OPTIONS_PARSER = new ObjectParser<>(
+        PercentilesMethod.HDR.getParseField().getPreferredName(),
+        HDROptions::new
+    );
     static {
         HDR_OPTIONS_PARSER.declareInt(
-                (opts, numberOfSigDigits) -> opts.numberOfSigDigits = numberOfSigDigits,
-                NUMBER_SIGNIFICANT_DIGITS_FIELD);
+            (opts, numberOfSigDigits) -> opts.numberOfSigDigits = numberOfSigDigits,
+            NUMBER_SIGNIFICANT_DIGITS_FIELD
+        );
     }
 
     private static final ObjectParser<InternalBuilder, Void> PARSER;
@@ -79,9 +84,7 @@ public class PercentilesAggregationBuilder extends LeafOnly<ValuesSource, Percen
         PARSER = new ObjectParser<>(PercentilesAggregationBuilder.NAME);
         ValuesSourceParserHelper.declareAnyFields(PARSER, true, true);
 
-        PARSER.declareDoubleArray(
-                (b, v) -> b.percentiles(v.stream().mapToDouble(Double::doubleValue).toArray()),
-                PERCENTS_FIELD);
+        PARSER.declareDoubleArray((b, v) -> b.percentiles(v.stream().mapToDouble(Double::doubleValue).toArray()), PERCENTS_FIELD);
 
         PARSER.declareBoolean(PercentilesAggregationBuilder::keyed, KEYED_FIELD);
 
@@ -133,8 +136,7 @@ public class PercentilesAggregationBuilder extends LeafOnly<ValuesSource, Percen
         super(name, CoreValuesSourceType.NUMERIC, ValueType.NUMERIC);
     }
 
-    protected PercentilesAggregationBuilder(PercentilesAggregationBuilder clone,
-                                            Builder factoriesBuilder, Map<String, Object> metaData) {
+    protected PercentilesAggregationBuilder(PercentilesAggregationBuilder clone, Builder factoriesBuilder, Map<String, Object> metaData) {
         super(clone, factoriesBuilder, metaData);
         this.percents = clone.percents;
         this.method = clone.method;
@@ -234,7 +236,8 @@ public class PercentilesAggregationBuilder extends LeafOnly<ValuesSource, Percen
     public PercentilesAggregationBuilder compression(double compression) {
         if (compression < 0.0) {
             throw new IllegalArgumentException(
-                    "[compression] must be greater than or equal to 0. Found [" + compression + "] in [" + name + "]");
+                "[compression] must be greater than or equal to 0. Found [" + compression + "] in [" + name + "]"
+            );
         }
         this.compression = compression;
         return this;
@@ -261,19 +264,39 @@ public class PercentilesAggregationBuilder extends LeafOnly<ValuesSource, Percen
     }
 
     @Override
-    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(QueryShardContext queryShardContext,
-                                                                    ValuesSourceConfig<ValuesSource> config,
-                                                                    AggregatorFactory parent,
-                                                                    Builder subFactoriesBuilder) throws IOException {
+    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         switch (method) {
-        case TDIGEST:
-            return new TDigestPercentilesAggregatorFactory(name, config, percents, compression, keyed, queryShardContext, parent,
-                    subFactoriesBuilder, metaData);
-        case HDR:
-            return new HDRPercentilesAggregatorFactory(name, config, percents,
-                numberOfSignificantValueDigits, keyed, queryShardContext, parent, subFactoriesBuilder, metaData);
-        default:
-            throw new IllegalStateException("Illegal method [" + method + "]");
+            case TDIGEST:
+                return new TDigestPercentilesAggregatorFactory(
+                    name,
+                    config,
+                    percents,
+                    compression,
+                    keyed,
+                    queryShardContext,
+                    parent,
+                    subFactoriesBuilder,
+                    metaData
+                );
+            case HDR:
+                return new HDRPercentilesAggregatorFactory(
+                    name,
+                    config,
+                    percents,
+                    numberOfSignificantValueDigits,
+                    keyed,
+                    queryShardContext,
+                    parent,
+                    subFactoriesBuilder,
+                    metaData
+                );
+            default:
+                throw new IllegalStateException("Illegal method [" + method + "]");
         }
     }
 
@@ -321,12 +344,12 @@ public class PercentilesAggregationBuilder extends LeafOnly<ValuesSource, Percen
     @Override
     public int hashCode() {
         switch (method) {
-        case HDR:
-            return Objects.hash(super.hashCode(), Arrays.hashCode(percents), keyed, numberOfSignificantValueDigits, method);
-        case TDIGEST:
-            return Objects.hash(super.hashCode(), Arrays.hashCode(percents), keyed, compression, method);
-        default:
-            throw new IllegalStateException("Illegal method [" + method.toString() + "]");
+            case HDR:
+                return Objects.hash(super.hashCode(), Arrays.hashCode(percents), keyed, numberOfSignificantValueDigits, method);
+            case TDIGEST:
+                return Objects.hash(super.hashCode(), Arrays.hashCode(percents), keyed, compression, method);
+            default:
+                throw new IllegalStateException("Illegal method [" + method.toString() + "]");
         }
     }
 

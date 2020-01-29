@@ -47,8 +47,12 @@ public class CountedCollectorTests extends ESTestCase {
                 runnable.run();
             }
         };
-        CountedCollector<SearchPhaseResult> collector = new CountedCollector<>(r -> results.set(r.getShardIndex(), r), numResultsExpected,
-            latch::countDown, context);
+        CountedCollector<SearchPhaseResult> collector = new CountedCollector<>(
+            r -> results.set(r.getShardIndex(), r),
+            numResultsExpected,
+            latch::countDown,
+            context
+        );
         for (int i = 0; i < numResultsExpected; i++) {
             int shardID = i;
             switch (randomIntBetween(0, 2)) {
@@ -61,14 +65,21 @@ public class CountedCollectorTests extends ESTestCase {
                     executor.execute(() -> {
                         DfsSearchResult dfsSearchResult = new DfsSearchResult(shardID, null);
                         dfsSearchResult.setShardIndex(shardID);
-                        dfsSearchResult.setSearchShardTarget(new SearchShardTarget("foo",
-                            new ShardId("bar", "baz", shardID), null, OriginalIndices.NONE));
-                        collector.onResult(dfsSearchResult);});
+                        dfsSearchResult.setSearchShardTarget(
+                            new SearchShardTarget("foo", new ShardId("bar", "baz", shardID), null, OriginalIndices.NONE)
+                        );
+                        collector.onResult(dfsSearchResult);
+                    });
                     break;
                 case 2:
                     state.add(2);
-                    executor.execute(() -> collector.onFailure(shardID, new SearchShardTarget("foo", new ShardId("bar", "baz", shardID),
-                        null, OriginalIndices.NONE), new RuntimeException("boom")));
+                    executor.execute(
+                        () -> collector.onFailure(
+                            shardID,
+                            new SearchShardTarget("foo", new ShardId("bar", "baz", shardID), null, OriginalIndices.NONE),
+                            new RuntimeException("boom")
+                        )
+                    );
                     break;
                 default:
                     fail("unknown state");

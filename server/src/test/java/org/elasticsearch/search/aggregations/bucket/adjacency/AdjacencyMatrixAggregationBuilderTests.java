@@ -58,10 +58,9 @@ public class AdjacencyMatrixAggregationBuilderTests extends ESTestCase {
         when(indexShard.indexSettings()).thenReturn(indexSettings);
         when(queryShardContext.getIndexSettings()).thenReturn(indexSettings);
         SearchContext context = new TestSearchContext(queryShardContext, indexShard);
-        
+
         int maxFilters = SearchModule.INDICES_MAX_CLAUSE_COUNT_SETTING.get(context.indexShard().indexSettings().getSettings());
         int maxFiltersPlusOne = maxFilters + 1;
-        
 
         Map<String, QueryBuilder> filters = new HashMap<>(maxFilters);
         for (int i = 0; i < maxFiltersPlusOne; i++) {
@@ -71,12 +70,23 @@ public class AdjacencyMatrixAggregationBuilderTests extends ESTestCase {
             filters.put("filter" + i, queryBuilder);
         }
         AdjacencyMatrixAggregationBuilder builder = new AdjacencyMatrixAggregationBuilder("dummy", filters);
-        IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-            () -> builder.doBuild(context.getQueryShardContext(), null, new AggregatorFactories.Builder()));
-        assertThat(ex.getMessage(), equalTo("Number of filters is too large, must be less than or equal to: ["+ maxFilters
-                +"] but was ["+ maxFiltersPlusOne +"]."
-            + "This limit can be set by changing the [" + SearchModule.INDICES_MAX_CLAUSE_COUNT_SETTING.getKey()
-            + "] setting."));
+        IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> builder.doBuild(context.getQueryShardContext(), null, new AggregatorFactories.Builder())
+        );
+        assertThat(
+            ex.getMessage(),
+            equalTo(
+                "Number of filters is too large, must be less than or equal to: ["
+                    + maxFilters
+                    + "] but was ["
+                    + maxFiltersPlusOne
+                    + "]."
+                    + "This limit can be set by changing the ["
+                    + SearchModule.INDICES_MAX_CLAUSE_COUNT_SETTING.getKey()
+                    + "] setting."
+            )
+        );
 
         // filter size not grater than max size should return an instance of AdjacencyMatrixAggregatorFactory
         Map<String, QueryBuilder> emptyFilters = Collections.emptyMap();

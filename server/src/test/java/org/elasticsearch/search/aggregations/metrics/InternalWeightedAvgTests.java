@@ -41,7 +41,10 @@ public class InternalWeightedAvgTests extends InternalAggregationTestCase<Intern
             name,
             randomDoubleBetween(0, 100000, true),
             randomDoubleBetween(0, 100000, true),
-            formatter, pipelineAggregators, metaData);
+            formatter,
+            pipelineAggregators,
+            metaData
+        );
     }
 
     @Override
@@ -81,33 +84,33 @@ public class InternalWeightedAvgTests extends InternalAggregationTestCase<Intern
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 2)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            if (Double.isFinite(sum)) {
-                sum += between(1, 100);
-            } else {
-                sum = between(1, 100);
-            }
-            break;
-        case 2:
-            if (Double.isFinite(weight)) {
-                weight += between(1, 100);
-            } else {
-                weight = between(1, 100);
-            }
-            break;
-        case 3:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
-        default:
-            throw new AssertionError("Illegal randomisation branch");
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                if (Double.isFinite(sum)) {
+                    sum += between(1, 100);
+                } else {
+                    sum = between(1, 100);
+                }
+                break;
+            case 2:
+                if (Double.isFinite(weight)) {
+                    weight += between(1, 100);
+                } else {
+                    weight = between(1, 100);
+                }
+                break;
+            case 3:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
+            default:
+                throw new AssertionError("Illegal randomisation branch");
         }
         return new InternalWeightedAvg(name, sum, weight, formatter, pipelineAggregators, metaData);
     }

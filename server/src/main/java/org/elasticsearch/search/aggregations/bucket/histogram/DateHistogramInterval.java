@@ -83,7 +83,6 @@ public class DateHistogramInterval implements Writeable, ToXContentFragment {
         out.writeString(expression);
     }
 
-
     @Override
     public String toString() {
         return expression;

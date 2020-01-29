@@ -56,8 +56,22 @@ public class ReadOnlyEngineTests extends EngineTestCase {
                 Engine.Get get = null;
                 for (int i = 0; i < numDocs; i++) {
                     ParsedDocument doc = testParsedDocument(Integer.toString(i), null, testDocument(), new BytesArray("{}"), null);
-                    engine.index(new Engine.Index(newUid(doc), doc, i, primaryTerm.get(), 1, null, Engine.Operation.Origin.REPLICA,
-                        System.nanoTime(), -1, false, SequenceNumbers.UNASSIGNED_SEQ_NO, 0));
+                    engine.index(
+                        new Engine.Index(
+                            newUid(doc),
+                            doc,
+                            i,
+                            primaryTerm.get(),
+                            1,
+                            null,
+                            Engine.Operation.Origin.REPLICA,
+                            System.nanoTime(),
+                            -1,
+                            false,
+                            SequenceNumbers.UNASSIGNED_SEQ_NO,
+                            0
+                        )
+                    );
                     if (get == null || rarely()) {
                         get = newGet(randomBoolean(), doc);
                     }
@@ -69,8 +83,13 @@ public class ReadOnlyEngineTests extends EngineTestCase {
                 engine.syncTranslog();
                 globalCheckpoint.set(randomLongBetween(globalCheckpoint.get(), engine.getPersistedLocalCheckpoint()));
                 engine.flush();
-                readOnlyEngine = new ReadOnlyEngine(engine.engineConfig, engine.getSeqNoStats(globalCheckpoint.get()),
-                    engine.getTranslogStats(), false, Function.identity());
+                readOnlyEngine = new ReadOnlyEngine(
+                    engine.engineConfig,
+                    engine.getSeqNoStats(globalCheckpoint.get()),
+                    engine.getTranslogStats(),
+                    false,
+                    Function.identity()
+                );
                 lastSeqNoStats = engine.getSeqNoStats(globalCheckpoint.get());
                 lastDocIds = getDocIds(engine, true);
                 assertThat(readOnlyEngine.getPersistedLocalCheckpoint(), equalTo(lastSeqNoStats.getLocalCheckpoint()));
@@ -127,24 +146,48 @@ public class ReadOnlyEngineTests extends EngineTestCase {
                 long maxSeqNo = SequenceNumbers.NO_OPS_PERFORMED;
                 for (int i = 0; i < numDocs; i++) {
                     ParsedDocument doc = testParsedDocument(Integer.toString(i), null, testDocument(), new BytesArray("{}"), null);
-                    engine.index(new Engine.Index(newUid(doc), doc, i, primaryTerm.get(), 1, null, Engine.Operation.Origin.REPLICA,
-                        System.nanoTime(), -1, false, SequenceNumbers.UNASSIGNED_SEQ_NO, 0));
+                    engine.index(
+                        new Engine.Index(
+                            newUid(doc),
+                            doc,
+                            i,
+                            primaryTerm.get(),
+                            1,
+                            null,
+                            Engine.Operation.Origin.REPLICA,
+                            System.nanoTime(),
+                            -1,
+                            false,
+                            SequenceNumbers.UNASSIGNED_SEQ_NO,
+                            0
+                        )
+                    );
                     maxSeqNo = engine.getProcessedLocalCheckpoint();
                 }
                 engine.syncTranslog();
                 globalCheckpoint.set(engine.getPersistedLocalCheckpoint() - 1);
                 engine.flushAndClose();
 
-                IllegalStateException exception = expectThrows(IllegalStateException.class,
+                IllegalStateException exception = expectThrows(
+                    IllegalStateException.class,
                     () -> new ReadOnlyEngine(config, null, null, true, Function.identity()) {
                         @Override
                         protected boolean assertMaxSeqNoEqualsToGlobalCheckpoint(final long maxSeqNo, final long globalCheckpoint) {
                             // we don't want the assertion to trip in this test
                             return true;
                         }
-                    });
-                assertThat(exception.getMessage(), equalTo("Maximum sequence number [" + maxSeqNo
-                    + "] from last commit does not match global checkpoint [" + globalCheckpoint.get() + "]"));
+                    }
+                );
+                assertThat(
+                    exception.getMessage(),
+                    equalTo(
+                        "Maximum sequence number ["
+                            + maxSeqNo
+                            + "] from last commit does not match global checkpoint ["
+                            + globalCheckpoint.get()
+                            + "]"
+                    )
+                );
             }
         }
     }
@@ -155,9 +198,10 @@ public class ReadOnlyEngineTests extends EngineTestCase {
         try (Store store = createStore()) {
             EngineConfig config = config(defaultSettings, store, createTempDir(), newMergePolicy(), null, null, globalCheckpoint::get);
             store.createEmpty(Version.CURRENT.luceneVersion);
-            try (ReadOnlyEngine readOnlyEngine = new ReadOnlyEngine(config, null , new TranslogStats(), true, Function.identity())) {
-                Class<? extends Throwable> expectedException = LuceneTestCase.TEST_ASSERTS_ENABLED ? AssertionError.class :
-                    UnsupportedOperationException.class;
+            try (ReadOnlyEngine readOnlyEngine = new ReadOnlyEngine(config, null, new TranslogStats(), true, Function.identity())) {
+                Class<? extends Throwable> expectedException = LuceneTestCase.TEST_ASSERTS_ENABLED
+                    ? AssertionError.class
+                    : UnsupportedOperationException.class;
                 expectThrows(expectedException, () -> readOnlyEngine.index(null));
                 expectThrows(expectedException, () -> readOnlyEngine.delete(null));
                 expectThrows(expectedException, () -> readOnlyEngine.noOp(null));
@@ -175,7 +219,7 @@ public class ReadOnlyEngineTests extends EngineTestCase {
         try (Store store = createStore()) {
             EngineConfig config = config(defaultSettings, store, createTempDir(), newMergePolicy(), null, null, globalCheckpoint::get);
             store.createEmpty(Version.CURRENT.luceneVersion);
-            try (ReadOnlyEngine readOnlyEngine = new ReadOnlyEngine(config, null , new TranslogStats(), true, Function.identity())) {
+            try (ReadOnlyEngine readOnlyEngine = new ReadOnlyEngine(config, null, new TranslogStats(), true, Function.identity())) {
                 globalCheckpoint.set(randomNonNegativeLong());
                 try {
                     readOnlyEngine.verifyEngineBeforeIndexClosing();
@@ -195,8 +239,22 @@ public class ReadOnlyEngineTests extends EngineTestCase {
             try (InternalEngine engine = createEngine(config)) {
                 for (int i = 0; i < numDocs; i++) {
                     ParsedDocument doc = testParsedDocument(Integer.toString(i), null, testDocument(), new BytesArray("{}"), null);
-                    engine.index(new Engine.Index(newUid(doc), doc, i, primaryTerm.get(), 1, null, Engine.Operation.Origin.REPLICA,
-                        System.nanoTime(), -1, false, SequenceNumbers.UNASSIGNED_SEQ_NO, 0));
+                    engine.index(
+                        new Engine.Index(
+                            newUid(doc),
+                            doc,
+                            i,
+                            primaryTerm.get(),
+                            1,
+                            null,
+                            Engine.Operation.Origin.REPLICA,
+                            System.nanoTime(),
+                            -1,
+                            false,
+                            SequenceNumbers.UNASSIGNED_SEQ_NO,
+                            0
+                        )
+                    );
                     if (rarely()) {
                         engine.flush();
                     }
@@ -205,7 +263,7 @@ public class ReadOnlyEngineTests extends EngineTestCase {
                 engine.syncTranslog();
                 engine.flushAndClose();
             }
-            try (ReadOnlyEngine readOnlyEngine = new ReadOnlyEngine(config, null , null, true, Function.identity())) {
+            try (ReadOnlyEngine readOnlyEngine = new ReadOnlyEngine(config, null, null, true, Function.identity())) {
                 final TranslogHandler translogHandler = new TranslogHandler(xContentRegistry(), config.getIndexSettings());
                 readOnlyEngine.recoverFromTranslog(translogHandler, randomNonNegativeLong());
 
@@ -226,8 +284,22 @@ public class ReadOnlyEngineTests extends EngineTestCase {
             try (InternalEngine engine = createEngine(config)) {
                 for (int i = 0; i < numDocs; i++) {
                     ParsedDocument doc = testParsedDocument(Integer.toString(i), null, testDocument(), new BytesArray("{}"), null);
-                    engine.index(new Engine.Index(newUid(doc), doc, i, primaryTerm.get(), 1, null, Engine.Operation.Origin.REPLICA,
-                        System.nanoTime(), -1, false, SequenceNumbers.UNASSIGNED_SEQ_NO, 0));
+                    engine.index(
+                        new Engine.Index(
+                            newUid(doc),
+                            doc,
+                            i,
+                            primaryTerm.get(),
+                            1,
+                            null,
+                            Engine.Operation.Origin.REPLICA,
+                            System.nanoTime(),
+                            -1,
+                            false,
+                            SequenceNumbers.UNASSIGNED_SEQ_NO,
+                            0
+                        )
+                    );
                     globalCheckpoint.set(i);
                     if (rarely()) {
                         engine.flush();
@@ -237,8 +309,10 @@ public class ReadOnlyEngineTests extends EngineTestCase {
                     }
                 }
 
-                assertThat(engine.getTranslogStats().estimatedNumberOfOperations(),
-                    equalTo(softDeletesEnabled ? uncommittedDocs : numDocs));
+                assertThat(
+                    engine.getTranslogStats().estimatedNumberOfOperations(),
+                    equalTo(softDeletesEnabled ? uncommittedDocs : numDocs)
+                );
                 assertThat(engine.getTranslogStats().getUncommittedOperations(), equalTo(uncommittedDocs));
                 assertThat(engine.getTranslogStats().getTranslogSizeInBytes(), greaterThan(0L));
                 assertThat(engine.getTranslogStats().getUncommittedSizeInBytes(), greaterThan(0L));

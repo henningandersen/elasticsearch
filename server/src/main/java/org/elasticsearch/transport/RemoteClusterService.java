@@ -65,11 +65,11 @@ public final class RemoteClusterService extends RemoteClusterAware implements Cl
     /**
      * The initial connect timeout for remote cluster connections
      */
-    public static final Setting<TimeValue> REMOTE_INITIAL_CONNECTION_TIMEOUT_SETTING =
-        Setting.positiveTimeSetting(
-            "cluster.remote.initial_connect_timeout",
-            TimeValue.timeValueSeconds(30),
-            Setting.Property.NodeScope);
+    public static final Setting<TimeValue> REMOTE_INITIAL_CONNECTION_TIMEOUT_SETTING = Setting.positiveTimeSetting(
+        "cluster.remote.initial_connect_timeout",
+        TimeValue.timeValueSeconds(30),
+        Setting.Property.NodeScope
+    );
 
     /**
      * The name of a node attribute to select nodes that should be connected to in the remote cluster.
@@ -77,42 +77,42 @@ public final class RemoteClusterService extends RemoteClusterAware implements Cl
      * clusters. In that case {@code cluster.remote.node.attr: gateway} can be used to filter out other nodes in the remote cluster.
      * The value of the setting is expected to be a boolean, {@code true} for nodes that can become gateways, {@code false} otherwise.
      */
-    public static final Setting<String> REMOTE_NODE_ATTRIBUTE =
-        Setting.simpleString("cluster.remote.node.attr", Setting.Property.NodeScope);
+    public static final Setting<String> REMOTE_NODE_ATTRIBUTE = Setting.simpleString(
+        "cluster.remote.node.attr",
+        Setting.Property.NodeScope
+    );
 
     /**
      * If <code>true</code> connecting to remote clusters is supported on this node. If <code>false</code> this node will not establish
      * connections to any remote clusters configured. Search requests executed against this node (where this node is the coordinating node)
      * will fail if remote cluster syntax is used as an index pattern. The default is <code>true</code>
      */
-    public static final Setting<Boolean> ENABLE_REMOTE_CLUSTERS =
-        Setting.boolSetting(
-            "cluster.remote.connect",
-            true,
-            Setting.Property.NodeScope);
+    public static final Setting<Boolean> ENABLE_REMOTE_CLUSTERS = Setting.boolSetting(
+        "cluster.remote.connect",
+        true,
+        Setting.Property.NodeScope
+    );
 
-    public static final Setting.AffixSetting<Boolean> REMOTE_CLUSTER_SKIP_UNAVAILABLE =
-        Setting.affixKeySetting(
-            "cluster.remote.",
-            "skip_unavailable",
-            key -> boolSetting(
-                key,
-                false,
-                Setting.Property.Dynamic,
-                Setting.Property.NodeScope),
-            () -> SniffConnectionStrategy.REMOTE_CLUSTER_SEEDS);
+    public static final Setting.AffixSetting<Boolean> REMOTE_CLUSTER_SKIP_UNAVAILABLE = Setting.affixKeySetting(
+        "cluster.remote.",
+        "skip_unavailable",
+        key -> boolSetting(key, false, Setting.Property.Dynamic, Setting.Property.NodeScope),
+        () -> SniffConnectionStrategy.REMOTE_CLUSTER_SEEDS
+    );
 
     public static final Setting.AffixSetting<TimeValue> REMOTE_CLUSTER_PING_SCHEDULE = Setting.affixKeySetting(
         "cluster.remote.",
         "transport.ping_schedule",
         key -> timeSetting(key, TransportSettings.PING_SCHEDULE, Setting.Property.Dynamic, Setting.Property.NodeScope),
-        () -> SniffConnectionStrategy.REMOTE_CLUSTER_SEEDS);
+        () -> SniffConnectionStrategy.REMOTE_CLUSTER_SEEDS
+    );
 
     public static final Setting.AffixSetting<Boolean> REMOTE_CLUSTER_COMPRESS = Setting.affixKeySetting(
         "cluster.remote.",
         "transport.compress",
         key -> boolSetting(key, TransportSettings.TRANSPORT_COMPRESS, Setting.Property.Dynamic, Setting.Property.NodeScope),
-        () -> SniffConnectionStrategy.REMOTE_CLUSTER_SEEDS);
+        () -> SniffConnectionStrategy.REMOTE_CLUSTER_SEEDS
+    );
 
     private final TransportService transportService;
     private final Map<String, RemoteClusterConnection> remoteClusters = ConcurrentCollections.newConcurrentMap();
@@ -138,14 +138,13 @@ public final class RemoteClusterService extends RemoteClusterAware implements Cl
         if (isCrossClusterSearchEnabled()) {
             final Map<String, List<String>> groupedIndices = groupClusterIndices(getRemoteClusterNames(), indices);
             if (groupedIndices.isEmpty()) {
-                //search on _all in the local cluster if neither local indices nor remote indices were specified
+                // search on _all in the local cluster if neither local indices nor remote indices were specified
                 originalIndicesMap.put(LOCAL_CLUSTER_GROUP_KEY, new OriginalIndices(Strings.EMPTY_ARRAY, indicesOptions));
             } else {
                 for (Map.Entry<String, List<String>> entry : groupedIndices.entrySet()) {
                     String clusterAlias = entry.getKey();
                     List<String> originalIndices = entry.getValue();
-                    originalIndicesMap.put(clusterAlias,
-                        new OriginalIndices(originalIndices.toArray(new String[0]), indicesOptions));
+                    originalIndicesMap.put(clusterAlias, new OriginalIndices(originalIndices.toArray(new String[0]), indicesOptions));
                 }
             }
         } else {
@@ -354,8 +353,7 @@ public final class RemoteClusterService extends RemoteClusterAware implements Cl
                         clusterMap.put(cluster, nodeLookup);
                     }
                     if (countDown.countDown()) {
-                        listener.onResponse((clusterAlias, nodeId)
-                            -> clusterMap.getOrDefault(clusterAlias, nullFunction).apply(nodeId));
+                        listener.onResponse((clusterAlias, nodeId) -> clusterMap.getOrDefault(clusterAlias, nullFunction).apply(nodeId));
                     }
                 }
 

@@ -44,7 +44,7 @@ public class SearchContextMissingException extends ElasticsearchException {
         return RestStatus.NOT_FOUND;
     }
 
-    public SearchContextMissingException(StreamInput in) throws IOException{
+    public SearchContextMissingException(StreamInput in) throws IOException {
         super(in);
         id = in.readLong();
     }

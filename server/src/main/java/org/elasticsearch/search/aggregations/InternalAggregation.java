@@ -229,12 +229,14 @@ public abstract class InternalAggregation implements Aggregation, NamedWriteable
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        if (obj == this) { return true; }
+        if (obj == this) {
+            return true;
+        }
 
         InternalAggregation other = (InternalAggregation) obj;
-        return Objects.equals(name, other.name) &&
-                Objects.equals(pipelineAggregators, other.pipelineAggregators) &&
-                Objects.equals(metaData, other.metaData);
+        return Objects.equals(name, other.name)
+            && Objects.equals(pipelineAggregators, other.pipelineAggregators)
+            && Objects.equals(metaData, other.metaData);
     }
 
     @Override

@@ -61,13 +61,16 @@ public class ExistsQueryBuilderTests extends AbstractQueryTestCase<ExistsQueryBu
     protected void doAssertLuceneQuery(ExistsQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
         String fieldPattern = queryBuilder.fieldName();
         Collection<String> fields = context.simpleMatchToIndexNames(fieldPattern);
-        Collection<String> mappedFields = fields.stream().filter((field) -> context.getObjectMapper(field) != null
-                || context.getMapperService().fullName(field) != null).collect(Collectors.toList());
+        Collection<String> mappedFields = fields.stream()
+            .filter((field) -> context.getObjectMapper(field) != null || context.getMapperService().fullName(field) != null)
+            .collect(Collectors.toList());
         if (fields.size() == 1 && mappedFields.size() == 0) {
             assertThat(query, instanceOf(MatchNoDocsQuery.class));
             MatchNoDocsQuery matchNoDocsQuery = (MatchNoDocsQuery) query;
-            assertThat(matchNoDocsQuery.toString(null),
-                    containsString("No field \"" + fields.iterator().next() + "\" exists in mappings."));
+            assertThat(
+                matchNoDocsQuery.toString(null),
+                containsString("No field \"" + fields.iterator().next() + "\" exists in mappings.")
+            );
         } else if (fields.size() == 1) {
             assertThat(query, instanceOf(ConstantScoreQuery.class));
             ConstantScoreQuery constantScoreQuery = (ConstantScoreQuery) query;
@@ -114,13 +117,7 @@ public class ExistsQueryBuilderTests extends AbstractQueryTestCase<ExistsQueryBu
     }
 
     public void testFromJson() throws IOException {
-        String json =
-                "{\n" +
-                "  \"exists\" : {\n" +
-                "    \"field\" : \"user\",\n" +
-                "    \"boost\" : 42.0\n" +
-                "  }\n" +
-                "}";
+        String json = "{\n" + "  \"exists\" : {\n" + "    \"field\" : \"user\",\n" + "    \"boost\" : 42.0\n" + "  }\n" + "}";
 
         ExistsQueryBuilder parsed = (ExistsQueryBuilder) parseQuery(json);
         checkGeneratedJson(json, parsed);

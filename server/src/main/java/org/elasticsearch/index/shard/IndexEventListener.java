@@ -81,8 +81,12 @@ public interface IndexEventListener {
      * @param currentState the new shard state
      * @param reason the reason for the state change if there is one, null otherwise
      */
-    default void indexShardStateChanged(IndexShard indexShard, @Nullable IndexShardState previousState,
-                                            IndexShardState currentState, @Nullable String reason) {}
+    default void indexShardStateChanged(
+        IndexShard indexShard,
+        @Nullable IndexShardState previousState,
+        IndexShardState currentState,
+        @Nullable String reason
+    ) {}
 
     /**
      * Called before the index gets created. Note that this is also called
@@ -122,8 +126,7 @@ public interface IndexEventListener {
     /**
      * Called before the index shard gets created.
      */
-    default void beforeIndexShardCreated(ShardId shardId, Settings indexSettings) {
-    }
+    default void beforeIndexShardCreated(ShardId shardId, Settings indexSettings) {}
 
     /**
      * Called before the index shard gets deleted from disk
@@ -132,8 +135,7 @@ public interface IndexEventListener {
      * @param shardId The shard id
      * @param indexSettings the shards index settings
      */
-    default void beforeIndexShardDeleted(ShardId shardId, Settings indexSettings) {
-    }
+    default void beforeIndexShardDeleted(ShardId shardId, Settings indexSettings) {}
 
     /**
      * Called after the index shard has been deleted from disk.
@@ -143,15 +145,13 @@ public interface IndexEventListener {
      * @param shardId The shard id
      * @param indexSettings the shards index settings
      */
-    default void afterIndexShardDeleted(ShardId shardId, Settings indexSettings) {
-    }
+    default void afterIndexShardDeleted(ShardId shardId, Settings indexSettings) {}
 
     /**
      * Called on the Master node only before the {@link IndexService} instances is created to simulate an index creation.
      * This happens right before the index and it's metadata is registered in the cluster state
      */
-    default void beforeIndexAddedToCluster(Index index, Settings indexSettings) {
-    }
+    default void beforeIndexAddedToCluster(Index index, Settings indexSettings) {}
 
     /**
      * Called when the given shards store is created. The shard store is created before the shard is created.

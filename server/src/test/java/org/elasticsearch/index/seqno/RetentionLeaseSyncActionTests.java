@@ -60,12 +60,13 @@ public class RetentionLeaseSyncActionTests extends ESTestCase {
         transport = new CapturingTransport();
         clusterService = createClusterService(threadPool);
         transportService = transport.createTransportService(
-                clusterService.getSettings(),
-                threadPool,
-                TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                boundAddress -> clusterService.localNode(),
-                null,
-                Collections.emptySet());
+            clusterService.getSettings(),
+            threadPool,
+            TransportService.NOOP_TRANSPORT_INTERCEPTOR,
+            boundAddress -> clusterService.localNode(),
+            null,
+            Collections.emptySet()
+        );
         transportService.start();
         transportService.acceptIncomingRequests();
         shardStateAction = new ShardStateAction(clusterService, transportService, null, null, threadPool);
@@ -95,17 +96,21 @@ public class RetentionLeaseSyncActionTests extends ESTestCase {
         when(indexShard.shardId()).thenReturn(shardId);
 
         final RetentionLeaseSyncAction action = new RetentionLeaseSyncAction(
-                Settings.EMPTY,
-                transportService,
-                clusterService,
-                indicesService,
-                threadPool,
-                shardStateAction,
-                new ActionFilters(Collections.emptySet()));
+            Settings.EMPTY,
+            transportService,
+            clusterService,
+            indicesService,
+            threadPool,
+            shardStateAction,
+            new ActionFilters(Collections.emptySet())
+        );
         final RetentionLeases retentionLeases = mock(RetentionLeases.class);
         final RetentionLeaseSyncAction.Request request = new RetentionLeaseSyncAction.Request(indexShard.shardId(), retentionLeases);
-        action.shardOperationOnPrimary(request, indexShard,
-            ActionTestUtils.assertNoFailureListener(result -> {
+        action.shardOperationOnPrimary(
+            request,
+            indexShard,
+            ActionTestUtils.assertNoFailureListener(
+                result -> {
                     // the retention leases on the shard should be persisted
                     verify(indexShard).persistRetentionLeases();
                     // we should forward the request containing the current retention leases to the replica
@@ -113,7 +118,8 @@ public class RetentionLeaseSyncActionTests extends ESTestCase {
                     // we should start with an empty replication response
                     assertNull(result.finalResponseIfSuccessful.getShardInfo());
                 }
-            ));
+            )
+        );
     }
 
     public void testRetentionLeaseSyncActionOnReplica() throws WriteStateException {
@@ -131,18 +137,21 @@ public class RetentionLeaseSyncActionTests extends ESTestCase {
         when(indexShard.shardId()).thenReturn(shardId);
 
         final RetentionLeaseSyncAction action = new RetentionLeaseSyncAction(
-                Settings.EMPTY,
-                transportService,
-                clusterService,
-                indicesService,
-                threadPool,
-                shardStateAction,
-                new ActionFilters(Collections.emptySet()));
+            Settings.EMPTY,
+            transportService,
+            clusterService,
+            indicesService,
+            threadPool,
+            shardStateAction,
+            new ActionFilters(Collections.emptySet())
+        );
         final RetentionLeases retentionLeases = mock(RetentionLeases.class);
         final RetentionLeaseSyncAction.Request request = new RetentionLeaseSyncAction.Request(indexShard.shardId(), retentionLeases);
 
-        final TransportWriteAction.WriteReplicaResult<RetentionLeaseSyncAction.Request> result =
-                action.shardOperationOnReplica(request, indexShard);
+        final TransportWriteAction.WriteReplicaResult<RetentionLeaseSyncAction.Request> result = action.shardOperationOnReplica(
+            request,
+            indexShard
+        );
         // the retention leases on the shard should be updated
         verify(indexShard).updateRetentionLeasesOnReplica(retentionLeases);
         // the retention leases on the shard should be persisted
@@ -168,13 +177,14 @@ public class RetentionLeaseSyncActionTests extends ESTestCase {
         when(indexShard.shardId()).thenReturn(shardId);
 
         final RetentionLeaseSyncAction action = new RetentionLeaseSyncAction(
-                Settings.EMPTY,
-                transportService,
-                clusterService,
-                indicesService,
-                threadPool,
-                shardStateAction,
-                new ActionFilters(Collections.emptySet()));
+            Settings.EMPTY,
+            transportService,
+            clusterService,
+            indicesService,
+            threadPool,
+            shardStateAction,
+            new ActionFilters(Collections.emptySet())
+        );
 
         assertNull(action.indexBlockLevel());
     }

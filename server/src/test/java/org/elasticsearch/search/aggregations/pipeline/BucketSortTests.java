@@ -19,8 +19,6 @@
 package org.elasticsearch.search.aggregations.pipeline;
 
 import org.elasticsearch.search.aggregations.BasePipelineAggregationTestCase;
-import org.elasticsearch.search.aggregations.pipeline.BucketHelpers;
-import org.elasticsearch.search.aggregations.pipeline.BucketSortPipelineAggregationBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -63,26 +61,34 @@ public class BucketSortTests extends BasePipelineAggregationTestCase<BucketSortP
     }
 
     public void testNegativeFrom() {
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> new BucketSortPipelineAggregationBuilder("foo", Collections.emptyList()).from(-1));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> new BucketSortPipelineAggregationBuilder("foo", Collections.emptyList()).from(-1)
+        );
         assertThat(e.getMessage(), equalTo("[from] must be a non-negative integer: [-1]"));
     }
 
     public void testNegativeSize() {
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> new BucketSortPipelineAggregationBuilder("foo", Collections.emptyList()).size(-1));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> new BucketSortPipelineAggregationBuilder("foo", Collections.emptyList()).size(-1)
+        );
         assertThat(e.getMessage(), equalTo("[size] must be a positive integer: [-1]"));
     }
 
     public void testZeroSize() {
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> new BucketSortPipelineAggregationBuilder("foo", Collections.emptyList()).size(0));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> new BucketSortPipelineAggregationBuilder("foo", Collections.emptyList()).size(0)
+        );
         assertThat(e.getMessage(), equalTo("[size] must be a positive integer: [0]"));
     }
 
     public void testNullGapPolicy() {
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> new BucketSortPipelineAggregationBuilder("foo", Collections.emptyList()).gapPolicy(null));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> new BucketSortPipelineAggregationBuilder("foo", Collections.emptyList()).gapPolicy(null)
+        );
         assertThat(e.getMessage(), equalTo("[gap_policy] must not be null: [foo]"));
     }
 }

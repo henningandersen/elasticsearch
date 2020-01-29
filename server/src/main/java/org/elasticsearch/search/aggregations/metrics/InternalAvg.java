@@ -34,8 +34,14 @@ public class InternalAvg extends InternalNumericMetricsAggregation.SingleValue i
     private final double sum;
     private final long count;
 
-    public InternalAvg(String name, double sum, long count, DocValueFormat format, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    public InternalAvg(
+        String name,
+        double sum,
+        long count,
+        DocValueFormat format,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.sum = sum;
         this.count = count;
@@ -120,8 +126,8 @@ public class InternalAvg extends InternalNumericMetricsAggregation.SingleValue i
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         InternalAvg other = (InternalAvg) obj;
-        return Objects.equals(sum, other.sum) &&
-                Objects.equals(count, other.count) &&
-                Objects.equals(format.getWriteableName(), other.format.getWriteableName());
+        return Objects.equals(sum, other.sum)
+            && Objects.equals(count, other.count)
+            && Objects.equals(format.getWriteableName(), other.format.getWriteableName());
     }
 }

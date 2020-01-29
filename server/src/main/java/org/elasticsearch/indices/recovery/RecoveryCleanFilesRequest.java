@@ -37,8 +37,13 @@ public class RecoveryCleanFilesRequest extends TransportRequest {
     private final int totalTranslogOps;
     private final long globalCheckpoint;
 
-    RecoveryCleanFilesRequest(long recoveryId, ShardId shardId, Store.MetadataSnapshot snapshotFiles,
-                              int totalTranslogOps, long globalCheckpoint) {
+    RecoveryCleanFilesRequest(
+        long recoveryId,
+        ShardId shardId,
+        Store.MetadataSnapshot snapshotFiles,
+        int totalTranslogOps,
+        long globalCheckpoint
+    ) {
         this.recoveryId = recoveryId;
         this.shardId = shardId;
         this.snapshotFiles = snapshotFiles;

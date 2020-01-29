@@ -288,8 +288,12 @@ public class DateRangeAggregationBuilder extends AbstractRangeBuilder<DateRangeA
     }
 
     @Override
-    protected DateRangeAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<Numeric> config,
-                                                    AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected DateRangeAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<Numeric> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         // We need to call processRanges here so they are parsed and we know whether `now` has been used before we make
         // the decision of whether to cache the request
         RangeAggregator.Range[] ranges = processRanges(range -> {
@@ -316,7 +320,16 @@ public class DateRangeAggregationBuilder extends AbstractRangeBuilder<DateRangeA
         if (ranges.length == 0) {
             throw new IllegalArgumentException("No [ranges] specified for the [" + this.getName() + "] aggregation");
         }
-        return new DateRangeAggregatorFactory(name, config, ranges, keyed, rangeFactory, queryShardContext, parent, subFactoriesBuilder,
-                metaData);
+        return new DateRangeAggregatorFactory(
+            name,
+            config,
+            ranges,
+            keyed,
+            rangeFactory,
+            queryShardContext,
+            parent,
+            subFactoriesBuilder,
+            metaData
+        );
     }
 }

@@ -53,7 +53,6 @@ public interface ExtendedStats extends Stats {
      */
     String getStdDeviationBoundAsString(Bounds bound);
 
-
     /**
      * The sum of the squares of the collected values as a String.
      */
@@ -64,9 +63,9 @@ public interface ExtendedStats extends Stats {
      */
     String getVarianceAsString();
 
-
     enum Bounds {
-        UPPER, LOWER
+        UPPER,
+        LOWER
     }
 
 }

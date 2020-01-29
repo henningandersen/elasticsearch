@@ -66,33 +66,55 @@ public class InternalGeoDistance extends InternalRange<InternalGeoDistance.Bucke
         }
 
         @Override
-        public InternalGeoDistance create(String name, List<Bucket> ranges, DocValueFormat format, boolean keyed,
-                List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+        public InternalGeoDistance create(
+            String name,
+            List<Bucket> ranges,
+            DocValueFormat format,
+            boolean keyed,
+            List<PipelineAggregator> pipelineAggregators,
+            Map<String, Object> metaData
+        ) {
             return new InternalGeoDistance(name, ranges, keyed, pipelineAggregators, metaData);
         }
 
         @Override
         public InternalGeoDistance create(List<Bucket> ranges, InternalGeoDistance prototype) {
-            return new InternalGeoDistance(prototype.name, ranges, prototype.keyed, prototype.pipelineAggregators(),
-                    prototype.metaData);
+            return new InternalGeoDistance(prototype.name, ranges, prototype.keyed, prototype.pipelineAggregators(), prototype.metaData);
         }
 
         @Override
-        public Bucket createBucket(String key, double from, double to, long docCount, InternalAggregations aggregations, boolean keyed,
-                DocValueFormat format) {
+        public Bucket createBucket(
+            String key,
+            double from,
+            double to,
+            long docCount,
+            InternalAggregations aggregations,
+            boolean keyed,
+            DocValueFormat format
+        ) {
             return new Bucket(key, from, to, docCount, aggregations, keyed);
         }
 
         @Override
         public Bucket createBucket(InternalAggregations aggregations, Bucket prototype) {
-            return new Bucket(prototype.getKey(), ((Number) prototype.getFrom()).doubleValue(), ((Number) prototype.getTo()).doubleValue(),
-                    prototype.getDocCount(), aggregations, prototype.getKeyed());
+            return new Bucket(
+                prototype.getKey(),
+                ((Number) prototype.getFrom()).doubleValue(),
+                ((Number) prototype.getTo()).doubleValue(),
+                prototype.getDocCount(),
+                aggregations,
+                prototype.getKeyed()
+            );
         }
     }
 
-    public InternalGeoDistance(String name, List<Bucket> ranges, boolean keyed,
-            List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    public InternalGeoDistance(
+        String name,
+        List<Bucket> ranges,
+        boolean keyed,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, ranges, DocValueFormat.RAW, keyed, pipelineAggregators, metaData);
     }
 

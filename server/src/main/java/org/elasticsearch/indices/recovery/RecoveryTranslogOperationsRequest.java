@@ -42,14 +42,15 @@ public class RecoveryTranslogOperationsRequest extends TransportRequest {
     private final long mappingVersionOnPrimary;
 
     RecoveryTranslogOperationsRequest(
-            final long recoveryId,
-            final ShardId shardId,
-            final List<Translog.Operation> operations,
-            final int totalTranslogOps,
-            final long maxSeenAutoIdTimestampOnPrimary,
-            final long maxSeqNoOfUpdatesOrDeletesOnPrimary,
-            final RetentionLeases retentionLeases,
-            final long mappingVersionOnPrimary) {
+        final long recoveryId,
+        final ShardId shardId,
+        final List<Translog.Operation> operations,
+        final int totalTranslogOps,
+        final long maxSeenAutoIdTimestampOnPrimary,
+        final long maxSeqNoOfUpdatesOrDeletesOnPrimary,
+        final RetentionLeases retentionLeases,
+        final long mappingVersionOnPrimary
+    ) {
         this.recoveryId = recoveryId;
         this.shardId = shardId;
         this.operations = operations;
@@ -127,5 +128,5 @@ public class RecoveryTranslogOperationsRequest extends TransportRequest {
             out.writeVLong(mappingVersionOnPrimary);
         }
     }
-    
-    }
+
+}

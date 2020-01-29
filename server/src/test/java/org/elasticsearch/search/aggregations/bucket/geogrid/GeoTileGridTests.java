@@ -28,8 +28,13 @@ import java.util.Map;
 public class GeoTileGridTests extends GeoGridTestCase<InternalGeoTileGridBucket, InternalGeoTileGrid> {
 
     @Override
-    protected InternalGeoTileGrid createInternalGeoGrid(String name, int size, List<InternalGeoGridBucket> buckets,
-                                                        List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    protected InternalGeoTileGrid createInternalGeoGrid(
+        String name,
+        int size,
+        List<InternalGeoGridBucket> buckets,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         return new InternalGeoTileGrid(name, size, buckets, pipelineAggregators, metaData);
     }
 

@@ -68,8 +68,14 @@ public final class RepositoryData {
     /**
      * An instance initialized for an empty repository.
      */
-    public static final RepositoryData EMPTY = new RepositoryData(EMPTY_REPO_GEN,
-        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), ShardGenerations.EMPTY);
+    public static final RepositoryData EMPTY = new RepositoryData(
+        EMPTY_REPO_GEN,
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        ShardGenerations.EMPTY
+    );
 
     /**
      * The generational id of the index file from which the repository data was read.
@@ -99,19 +105,27 @@ public final class RepositoryData {
      */
     private final ShardGenerations shardGenerations;
 
-    public RepositoryData(long genId, Map<String, SnapshotId> snapshotIds, Map<String, SnapshotState> snapshotStates,
-                          Map<String, Version> snapshotVersions, Map<IndexId, Set<SnapshotId>> indexSnapshots,
-                          ShardGenerations shardGenerations) {
+    public RepositoryData(
+        long genId,
+        Map<String, SnapshotId> snapshotIds,
+        Map<String, SnapshotState> snapshotStates,
+        Map<String, Version> snapshotVersions,
+        Map<IndexId, Set<SnapshotId>> indexSnapshots,
+        ShardGenerations shardGenerations
+    ) {
         this.genId = genId;
         this.snapshotIds = Collections.unmodifiableMap(snapshotIds);
         this.snapshotStates = Collections.unmodifiableMap(snapshotStates);
-        this.indices = Collections.unmodifiableMap(indexSnapshots.keySet().stream()
-            .collect(Collectors.toMap(IndexId::getName, Function.identity())));
+        this.indices = Collections.unmodifiableMap(
+            indexSnapshots.keySet().stream().collect(Collectors.toMap(IndexId::getName, Function.identity()))
+        );
         this.indexSnapshots = Collections.unmodifiableMap(indexSnapshots);
         this.shardGenerations = Objects.requireNonNull(shardGenerations);
         this.snapshotVersions = snapshotVersions;
         assert indices.values().containsAll(shardGenerations.indices()) : "ShardGenerations contained indices "
-            + shardGenerations.indices() + " but snapshots only reference indices " + indices.values();
+            + shardGenerations.indices()
+            + " but snapshots only reference indices "
+            + indices.values();
     }
 
     protected RepositoryData copy() {
@@ -182,7 +196,8 @@ public final class RepositoryData {
      * @return List of indices that are changed but not removed
      */
     public List<IndexId> indicesToUpdateAfterRemovingSnapshot(SnapshotId snapshotId) {
-        return indexSnapshots.entrySet().stream()
+        return indexSnapshots.entrySet()
+            .stream()
             .filter(entry -> entry.getValue().size() > 1 && entry.getValue().contains(snapshotId))
             .map(Map.Entry::getKey)
             .collect(Collectors.toList());
@@ -197,10 +212,12 @@ public final class RepositoryData {
      * @param shardGenerations Updated shard generations in the new snapshot. For each index contained in the snapshot an array of new
      *                         generations indexed by the shard id they correspond to must be supplied.
      */
-    public RepositoryData addSnapshot(final SnapshotId snapshotId,
-                                      final SnapshotState snapshotState,
-                                      final Version version,
-                                      final ShardGenerations shardGenerations) {
+    public RepositoryData addSnapshot(
+        final SnapshotId snapshotId,
+        final SnapshotState snapshotState,
+        final Version version,
+        final ShardGenerations shardGenerations
+    ) {
         if (snapshotIds.containsKey(snapshotId.getUUID())) {
             // if the snapshot id already exists in the repository data, it means an old master
             // that is blocked from the cluster is trying to finalize a snapshot concurrently with
@@ -217,8 +234,14 @@ public final class RepositoryData {
         for (final IndexId indexId : shardGenerations.indices()) {
             allIndexSnapshots.computeIfAbsent(indexId, k -> new LinkedHashSet<>()).add(snapshotId);
         }
-        return new RepositoryData(genId, snapshots, newSnapshotStates, newSnapshotVersions, allIndexSnapshots,
-            ShardGenerations.builder().putAll(this.shardGenerations).putAll(shardGenerations).build());
+        return new RepositoryData(
+            genId,
+            snapshots,
+            newSnapshotStates,
+            newSnapshotVersions,
+            allIndexSnapshots,
+            ShardGenerations.builder().putAll(this.shardGenerations).putAll(shardGenerations).build()
+        );
     }
 
     /**
@@ -243,7 +266,8 @@ public final class RepositoryData {
      *                                changed shard indexed by its shardId
      */
     public RepositoryData removeSnapshot(final SnapshotId snapshotId, final ShardGenerations updatedShardGenerations) {
-        Map<String, SnapshotId> newSnapshotIds = snapshotIds.values().stream()
+        Map<String, SnapshotId> newSnapshotIds = snapshotIds.values()
+            .stream()
             .filter(id -> !snapshotId.equals(id))
             .collect(Collectors.toMap(SnapshotId::getUUID, Function.identity()));
         if (newSnapshotIds.size() == snapshotIds.size()) {
@@ -272,9 +296,17 @@ public final class RepositoryData {
             indexSnapshots.put(indexId, set);
         }
 
-        return new RepositoryData(genId, newSnapshotIds, newSnapshotStates, newSnapshotVersions, indexSnapshots,
-            ShardGenerations.builder().putAll(shardGenerations).putAll(updatedShardGenerations)
-                .retainIndicesAndPruneDeletes(indexSnapshots.keySet()).build()
+        return new RepositoryData(
+            genId,
+            newSnapshotIds,
+            newSnapshotStates,
+            newSnapshotVersions,
+            indexSnapshots,
+            ShardGenerations.builder()
+                .putAll(shardGenerations)
+                .putAll(updatedShardGenerations)
+                .retainIndicesAndPruneDeletes(indexSnapshots.keySet())
+                .build()
         );
     }
 
@@ -299,11 +331,11 @@ public final class RepositoryData {
         }
         RepositoryData that = (RepositoryData) obj;
         return snapshotIds.equals(that.snapshotIds)
-                   && snapshotStates.equals(that.snapshotStates)
-                   && snapshotVersions.equals(that.snapshotVersions)
-                   && indices.equals(that.indices)
-                   && indexSnapshots.equals(that.indexSnapshots)
-                   && shardGenerations.equals(that.shardGenerations);
+            && snapshotStates.equals(that.snapshotStates)
+            && snapshotVersions.equals(that.snapshotVersions)
+            && indices.equals(that.indices)
+            && indexSnapshots.equals(that.indexSnapshots)
+            && shardGenerations.equals(that.shardGenerations);
     }
 
     @Override
@@ -499,13 +531,21 @@ public final class RepositoryData {
                                         // A snapshotted index references a snapshot which does not exist in
                                         // the list of snapshots. This can happen when multiple clusters in
                                         // different versions create or delete snapshot in the same repository.
-                                        throw new ElasticsearchParseException("Detected a corrupted repository, index " + indexId
-                                            + " references an unknown snapshot uuid [" + uuid + "]");
+                                        throw new ElasticsearchParseException(
+                                            "Detected a corrupted repository, index "
+                                                + indexId
+                                                + " references an unknown snapshot uuid ["
+                                                + uuid
+                                                + "]"
+                                        );
                                     }
                                 }
                             } else if (SHARD_GENERATIONS.equals(indexMetaFieldName)) {
                                 XContentParserUtils.ensureExpectedToken(
-                                    XContentParser.Token.START_ARRAY, parser.currentToken(), parser::getTokenLocation);
+                                    XContentParser.Token.START_ARRAY,
+                                    parser.currentToken(),
+                                    parser::getTokenLocation
+                                );
                                 while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
                                     gens.add(parser.textOrNull());
                                 }

@@ -41,11 +41,10 @@ import java.util.Objects;
  * A limitation of this class is that all the ValuesSource's being refereenced must be of the same type.
  */
 public abstract class MultiValuesSourceAggregationBuilder<VS extends ValuesSource, AB extends MultiValuesSourceAggregationBuilder<VS, AB>>
-        extends AbstractAggregationBuilder<AB> {
+    extends AbstractAggregationBuilder<AB> {
 
-
-    public abstract static class LeafOnly<VS extends ValuesSource, AB extends MultiValuesSourceAggregationBuilder<VS, AB>>
-            extends MultiValuesSourceAggregationBuilder<VS, AB> {
+    public abstract static class LeafOnly<VS extends ValuesSource, AB extends MultiValuesSourceAggregationBuilder<VS, AB>> extends
+        MultiValuesSourceAggregationBuilder<VS, AB> {
 
         protected LeafOnly(String name, ValueType targetValueType) {
             super(name, targetValueType);
@@ -54,8 +53,9 @@ public abstract class MultiValuesSourceAggregationBuilder<VS extends ValuesSourc
         protected LeafOnly(LeafOnly<VS, AB> clone, Builder factoriesBuilder, Map<String, Object> metaData) {
             super(clone, factoriesBuilder, metaData);
             if (factoriesBuilder.count() > 0) {
-                throw new AggregationInitializationException("Aggregator [" + name + "] of type ["
-                    + getType() + "] cannot accept sub-aggregations");
+                throw new AggregationInitializationException(
+                    "Aggregator [" + name + "] of type [" + getType() + "] cannot accept sub-aggregations"
+                );
             }
         }
 
@@ -68,12 +68,11 @@ public abstract class MultiValuesSourceAggregationBuilder<VS extends ValuesSourc
 
         @Override
         public AB subAggregations(Builder subFactories) {
-            throw new AggregationInitializationException("Aggregator [" + name + "] of type [" +
-                getType() + "] cannot accept sub-aggregations");
+            throw new AggregationInitializationException(
+                "Aggregator [" + name + "] of type [" + getType() + "] cannot accept sub-aggregations"
+            );
         }
     }
-
-
 
     private Map<String, MultiValuesSourceFieldConfig> fields = new HashMap<>();
     private final ValueType targetValueType;
@@ -85,8 +84,11 @@ public abstract class MultiValuesSourceAggregationBuilder<VS extends ValuesSourc
         this.targetValueType = targetValueType;
     }
 
-    protected MultiValuesSourceAggregationBuilder(MultiValuesSourceAggregationBuilder<VS, AB> clone,
-                                                  Builder factoriesBuilder, Map<String, Object> metaData) {
+    protected MultiValuesSourceAggregationBuilder(
+        MultiValuesSourceAggregationBuilder<VS, AB> clone,
+        Builder factoriesBuilder,
+        Map<String, Object> metaData
+    ) {
         super(clone, factoriesBuilder, metaData);
 
         this.fields = new HashMap<>(clone.fields);
@@ -95,8 +97,7 @@ public abstract class MultiValuesSourceAggregationBuilder<VS extends ValuesSourc
         this.format = clone.format;
     }
 
-    protected MultiValuesSourceAggregationBuilder(StreamInput in, ValueType targetValueType)
-        throws IOException {
+    protected MultiValuesSourceAggregationBuilder(StreamInput in, ValueType targetValueType) throws IOException {
         super(in);
         assert false == serializeTargetValueType() : "Wrong read constructor called for subclass that provides its targetValueType";
         this.targetValueType = targetValueType;
@@ -163,20 +164,29 @@ public abstract class MultiValuesSourceAggregationBuilder<VS extends ValuesSourc
     }
 
     @Override
-    protected final MultiValuesSourceAggregatorFactory<VS> doBuild(QueryShardContext queryShardContext, AggregatorFactory parent,
-                                                                   Builder subFactoriesBuilder) throws IOException {
+    protected final MultiValuesSourceAggregatorFactory<VS> doBuild(
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         ValueType finalValueType = this.valueType != null ? this.valueType : targetValueType;
 
         Map<String, ValuesSourceConfig<VS>> configs = new HashMap<>(fields.size());
         fields.forEach((key, value) -> {
-            ValuesSourceConfig<VS> config = ValuesSourceConfig.resolve(queryShardContext, finalValueType,
-                value.getFieldName(), value.getScript(), value.getMissing(), value.getTimeZone(), format);
+            ValuesSourceConfig<VS> config = ValuesSourceConfig.resolve(
+                queryShardContext,
+                finalValueType,
+                value.getFieldName(),
+                value.getScript(),
+                value.getMissing(),
+                value.getTimeZone(),
+                format
+            );
             configs.put(key, config);
         });
         DocValueFormat docValueFormat = resolveFormat(format, finalValueType);
         return innerBuild(queryShardContext, configs, docValueFormat, parent, subFactoriesBuilder);
     }
-
 
     private static DocValueFormat resolveFormat(@Nullable String format, @Nullable ValueType valueType) {
         if (valueType == null) {
@@ -189,11 +199,13 @@ public abstract class MultiValuesSourceAggregationBuilder<VS extends ValuesSourc
         return valueFormat;
     }
 
-    protected abstract MultiValuesSourceAggregatorFactory<VS> innerBuild(QueryShardContext queryShardContext,
-                                                                         Map<String, ValuesSourceConfig<VS>> configs,
-                                                                         DocValueFormat format, AggregatorFactory parent,
-                                                                         Builder subFactoriesBuilder) throws IOException;
-
+    protected abstract MultiValuesSourceAggregatorFactory<VS> innerBuild(
+        QueryShardContext queryShardContext,
+        Map<String, ValuesSourceConfig<VS>> configs,
+        DocValueFormat format,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException;
 
     /**
      * Should this builder serialize its targetValueType? Defaults to false. All subclasses that override this to true
@@ -228,7 +240,6 @@ public abstract class MultiValuesSourceAggregationBuilder<VS extends ValuesSourc
     public int hashCode() {
         return Objects.hash(super.hashCode(), fields, format, targetValueType, valueType);
     }
-
 
     @Override
     public boolean equals(Object obj) {

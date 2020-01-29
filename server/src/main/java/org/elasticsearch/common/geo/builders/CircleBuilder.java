@@ -165,7 +165,7 @@ public class CircleBuilder extends ShapeBuilder<Circle, org.elasticsearch.geomet
 
     @Override
     public org.elasticsearch.geometry.Circle buildGeometry() {
-       return new org.elasticsearch.geometry.Circle(center.x, center.y, unit.toMeters(radius));
+        return new org.elasticsearch.geometry.Circle(center.x, center.y, unit.toMeters(radius));
     }
 
     @Override
@@ -196,8 +196,8 @@ public class CircleBuilder extends ShapeBuilder<Circle, org.elasticsearch.geomet
             return false;
         }
         CircleBuilder other = (CircleBuilder) obj;
-        return Objects.equals(center, other.center) &&
-                Objects.equals(radius, other.radius) &&
-                Objects.equals(unit.ordinal(), other.unit.ordinal());
+        return Objects.equals(center, other.center)
+            && Objects.equals(radius, other.radius)
+            && Objects.equals(unit.ordinal(), other.unit.ordinal());
     }
 }

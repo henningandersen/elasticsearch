@@ -72,23 +72,39 @@ public class IndexStorePluginTests extends ESTestCase {
     public void testIndexStoreFactoryConflictsWithBuiltInIndexStoreType() {
         final Settings settings = Settings.builder().put("path.home", createTempDir()).build();
         final IllegalStateException e = expectThrows(
-                IllegalStateException.class, () -> new MockNode(settings, Collections.singletonList(ConflictingStorePlugin.class)));
-        assertThat(e, hasToString(containsString(
-                "registered index store type [" + ConflictingStorePlugin.TYPE + "] conflicts with a built-in type")));
+            IllegalStateException.class,
+            () -> new MockNode(settings, Collections.singletonList(ConflictingStorePlugin.class))
+        );
+        assertThat(
+            e,
+            hasToString(containsString("registered index store type [" + ConflictingStorePlugin.TYPE + "] conflicts with a built-in type"))
+        );
     }
 
     public void testDuplicateIndexStoreFactories() {
         final Settings settings = Settings.builder().put("path.home", createTempDir()).build();
         final IllegalStateException e = expectThrows(
-                IllegalStateException.class, () -> new MockNode(settings, Arrays.asList(BarStorePlugin.class, FooStorePlugin.class)));
+            IllegalStateException.class,
+            () -> new MockNode(settings, Arrays.asList(BarStorePlugin.class, FooStorePlugin.class))
+        );
         if (JavaVersion.current().compareTo(JavaVersion.parse("9")) >= 0) {
-            assertThat(e, hasToString(matches(
-                    "java.lang.IllegalStateException: Duplicate key store \\(attempted merging values " +
-                            "org.elasticsearch.index.store.FsDirectoryFactory@[\\w\\d]+ " +
-                            "and org.elasticsearch.index.store.FsDirectoryFactory@[\\w\\d]+\\)")));
+            assertThat(
+                e,
+                hasToString(
+                    matches(
+                        "java.lang.IllegalStateException: Duplicate key store \\(attempted merging values "
+                            + "org.elasticsearch.index.store.FsDirectoryFactory@[\\w\\d]+ "
+                            + "and org.elasticsearch.index.store.FsDirectoryFactory@[\\w\\d]+\\)"
+                    )
+                )
+            );
         } else {
-            assertThat(e, hasToString(matches(
-                    "java.lang.IllegalStateException: Duplicate key org.elasticsearch.index.store.FsDirectoryFactory@[\\w\\d]+")));
+            assertThat(
+                e,
+                hasToString(
+                    matches("java.lang.IllegalStateException: Duplicate key org.elasticsearch.index.store.FsDirectoryFactory@[\\w\\d]+")
+                )
+            );
         }
     }
 

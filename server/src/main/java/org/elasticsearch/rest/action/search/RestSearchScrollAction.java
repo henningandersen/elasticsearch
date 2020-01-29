@@ -68,7 +68,8 @@ public class RestSearchScrollAction extends BaseRestHandler {
                 } catch (IOException e) {
                     throw new IllegalArgumentException("Failed to parse request body", e);
                 }
-            }});
+            }
+        });
         return channel -> client.searchScroll(searchScrollRequest, new RestStatusToXContentListener<>(channel));
     }
 

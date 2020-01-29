@@ -194,11 +194,7 @@ public class SearchAfterBuilderTests extends ESTestCase {
         for (XContentType type : XContentType.values()) {
             // BIG_INTEGER
             XContentBuilder xContent = XContentFactory.contentBuilder(type);
-            xContent.startObject()
-                .startArray("search_after")
-                .value(new BigInteger("9223372036854776000"))
-                .endArray()
-                .endObject();
+            xContent.startObject().startArray("search_after").value(new BigInteger("9223372036854776000")).endArray().endObject();
             try (XContentParser parser = createParser(xContent)) {
                 parser.nextToken();
                 parser.nextToken();
@@ -213,11 +209,7 @@ public class SearchAfterBuilderTests extends ESTestCase {
                 continue;
             }
             xContent = XContentFactory.contentBuilder(type);
-            xContent.startObject()
-                .startArray("search_after")
-                    .value(new BigDecimal("9223372036854776003.3"))
-                .endArray()
-                .endObject();
+            xContent.startObject().startArray("search_after").value(new BigDecimal("9223372036854776003.3")).endArray().endObject();
             try (XContentParser parser = createParser(xContent)) {
                 parser.nextToken();
                 parser.nextToken();

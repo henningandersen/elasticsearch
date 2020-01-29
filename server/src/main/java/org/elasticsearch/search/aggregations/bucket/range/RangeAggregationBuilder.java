@@ -146,8 +146,12 @@ public class RangeAggregationBuilder extends AbstractRangeBuilder<RangeAggregati
     }
 
     @Override
-    protected RangeAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<Numeric> config,
-                                                AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected RangeAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<Numeric> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         // We need to call processRanges here so they are parsed before we make the decision of whether to cache the request
         Range[] ranges = processRanges(range -> {
             DocValueFormat parser = config.format();
@@ -165,8 +169,17 @@ public class RangeAggregationBuilder extends AbstractRangeBuilder<RangeAggregati
         if (ranges.length == 0) {
             throw new IllegalArgumentException("No [ranges] specified for the [" + this.getName() + "] aggregation");
         }
-        return new RangeAggregatorFactory(name, config, ranges, keyed, rangeFactory, queryShardContext, parent, subFactoriesBuilder,
-                metaData);
+        return new RangeAggregatorFactory(
+            name,
+            config,
+            ranges,
+            keyed,
+            rangeFactory,
+            queryShardContext,
+            parent,
+            subFactoriesBuilder,
+            metaData
+        );
     }
 
     @Override

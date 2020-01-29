@@ -61,9 +61,9 @@ import java.util.Objects;
  * retention leases.
  */
 public class RetentionLeaseBackgroundSyncAction extends TransportReplicationAction<
-        RetentionLeaseBackgroundSyncAction.Request,
-        RetentionLeaseBackgroundSyncAction.Request,
-        ReplicationResponse> {
+    RetentionLeaseBackgroundSyncAction.Request,
+    RetentionLeaseBackgroundSyncAction.Request,
+    ReplicationResponse> {
 
     public static final String ACTION_NAME = "indices:admin/seq_no/retention_lease_background_sync";
     private static final Logger LOGGER = LogManager.getLogger(RetentionLeaseSyncAction.class);
@@ -74,25 +74,27 @@ public class RetentionLeaseBackgroundSyncAction extends TransportReplicationActi
 
     @Inject
     public RetentionLeaseBackgroundSyncAction(
-            final Settings settings,
-            final TransportService transportService,
-            final ClusterService clusterService,
-            final IndicesService indicesService,
-            final ThreadPool threadPool,
-            final ShardStateAction shardStateAction,
-            final ActionFilters actionFilters) {
+        final Settings settings,
+        final TransportService transportService,
+        final ClusterService clusterService,
+        final IndicesService indicesService,
+        final ThreadPool threadPool,
+        final ShardStateAction shardStateAction,
+        final ActionFilters actionFilters
+    ) {
         super(
-                settings,
-                ACTION_NAME,
-                transportService,
-                clusterService,
-                indicesService,
-                threadPool,
-                shardStateAction,
-                actionFilters,
-                Request::new,
-                Request::new,
-                ThreadPool.Names.MANAGEMENT);
+            settings,
+            ACTION_NAME,
+            transportService,
+            clusterService,
+            indicesService,
+            threadPool,
+            shardStateAction,
+            actionFilters,
+            Request::new,
+            Request::new,
+            ThreadPool.Names.MANAGEMENT
+        );
     }
 
     @Override
@@ -103,7 +105,9 @@ public class RetentionLeaseBackgroundSyncAction extends TransportReplicationActi
     final void backgroundSync(ShardId shardId, String primaryAllocationId, long primaryTerm, RetentionLeases retentionLeases) {
         final Request request = new Request(shardId, retentionLeases);
         final ReplicationTask task = (ReplicationTask) taskManager.register("transport", "retention_lease_background_sync", request);
-        transportService.sendChildRequest(clusterService.localNode(), transportPrimaryAction,
+        transportService.sendChildRequest(
+            clusterService.localNode(),
+            transportPrimaryAction,
             new ConcreteShardRequest<>(request, primaryAllocationId, primaryTerm),
             task,
             transportOptions,
@@ -138,13 +142,16 @@ public class RetentionLeaseBackgroundSyncAction extends TransportReplicationActi
                     }
                     getLogger().warn(new ParameterizedMessage("{} retention lease background sync failed", shardId), e);
                 }
-            });
+            }
+        );
     }
 
     @Override
     protected void shardOperationOnPrimary(
-            final Request request,
-            final IndexShard primary, ActionListener<PrimaryResult<Request, ReplicationResponse>> listener) {
+        final Request request,
+        final IndexShard primary,
+        ActionListener<PrimaryResult<Request, ReplicationResponse>> listener
+    ) {
         ActionListener.completeWith(listener, () -> {
             assert request.waitForActiveShards().equals(ActiveShardCount.NONE) : request.waitForActiveShards();
             Objects.requireNonNull(request);
@@ -195,13 +202,19 @@ public class RetentionLeaseBackgroundSyncAction extends TransportReplicationActi
 
         @Override
         public String toString() {
-            return "RetentionLeaseBackgroundSyncAction.Request{" +
-                    "retentionLeases=" + retentionLeases +
-                    ", shardId=" + shardId +
-                    ", timeout=" + timeout +
-                    ", index='" + index + '\'' +
-                    ", waitForActiveShards=" + waitForActiveShards +
-                    '}';
+            return "RetentionLeaseBackgroundSyncAction.Request{"
+                + "retentionLeases="
+                + retentionLeases
+                + ", shardId="
+                + shardId
+                + ", timeout="
+                + timeout
+                + ", index='"
+                + index
+                + '\''
+                + ", waitForActiveShards="
+                + waitForActiveShards
+                + '}';
         }
 
     }

@@ -81,8 +81,11 @@ public class NodeTests extends ESTestCase {
         plugins.add(CheckPlugin.class);
         try (Node node = new MockNode(settings.build(), plugins) {
             @Override
-            protected void validateNodeBeforeAcceptingRequests(BootstrapContext context, BoundTransportAddress boundTransportAddress,
-                                                               List<BootstrapCheck> bootstrapChecks) throws NodeValidationException {
+            protected void validateNodeBeforeAcceptingRequests(
+                BootstrapContext context,
+                BoundTransportAddress boundTransportAddress,
+                List<BootstrapCheck> bootstrapChecks
+            ) throws NodeValidationException {
                 assertEquals(1, bootstrapChecks.size());
                 assertSame(CheckPlugin.CHECK, bootstrapChecks.get(0));
                 executed.set(true);
@@ -143,10 +146,10 @@ public class NodeTests extends ESTestCase {
     private static Settings.Builder baseSettings() {
         final Path tempDir = createTempDir();
         return Settings.builder()
-                .put(ClusterName.CLUSTER_NAME_SETTING.getKey(), InternalTestCluster.clusterName("single-node-cluster", randomLong()))
-                .put(Environment.PATH_HOME_SETTING.getKey(), tempDir)
-                .put(NetworkModule.TRANSPORT_TYPE_KEY, getTestTransportType())
-                .put(Node.NODE_DATA_SETTING.getKey(), true);
+            .put(ClusterName.CLUSTER_NAME_SETTING.getKey(), InternalTestCluster.clusterName("single-node-cluster", randomLong()))
+            .put(Environment.PATH_HOME_SETTING.getKey(), tempDir)
+            .put(NetworkModule.TRANSPORT_TYPE_KEY, getTestTransportType())
+            .put(Node.NODE_DATA_SETTING.getKey(), true);
     }
 
     public void testCloseOnOutstandingTask() throws Exception {
@@ -157,7 +160,8 @@ public class NodeTests extends ESTestCase {
         final CountDownLatch threadRunning = new CountDownLatch(1);
         threadpool.executor(ThreadPool.Names.SEARCH).execute(() -> {
             threadRunning.countDown();
-            while (shouldRun.get());
+            while (shouldRun.get())
+                ;
         });
         threadRunning.await();
         node.close();
@@ -180,7 +184,8 @@ public class NodeTests extends ESTestCase {
             }
             try {
                 threadpool.executor(ThreadPool.Names.SEARCH).execute(() -> {
-                    while (shouldRun.get());
+                    while (shouldRun.get())
+                        ;
                 });
             } catch (RejectedExecutionException e) {
                 assertThat(e.getMessage(), containsString("[Terminated,"));
@@ -219,7 +224,8 @@ public class NodeTests extends ESTestCase {
         final CountDownLatch threadRunning = new CountDownLatch(1);
         threadpool.executor(ThreadPool.Names.SEARCH).execute(() -> {
             threadRunning.countDown();
-            while (shouldRun.get());
+            while (shouldRun.get())
+                ;
         });
         threadRunning.await();
         node.close();
@@ -261,8 +267,13 @@ public class NodeTests extends ESTestCase {
         Node node = new MockNode(baseSettings().build(), basePlugins());
         node.start();
         IndicesService indicesService = node.injector().getInstance(IndicesService.class);
-        assertAcked(node.client().admin().indices().prepareCreate("test")
-                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0)));
+        assertAcked(
+            node.client()
+                .admin()
+                .indices()
+                .prepareCreate("test")
+                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0))
+        );
         IndexService indexService = indicesService.iterator().next();
         IndexShard shard = indexService.getShard(0);
         Searcher searcher = shard.acquireSearcher("test");
@@ -277,8 +288,13 @@ public class NodeTests extends ESTestCase {
         Node node = new MockNode(baseSettings().build(), basePlugins());
         node.start();
         IndicesService indicesService = node.injector().getInstance(IndicesService.class);
-        assertAcked(node.client().admin().indices().prepareCreate("test")
-                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0)));
+        assertAcked(
+            node.client()
+                .admin()
+                .indices()
+                .prepareCreate("test")
+                .setSettings(Settings.builder().put(SETTING_NUMBER_OF_SHARDS, 1).put(SETTING_NUMBER_OF_REPLICAS, 0))
+        );
         IndexService indexService = indicesService.iterator().next();
         IndexShard shard = indexService.getShard(0);
         shard.store().incRef();

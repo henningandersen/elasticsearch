@@ -67,41 +67,74 @@ public class RepositoriesModuleTests extends ESTestCase {
 
         // Would throw
         new RepositoriesModule(
-            environment, repoPlugins, mock(TransportService.class), mock(ClusterService.class), threadPool, contentRegistry);
+            environment,
+            repoPlugins,
+            mock(TransportService.class),
+            mock(ClusterService.class),
+            threadPool,
+            contentRegistry
+        );
     }
 
     public void testCannotRegisterTwoRepositoriesWithSameTypes() {
         when(plugin1.getRepositories(environment, contentRegistry, clusterService)).thenReturn(Collections.singletonMap("type1", factory));
         when(plugin2.getRepositories(environment, contentRegistry, clusterService)).thenReturn(Collections.singletonMap("type1", factory));
 
-        IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-            () -> new RepositoriesModule(environment, repoPlugins, mock(TransportService.class), clusterService,
-                threadPool, contentRegistry));
+        IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> new RepositoriesModule(
+                environment,
+                repoPlugins,
+                mock(TransportService.class),
+                clusterService,
+                threadPool,
+                contentRegistry
+            )
+        );
 
         assertEquals("Repository type [type1] is already registered", ex.getMessage());
     }
 
     public void testCannotRegisterTwoInternalRepositoriesWithSameTypes() {
-        when(plugin1.getInternalRepositories(environment, contentRegistry, clusterService))
-            .thenReturn(Collections.singletonMap("type1", factory));
-        when(plugin2.getInternalRepositories(environment, contentRegistry, clusterService))
-            .thenReturn(Collections.singletonMap("type1", factory));
+        when(plugin1.getInternalRepositories(environment, contentRegistry, clusterService)).thenReturn(
+            Collections.singletonMap("type1", factory)
+        );
+        when(plugin2.getInternalRepositories(environment, contentRegistry, clusterService)).thenReturn(
+            Collections.singletonMap("type1", factory)
+        );
 
-        IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-            () -> new RepositoriesModule(environment, repoPlugins, mock(TransportService.class), clusterService,
-                threadPool, contentRegistry));
+        IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> new RepositoriesModule(
+                environment,
+                repoPlugins,
+                mock(TransportService.class),
+                clusterService,
+                threadPool,
+                contentRegistry
+            )
+        );
 
         assertEquals("Internal repository type [type1] is already registered", ex.getMessage());
     }
 
     public void testCannotRegisterNormalAndInternalRepositoriesWithSameTypes() {
         when(plugin1.getRepositories(environment, contentRegistry, clusterService)).thenReturn(Collections.singletonMap("type1", factory));
-        when(plugin2.getInternalRepositories(environment, contentRegistry, clusterService))
-            .thenReturn(Collections.singletonMap("type1", factory));
+        when(plugin2.getInternalRepositories(environment, contentRegistry, clusterService)).thenReturn(
+            Collections.singletonMap("type1", factory)
+        );
 
-        IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-            () -> new RepositoriesModule(environment, repoPlugins, mock(TransportService.class), clusterService, threadPool,
-                contentRegistry));
+        IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> new RepositoriesModule(
+                environment,
+                repoPlugins,
+                mock(TransportService.class),
+                clusterService,
+                threadPool,
+                contentRegistry
+            )
+        );
 
         assertEquals("Internal repository type [type1] is already registered as a non-internal repository", ex.getMessage());
     }

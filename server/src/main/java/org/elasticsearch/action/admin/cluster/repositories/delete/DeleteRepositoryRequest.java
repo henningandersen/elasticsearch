@@ -42,8 +42,7 @@ public class DeleteRepositoryRequest extends AcknowledgedRequest<DeleteRepositor
         name = in.readString();
     }
 
-    public DeleteRepositoryRequest() {
-    }
+    public DeleteRepositoryRequest() {}
 
     /**
      * Constructs a new unregister repository request with the provided name.

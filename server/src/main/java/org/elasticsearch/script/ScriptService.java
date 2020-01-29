@@ -69,51 +69,76 @@ public class ScriptService implements Closeable, ClusterStateApplier {
 
     // a parsing function that requires a non negative int and a timevalue as arguments split by a slash
     // this allows you to easily define rates
-    static final Function<String, Tuple<Integer, TimeValue>> MAX_COMPILATION_RATE_FUNCTION =
-            (String value) -> {
-                if (value.contains("/") == false || value.startsWith("/") || value.endsWith("/")) {
-                    throw new IllegalArgumentException("parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [" +
-                            value + "]");
-                }
-                int idx = value.indexOf("/");
-                String count = value.substring(0, idx);
-                String time = value.substring(idx + 1);
-                try {
+    static final Function<String, Tuple<Integer, TimeValue>> MAX_COMPILATION_RATE_FUNCTION = (String value) -> {
+        if (value.contains("/") == false || value.startsWith("/") || value.endsWith("/")) {
+            throw new IllegalArgumentException(
+                "parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [" + value + "]"
+            );
+        }
+        int idx = value.indexOf("/");
+        String count = value.substring(0, idx);
+        String time = value.substring(idx + 1);
+        try {
 
-                    int rate = Integer.parseInt(count);
-                    if (rate < 0) {
-                        throw new IllegalArgumentException("rate [" + rate + "] must be positive");
-                    }
-                    TimeValue timeValue = TimeValue.parseTimeValue(time, "script.max_compilations_rate");
-                    if (timeValue.nanos() <= 0) {
-                        throw new IllegalArgumentException("time value [" + time + "] must be positive");
-                    }
-                    // protect against a too hard to check limit, like less than a minute
-                    if (timeValue.seconds() < 60) {
-                        throw new IllegalArgumentException("time value [" + time + "] must be at least on a one minute resolution");
-                    }
-                    return Tuple.tuple(rate, timeValue);
-                } catch (NumberFormatException e) {
-                    // the number format exception message is so confusing, that it makes more sense to wrap it with a useful one
-                    throw new IllegalArgumentException("could not parse [" + count + "] as integer in value [" + value + "]", e);
-                }
-            };
+            int rate = Integer.parseInt(count);
+            if (rate < 0) {
+                throw new IllegalArgumentException("rate [" + rate + "] must be positive");
+            }
+            TimeValue timeValue = TimeValue.parseTimeValue(time, "script.max_compilations_rate");
+            if (timeValue.nanos() <= 0) {
+                throw new IllegalArgumentException("time value [" + time + "] must be positive");
+            }
+            // protect against a too hard to check limit, like less than a minute
+            if (timeValue.seconds() < 60) {
+                throw new IllegalArgumentException("time value [" + time + "] must be at least on a one minute resolution");
+            }
+            return Tuple.tuple(rate, timeValue);
+        } catch (NumberFormatException e) {
+            // the number format exception message is so confusing, that it makes more sense to wrap it with a useful one
+            throw new IllegalArgumentException("could not parse [" + count + "] as integer in value [" + value + "]", e);
+        }
+    };
 
-    public static final Setting<Integer> SCRIPT_CACHE_SIZE_SETTING =
-        Setting.intSetting("script.cache.max_size", 100, 0, Property.NodeScope);
-    public static final Setting<TimeValue> SCRIPT_CACHE_EXPIRE_SETTING =
-        Setting.positiveTimeSetting("script.cache.expire", TimeValue.timeValueMillis(0), Property.NodeScope);
-    public static final Setting<Integer> SCRIPT_MAX_SIZE_IN_BYTES =
-        Setting.intSetting("script.max_size_in_bytes", 65535, 0, Property.Dynamic, Property.NodeScope);
-    public static final Setting<Tuple<Integer, TimeValue>> SCRIPT_MAX_COMPILATIONS_RATE =
-            new Setting<>("script.max_compilations_rate", "75/5m", MAX_COMPILATION_RATE_FUNCTION, Property.Dynamic, Property.NodeScope);
+    public static final Setting<Integer> SCRIPT_CACHE_SIZE_SETTING = Setting.intSetting(
+        "script.cache.max_size",
+        100,
+        0,
+        Property.NodeScope
+    );
+    public static final Setting<TimeValue> SCRIPT_CACHE_EXPIRE_SETTING = Setting.positiveTimeSetting(
+        "script.cache.expire",
+        TimeValue.timeValueMillis(0),
+        Property.NodeScope
+    );
+    public static final Setting<Integer> SCRIPT_MAX_SIZE_IN_BYTES = Setting.intSetting(
+        "script.max_size_in_bytes",
+        65535,
+        0,
+        Property.Dynamic,
+        Property.NodeScope
+    );
+    public static final Setting<Tuple<Integer, TimeValue>> SCRIPT_MAX_COMPILATIONS_RATE = new Setting<>(
+        "script.max_compilations_rate",
+        "75/5m",
+        MAX_COMPILATION_RATE_FUNCTION,
+        Property.Dynamic,
+        Property.NodeScope
+    );
 
     public static final String ALLOW_NONE = "none";
 
-    public static final Setting<List<String>> TYPES_ALLOWED_SETTING =
-        Setting.listSetting("script.allowed_types", Collections.emptyList(), Function.identity(), Setting.Property.NodeScope);
-    public static final Setting<List<String>> CONTEXTS_ALLOWED_SETTING =
-        Setting.listSetting("script.allowed_contexts", Collections.emptyList(), Function.identity(), Setting.Property.NodeScope);
+    public static final Setting<List<String>> TYPES_ALLOWED_SETTING = Setting.listSetting(
+        "script.allowed_types",
+        Collections.emptyList(),
+        Function.identity(),
+        Setting.Property.NodeScope
+    );
+    public static final Setting<List<String>> CONTEXTS_ALLOWED_SETTING = Setting.listSetting(
+        "script.allowed_contexts",
+        Collections.emptyList(),
+        Function.identity(),
+        Setting.Property.NodeScope
+    );
 
     private final Settings settings;
     private final Set<String> typesAllowed;
@@ -141,9 +166,12 @@ public class ScriptService implements Closeable, ClusterStateApplier {
         this.contexts = Objects.requireNonNull(contexts);
 
         if (Strings.hasLength(settings.get(DISABLE_DYNAMIC_SCRIPTING_SETTING))) {
-            throw new IllegalArgumentException(DISABLE_DYNAMIC_SCRIPTING_SETTING + " is not a supported setting, replace with " +
-                    "fine-grained script settings. \n Dynamic scripts can be enabled for all languages and all operations not " +
-                    "using `script.disable_dynamic: false` in elasticsearch.yml");
+            throw new IllegalArgumentException(
+                DISABLE_DYNAMIC_SCRIPTING_SETTING
+                    + " is not a supported setting, replace with "
+                    + "fine-grained script settings. \n Dynamic scripts can be enabled for all languages and all operations not "
+                    + "using `script.disable_dynamic: false` in elasticsearch.yml"
+            );
         }
 
         this.typesAllowed = TYPES_ALLOWED_SETTING.exists(settings) ? new HashSet<>() : null;
@@ -153,14 +181,21 @@ public class ScriptService implements Closeable, ClusterStateApplier {
 
             if (typesAllowedList.isEmpty()) {
                 throw new IllegalArgumentException(
-                    "must specify at least one script type or none for setting [" + TYPES_ALLOWED_SETTING.getKey() + "].");
+                    "must specify at least one script type or none for setting [" + TYPES_ALLOWED_SETTING.getKey() + "]."
+                );
             }
 
             for (String settingType : typesAllowedList) {
                 if (ALLOW_NONE.equals(settingType)) {
                     if (typesAllowedList.size() != 1) {
-                        throw new IllegalArgumentException("cannot specify both [" + ALLOW_NONE + "]" +
-                            " and other script types for setting [" + TYPES_ALLOWED_SETTING.getKey() + "].");
+                        throw new IllegalArgumentException(
+                            "cannot specify both ["
+                                + ALLOW_NONE
+                                + "]"
+                                + " and other script types for setting ["
+                                + TYPES_ALLOWED_SETTING.getKey()
+                                + "]."
+                        );
                     } else {
                         break;
                     }
@@ -179,7 +214,8 @@ public class ScriptService implements Closeable, ClusterStateApplier {
 
                 if (found == false) {
                     throw new IllegalArgumentException(
-                        "unknown script type [" + settingType + "] found in setting [" + TYPES_ALLOWED_SETTING.getKey() + "].");
+                        "unknown script type [" + settingType + "] found in setting [" + TYPES_ALLOWED_SETTING.getKey() + "]."
+                    );
                 }
             }
         }
@@ -191,14 +227,21 @@ public class ScriptService implements Closeable, ClusterStateApplier {
 
             if (contextsAllowedList.isEmpty()) {
                 throw new IllegalArgumentException(
-                    "must specify at least one script context or none for setting [" + CONTEXTS_ALLOWED_SETTING.getKey() + "].");
+                    "must specify at least one script context or none for setting [" + CONTEXTS_ALLOWED_SETTING.getKey() + "]."
+                );
             }
 
             for (String settingContext : contextsAllowedList) {
                 if (ALLOW_NONE.equals(settingContext)) {
                     if (contextsAllowedList.size() != 1) {
-                        throw new IllegalArgumentException("cannot specify both [" + ALLOW_NONE + "]" +
-                            " and other script contexts for setting [" + CONTEXTS_ALLOWED_SETTING.getKey() + "].");
+                        throw new IllegalArgumentException(
+                            "cannot specify both ["
+                                + ALLOW_NONE
+                                + "]"
+                                + " and other script contexts for setting ["
+                                + CONTEXTS_ALLOWED_SETTING.getKey()
+                                + "]."
+                        );
                     } else {
                         break;
                     }
@@ -208,7 +251,8 @@ public class ScriptService implements Closeable, ClusterStateApplier {
                     this.contextsAllowed.add(settingContext);
                 } else {
                     throw new IllegalArgumentException(
-                        "unknown script context [" + settingContext + "] found in setting [" + CONTEXTS_ALLOWED_SETTING.getKey() + "].");
+                        "unknown script context [" + settingContext + "] found in setting [" + CONTEXTS_ALLOWED_SETTING.getKey() + "]."
+                    );
                 }
             }
         }
@@ -258,9 +302,17 @@ public class ScriptService implements Closeable, ClusterStateApplier {
     void setMaxSizeInBytes(int newMaxSizeInBytes) {
         for (Map.Entry<String, StoredScriptSource> source : getScriptsFromClusterState().entrySet()) {
             if (source.getValue().getSource().getBytes(StandardCharsets.UTF_8).length > newMaxSizeInBytes) {
-                throw new IllegalArgumentException("script.max_size_in_bytes cannot be set to [" + newMaxSizeInBytes + "], " +
-                        "stored script [" + source.getKey() + "] exceeds the new value with a size of " +
-                        "[" + source.getValue().getSource().getBytes(StandardCharsets.UTF_8).length + "]");
+                throw new IllegalArgumentException(
+                    "script.max_size_in_bytes cannot be set to ["
+                        + newMaxSizeInBytes
+                        + "], "
+                        + "stored script ["
+                        + source.getKey()
+                        + "] exceeds the new value with a size of "
+                        + "["
+                        + source.getValue().getSource().getBytes(StandardCharsets.UTF_8).length
+                        + "]"
+                );
             }
         }
 
@@ -323,8 +375,16 @@ public class ScriptService implements Closeable, ClusterStateApplier {
 
         if (type == ScriptType.INLINE) {
             if (idOrCode.getBytes(StandardCharsets.UTF_8).length > maxSizeInBytes) {
-                throw new IllegalArgumentException("exceeded max allowed inline script size in bytes [" + maxSizeInBytes + "] " +
-                        "with size [" + idOrCode.getBytes(StandardCharsets.UTF_8).length + "] for script [" + idOrCode + "]");
+                throw new IllegalArgumentException(
+                    "exceeded max allowed inline script size in bytes ["
+                        + maxSizeInBytes
+                        + "] "
+                        + "with size ["
+                        + idOrCode.getBytes(StandardCharsets.UTF_8).length
+                        + "] for script ["
+                        + idOrCode
+                        + "]"
+                );
             }
         }
 
@@ -360,8 +420,10 @@ public class ScriptService implements Closeable, ClusterStateApplier {
                     // TODO: remove this try-catch completely, when all script engines have good exceptions!
                     throw good; // its already good
                 } catch (Exception exception) {
-                    throw new GeneralScriptException("Failed to compile " + type + " script [" + id + "] using lang [" + lang + "]",
-                            exception);
+                    throw new GeneralScriptException(
+                        "Failed to compile " + type + " script [" + id + "] using lang [" + lang + "]",
+                        exception
+                    );
                 }
 
                 // Since the cache key is the script content itself we don't need to
@@ -401,10 +463,17 @@ public class ScriptService implements Closeable, ClusterStateApplier {
         } else {
             scriptMetrics.onCompilationLimit();
             // Otherwise reject the request
-            throw new CircuitBreakingException("[script] Too many dynamic script compilations within, max: [" +
-                    rate.v1() + "/" + rate.v2() +"]; please use indexed, or scripts with parameters instead; " +
-                            "this limit can be changed by the [" + SCRIPT_MAX_COMPILATIONS_RATE.getKey() + "] setting",
-                CircuitBreaker.Durability.TRANSIENT);
+            throw new CircuitBreakingException(
+                "[script] Too many dynamic script compilations within, max: ["
+                    + rate.v1()
+                    + "/"
+                    + rate.v2()
+                    + "]; please use indexed, or scripts with parameters instead; "
+                    + "this limit can be changed by the ["
+                    + SCRIPT_MAX_COMPILATIONS_RATE.getKey()
+                    + "] setting",
+                CircuitBreaker.Durability.TRANSIENT
+            );
         }
     }
 
@@ -455,11 +524,21 @@ public class ScriptService implements Closeable, ClusterStateApplier {
         return source;
     }
 
-    public void putStoredScript(ClusterService clusterService, PutStoredScriptRequest request,
-                                ActionListener<AcknowledgedResponse> listener) {
+    public void putStoredScript(
+        ClusterService clusterService,
+        PutStoredScriptRequest request,
+        ActionListener<AcknowledgedResponse> listener
+    ) {
         if (request.content().length() > maxSizeInBytes) {
-            throw new IllegalArgumentException("exceeded max allowed stored script size in bytes [" + maxSizeInBytes + "] with size [" +
-                request.content().length() + "] for script [" + request.id() + "]");
+            throw new IllegalArgumentException(
+                "exceeded max allowed stored script size in bytes ["
+                    + maxSizeInBytes
+                    + "] with size ["
+                    + request.content().length()
+                    + "] for script ["
+                    + request.id()
+                    + "]"
+            );
         }
 
         StoredScriptSource source = request.source();
@@ -473,10 +552,10 @@ public class ScriptService implements Closeable, ClusterStateApplier {
 
             if (isTypeEnabled(ScriptType.STORED) == false) {
                 throw new IllegalArgumentException(
-                    "cannot put [" + ScriptType.STORED + "] script, [" + ScriptType.STORED + "] scripts are not enabled");
+                    "cannot put [" + ScriptType.STORED + "] script, [" + ScriptType.STORED + "] scripts are not enabled"
+                );
             } else if (isAnyContextEnabled() == false) {
-                throw new IllegalArgumentException(
-                    "cannot put [" + ScriptType.STORED + "] script, no script contexts are enabled");
+                throw new IllegalArgumentException("cannot put [" + ScriptType.STORED + "] script, no script contexts are enabled");
             } else if (request.context() != null) {
                 ScriptContext<?> context = contexts.get(request.context());
                 if (context == null) {
@@ -490,44 +569,51 @@ public class ScriptService implements Closeable, ClusterStateApplier {
             throw new IllegalArgumentException("failed to parse/compile stored script [" + request.id() + "]", exception);
         }
 
-        clusterService.submitStateUpdateTask("put-script-" + request.id(),
+        clusterService.submitStateUpdateTask(
+            "put-script-" + request.id(),
             new AckedClusterStateUpdateTask<AcknowledgedResponse>(request, listener) {
 
-            @Override
-            protected AcknowledgedResponse newResponse(boolean acknowledged) {
-                return new AcknowledgedResponse(acknowledged);
-            }
+                @Override
+                protected AcknowledgedResponse newResponse(boolean acknowledged) {
+                    return new AcknowledgedResponse(acknowledged);
+                }
 
-            @Override
-            public ClusterState execute(ClusterState currentState) throws Exception {
-                ScriptMetaData smd = currentState.metaData().custom(ScriptMetaData.TYPE);
-                smd = ScriptMetaData.putStoredScript(smd, request.id(), source);
-                MetaData.Builder mdb = MetaData.builder(currentState.getMetaData()).putCustom(ScriptMetaData.TYPE, smd);
+                @Override
+                public ClusterState execute(ClusterState currentState) throws Exception {
+                    ScriptMetaData smd = currentState.metaData().custom(ScriptMetaData.TYPE);
+                    smd = ScriptMetaData.putStoredScript(smd, request.id(), source);
+                    MetaData.Builder mdb = MetaData.builder(currentState.getMetaData()).putCustom(ScriptMetaData.TYPE, smd);
 
-                return ClusterState.builder(currentState).metaData(mdb).build();
+                    return ClusterState.builder(currentState).metaData(mdb).build();
+                }
             }
-        });
+        );
     }
 
-    public void deleteStoredScript(ClusterService clusterService, DeleteStoredScriptRequest request,
-                                   ActionListener<AcknowledgedResponse> listener) {
-        clusterService.submitStateUpdateTask("delete-script-" + request.id(),
+    public void deleteStoredScript(
+        ClusterService clusterService,
+        DeleteStoredScriptRequest request,
+        ActionListener<AcknowledgedResponse> listener
+    ) {
+        clusterService.submitStateUpdateTask(
+            "delete-script-" + request.id(),
             new AckedClusterStateUpdateTask<AcknowledgedResponse>(request, listener) {
 
-            @Override
-            protected AcknowledgedResponse newResponse(boolean acknowledged) {
-                return new AcknowledgedResponse(acknowledged);
-            }
+                @Override
+                protected AcknowledgedResponse newResponse(boolean acknowledged) {
+                    return new AcknowledgedResponse(acknowledged);
+                }
 
-            @Override
-            public ClusterState execute(ClusterState currentState) throws Exception {
-                ScriptMetaData smd = currentState.metaData().custom(ScriptMetaData.TYPE);
-                smd = ScriptMetaData.deleteStoredScript(smd, request.id());
-                MetaData.Builder mdb = MetaData.builder(currentState.getMetaData()).putCustom(ScriptMetaData.TYPE, smd);
+                @Override
+                public ClusterState execute(ClusterState currentState) throws Exception {
+                    ScriptMetaData smd = currentState.metaData().custom(ScriptMetaData.TYPE);
+                    smd = ScriptMetaData.deleteStoredScript(smd, request.id());
+                    MetaData.Builder mdb = MetaData.builder(currentState.getMetaData()).putCustom(ScriptMetaData.TYPE, smd);
 
-                return ClusterState.builder(currentState).metaData(mdb).build();
+                    return ClusterState.builder(currentState).metaData(mdb).build();
+                }
             }
-        });
+        );
     }
 
     public StoredScriptSource getStoredScript(ClusterState state, GetStoredScriptRequest request) {
@@ -552,13 +638,13 @@ public class ScriptService implements Closeable, ClusterStateApplier {
         Set<String> types = typesAllowed;
         if (types == null) {
             types = new HashSet<>();
-            for (ScriptType type: ScriptType.values()) {
+            for (ScriptType type : ScriptType.values()) {
                 types.add(type.getName());
             }
         }
 
         final Set<String> contexts = contextsAllowed != null ? contextsAllowed : this.contexts.keySet();
-        Map<String,Set<String>> languageContexts = new HashMap<>();
+        Map<String, Set<String>> languageContexts = new HashMap<>();
         engines.forEach(
             (key, value) -> languageContexts.put(
                 key,
@@ -610,10 +696,10 @@ public class ScriptService implements Closeable, ClusterStateApplier {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             CacheKey cacheKey = (CacheKey) o;
-            return Objects.equals(lang, cacheKey.lang) &&
-                Objects.equals(idOrCode, cacheKey.idOrCode) &&
-                Objects.equals(context, cacheKey.context) &&
-                Objects.equals(options, cacheKey.options);
+            return Objects.equals(lang, cacheKey.lang)
+                && Objects.equals(idOrCode, cacheKey.idOrCode)
+                && Objects.equals(context, cacheKey.context)
+                && Objects.equals(options, cacheKey.options);
         }
 
         @Override

@@ -50,6 +50,7 @@ public final class CompressedXContent {
             public void write(int b) throws IOException {
                 // no-op
             }
+
             @Override
             public void write(byte[] b, int off, int len) throws IOException {
                 // no-op

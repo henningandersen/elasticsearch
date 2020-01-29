@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 public final class PreConfiguredTokenizer extends PreConfiguredAnalysisComponent<TokenizerFactory> {
     /**
      * Create a pre-configured tokenizer that may not vary at all.
-     * 
+     *
      * @param name the name of the tokenizer in the api
      * @param create builds the tokenizer
      */
@@ -62,7 +62,7 @@ public final class PreConfiguredTokenizer extends PreConfiguredAnalysisComponent
     }
 
     private final Function<Version, Tokenizer> create;
-    
+
     private PreConfiguredTokenizer(String name, PreBuiltCacheFactory.CachingStrategy cache, Function<Version, Tokenizer> create) {
         super(name, cache);
         this.create = create;

@@ -96,10 +96,8 @@ public class SumAggregatorTests extends AggregatorTestCase {
 
     public void testSortedNumericDocValues() throws IOException {
         testCase(new DocValuesFieldExistsQuery(FIELD_NAME), iw -> {
-            iw.addDocument(Arrays.asList(new SortedNumericDocValuesField(FIELD_NAME, 3),
-                new SortedNumericDocValuesField(FIELD_NAME, 4)));
-            iw.addDocument(Arrays.asList(new SortedNumericDocValuesField(FIELD_NAME, 3),
-                new SortedNumericDocValuesField(FIELD_NAME, 4)));
+            iw.addDocument(Arrays.asList(new SortedNumericDocValuesField(FIELD_NAME, 3), new SortedNumericDocValuesField(FIELD_NAME, 4)));
+            iw.addDocument(Arrays.asList(new SortedNumericDocValuesField(FIELD_NAME, 3), new SortedNumericDocValuesField(FIELD_NAME, 4)));
             iw.addDocument(singleton(new SortedNumericDocValuesField(FIELD_NAME, 1)));
         }, count -> {
             assertEquals(15L, count.getValue(), 0d);
@@ -122,20 +120,25 @@ public class SumAggregatorTests extends AggregatorTestCase {
 
     public void testStringField() throws IOException {
         IllegalStateException e = expectThrows(IllegalStateException.class, () -> {
-            testCase(new MatchAllDocsQuery(), iw -> {
-                iw.addDocument(singleton(new SortedDocValuesField(FIELD_NAME, new BytesRef("1"))));
-            }, count -> {
-                assertEquals(0L, count.getValue(), 0d);
-                assertFalse(AggregationInspectionHelper.hasValue(count));
-            });
+            testCase(
+                new MatchAllDocsQuery(),
+                iw -> { iw.addDocument(singleton(new SortedDocValuesField(FIELD_NAME, new BytesRef("1")))); },
+                count -> {
+                    assertEquals(0L, count.getValue(), 0d);
+                    assertFalse(AggregationInspectionHelper.hasValue(count));
+                }
+            );
         });
-        assertEquals("unexpected docvalues type SORTED for field 'field' (expected one of [SORTED_NUMERIC, NUMERIC]). " +
-            "Re-index with correct docvalues type.", e.getMessage());
+        assertEquals(
+            "unexpected docvalues type SORTED for field 'field' (expected one of [SORTED_NUMERIC, NUMERIC]). "
+                + "Re-index with correct docvalues type.",
+            e.getMessage()
+        );
     }
 
     public void testSummationAccuracy() throws IOException {
         // Summing up a normal array and expect an accurate value
-        double[] values = new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7};
+        double[] values = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 };
         verifySummationOfDoubles(values, 15.3, 0d);
 
         // Summing up an array which contains NaN and infinities and expect a result same as naive summation
@@ -165,27 +168,24 @@ public class SumAggregatorTests extends AggregatorTestCase {
     }
 
     private void verifySummationOfDoubles(double[] values, double expected, double delta) throws IOException {
-        testCase(new MatchAllDocsQuery(),
-            iw -> {
-                for (double value : values) {
-                    iw.addDocument(singleton(new NumericDocValuesField(FIELD_NAME, NumericUtils.doubleToSortableLong(value))));
-                }
-            },
-            result -> assertEquals(expected, result.getValue(), delta),
-            NumberFieldMapper.NumberType.DOUBLE
-        );
+        testCase(new MatchAllDocsQuery(), iw -> {
+            for (double value : values) {
+                iw.addDocument(singleton(new NumericDocValuesField(FIELD_NAME, NumericUtils.doubleToSortableLong(value))));
+            }
+        }, result -> assertEquals(expected, result.getValue(), delta), NumberFieldMapper.NumberType.DOUBLE);
     }
 
-    private void testCase(Query query,
-                          CheckedConsumer<RandomIndexWriter, IOException> indexer,
-                          Consumer<InternalSum> verify) throws IOException {
+    private void testCase(Query query, CheckedConsumer<RandomIndexWriter, IOException> indexer, Consumer<InternalSum> verify)
+        throws IOException {
         testCase(query, indexer, verify, NumberFieldMapper.NumberType.LONG);
     }
 
-    private void testCase(Query query,
-                          CheckedConsumer<RandomIndexWriter, IOException> indexer,
-                          Consumer<InternalSum> verify,
-                          NumberFieldMapper.NumberType fieldNumberType) throws IOException {
+    private void testCase(
+        Query query,
+        CheckedConsumer<RandomIndexWriter, IOException> indexer,
+        Consumer<InternalSum> verify,
+        NumberFieldMapper.NumberType fieldNumberType
+    ) throws IOException {
         try (Directory directory = newDirectory()) {
             try (RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory)) {
                 indexer.accept(indexWriter);

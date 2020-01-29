@@ -79,15 +79,25 @@ public final class ScriptContext<FactoryType> {
             statefulFactoryClazz = newFactoryMethod.getReturnType();
             newInstanceMethod = findMethod("StatefulFactoryType", statefulFactoryClazz, "newInstance");
             if (newInstanceMethod == null) {
-                throw new IllegalArgumentException("Could not find method newInstance StatefulFactoryType class ["
-                    + statefulFactoryClazz.getName() + "] for script context [" + name + "]");
+                throw new IllegalArgumentException(
+                    "Could not find method newInstance StatefulFactoryType class ["
+                        + statefulFactoryClazz.getName()
+                        + "] for script context ["
+                        + name
+                        + "]"
+                );
             }
         } else if (newInstanceMethod != null) {
             assert newFactoryMethod == null;
             statefulFactoryClazz = null;
         } else {
-            throw new IllegalArgumentException("Could not find method newInstance or method newFactory on FactoryType class ["
-                + factoryClazz.getName() + "] for script context [" + name + "]");
+            throw new IllegalArgumentException(
+                "Could not find method newInstance or method newFactory on FactoryType class ["
+                    + factoryClazz.getName()
+                    + "] for script context ["
+                    + name
+                    + "]"
+            );
         }
         instanceClazz = newInstanceMethod.getReturnType();
     }
@@ -98,8 +108,17 @@ public final class ScriptContext<FactoryType> {
         for (Method method : clazz.getMethods()) {
             if (method.getName().equals(methodName)) {
                 if (foundMethod != null) {
-                    throw new IllegalArgumentException("Cannot have multiple " + methodName + " methods on " + type + " class ["
-                        + clazz.getName() + "] for script context [" + name + "]");
+                    throw new IllegalArgumentException(
+                        "Cannot have multiple "
+                            + methodName
+                            + " methods on "
+                            + type
+                            + " class ["
+                            + clazz.getName()
+                            + "] for script context ["
+                            + name
+                            + "]"
+                    );
                 }
                 foundMethod = method;
             }

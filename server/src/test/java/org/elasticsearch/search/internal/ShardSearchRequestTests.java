@@ -50,14 +50,19 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
 public class ShardSearchRequestTests extends AbstractSearchTestCase {
-    private IndexMetaData baseMetaData = IndexMetaData.builder("test").settings(Settings.builder()
-        .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT).build())
-        .numberOfShards(1).numberOfReplicas(1).build();
+    private IndexMetaData baseMetaData = IndexMetaData.builder("test")
+        .settings(Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT).build())
+        .numberOfShards(1)
+        .numberOfReplicas(1)
+        .build();
 
     public void testSerialization() throws Exception {
         ShardSearchRequest shardSearchTransportRequest = createShardSearchRequest();
-        ShardSearchRequest deserializedRequest =
-            copyWriteable(shardSearchTransportRequest, namedWriteableRegistry, ShardSearchRequest::new);
+        ShardSearchRequest deserializedRequest = copyWriteable(
+            shardSearchTransportRequest,
+            namedWriteableRegistry,
+            ShardSearchRequest::new
+        );
         assertEquals(deserializedRequest.scroll(), shardSearchTransportRequest.scroll());
         assertEquals(deserializedRequest.getAliasFilter(), shardSearchTransportRequest.getAliasFilter());
         assertArrayEquals(deserializedRequest.indices(), shardSearchTransportRequest.indices());
@@ -88,9 +93,17 @@ public class ShardSearchRequestTests extends AbstractSearchTestCase {
             filteringAliases = new AliasFilter(null, Strings.EMPTY_ARRAY);
         }
         final String[] routings = generateRandomStringArray(5, 10, false, true);
-        return new ShardSearchRequest(new OriginalIndices(searchRequest), searchRequest, shardId,
-            randomIntBetween(1, 100), filteringAliases, randomBoolean() ? 1.0f : randomFloat(),
-            Math.abs(randomLong()), randomAlphaOfLengthBetween(3, 10), routings);
+        return new ShardSearchRequest(
+            new OriginalIndices(searchRequest),
+            searchRequest,
+            shardId,
+            randomIntBetween(1, 100),
+            filteringAliases,
+            randomBoolean() ? 1.0f : randomFloat(),
+            Math.abs(randomLong()),
+            randomAlphaOfLengthBetween(3, 10),
+            routings
+        );
     }
 
     public void testFilteringAliases() throws Exception {
@@ -104,19 +117,24 @@ public class ShardSearchRequestTests extends AbstractSearchTestCase {
         assertThat(indexMetaData.getAliases().containsKey("turtles"), equalTo(false));
 
         assertEquals(aliasFilter(indexMetaData, "cats"), QueryBuilders.termQuery("animal", "cat"));
-        assertEquals(aliasFilter(indexMetaData, "cats", "dogs"), QueryBuilders.boolQuery().should(QueryBuilders.termQuery("animal", "cat"))
-            .should(QueryBuilders.termQuery("animal", "dog")));
+        assertEquals(
+            aliasFilter(indexMetaData, "cats", "dogs"),
+            QueryBuilders.boolQuery().should(QueryBuilders.termQuery("animal", "cat")).should(QueryBuilders.termQuery("animal", "dog"))
+        );
 
         // Non-filtering alias should turn off all filters because filters are ORed
-        assertThat(aliasFilter(indexMetaData,"all"), nullValue());
+        assertThat(aliasFilter(indexMetaData, "all"), nullValue());
         assertThat(aliasFilter(indexMetaData, "cats", "all"), nullValue());
         assertThat(aliasFilter(indexMetaData, "all", "cats"), nullValue());
 
         indexMetaData = add(indexMetaData, "cats", filter(termQuery("animal", "feline")));
         indexMetaData = add(indexMetaData, "dogs", filter(termQuery("animal", "canine")));
-        assertEquals(aliasFilter(indexMetaData, "dogs", "cats"),QueryBuilders.boolQuery()
-            .should(QueryBuilders.termQuery("animal", "canine"))
-            .should(QueryBuilders.termQuery("animal", "feline")));
+        assertEquals(
+            aliasFilter(indexMetaData, "dogs", "cats"),
+            QueryBuilders.boolQuery()
+                .should(QueryBuilders.termQuery("animal", "canine"))
+                .should(QueryBuilders.termQuery("animal", "feline"))
+        );
     }
 
     public void testRemovedAliasFilter() throws Exception {
@@ -156,8 +174,10 @@ public class ShardSearchRequestTests extends AbstractSearchTestCase {
 
     public QueryBuilder aliasFilter(IndexMetaData indexMetaData, String... aliasNames) {
         CheckedFunction<byte[], QueryBuilder, IOException> filterParser = bytes -> {
-            try (XContentParser parser = XContentFactory.xContent(bytes)
-                    .createParser(xContentRegistry(), DeprecationHandler.THROW_UNSUPPORTED_OPERATION, bytes)) {
+            try (
+                XContentParser parser = XContentFactory.xContent(bytes)
+                    .createParser(xContentRegistry(), DeprecationHandler.THROW_UNSUPPORTED_OPERATION, bytes)
+            ) {
                 return parseInnerQueryBuilder(parser);
             }
         };

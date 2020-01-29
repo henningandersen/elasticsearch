@@ -49,8 +49,10 @@ class ElasticsearchReaderManager extends ReferenceManager<ElasticsearchDirectory
      * @param reader            the directoryReader to use for future reopens
      * @param refreshListener   A consumer that is called every time a new reader is opened
      */
-    ElasticsearchReaderManager(ElasticsearchDirectoryReader reader,
-                               BiConsumer<ElasticsearchDirectoryReader, ElasticsearchDirectoryReader> refreshListener) {
+    ElasticsearchReaderManager(
+        ElasticsearchDirectoryReader reader,
+        BiConsumer<ElasticsearchDirectoryReader, ElasticsearchDirectoryReader> refreshListener
+    ) {
         this.current = reader;
         this.refreshListener = refreshListener;
         refreshListener.accept(current, null);

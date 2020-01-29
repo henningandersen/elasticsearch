@@ -57,7 +57,6 @@ public class Table {
         return this;
     }
 
-
     public Table endHeaders() {
         if (currentCells == null || currentCells.isEmpty()) {
             throw new IllegalStateException("no headers added...");

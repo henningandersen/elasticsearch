@@ -59,10 +59,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSource>
-        implements Releasable {
+public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSource> implements Releasable {
     private static final DeprecationLogger deprecationLogger = new DeprecationLogger(
-            LogManager.getLogger(SignificantTermsAggregatorFactory.class));
+        LogManager.getLogger(SignificantTermsAggregatorFactory.class)
+    );
 
     private final IncludeExclude includeExclude;
     private final String executionHint;
@@ -75,17 +75,20 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
     private final TermsAggregator.BucketCountThresholds bucketCountThresholds;
     private final SignificanceHeuristic significanceHeuristic;
 
-    public SignificantTermsAggregatorFactory(String name,
-                                             ValuesSourceConfig<ValuesSource> config,
-                                             IncludeExclude includeExclude,
-                                             String executionHint,
-                                             QueryBuilder filterBuilder,
-                                             TermsAggregator.BucketCountThresholds bucketCountThresholds,
-                                             SignificanceHeuristic significanceHeuristic,
-                                             QueryShardContext queryShardContext,
-                                             AggregatorFactory parent,
-                                             AggregatorFactories.Builder subFactoriesBuilder,
-                                             Map<String, Object> metaData) throws IOException {
+    public SignificantTermsAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource> config,
+        IncludeExclude includeExclude,
+        String executionHint,
+        QueryBuilder filterBuilder,
+        TermsAggregator.BucketCountThresholds bucketCountThresholds,
+        SignificanceHeuristic significanceHeuristic,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
 
         if (!config.unmapped()) {
@@ -95,15 +98,13 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
 
         this.includeExclude = includeExclude;
         this.executionHint = executionHint;
-        this.filter = filterBuilder == null
-                ? null
-                : filterBuilder.toQuery(queryShardContext);
+        this.filter = filterBuilder == null ? null : filterBuilder.toQuery(queryShardContext);
         IndexSearcher searcher = queryShardContext.searcher();
         this.supersetNumDocs = filter == null
-                // Important - need to use the doc count that includes deleted docs
-                // or we have this issue: https://github.com/elastic/elasticsearch/issues/7951
-                ? searcher.getIndexReader().maxDoc()
-                : searcher.count(filter);
+            // Important - need to use the doc count that includes deleted docs
+            // or we have this issue: https://github.com/elastic/elasticsearch/issues/7951
+            ? searcher.getIndexReader().maxDoc()
+            : searcher.count(filter);
         this.bucketCountThresholds = bucketCountThresholds;
         this.significanceHeuristic = significanceHeuristic;
     }
@@ -143,10 +144,7 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
         }
         // otherwise do it the naive way
         if (filter != null) {
-            query = new BooleanQuery.Builder()
-                    .add(query, Occur.FILTER)
-                    .add(filter, Occur.FILTER)
-                    .build();
+            query = new BooleanQuery.Builder().add(query, Occur.FILTER).add(filter, Occur.FILTER).build();
         }
         return queryShardContext.searcher().count(query);
     }
@@ -162,12 +160,19 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        final InternalAggregation aggregation = new UnmappedSignificantTerms(name, bucketCountThresholds.getRequiredSize(),
-                bucketCountThresholds.getMinDocCount(), pipelineAggregators, metaData);
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        final InternalAggregation aggregation = new UnmappedSignificantTerms(
+            name,
+            bucketCountThresholds.getRequiredSize(),
+            bucketCountThresholds.getMinDocCount(),
+            pipelineAggregators,
+            metaData
+        );
         return new NonCollectingAggregator(name, searchContext, parent, pipelineAggregators, metaData) {
             @Override
             public InternalAggregation buildEmptyAggregation() {
@@ -177,12 +182,14 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
     }
 
     @Override
-    protected Aggregator doCreateInternal(ValuesSource valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator doCreateInternal(
+        ValuesSource valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         if (collectsFromSingleBucket == false) {
             return asMultiBucketAggregator(this, searchContext, parent);
         }
@@ -220,19 +227,39 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
 
             DocValueFormat format = config.format();
             if ((includeExclude != null) && (includeExclude.isRegexBased()) && format != DocValueFormat.RAW) {
-                throw new AggregationExecutionException("Aggregation [" + name + "] cannot support regular expression style "
+                throw new AggregationExecutionException(
+                    "Aggregation ["
+                        + name
+                        + "] cannot support regular expression style "
                         + "include/exclude settings as they can only be applied to string fields. Use an array of values for "
-                        + "include/exclude clauses");
+                        + "include/exclude clauses"
+                );
             }
 
-            return execution.create(name, factories, valuesSource, format, bucketCountThresholds, includeExclude, searchContext, parent,
-                    significanceHeuristic, this, pipelineAggregators, metaData);
+            return execution.create(
+                name,
+                factories,
+                valuesSource,
+                format,
+                bucketCountThresholds,
+                includeExclude,
+                searchContext,
+                parent,
+                significanceHeuristic,
+                this,
+                pipelineAggregators,
+                metaData
+            );
         }
 
         if ((includeExclude != null) && (includeExclude.isRegexBased())) {
-            throw new AggregationExecutionException("Aggregation [" + name + "] cannot support regular expression style include/exclude "
+            throw new AggregationExecutionException(
+                "Aggregation ["
+                    + name
+                    + "] cannot support regular expression style include/exclude "
                     + "settings as they can only be applied to string fields. Use an array of numeric values for include/exclude clauses "
-                    + "used to filter numeric fields");
+                    + "used to filter numeric fields"
+            );
         }
 
         if (valuesSource instanceof ValuesSource.Numeric) {
@@ -244,13 +271,27 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
             if (includeExclude != null) {
                 longFilter = includeExclude.convertToLongFilter(config.format());
             }
-            return new SignificantLongTermsAggregator(name, factories, (ValuesSource.Numeric) valuesSource, config.format(),
-                    bucketCountThresholds, searchContext, parent, significanceHeuristic, this, longFilter, pipelineAggregators,
-                    metaData);
+            return new SignificantLongTermsAggregator(
+                name,
+                factories,
+                (ValuesSource.Numeric) valuesSource,
+                config.format(),
+                bucketCountThresholds,
+                searchContext,
+                parent,
+                significanceHeuristic,
+                this,
+                longFilter,
+                pipelineAggregators,
+                metaData
+            );
         }
 
-        throw new AggregationExecutionException("significant_terms aggregation cannot be applied to field ["
-                + config.fieldContext().field() + "]. It can only be applied to numeric or string fields.");
+        throw new AggregationExecutionException(
+            "significant_terms aggregation cannot be applied to field ["
+                + config.fieldContext().field()
+                + "]. It can only be applied to numeric or string fields."
+        );
     }
 
     public enum ExecutionMode {
@@ -258,22 +299,36 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
         MAP(new ParseField("map")) {
 
             @Override
-            Aggregator create(String name,
-                              AggregatorFactories factories,
-                              ValuesSource valuesSource,
-                              DocValueFormat format,
-                              TermsAggregator.BucketCountThresholds bucketCountThresholds,
-                              IncludeExclude includeExclude,
-                              SearchContext aggregationContext,
-                              Aggregator parent,
-                              SignificanceHeuristic significanceHeuristic,
-                              SignificantTermsAggregatorFactory termsAggregatorFactory,
-                              List<PipelineAggregator> pipelineAggregators,
-                              Map<String, Object> metaData) throws IOException {
+            Aggregator create(
+                String name,
+                AggregatorFactories factories,
+                ValuesSource valuesSource,
+                DocValueFormat format,
+                TermsAggregator.BucketCountThresholds bucketCountThresholds,
+                IncludeExclude includeExclude,
+                SearchContext aggregationContext,
+                Aggregator parent,
+                SignificanceHeuristic significanceHeuristic,
+                SignificantTermsAggregatorFactory termsAggregatorFactory,
+                List<PipelineAggregator> pipelineAggregators,
+                Map<String, Object> metaData
+            ) throws IOException {
 
                 final IncludeExclude.StringFilter filter = includeExclude == null ? null : includeExclude.convertToStringFilter(format);
-                return new SignificantStringTermsAggregator(name, factories, valuesSource, format, bucketCountThresholds, filter,
-                        aggregationContext, parent, significanceHeuristic, termsAggregatorFactory, pipelineAggregators, metaData);
+                return new SignificantStringTermsAggregator(
+                    name,
+                    factories,
+                    valuesSource,
+                    format,
+                    bucketCountThresholds,
+                    filter,
+                    aggregationContext,
+                    parent,
+                    significanceHeuristic,
+                    termsAggregatorFactory,
+                    pipelineAggregators,
+                    metaData
+                );
 
             }
 
@@ -281,24 +336,26 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
         GLOBAL_ORDINALS(new ParseField("global_ordinals")) {
 
             @Override
-            Aggregator create(String name,
-                              AggregatorFactories factories,
-                              ValuesSource valuesSource,
-                              DocValueFormat format,
-                              TermsAggregator.BucketCountThresholds bucketCountThresholds,
-                              IncludeExclude includeExclude,
-                              SearchContext aggregationContext,
-                              Aggregator parent,
-                              SignificanceHeuristic significanceHeuristic,
-                              SignificantTermsAggregatorFactory termsAggregatorFactory,
-                              List<PipelineAggregator> pipelineAggregators,
-                              Map<String, Object> metaData) throws IOException {
+            Aggregator create(
+                String name,
+                AggregatorFactories factories,
+                ValuesSource valuesSource,
+                DocValueFormat format,
+                TermsAggregator.BucketCountThresholds bucketCountThresholds,
+                IncludeExclude includeExclude,
+                SearchContext aggregationContext,
+                Aggregator parent,
+                SignificanceHeuristic significanceHeuristic,
+                SignificantTermsAggregatorFactory termsAggregatorFactory,
+                List<PipelineAggregator> pipelineAggregators,
+                Map<String, Object> metaData
+            ) throws IOException {
 
                 final IncludeExclude.OrdinalsFilter filter = includeExclude == null ? null : includeExclude.convertToOrdinalsFilter(format);
                 boolean remapGlobalOrd = true;
-                if (Aggregator.descendsFromBucketAggregator(parent) == false &&
-                        factories == AggregatorFactories.EMPTY &&
-                        includeExclude == null) {
+                if (Aggregator.descendsFromBucketAggregator(parent) == false
+                    && factories == AggregatorFactories.EMPTY
+                    && includeExclude == null) {
                     /**
                      * We don't need to remap global ords iff this aggregator:
                      *    - is not a child of a bucket aggregator AND
@@ -307,10 +364,21 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
                      **/
                     remapGlobalOrd = false;
                 }
-                return new GlobalOrdinalsSignificantTermsAggregator(name, factories,
-                        (ValuesSource.Bytes.WithOrdinals.FieldData) valuesSource, format, bucketCountThresholds, filter,
-                        aggregationContext, parent, remapGlobalOrd, significanceHeuristic, termsAggregatorFactory, pipelineAggregators,
-                        metaData);
+                return new GlobalOrdinalsSignificantTermsAggregator(
+                    name,
+                    factories,
+                    (ValuesSource.Bytes.WithOrdinals.FieldData) valuesSource,
+                    format,
+                    bucketCountThresholds,
+                    filter,
+                    aggregationContext,
+                    parent,
+                    remapGlobalOrd,
+                    significanceHeuristic,
+                    termsAggregatorFactory,
+                    pipelineAggregators,
+                    metaData
+                );
 
             }
         };
@@ -333,18 +401,20 @@ public class SignificantTermsAggregatorFactory extends ValuesSourceAggregatorFac
             this.parseField = parseField;
         }
 
-        abstract Aggregator create(String name,
-                                   AggregatorFactories factories,
-                                   ValuesSource valuesSource,
-                                   DocValueFormat format,
-                                   TermsAggregator.BucketCountThresholds bucketCountThresholds,
-                                   IncludeExclude includeExclude,
-                                   SearchContext aggregationContext,
-                                   Aggregator parent,
-                                   SignificanceHeuristic significanceHeuristic,
-                                   SignificantTermsAggregatorFactory termsAggregatorFactory,
-                                   List<PipelineAggregator> pipelineAggregators,
-                                   Map<String, Object> metaData) throws IOException;
+        abstract Aggregator create(
+            String name,
+            AggregatorFactories factories,
+            ValuesSource valuesSource,
+            DocValueFormat format,
+            TermsAggregator.BucketCountThresholds bucketCountThresholds,
+            IncludeExclude includeExclude,
+            SearchContext aggregationContext,
+            Aggregator parent,
+            SignificanceHeuristic significanceHeuristic,
+            SignificantTermsAggregatorFactory termsAggregatorFactory,
+            List<PipelineAggregator> pipelineAggregators,
+            Map<String, Object> metaData
+        ) throws IOException;
 
         @Override
         public String toString() {

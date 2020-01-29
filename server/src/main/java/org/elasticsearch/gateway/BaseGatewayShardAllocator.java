@@ -64,11 +64,14 @@ public abstract class BaseGatewayShardAllocator {
             }
 
             if (allocateUnassignedDecision.getAllocationDecision() == AllocationDecision.YES) {
-                unassignedIterator.initialize(allocateUnassignedDecision.getTargetNode().getId(),
+                unassignedIterator.initialize(
+                    allocateUnassignedDecision.getTargetNode().getId(),
                     allocateUnassignedDecision.getAllocationId(),
-                    shard.primary() ? ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE :
-                                      allocation.clusterInfo().getShardSize(shard, ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE),
-                    allocation.changes());
+                    shard.primary()
+                        ? ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE
+                        : allocation.clusterInfo().getShardSize(shard, ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE),
+                    allocation.changes()
+                );
             } else {
                 unassignedIterator.removeAndIgnore(allocateUnassignedDecision.getAllocationStatus(), allocation.changes());
             }
@@ -85,9 +88,11 @@ public abstract class BaseGatewayShardAllocator {
      * @param logger           the logger
      * @return an {@link AllocateUnassignedDecision} with the final decision of whether to allocate and details of the decision
      */
-    public abstract AllocateUnassignedDecision makeAllocationDecision(ShardRouting unassignedShard,
-                                                                      RoutingAllocation allocation,
-                                                                      Logger logger);
+    public abstract AllocateUnassignedDecision makeAllocationDecision(
+        ShardRouting unassignedShard,
+        RoutingAllocation allocation,
+        Logger logger
+    );
 
     /**
      * Builds decisions for all nodes in the cluster, so that the explain API can provide information on

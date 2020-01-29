@@ -29,8 +29,13 @@ import java.util.List;
 import java.util.Map;
 
 public class InternalFilter extends InternalSingleBucketAggregation implements Filter {
-    InternalFilter(String name, long docCount, InternalAggregations subAggregations, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    InternalFilter(
+        String name,
+        long docCount,
+        InternalAggregations subAggregations,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, docCount, subAggregations, pipelineAggregators, metaData);
     }
 

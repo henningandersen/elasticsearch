@@ -24,5 +24,4 @@ import org.elasticsearch.search.aggregations.metrics.ExtendedStats;
 /**
  * Extended Statistics over a set of buckets
  */
-public interface ExtendedStatsBucket extends ExtendedStats {
-}
+public interface ExtendedStatsBucket extends ExtendedStats {}

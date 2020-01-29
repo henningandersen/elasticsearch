@@ -53,9 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-
-public final class IpRangeAggregationBuilder
-        extends ValuesSourceAggregationBuilder<ValuesSource.Bytes, IpRangeAggregationBuilder> {
+public final class IpRangeAggregationBuilder extends ValuesSourceAggregationBuilder<ValuesSource.Bytes, IpRangeAggregationBuilder> {
     public static final String NAME = "ip_range";
     private static final ParseField MASK_FIELD = new ParseField("mask");
 
@@ -67,7 +65,8 @@ public final class IpRangeAggregationBuilder
         PARSER.declareBoolean(IpRangeAggregationBuilder::keyed, RangeAggregator.KEYED_FIELD);
 
         PARSER.declareObjectArray((agg, ranges) -> {
-            for (Range range : ranges) agg.addRange(range);
+            for (Range range : ranges)
+                agg.addRange(range);
         }, (p, c) -> IpRangeAggregationBuilder.parseRange(p), RangeAggregator.RANGES_FIELD);
     }
 
@@ -189,9 +188,7 @@ public final class IpRangeAggregationBuilder
                 return false;
             }
             Range that = (Range) obj;
-            return Objects.equals(key, that.key)
-                    && Objects.equals(from, that.from)
-                    && Objects.equals(to, that.to);
+            return Objects.equals(key, that.key) && Objects.equals(from, that.from) && Objects.equals(to, that.to);
         }
 
         @Override
@@ -225,7 +222,7 @@ public final class IpRangeAggregationBuilder
 
     protected IpRangeAggregationBuilder(IpRangeAggregationBuilder clone, Builder factoriesBuilder, Map<String, Object> metaData) {
         super(clone, factoriesBuilder, metaData);
-        this.ranges =  new ArrayList<>(clone.ranges);
+        this.ranges = new ArrayList<>(clone.ranges);
         this.keyed = clone.keyed;
     }
 
@@ -365,18 +362,19 @@ public final class IpRangeAggregationBuilder
 
     @Override
     protected ValuesSourceAggregatorFactory<ValuesSource.Bytes> innerBuild(
-        QueryShardContext queryShardContext, ValuesSourceConfig<ValuesSource.Bytes> config,
-        AggregatorFactory parent, Builder subFactoriesBuilder)
-                    throws IOException {
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource.Bytes> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         List<BinaryRangeAggregator.Range> ranges = new ArrayList<>();
-        if(this.ranges.size() == 0){
+        if (this.ranges.size() == 0) {
             throw new IllegalArgumentException("No [ranges] specified for the [" + this.getName() + "] aggregation");
         }
         for (Range range : this.ranges) {
             ranges.add(new BinaryRangeAggregator.Range(range.key, toBytesRef(range.from), toBytesRef(range.to)));
         }
-        return new BinaryRangeAggregatorFactory(name, config, ranges,
-                keyed, queryShardContext, parent, subFactoriesBuilder, metaData);
+        return new BinaryRangeAggregatorFactory(name, config, ranges, keyed, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 
     @Override
@@ -397,7 +395,6 @@ public final class IpRangeAggregationBuilder
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         IpRangeAggregationBuilder that = (IpRangeAggregationBuilder) obj;
-        return keyed == that.keyed
-            && ranges.equals(that.ranges);
+        return keyed == that.keyed && ranges.equals(that.ranges);
     }
 }

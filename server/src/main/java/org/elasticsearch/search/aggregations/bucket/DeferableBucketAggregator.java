@@ -36,8 +36,15 @@ public abstract class DeferableBucketAggregator extends BucketsAggregator {
 
     private DeferringBucketCollector recordingWrapper;
 
-    protected DeferableBucketAggregator(String name, AggregatorFactories factories, SearchContext context, Aggregator parent,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    protected DeferableBucketAggregator(
+        String name,
+        AggregatorFactories factories,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData);
     }
 

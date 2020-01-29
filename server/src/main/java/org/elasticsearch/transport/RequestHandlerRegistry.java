@@ -36,9 +36,15 @@ public class RequestHandlerRegistry<Request extends TransportRequest> {
     private final TaskManager taskManager;
     private final Writeable.Reader<Request> requestReader;
 
-    public RequestHandlerRegistry(String action, Writeable.Reader<Request> requestReader, TaskManager taskManager,
-                                  TransportRequestHandler<Request> handler, String executor, boolean forceExecution,
-                                  boolean canTripCircuitBreaker) {
+    public RequestHandlerRegistry(
+        String action,
+        Writeable.Reader<Request> requestReader,
+        TaskManager taskManager,
+        TransportRequestHandler<Request> handler,
+        String executor,
+        boolean forceExecution,
+        boolean canTripCircuitBreaker
+    ) {
         this.action = action;
         this.requestReader = requestReader;
         this.handler = handler;

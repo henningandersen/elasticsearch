@@ -41,8 +41,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
-public final class CardinalityAggregationBuilder
-    extends ValuesSourceAggregationBuilder.LeafOnly<ValuesSource, CardinalityAggregationBuilder> {
+public final class CardinalityAggregationBuilder extends ValuesSourceAggregationBuilder.LeafOnly<
+    ValuesSource,
+    CardinalityAggregationBuilder> {
 
     public static final String NAME = "cardinality";
 
@@ -108,7 +109,8 @@ public final class CardinalityAggregationBuilder
     public CardinalityAggregationBuilder precisionThreshold(long precisionThreshold) {
         if (precisionThreshold < 0) {
             throw new IllegalArgumentException(
-                    "[precisionThreshold] must be greater than or equal to 0. Found [" + precisionThreshold + "] in [" + name + "]");
+                "[precisionThreshold] must be greater than or equal to 0. Found [" + precisionThreshold + "] in [" + name + "]"
+            );
         }
         this.precisionThreshold = precisionThreshold;
         return this;
@@ -124,8 +126,12 @@ public final class CardinalityAggregationBuilder
     }
 
     @Override
-    protected CardinalityAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<ValuesSource> config,
-                                                      AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected CardinalityAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         return new CardinalityAggregatorFactory(name, config, precisionThreshold, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 

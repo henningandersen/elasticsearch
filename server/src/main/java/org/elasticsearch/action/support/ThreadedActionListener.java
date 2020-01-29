@@ -37,8 +37,13 @@ public final class ThreadedActionListener<Response> implements ActionListener<Re
     private final ActionListener<Response> listener;
     private final boolean forceExecution;
 
-    public ThreadedActionListener(Logger logger, ThreadPool threadPool, String executor, ActionListener<Response> listener,
-                                  boolean forceExecution) {
+    public ThreadedActionListener(
+        Logger logger,
+        ThreadPool threadPool,
+        String executor,
+        ActionListener<Response> listener,
+        boolean forceExecution
+    ) {
         this.logger = logger;
         this.threadPool = threadPool;
         this.executor = executor;

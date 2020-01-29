@@ -54,9 +54,19 @@ abstract class AbstractHDRPercentilesAggregator extends NumericMetricsAggregator
     protected final int numberOfSignificantValueDigits;
     protected final boolean keyed;
 
-    AbstractHDRPercentilesAggregator(String name, ValuesSource valuesSource, SearchContext context, Aggregator parent,
-            double[] keys, int numberOfSignificantValueDigits, boolean keyed, DocValueFormat formatter,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    AbstractHDRPercentilesAggregator(
+        String name,
+        ValuesSource valuesSource,
+        SearchContext context,
+        Aggregator parent,
+        double[] keys,
+        int numberOfSignificantValueDigits,
+        boolean keyed,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.keyed = keyed;
@@ -72,24 +82,26 @@ abstract class AbstractHDRPercentilesAggregator extends NumericMetricsAggregator
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         if (valuesSource == null) {
             return LeafBucketCollector.NO_OP_COLLECTOR;
         }
         final BigArrays bigArrays = context.bigArrays();
         if (valuesSource instanceof ValuesSource.Histogram) {
-            final HistogramValues values = ((ValuesSource.Histogram)valuesSource).getHistogramValues(ctx);
+            final HistogramValues values = ((ValuesSource.Histogram) valuesSource).getHistogramValues(ctx);
             return collectHistogramValues(values, bigArrays, sub);
         } else {
-            final SortedNumericDoubleValues values = ((ValuesSource.Numeric)valuesSource).doubleValues(ctx);
+            final SortedNumericDoubleValues values = ((ValuesSource.Numeric) valuesSource).doubleValues(ctx);
             return collectNumeric(values, bigArrays, sub);
         }
 
     }
 
-    private LeafBucketCollector collectNumeric(final SortedNumericDoubleValues values,
-                                               final BigArrays bigArrays, final LeafBucketCollector sub) {
+    private LeafBucketCollector collectNumeric(
+        final SortedNumericDoubleValues values,
+        final BigArrays bigArrays,
+        final LeafBucketCollector sub
+    ) {
         return new LeafBucketCollectorBase(sub, values) {
             @Override
             public void collect(int doc, long bucket) throws IOException {
@@ -104,8 +116,11 @@ abstract class AbstractHDRPercentilesAggregator extends NumericMetricsAggregator
         };
     }
 
-    private LeafBucketCollector collectHistogramValues(final HistogramValues values,
-                                                       final BigArrays bigArrays, final LeafBucketCollector sub) {
+    private LeafBucketCollector collectHistogramValues(
+        final HistogramValues values,
+        final BigArrays bigArrays,
+        final LeafBucketCollector sub
+    ) {
         return new LeafBucketCollectorBase(sub, values) {
             @Override
             public void collect(int doc, long bucket) throws IOException {

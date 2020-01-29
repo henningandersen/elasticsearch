@@ -219,7 +219,6 @@ public class RecoveryTargetTests extends ESTestCase {
             index.reset();
         }
 
-
         // before we start we must report 0
         assertThat(index.recoveredFilesPercent(), equalTo((float) 0.0));
         assertThat(index.recoveredBytesPercent(), equalTo((float) 0.0));
@@ -242,7 +241,6 @@ public class RecoveryTargetTests extends ESTestCase {
         assertThat(index.recoveredBytes(), equalTo(0L));
         assertThat(index.recoveredFilesPercent(), equalTo(filesToRecover.size() == 0 ? 100.0f : 0.0f));
         assertThat(index.recoveredBytesPercent(), equalTo(filesToRecover.size() == 0 ? 100.0f : 0.0f));
-
 
         long bytesToRecover = totalFileBytes - totalReusedBytes;
         boolean completeRecovery = bytesToRecover == 0 || randomBoolean();
@@ -326,16 +324,16 @@ public class RecoveryTargetTests extends ESTestCase {
             assertThat((double) index.recoveredFilesPercent(), equalTo(100.0));
             assertThat((double) index.recoveredBytesPercent(), equalTo(100.0));
         } else {
-            assertThat((double) index.recoveredFilesPercent(),
-                    closeTo(100.0 * index.recoveredFileCount() / index.totalRecoverFiles(), 0.1));
-            assertThat((double) index.recoveredBytesPercent(),
-                    closeTo(100.0 * index.recoveredBytes() / index.totalRecoverBytes(), 0.1));
+            assertThat(
+                (double) index.recoveredFilesPercent(),
+                closeTo(100.0 * index.recoveredFileCount() / index.totalRecoverFiles(), 0.1)
+            );
+            assertThat((double) index.recoveredBytesPercent(), closeTo(100.0 * index.recoveredBytes() / index.totalRecoverBytes(), 0.1));
         }
     }
 
     public void testStageSequenceEnforcement() {
-        final DiscoveryNode discoveryNode = new DiscoveryNode("1", buildNewFakeTransportAddress(), emptyMap(), emptySet(),
-            Version.CURRENT);
+        final DiscoveryNode discoveryNode = new DiscoveryNode("1", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT);
         Stage[] stages = Stage.values();
         int i = randomIntBetween(0, stages.length - 1);
         int j;
@@ -346,10 +344,17 @@ public class RecoveryTargetTests extends ESTestCase {
         stages[i] = stages[j];
         stages[j] = t;
         try {
-            ShardRouting shardRouting = TestShardRouting.newShardRouting(new ShardId("bla", "_na_", 0), discoveryNode.getId(),
-                randomBoolean(), ShardRoutingState.INITIALIZING);
-            RecoveryState state = new RecoveryState(shardRouting, discoveryNode,
-                shardRouting.recoverySource().getType() == RecoverySource.Type.PEER ? discoveryNode : null);
+            ShardRouting shardRouting = TestShardRouting.newShardRouting(
+                new ShardId("bla", "_na_", 0),
+                discoveryNode.getId(),
+                randomBoolean(),
+                ShardRoutingState.INITIALIZING
+            );
+            RecoveryState state = new RecoveryState(
+                shardRouting,
+                discoveryNode,
+                shardRouting.recoverySource().getType() == RecoverySource.Type.PEER ? discoveryNode : null
+            );
             for (Stage stage : stages) {
                 state.setStage(stage);
             }
@@ -363,10 +368,17 @@ public class RecoveryTargetTests extends ESTestCase {
         i = randomIntBetween(1, stages.length - 1);
         ArrayList<Stage> list = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(stages, 0, i)));
         list.addAll(Arrays.asList(stages));
-        ShardRouting shardRouting = TestShardRouting.newShardRouting(new ShardId("bla", "_na_", 0), discoveryNode.getId(),
-            randomBoolean(), ShardRoutingState.INITIALIZING);
-        RecoveryState state = new RecoveryState(shardRouting, discoveryNode,
-            shardRouting.recoverySource().getType() == RecoverySource.Type.PEER ? discoveryNode : null);
+        ShardRouting shardRouting = TestShardRouting.newShardRouting(
+            new ShardId("bla", "_na_", 0),
+            discoveryNode.getId(),
+            randomBoolean(),
+            ShardRoutingState.INITIALIZING
+        );
+        RecoveryState state = new RecoveryState(
+            shardRouting,
+            discoveryNode,
+            shardRouting.recoverySource().getType() == RecoverySource.Type.PEER ? discoveryNode : null
+        );
         for (Stage stage : list) {
             state.setStage(stage);
         }

@@ -49,13 +49,23 @@ class ScriptedMetricAggregatorFactory extends AggregatorFactory {
     private final ScriptedMetricAggContexts.InitScript.Factory initScript;
     private final Map<String, Object> initScriptParams;
 
-    ScriptedMetricAggregatorFactory(String name,
-                                    ScriptedMetricAggContexts.MapScript.Factory mapScript, Map<String, Object> mapScriptParams,
-                                    ScriptedMetricAggContexts.InitScript.Factory initScript, Map<String, Object> initScriptParams,
-                                    ScriptedMetricAggContexts.CombineScript.Factory combineScript,
-                                    Map<String, Object> combineScriptParams, Script reduceScript, Map<String, Object> aggParams,
-                                    SearchLookup lookup, QueryShardContext queryShardContext, AggregatorFactory parent,
-                                    AggregatorFactories.Builder subFactories, Map<String, Object> metaData) throws IOException {
+    ScriptedMetricAggregatorFactory(
+        String name,
+        ScriptedMetricAggContexts.MapScript.Factory mapScript,
+        Map<String, Object> mapScriptParams,
+        ScriptedMetricAggContexts.InitScript.Factory initScript,
+        Map<String, Object> initScriptParams,
+        ScriptedMetricAggContexts.CombineScript.Factory combineScript,
+        Map<String, Object> combineScriptParams,
+        Script reduceScript,
+        Map<String, Object> aggParams,
+        SearchLookup lookup,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactories,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, queryShardContext, parent, subFactories, metaData);
         this.mapScript = mapScript;
         this.mapScriptParams = mapScriptParams;
@@ -69,11 +79,13 @@ class ScriptedMetricAggregatorFactory extends AggregatorFactory {
     }
 
     @Override
-    public Aggregator createInternal(SearchContext searchContext,
-                                        Aggregator parent,
-                                        boolean collectsFromSingleBucket,
-                                        List<PipelineAggregator> pipelineAggregators,
-                                        Map<String, Object> metaData) throws IOException {
+    public Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         if (collectsFromSingleBucket == false) {
             return asMultiBucketAggregator(this, searchContext, parent);
         }
@@ -87,20 +99,35 @@ class ScriptedMetricAggregatorFactory extends AggregatorFactory {
         Map<String, Object> aggState = new HashMap<String, Object>();
 
         final ScriptedMetricAggContexts.InitScript initScript = this.initScript.newInstance(
-            mergeParams(aggParams, initScriptParams), aggState);
+            mergeParams(aggParams, initScriptParams),
+            aggState
+        );
         final ScriptedMetricAggContexts.MapScript.LeafFactory mapScript = this.mapScript.newFactory(
-            mergeParams(aggParams, mapScriptParams), aggState, lookup);
+            mergeParams(aggParams, mapScriptParams),
+            aggState,
+            lookup
+        );
         final ScriptedMetricAggContexts.CombineScript combineScript = this.combineScript.newInstance(
-            mergeParams(aggParams, combineScriptParams), aggState);
+            mergeParams(aggParams, combineScriptParams),
+            aggState
+        );
 
         final Script reduceScript = deepCopyScript(this.reduceScript, searchContext, aggParams);
         if (initScript != null) {
             initScript.execute();
             CollectionUtils.ensureNoSelfReferences(aggState, "Scripted metric aggs init script");
         }
-        return new ScriptedMetricAggregator(name, mapScript,
-                combineScript, reduceScript, aggState, searchContext, parent,
-                pipelineAggregators, metaData);
+        return new ScriptedMetricAggregator(
+            name,
+            mapScript,
+            combineScript,
+            reduceScript,
+            aggState,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
 
     private static Script deepCopyScript(Script script, SearchContext context, Map<String, Object> aggParams) {
@@ -129,14 +156,23 @@ class ScriptedMetricAggregatorFactory extends AggregatorFactory {
                 clonedList.add(deepCopyParams(o, context));
             }
             clone = (T) clonedList;
-        } else if (original instanceof String || original instanceof Integer || original instanceof Long || original instanceof Short
-            || original instanceof Byte || original instanceof Float || original instanceof Double || original instanceof Character
+        } else if (original instanceof String
+            || original instanceof Integer
+            || original instanceof Long
+            || original instanceof Short
+            || original instanceof Byte
+            || original instanceof Float
+            || original instanceof Double
+            || original instanceof Character
             || original instanceof Boolean) {
-            clone = original;
-        } else {
-            throw new SearchParseException(context.shardTarget(),
-                "Can only clone primitives, String, ArrayList, and HashMap. Found: " + original.getClass().getCanonicalName(), null);
-        }
+                clone = original;
+            } else {
+                throw new SearchParseException(
+                    context.shardTarget(),
+                    "Can only clone primitives, String, ArrayList, and HashMap. Found: " + original.getClass().getCanonicalName(),
+                    null
+                );
+            }
         return clone;
     }
 
@@ -147,8 +183,9 @@ class ScriptedMetricAggregatorFactory extends AggregatorFactory {
         // Add in agg params, throwing an exception if any conflicts are detected
         for (Map.Entry<String, Object> aggEntry : agg.entrySet()) {
             if (combined.putIfAbsent(aggEntry.getKey(), aggEntry.getValue()) != null) {
-                throw new IllegalArgumentException("Parameter name \"" + aggEntry.getKey() +
-                    "\" used in both aggregation and script parameters");
+                throw new IllegalArgumentException(
+                    "Parameter name \"" + aggEntry.getKey() + "\" used in both aggregation and script parameters"
+                );
             }
         }
 

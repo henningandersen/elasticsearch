@@ -97,13 +97,12 @@ public final class NoOpEngine extends ReadOnlyEngine {
             }
 
             @Override
-            public IndexCommit getIndexCommit()  {
+            public IndexCommit getIndexCommit() {
                 return indexCommit;
             }
 
             @Override
-            protected void doClose() {
-            }
+            protected void doClose() {}
 
             @Override
             public CacheHelper getReaderCacheHelper() {
@@ -156,8 +155,16 @@ public final class NoOpEngine extends ReadOnlyEngine {
                     translogDeletionPolicy.setTranslogGenerationOfLastCommit(lastCommitGeneration);
                     translogDeletionPolicy.setMinTranslogGenerationForRecovery(lastCommitGeneration);
 
-                    try (Translog translog = new Translog(translogConfig, translogUuid, translogDeletionPolicy,
-                        engineConfig.getGlobalCheckpointSupplier(), engineConfig.getPrimaryTermSupplier(), seqNo -> {})) {
+                    try (
+                        Translog translog = new Translog(
+                            translogConfig,
+                            translogUuid,
+                            translogDeletionPolicy,
+                            engineConfig.getGlobalCheckpointSupplier(),
+                            engineConfig.getPrimaryTermSupplier(),
+                            seqNo -> {}
+                        )
+                    ) {
                         translog.trimUnreferencedReaders();
                         // refresh the translog stats
                         this.translogStats = translog.stats();

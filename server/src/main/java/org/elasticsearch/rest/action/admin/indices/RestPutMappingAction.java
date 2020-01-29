@@ -43,7 +43,7 @@ public class RestPutMappingAction extends BaseRestHandler {
         controller.registerHandler(PUT, "/{index}/_mapping/", this);
         controller.registerHandler(POST, "/{index}/_mapping/", this);
 
-        //register the same paths, but with plural form _mappings
+        // register the same paths, but with plural form _mappings
         controller.registerHandler(PUT, "/{index}/_mappings/", this);
         controller.registerHandler(POST, "/{index}/_mappings/", this);
     }
@@ -57,8 +57,7 @@ public class RestPutMappingAction extends BaseRestHandler {
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
         PutMappingRequest putMappingRequest = putMappingRequest(Strings.splitStringByCommaToArray(request.param("index")));
 
-        Map<String, Object> sourceAsMap = XContentHelper.convertToMap(request.requiredContent(), false,
-            request.getXContentType()).v2();
+        Map<String, Object> sourceAsMap = XContentHelper.convertToMap(request.requiredContent(), false, request.getXContentType()).v2();
         if (MapperService.isMappingSourceTyped(MapperService.SINGLE_MAPPING_NAME, sourceAsMap)) {
             throw new IllegalArgumentException("Types cannot be provided in put mapping requests");
         }

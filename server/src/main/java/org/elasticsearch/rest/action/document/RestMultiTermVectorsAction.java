@@ -50,8 +50,7 @@ public class RestMultiTermVectorsAction extends BaseRestHandler {
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
         MultiTermVectorsRequest multiTermVectorsRequest = new MultiTermVectorsRequest();
-        TermVectorsRequest template = new TermVectorsRequest()
-            .index(request.param("index"));
+        TermVectorsRequest template = new TermVectorsRequest().index(request.param("index"));
 
         RestTermVectorsAction.readURIParameters(template, request);
         multiTermVectorsRequest.ids(Strings.commaDelimitedListToStringArray(request.param("ids")));

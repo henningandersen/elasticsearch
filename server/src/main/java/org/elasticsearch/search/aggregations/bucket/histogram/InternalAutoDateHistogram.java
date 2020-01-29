@@ -48,8 +48,9 @@ import java.util.Objects;
 /**
  * Implementation of {@link Histogram}.
  */
-public final class InternalAutoDateHistogram extends
-        InternalMultiBucketAggregation<InternalAutoDateHistogram, InternalAutoDateHistogram.Bucket> implements Histogram, HistogramFactory {
+public final class InternalAutoDateHistogram extends InternalMultiBucketAggregation<
+    InternalAutoDateHistogram,
+    InternalAutoDateHistogram.Bucket> implements Histogram, HistogramFactory {
 
     public static class Bucket extends InternalMultiBucketAggregation.InternalBucket implements Histogram.Bucket, KeyComparable<Bucket> {
 
@@ -58,8 +59,7 @@ public final class InternalAutoDateHistogram extends
         final InternalAggregations aggregations;
         protected final transient DocValueFormat format;
 
-        public Bucket(long key, long docCount, DocValueFormat format,
-                InternalAggregations aggregations) {
+        public Bucket(long key, long docCount, DocValueFormat format, InternalAggregations aggregations) {
             this.format = format;
             this.key = key;
             this.docCount = docCount;
@@ -84,9 +84,7 @@ public final class InternalAutoDateHistogram extends
             InternalAutoDateHistogram.Bucket that = (InternalAutoDateHistogram.Bucket) obj;
             // No need to take the keyed and format parameters into account,
             // they are already stored and tested on the InternalDateHistogram object
-            return key == that.key
-                    && docCount == that.docCount
-                    && Objects.equals(aggregations, that.aggregations);
+            return key == that.key && docCount == that.docCount && Objects.equals(aggregations, that.aggregations);
         }
 
         @Override
@@ -183,8 +181,8 @@ public final class InternalAutoDateHistogram extends
             }
             BucketInfo that = (BucketInfo) obj;
             return Objects.deepEquals(roundingInfos, that.roundingInfos)
-                    && Objects.equals(roundingIdx, that.roundingIdx)
-                    && Objects.equals(emptySubAggregations, that.emptySubAggregations);
+                && Objects.equals(roundingIdx, that.roundingIdx)
+                && Objects.equals(emptySubAggregations, that.emptySubAggregations);
         }
 
         @Override
@@ -199,8 +197,16 @@ public final class InternalAutoDateHistogram extends
     private final int targetBuckets;
     private long bucketInnerInterval;
 
-    InternalAutoDateHistogram(String name, List<Bucket> buckets, int targetBuckets, BucketInfo emptyBucketInfo, DocValueFormat formatter,
-                              List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData, long bucketInnerInterval) {
+    InternalAutoDateHistogram(
+        String name,
+        List<Bucket> buckets,
+        int targetBuckets,
+        BucketInfo emptyBucketInfo,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        long bucketInnerInterval
+    ) {
         super(name, pipelineAggregators, metaData);
         this.buckets = buckets;
         this.bucketInfo = emptyBucketInfo;
@@ -353,10 +359,14 @@ public final class InternalAutoDateHistogram extends
         return mergeBucketsIfNeeded(reducedBuckets, reduceRoundingIdx, reduceRoundingInfo, reduceContext);
     }
 
-    private BucketReduceResult mergeBucketsIfNeeded(List<Bucket> reducedBuckets, int reduceRoundingIdx, RoundingInfo reduceRoundingInfo,
-            ReduceContext reduceContext) {
+    private BucketReduceResult mergeBucketsIfNeeded(
+        List<Bucket> reducedBuckets,
+        int reduceRoundingIdx,
+        RoundingInfo reduceRoundingInfo,
+        ReduceContext reduceContext
+    ) {
         while (reducedBuckets.size() > (targetBuckets * reduceRoundingInfo.getMaximumInnerInterval())
-                && reduceRoundingIdx < bucketInfo.roundingInfos.length - 1) {
+            && reduceRoundingIdx < bucketInfo.roundingInfos.length - 1) {
             reduceRoundingIdx++;
             reduceRoundingInfo = bucketInfo.roundingInfos[reduceRoundingIdx];
             reducedBuckets = mergeBuckets(reducedBuckets, reduceRoundingInfo.rounding, reduceContext);
@@ -427,8 +437,13 @@ public final class InternalAutoDateHistogram extends
         if (list.isEmpty()) {
             return currentResult;
         }
-        int roundingIdx = getAppropriateRounding(list.get(0).key, list.get(list.size() - 1).key, currentResult.roundingIdx,
-                bucketInfo.roundingInfos, targetBuckets);
+        int roundingIdx = getAppropriateRounding(
+            list.get(0).key,
+            list.get(list.size() - 1).key,
+            currentResult.roundingIdx,
+            bucketInfo.roundingInfos,
+            targetBuckets
+        );
         RoundingInfo roundingInfo = bucketInfo.roundingInfos[roundingIdx];
         Rounding rounding = roundingInfo.rounding;
         // merge buckets using the new rounding
@@ -436,8 +451,10 @@ public final class InternalAutoDateHistogram extends
 
         Bucket lastBucket = null;
         ListIterator<Bucket> iter = list.listIterator();
-        InternalAggregations reducedEmptySubAggs = InternalAggregations.reduce(Collections.singletonList(bucketInfo.emptySubAggregations),
-                reduceContext);
+        InternalAggregations reducedEmptySubAggs = InternalAggregations.reduce(
+            Collections.singletonList(bucketInfo.emptySubAggregations),
+            reduceContext
+        );
 
         // Add the empty buckets within the data,
         // e.g. if the data series is [1,2,3,7] there're 3 empty buckets that will be created for 4,5,6
@@ -457,8 +474,7 @@ public final class InternalAutoDateHistogram extends
         return new BucketReduceResult(list, roundingInfo, roundingIdx, currentResult.innerInterval);
     }
 
-    static int getAppropriateRounding(long minKey, long maxKey, int roundingIdx,
-                                              RoundingInfo[] roundings, int targetBuckets) {
+    static int getAppropriateRounding(long minKey, long maxKey, int roundingIdx, RoundingInfo[] roundings, int targetBuckets) {
         if (roundingIdx == roundings.length - 1) {
             return roundingIdx;
         }
@@ -491,7 +507,7 @@ public final class InternalAutoDateHistogram extends
             }
             currentRoundingIdx++;
         } while (requiredBuckets > (targetBuckets * roundings[currentRoundingIdx - 1].getMaximumInnerInterval())
-                && currentRoundingIdx < roundings.length);
+            && currentRoundingIdx < roundings.length);
         // The loop will increase past the correct rounding index here so we
         // need to subtract one to get the rounding index we need
         return currentRoundingIdx - 1;
@@ -506,22 +522,36 @@ public final class InternalAutoDateHistogram extends
             reducedBucketsResult = addEmptyBuckets(reducedBucketsResult, reduceContext);
 
             // Adding empty buckets may have tipped us over the target so merge the buckets again if needed
-            reducedBucketsResult = mergeBucketsIfNeeded(reducedBucketsResult.buckets, reducedBucketsResult.roundingIdx,
-                    reducedBucketsResult.roundingInfo, reduceContext);
+            reducedBucketsResult = mergeBucketsIfNeeded(
+                reducedBucketsResult.buckets,
+                reducedBucketsResult.roundingIdx,
+                reducedBucketsResult.roundingInfo,
+                reduceContext
+            );
 
             // Now finally see if we need to merge consecutive buckets together to make a coarser interval at the same rounding
             reducedBucketsResult = maybeMergeConsecutiveBuckets(reducedBucketsResult, reduceContext);
         }
 
-        BucketInfo bucketInfo = new BucketInfo(this.bucketInfo.roundingInfos, reducedBucketsResult.roundingIdx,
-                this.bucketInfo.emptySubAggregations);
+        BucketInfo bucketInfo = new BucketInfo(
+            this.bucketInfo.roundingInfos,
+            reducedBucketsResult.roundingIdx,
+            this.bucketInfo.emptySubAggregations
+        );
 
-        return new InternalAutoDateHistogram(getName(), reducedBucketsResult.buckets, targetBuckets, bucketInfo, format,
-                pipelineAggregators(), getMetaData(), reducedBucketsResult.innerInterval);
+        return new InternalAutoDateHistogram(
+            getName(),
+            reducedBucketsResult.buckets,
+            targetBuckets,
+            bucketInfo,
+            format,
+            pipelineAggregators(),
+            getMetaData(),
+            reducedBucketsResult.innerInterval
+        );
     }
 
-    private BucketReduceResult maybeMergeConsecutiveBuckets(BucketReduceResult reducedBucketsResult,
-                                                                   ReduceContext reduceContext) {
+    private BucketReduceResult maybeMergeConsecutiveBuckets(BucketReduceResult reducedBucketsResult, ReduceContext reduceContext) {
         List<Bucket> buckets = reducedBucketsResult.buckets;
         RoundingInfo roundingInfo = reducedBucketsResult.roundingInfo;
         int roundingIdx = reducedBucketsResult.roundingIdx;
@@ -539,8 +569,13 @@ public final class InternalAutoDateHistogram extends
         return reducedBucketsResult;
     }
 
-    private BucketReduceResult mergeConsecutiveBuckets(List<Bucket> reducedBuckets, int mergeInterval, int roundingIdx,
-            RoundingInfo roundingInfo, ReduceContext reduceContext) {
+    private BucketReduceResult mergeConsecutiveBuckets(
+        List<Bucket> reducedBuckets,
+        int mergeInterval,
+        int roundingIdx,
+        RoundingInfo roundingInfo,
+        ReduceContext reduceContext
+    ) {
         List<Bucket> mergedBuckets = new ArrayList<>();
         List<Bucket> sameKeyedBuckets = new ArrayList<>();
 
@@ -609,9 +644,7 @@ public final class InternalAutoDateHistogram extends
         if (super.equals(obj) == false) return false;
 
         InternalAutoDateHistogram that = (InternalAutoDateHistogram) obj;
-        return Objects.equals(buckets, that.buckets)
-                && Objects.equals(format, that.format)
-                && Objects.equals(bucketInfo, that.bucketInfo);
+        return Objects.equals(buckets, that.buckets) && Objects.equals(format, that.format) && Objects.equals(bucketInfo, that.bucketInfo);
     }
 
     @Override

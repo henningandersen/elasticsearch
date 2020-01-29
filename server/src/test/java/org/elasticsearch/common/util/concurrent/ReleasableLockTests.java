@@ -79,10 +79,12 @@ public class ReleasableLockTests extends ESTestCase {
     }
 
     private void acquire(final ReleasableLock lockToAcquire, final ReleasableLock otherLock) {
-        try (@SuppressWarnings("unused") Releasable outer = lockToAcquire.acquire()) {
+        try (@SuppressWarnings("unused")
+        Releasable outer = lockToAcquire.acquire()) {
             assertTrue(lockToAcquire.isHeldByCurrentThread());
             assertFalse(otherLock.isHeldByCurrentThread());
-            try (@SuppressWarnings("unused") Releasable inner = lockToAcquire.acquire()) {
+            try (@SuppressWarnings("unused")
+            Releasable inner = lockToAcquire.acquire()) {
                 assertTrue(lockToAcquire.isHeldByCurrentThread());
                 assertFalse(otherLock.isHeldByCurrentThread());
             }

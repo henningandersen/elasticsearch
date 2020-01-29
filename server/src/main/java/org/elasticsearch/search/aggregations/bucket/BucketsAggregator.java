@@ -42,8 +42,15 @@ public abstract class BucketsAggregator extends AggregatorBase {
     private final IntConsumer multiBucketConsumer;
     private IntArray docCounts;
 
-    public BucketsAggregator(String name, AggregatorFactories factories, SearchContext context, Aggregator parent,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    public BucketsAggregator(
+        String name,
+        AggregatorFactories factories,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData);
         bigArrays = context.bigArrays();
         docCounts = bigArrays.newIntArray(1, true);

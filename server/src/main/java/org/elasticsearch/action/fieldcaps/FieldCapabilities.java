@@ -59,8 +59,7 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
 
     private static Map<String, Set<String>> mapToMapOfSets(Map<String, String> map) {
         final Function<Map.Entry<String, String>, String> entryValueFunction = Map.Entry::getValue;
-        return map.entrySet().stream().collect(
-                Collectors.toUnmodifiableMap(Map.Entry::getKey, entryValueFunction.andThen(Set::of)));
+        return map.entrySet().stream().collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, entryValueFunction.andThen(Set::of)));
     }
 
     private final String name;
@@ -82,8 +81,7 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
      * @param isAggregatable Whether this field can be aggregated on.
      * @param meta Metadata about the field.
      */
-    public FieldCapabilities(String name, String type, boolean isSearchable, boolean isAggregatable,
-            Map<String, String> meta) {
+    public FieldCapabilities(String name, String type, boolean isSearchable, boolean isAggregatable, Map<String, String> meta) {
         this(name, type, isSearchable, isAggregatable, null, null, null, mapToMapOfSets(Objects.requireNonNull(meta)));
     }
 
@@ -101,12 +99,16 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
      *                               or null if the field is aggregatable in all indices.
      * @param meta Merged metadata across indices.
      */
-    public FieldCapabilities(String name, String type,
-                      boolean isSearchable, boolean isAggregatable,
-                      String[] indices,
-                      String[] nonSearchableIndices,
-                      String[] nonAggregatableIndices,
-                      Map<String, Set<String>> meta) {
+    public FieldCapabilities(
+        String name,
+        String type,
+        boolean isSearchable,
+        boolean isAggregatable,
+        String[] indices,
+        String[] nonSearchableIndices,
+        String[] nonAggregatableIndices,
+        Map<String, Set<String>> meta
+    ) {
         this.name = name;
         this.type = type;
         this.isSearchable = isSearchable;
@@ -184,14 +186,17 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
     private static final ConstructingObjectParser<FieldCapabilities, String> PARSER = new ConstructingObjectParser<>(
         "field_capabilities",
         true,
-        (a, name) -> new FieldCapabilities(name,
+        (a, name) -> new FieldCapabilities(
+            name,
             (String) a[0],
             (boolean) a[1],
             (boolean) a[2],
             a[3] != null ? ((List<String>) a[3]).toArray(new String[0]) : null,
             a[4] != null ? ((List<String>) a[4]).toArray(new String[0]) : null,
             a[5] != null ? ((List<String>) a[5]).toArray(new String[0]) : null,
-            a[6] != null ? ((Map<String, Set<String>>) a[6]) : Collections.emptyMap()));
+            a[6] != null ? ((Map<String, Set<String>>) a[6]) : Collections.emptyMap()
+        )
+    );
 
     static {
         PARSER.declareString(ConstructingObjectParser.constructorArg(), TYPE_FIELD);
@@ -200,8 +205,11 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
         PARSER.declareStringArray(ConstructingObjectParser.optionalConstructorArg(), INDICES_FIELD);
         PARSER.declareStringArray(ConstructingObjectParser.optionalConstructorArg(), NON_SEARCHABLE_INDICES_FIELD);
         PARSER.declareStringArray(ConstructingObjectParser.optionalConstructorArg(), NON_AGGREGATABLE_INDICES_FIELD);
-        PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(),
-                (parser, context) -> parser.map(HashMap::new, p -> Set.copyOf(p.list())), META_FIELD);
+        PARSER.declareObject(
+            ConstructingObjectParser.optionalConstructorArg(),
+            (parser, context) -> parser.map(HashMap::new, p -> Set.copyOf(p.list())),
+            META_FIELD
+        );
     }
 
     /**
@@ -268,14 +276,14 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FieldCapabilities that = (FieldCapabilities) o;
-        return isSearchable == that.isSearchable &&
-            isAggregatable == that.isAggregatable &&
-            Objects.equals(name, that.name) &&
-            Objects.equals(type, that.type) &&
-            Arrays.equals(indices, that.indices) &&
-            Arrays.equals(nonSearchableIndices, that.nonSearchableIndices) &&
-            Arrays.equals(nonAggregatableIndices, that.nonAggregatableIndices) &&
-            Objects.equals(meta, that.meta);
+        return isSearchable == that.isSearchable
+            && isAggregatable == that.isAggregatable
+            && Objects.equals(name, that.name)
+            && Objects.equals(type, that.type)
+            && Arrays.equals(indices, that.indices)
+            && Arrays.equals(nonSearchableIndices, that.nonSearchableIndices)
+            && Arrays.equals(nonAggregatableIndices, that.nonAggregatableIndices)
+            && Objects.equals(meta, that.meta);
     }
 
     @Override
@@ -322,8 +330,7 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
         void add(String index, boolean search, boolean agg, Map<String, String> meta) {
             add(index, search, agg);
             for (Map.Entry<String, String> entry : meta.entrySet()) {
-                this.meta.computeIfAbsent(entry.getKey(), key -> new HashSet<>())
-                        .add(entry.getValue());
+                this.meta.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).add(entry.getValue());
             }
         }
 
@@ -333,8 +340,7 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
         void merge(String index, boolean search, boolean agg, Map<String, Set<String>> meta) {
             add(index, search, agg);
             for (Map.Entry<String, Set<String>> entry : meta.entrySet()) {
-                this.meta.computeIfAbsent(entry.getKey(), key -> new HashSet<>())
-                        .addAll(entry.getValue());
+                this.meta.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).addAll(entry.getValue());
             }
         }
 
@@ -348,16 +354,13 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
              * https://bugs.eclipse.org/bugs/show_bug.cgi?id=511750 */
             Collections.sort(indiceList, Comparator.comparing((IndexCaps o) -> o.name));
             if (withIndices) {
-                indices = indiceList.stream()
-                    .map(caps -> caps.name)
-                    .toArray(String[]::new);
+                indices = indiceList.stream().map(caps -> caps.name).toArray(String[]::new);
             } else {
                 indices = null;
             }
 
             final String[] nonSearchableIndices;
-            if (isSearchable == false &&
-                indiceList.stream().anyMatch((caps) -> caps.isSearchable)) {
+            if (isSearchable == false && indiceList.stream().anyMatch((caps) -> caps.isSearchable)) {
                 // Iff this field is searchable in some indices AND non-searchable in others
                 // we record the list of non-searchable indices
                 nonSearchableIndices = indiceList.stream()
@@ -369,8 +372,7 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
             }
 
             final String[] nonAggregatableIndices;
-            if (isAggregatable == false &&
-                indiceList.stream().anyMatch((caps) -> caps.isAggregatable)) {
+            if (isAggregatable == false && indiceList.stream().anyMatch((caps) -> caps.isAggregatable)) {
                 // Iff this field is aggregatable in some indices AND non-searchable in others
                 // we keep the list of non-aggregatable indices
                 nonAggregatableIndices = indiceList.stream()
@@ -381,11 +383,19 @@ public class FieldCapabilities implements Writeable, ToXContentObject {
                 nonAggregatableIndices = null;
             }
             final Function<Map.Entry<String, Set<String>>, Set<String>> entryValueFunction = Map.Entry::getValue;
-            Map<String, Set<String>> immutableMeta = meta.entrySet().stream()
-                    .collect(Collectors.toUnmodifiableMap(
-                            Map.Entry::getKey, entryValueFunction.andThen(Set::copyOf)));
-            return new FieldCapabilities(name, type, isSearchable, isAggregatable,
-                indices, nonSearchableIndices, nonAggregatableIndices, immutableMeta);
+            Map<String, Set<String>> immutableMeta = meta.entrySet()
+                .stream()
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, entryValueFunction.andThen(Set::copyOf)));
+            return new FieldCapabilities(
+                name,
+                type,
+                isSearchable,
+                isAggregatable,
+                indices,
+                nonSearchableIndices,
+                nonAggregatableIndices,
+                immutableMeta
+            );
         }
     }
 

@@ -161,8 +161,7 @@ public class SpanFirstQueryBuilder extends AbstractQueryBuilder<SpanFirstQueryBu
 
     @Override
     protected boolean doEquals(SpanFirstQueryBuilder other) {
-        return Objects.equals(matchBuilder, other.matchBuilder) &&
-               Objects.equals(end, other.end);
+        return Objects.equals(matchBuilder, other.matchBuilder) && Objects.equals(end, other.end);
     }
 
     @Override

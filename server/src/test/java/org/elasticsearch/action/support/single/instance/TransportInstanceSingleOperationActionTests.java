@@ -99,11 +99,22 @@ public class TransportInstanceSingleOperationActionTests extends ESTestCase {
     class TestTransportInstanceSingleOperationAction extends TransportInstanceSingleOperationAction<Request, Response> {
         private final Map<ShardId, Object> shards = new HashMap<>();
 
-        TestTransportInstanceSingleOperationAction(String actionName, TransportService transportService,
-                                                   ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                                                   Writeable.Reader<Request> request) {
-            super(actionName, THREAD_POOL, TransportInstanceSingleOperationActionTests.this.clusterService, transportService,
-                actionFilters, indexNameExpressionResolver, request);
+        TestTransportInstanceSingleOperationAction(
+            String actionName,
+            TransportService transportService,
+            ActionFilters actionFilters,
+            IndexNameExpressionResolver indexNameExpressionResolver,
+            Writeable.Reader<Request> request
+        ) {
+            super(
+                actionName,
+                THREAD_POOL,
+                TransportInstanceSingleOperationActionTests.this.clusterService,
+                transportService,
+                actionFilters,
+                indexNameExpressionResolver,
+                request
+            );
         }
 
         public Map<ShardId, Object> getResults() {
@@ -126,8 +137,7 @@ public class TransportInstanceSingleOperationActionTests extends ESTestCase {
         }
 
         @Override
-        protected void resolveRequest(ClusterState state, Request request) {
-        }
+        protected void resolveRequest(ClusterState state, Request request) {}
 
         @Override
         protected ShardIterator shards(ClusterState clusterState, Request request) {
@@ -153,16 +163,22 @@ public class TransportInstanceSingleOperationActionTests extends ESTestCase {
         super.setUp();
         transport = new CapturingTransport();
         clusterService = createClusterService(THREAD_POOL);
-        transportService = transport.createTransportService(clusterService.getSettings(), THREAD_POOL,
-            TransportService.NOOP_TRANSPORT_INTERCEPTOR, x -> clusterService.localNode(), null, Collections.emptySet());
+        transportService = transport.createTransportService(
+            clusterService.getSettings(),
+            THREAD_POOL,
+            TransportService.NOOP_TRANSPORT_INTERCEPTOR,
+            x -> clusterService.localNode(),
+            null,
+            Collections.emptySet()
+        );
         transportService.start();
         transportService.acceptIncomingRequests();
         action = new TestTransportInstanceSingleOperationAction(
-                "indices:admin/test",
-                transportService,
-                new ActionFilters(new HashSet<>()),
-                new MyResolver(),
-                Request::new
+            "indices:admin/test",
+            transportService,
+            new ActionFilters(new HashSet<>()),
+            new MyResolver(),
+            Request::new
         );
     }
 
@@ -185,7 +201,7 @@ public class TransportInstanceSingleOperationActionTests extends ESTestCase {
         Request request = new Request();
         PlainActionFuture<Response> listener = new PlainActionFuture<>();
         ClusterBlocks.Builder block = ClusterBlocks.builder()
-                .addGlobalBlock(new ClusterBlock(1, "", false, true, false, RestStatus.SERVICE_UNAVAILABLE, ClusterBlockLevel.ALL));
+            .addGlobalBlock(new ClusterBlock(1, "", false, true, false, RestStatus.SERVICE_UNAVAILABLE, ClusterBlockLevel.ALL));
         setState(clusterService, ClusterState.builder(clusterService.state()).blocks(block));
         try {
             action.new AsyncSingleAction(request, listener).start();
@@ -221,8 +237,10 @@ public class TransportInstanceSingleOperationActionTests extends ESTestCase {
         long requestId = transport.capturedRequests()[0].requestId;
         transport.clear();
         // this should not trigger retry or anything and the listener should report exception immediately
-        transport.handleRemoteError(requestId, new TransportException("a generic transport exception",
-            new Exception("generic test exception")));
+        transport.handleRemoteError(
+            requestId,
+            new TransportException("a generic transport exception", new Exception("generic test exception"))
+        );
 
         try {
             // result should return immediately
@@ -305,11 +323,11 @@ public class TransportInstanceSingleOperationActionTests extends ESTestCase {
 
     public void testUnresolvableRequestDoesNotHang() throws InterruptedException, ExecutionException, TimeoutException {
         action = new TestTransportInstanceSingleOperationAction(
-                "indices:admin/test_unresolvable",
-                transportService,
-                new ActionFilters(new HashSet<>()),
-                new MyResolver(),
-                Request::new
+            "indices:admin/test_unresolvable",
+            transportService,
+            new ActionFilters(new HashSet<>()),
+            new MyResolver(),
+            Request::new
         ) {
             @Override
             protected void resolveRequest(ClusterState state, Request request) {

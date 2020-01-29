@@ -45,8 +45,7 @@ public class PublishRequest {
 
         PublishRequest that = (PublishRequest) o;
 
-        return acceptedState.term() == that.acceptedState.term() &&
-            acceptedState.version() == that.acceptedState.version();
+        return acceptedState.term() == that.acceptedState.term() && acceptedState.version() == that.acceptedState.version();
     }
 
     @Override
@@ -56,8 +55,6 @@ public class PublishRequest {
 
     @Override
     public String toString() {
-        return "PublishRequest{term=" + acceptedState.term()
-            + ", version=" + acceptedState.version()
-            + ", state=" + acceptedState + '}';
+        return "PublishRequest{term=" + acceptedState.term() + ", version=" + acceptedState.version() + ", state=" + acceptedState + '}';
     }
 }

@@ -61,8 +61,10 @@ public class XContentHelperTests extends ESTestCase {
     public void testMergingListValuesAreMapsOfOne() {
         Map<String, Object> defaults = getMap("test", getList(getNamedMap("name1", "t1", "1"), getNamedMap("name2", "t2", "2")));
         Map<String, Object> content = getMap("test", getList(getNamedMap("name2", "t3", "3"), getNamedMap("name4", "t4", "4")));
-        Map<String, Object> expected = getMap("test",
-                getList(getNamedMap("name2", "t2", "2", "t3", "3"), getNamedMap("name4", "t4", "4"), getNamedMap("name1", "t1", "1")));
+        Map<String, Object> expected = getMap(
+            "test",
+            getList(getNamedMap("name2", "t2", "2", "t3", "3"), getNamedMap("name4", "t4", "4"), getNamedMap("name1", "t1", "1"))
+        );
 
         XContentHelper.mergeDefaults(content, defaults);
 
@@ -94,8 +96,10 @@ public class XContentHelperTests extends ESTestCase {
             expectThrows(IOException.class, () -> XContentHelper.toXContent(toXContent, xContentType, randomBoolean()));
         } else {
             BytesReference bytes = XContentHelper.toXContent(toXContent, xContentType, randomBoolean());
-            try (XContentParser parser = xContentType.xContent()
-                    .createParser(NamedXContentRegistry.EMPTY, DeprecationHandler.THROW_UNSUPPORTED_OPERATION, bytes.streamInput())) {
+            try (
+                XContentParser parser = xContentType.xContent()
+                    .createParser(NamedXContentRegistry.EMPTY, DeprecationHandler.THROW_UNSUPPORTED_OPERATION, bytes.streamInput())
+            ) {
                 assertEquals(XContentParser.Token.START_OBJECT, parser.nextToken());
                 assertEquals(XContentParser.Token.FIELD_NAME, parser.nextToken());
                 assertTrue(parser.nextToken().isValue());

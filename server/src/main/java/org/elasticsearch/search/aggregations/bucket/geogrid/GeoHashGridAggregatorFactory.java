@@ -45,10 +45,19 @@ public class GeoHashGridAggregatorFactory extends ValuesSourceAggregatorFactory<
     private final int shardSize;
     private final GeoBoundingBox geoBoundingBox;
 
-    GeoHashGridAggregatorFactory(String name, ValuesSourceConfig<ValuesSource.GeoPoint> config, int precision, int requiredSize,
-                                 int shardSize, GeoBoundingBox geoBoundingBox, QueryShardContext queryShardContext,
-                                 AggregatorFactory parent, AggregatorFactories.Builder subFactoriesBuilder,
-                                 Map<String, Object> metaData) throws IOException {
+    GeoHashGridAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource.GeoPoint> config,
+        int precision,
+        int requiredSize,
+        int shardSize,
+        GeoBoundingBox geoBoundingBox,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.precision = precision;
         this.requiredSize = requiredSize;
@@ -57,12 +66,19 @@ public class GeoHashGridAggregatorFactory extends ValuesSourceAggregatorFactory<
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        final InternalAggregation aggregation = new InternalGeoHashGrid(name, requiredSize,
-                Collections.emptyList(), pipelineAggregators, metaData);
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        final InternalAggregation aggregation = new InternalGeoHashGrid(
+            name,
+            requiredSize,
+            Collections.emptyList(),
+            pipelineAggregators,
+            metaData
+        );
         return new NonCollectingAggregator(name, searchContext, parent, pipelineAggregators, metaData) {
             @Override
             public InternalAggregation buildEmptyAggregation() {
@@ -72,17 +88,28 @@ public class GeoHashGridAggregatorFactory extends ValuesSourceAggregatorFactory<
     }
 
     @Override
-    protected Aggregator doCreateInternal(final ValuesSource.GeoPoint valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator doCreateInternal(
+        final ValuesSource.GeoPoint valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         if (collectsFromSingleBucket == false) {
             return asMultiBucketAggregator(this, searchContext, parent);
         }
         CellIdSource cellIdSource = new CellIdSource(valuesSource, precision, geoBoundingBox, Geohash::longEncode);
-        return new GeoHashGridAggregator(name, factories, cellIdSource, requiredSize, shardSize,
-            searchContext, parent, pipelineAggregators, metaData);
+        return new GeoHashGridAggregator(
+            name,
+            factories,
+            cellIdSource,
+            requiredSize,
+            shardSize,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
 }

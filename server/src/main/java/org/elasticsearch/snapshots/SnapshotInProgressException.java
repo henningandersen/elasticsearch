@@ -44,4 +44,3 @@ public class SnapshotInProgressException extends ElasticsearchException {
         return RestStatus.BAD_REQUEST;
     }
 }
-

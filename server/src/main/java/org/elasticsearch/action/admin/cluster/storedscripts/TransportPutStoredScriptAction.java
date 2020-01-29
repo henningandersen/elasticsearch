@@ -42,11 +42,23 @@ public class TransportPutStoredScriptAction extends TransportMasterNodeAction<Pu
     private final ScriptService scriptService;
 
     @Inject
-    public TransportPutStoredScriptAction(TransportService transportService, ClusterService clusterService,
-                                          ThreadPool threadPool, ActionFilters actionFilters,
-                                          IndexNameExpressionResolver indexNameExpressionResolver, ScriptService scriptService) {
-        super(PutStoredScriptAction.NAME, transportService, clusterService, threadPool, actionFilters,
-                PutStoredScriptRequest::new, indexNameExpressionResolver);
+    public TransportPutStoredScriptAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        ScriptService scriptService
+    ) {
+        super(
+            PutStoredScriptAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            PutStoredScriptRequest::new,
+            indexNameExpressionResolver
+        );
         this.scriptService = scriptService;
     }
 
@@ -61,8 +73,12 @@ public class TransportPutStoredScriptAction extends TransportMasterNodeAction<Pu
     }
 
     @Override
-    protected void masterOperation(Task task, PutStoredScriptRequest request, ClusterState state,
-                                   ActionListener<AcknowledgedResponse> listener) throws Exception {
+    protected void masterOperation(
+        Task task,
+        PutStoredScriptRequest request,
+        ClusterState state,
+        ActionListener<AcknowledgedResponse> listener
+    ) throws Exception {
         scriptService.putStoredScript(clusterService, request, listener);
     }
 

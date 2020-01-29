@@ -35,24 +35,42 @@ import org.elasticsearch.transport.TransportService;
 import java.io.IOException;
 import java.util.List;
 
-public class TransportNodesInfoAction extends TransportNodesAction<NodesInfoRequest,
-                                                                   NodesInfoResponse,
-                                                                   TransportNodesInfoAction.NodeInfoRequest,
-                                                                   NodeInfo> {
+public class TransportNodesInfoAction extends TransportNodesAction<
+    NodesInfoRequest,
+    NodesInfoResponse,
+    TransportNodesInfoAction.NodeInfoRequest,
+    NodeInfo> {
 
     private final NodeService nodeService;
 
     @Inject
-    public TransportNodesInfoAction(ThreadPool threadPool, ClusterService clusterService,
-                                    TransportService transportService, NodeService nodeService, ActionFilters actionFilters) {
-        super(NodesInfoAction.NAME, threadPool, clusterService, transportService, actionFilters,
-            NodesInfoRequest::new, NodeInfoRequest::new, ThreadPool.Names.MANAGEMENT, NodeInfo.class);
+    public TransportNodesInfoAction(
+        ThreadPool threadPool,
+        ClusterService clusterService,
+        TransportService transportService,
+        NodeService nodeService,
+        ActionFilters actionFilters
+    ) {
+        super(
+            NodesInfoAction.NAME,
+            threadPool,
+            clusterService,
+            transportService,
+            actionFilters,
+            NodesInfoRequest::new,
+            NodeInfoRequest::new,
+            ThreadPool.Names.MANAGEMENT,
+            NodeInfo.class
+        );
         this.nodeService = nodeService;
     }
 
     @Override
-    protected NodesInfoResponse newResponse(NodesInfoRequest nodesInfoRequest,
-                                            List<NodeInfo> responses, List<FailedNodeException> failures) {
+    protected NodesInfoResponse newResponse(
+        NodesInfoRequest nodesInfoRequest,
+        List<NodeInfo> responses,
+        List<FailedNodeException> failures
+    ) {
         return new NodesInfoResponse(clusterService.getClusterName(), responses, failures);
     }
 
@@ -69,8 +87,18 @@ public class TransportNodesInfoAction extends TransportNodesAction<NodesInfoRequ
     @Override
     protected NodeInfo nodeOperation(NodeInfoRequest nodeRequest, Task task) {
         NodesInfoRequest request = nodeRequest.request;
-        return nodeService.info(request.settings(), request.os(), request.process(), request.jvm(), request.threadPool(),
-                request.transport(), request.http(), request.plugins(), request.ingest(), request.indices());
+        return nodeService.info(
+            request.settings(),
+            request.os(),
+            request.process(),
+            request.jvm(),
+            request.threadPool(),
+            request.transport(),
+            request.http(),
+            request.plugins(),
+            request.ingest(),
+            request.indices()
+        );
     }
 
     public static class NodeInfoRequest extends BaseNodeRequest {

@@ -54,21 +54,22 @@ public class RestUpdateActionTests extends RestActionTestCase {
         } else {
             params.put("version_type", randomFrom(VersionType.values()).name());
         }
-        String content =
-            "{\n" +
-                "    \"doc\" : {\n" +
-                "        \"name\" : \"new_name\"\n" +
-                "    }\n" +
-                "}";
-        FakeRestRequest updateRequest = new FakeRestRequest.Builder(xContentRegistry())
-            .withMethod(RestRequest.Method.POST)
+        String content = "{\n" + "    \"doc\" : {\n" + "        \"name\" : \"new_name\"\n" + "    }\n" + "}";
+        FakeRestRequest updateRequest = new FakeRestRequest.Builder(xContentRegistry()).withMethod(RestRequest.Method.POST)
             .withPath("test/_update/1")
             .withParams(params)
             .withContent(new BytesArray(content), XContentType.JSON)
             .build();
-        ActionRequestValidationException e = expectThrows(ActionRequestValidationException.class,
-            () -> action.prepareRequest(updateRequest, mock(NodeClient.class)));
-        assertThat(e.getMessage(), containsString("internal versioning can not be used for optimistic concurrency control. " +
-            "Please use `if_seq_no` and `if_primary_term` instead"));
+        ActionRequestValidationException e = expectThrows(
+            ActionRequestValidationException.class,
+            () -> action.prepareRequest(updateRequest, mock(NodeClient.class))
+        );
+        assertThat(
+            e.getMessage(),
+            containsString(
+                "internal versioning can not be used for optimistic concurrency control. "
+                    + "Please use `if_seq_no` and `if_primary_term` instead"
+            )
+        );
     }
 }

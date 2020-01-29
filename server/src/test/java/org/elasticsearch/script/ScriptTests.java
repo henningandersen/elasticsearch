@@ -80,8 +80,8 @@ public class ScriptTests extends ESTestCase {
             scriptType,
             scriptType == ScriptType.STORED ? null : randomFrom("_lang1", "_lang2", "_lang3"),
             script,
-            scriptType == ScriptType.INLINE ?
-                    Collections.singletonMap(Script.CONTENT_TYPE_OPTION, XContentType.JSON.mediaType()) : null, params
+            scriptType == ScriptType.INLINE ? Collections.singletonMap(Script.CONTENT_TYPE_OPTION, XContentType.JSON.mediaType()) : null,
+            params
         );
     }
 

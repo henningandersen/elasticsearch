@@ -70,8 +70,13 @@ public class SortedNumericDVIndexFieldData extends DocValuesIndexFieldData imple
      * Values are casted to the provided <code>targetNumericType</code> type if it doesn't
      * match the field's <code>numericType</code>.
      */
-    public SortField sortField(NumericType targetNumericType, Object missingValue, MultiValueMode sortMode,
-                               Nested nested, boolean reverse) {
+    public SortField sortField(
+        NumericType targetNumericType,
+        Object missingValue,
+        MultiValueMode sortMode,
+        Nested nested,
+        boolean reverse
+    ) {
         final XFieldComparatorSource source;
         switch (targetNumericType) {
             case HALF_FLOAT:
@@ -86,8 +91,7 @@ public class SortedNumericDVIndexFieldData extends DocValuesIndexFieldData imple
             case DATE:
                 if (numericType == NumericType.DATE_NANOSECONDS) {
                     // converts date values to nanosecond resolution
-                    source = new LongValuesComparatorSource(this, missingValue,
-                        sortMode, nested, dvs -> convertNanosToMillis(dvs));
+                    source = new LongValuesComparatorSource(this, missingValue, sortMode, nested, dvs -> convertNanosToMillis(dvs));
                 } else {
                     source = new LongValuesComparatorSource(this, missingValue, sortMode, nested);
                 }
@@ -96,8 +100,7 @@ public class SortedNumericDVIndexFieldData extends DocValuesIndexFieldData imple
             case DATE_NANOSECONDS:
                 if (numericType == NumericType.DATE) {
                     // converts date_nanos values to millisecond resolution
-                    source = new LongValuesComparatorSource(this, missingValue,
-                        sortMode, nested, dvs -> convertMillisToNanos(dvs));
+                    source = new LongValuesComparatorSource(this, missingValue, sortMode, nested, dvs -> convertMillisToNanos(dvs));
                 } else {
                     source = new LongValuesComparatorSource(this, missingValue, sortMode, nested);
                 }
@@ -114,15 +117,16 @@ public class SortedNumericDVIndexFieldData extends DocValuesIndexFieldData imple
          * returns a custom sort field otherwise.
          */
         if (nested != null
-                || (sortMode != MultiValueMode.MAX && sortMode != MultiValueMode.MIN)
-                || numericType == NumericType.HALF_FLOAT
-                || targetNumericType != numericType) {
+            || (sortMode != MultiValueMode.MAX && sortMode != MultiValueMode.MIN)
+            || numericType == NumericType.HALF_FLOAT
+            || targetNumericType != numericType) {
             return new SortField(fieldName, source, reverse);
         }
 
         final SortField sortField;
-        final SortedNumericSelector.Type selectorType = sortMode == MultiValueMode.MAX ?
-            SortedNumericSelector.Type.MAX : SortedNumericSelector.Type.MIN;
+        final SortedNumericSelector.Type selectorType = sortMode == MultiValueMode.MAX
+            ? SortedNumericSelector.Type.MAX
+            : SortedNumericSelector.Type.MIN;
         switch (numericType) {
             case FLOAT:
                 sortField = new SortedNumericSortField(fieldName, SortField.Type.FLOAT, reverse, selectorType);

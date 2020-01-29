@@ -32,14 +32,14 @@ import java.util.Map;
 public class InternalMedianAbsoluteDeviationTests extends InternalAggregationTestCase<InternalMedianAbsoluteDeviation> {
 
     @Override
-    protected InternalMedianAbsoluteDeviation createTestInstance(String name,
-                                                                 List<PipelineAggregator> pipelineAggregators,
-                                                                 Map<String, Object> metaData) {
+    protected InternalMedianAbsoluteDeviation createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
 
         final TDigestState valuesSketch = new TDigestState(randomDoubleBetween(20, 1000, true));
-        final int numberOfValues = frequently()
-            ? randomIntBetween(0, 1000)
-            : 0;
+        final int numberOfValues = frequently() ? randomIntBetween(0, 1000) : 0;
         for (int i = 0; i < numberOfValues; i++) {
             valuesSketch.add(randomDouble());
         }

@@ -30,6 +30,7 @@ public class MasterNotDiscoveredException extends ElasticsearchException {
     public MasterNotDiscoveredException() {
         super("");
     }
+
     public MasterNotDiscoveredException(Throwable cause) {
         super(cause);
     }

@@ -73,7 +73,8 @@ public class JvmGcMonitorServiceTests extends ESTestCase {
             elapsedValue,
             lastJvmStats,
             currentJvmStats,
-            maxHeapUsed);
+            maxHeapUsed
+        );
 
         JvmGcMonitorService.logSlowGc(logger, threshold, seq, slowGcEvent, (l, c) -> l.toString() + ", " + c.toString());
 
@@ -93,7 +94,8 @@ public class JvmGcMonitorServiceTests extends ESTestCase {
                     lastHeapUsed,
                     currentHeapUsed,
                     maxHeapUsed,
-                    "last, current");
+                    "last, current"
+                );
                 break;
             case INFO:
                 verify(logger).isInfoEnabled();
@@ -110,7 +112,8 @@ public class JvmGcMonitorServiceTests extends ESTestCase {
                     lastHeapUsed,
                     currentHeapUsed,
                     maxHeapUsed,
-                    "last, current");
+                    "last, current"
+                );
                 break;
             case DEBUG:
                 verify(logger).isDebugEnabled();
@@ -127,7 +130,8 @@ public class JvmGcMonitorServiceTests extends ESTestCase {
                     lastHeapUsed,
                     currentHeapUsed,
                     maxHeapUsed,
-                    "last, current");
+                    "last, current"
+                );
                 break;
         }
         verifyNoMoreInteractions(logger);
@@ -143,14 +147,15 @@ public class JvmGcMonitorServiceTests extends ESTestCase {
         when(logger.isInfoEnabled()).thenReturn(true);
         when(logger.isDebugEnabled()).thenReturn(true);
         JvmGcMonitorService.logGcOverhead(logger, threshold, current, elapsed, seq);
-        switch(threshold) {
+        switch (threshold) {
             case WARN:
                 verify(logger).isWarnEnabled();
                 verify(logger).warn(
                     "[gc][{}] overhead, spent [{}] collecting in the last [{}]",
                     seq,
                     TimeValue.timeValueMillis(current),
-                    TimeValue.timeValueMillis(elapsed));
+                    TimeValue.timeValueMillis(elapsed)
+                );
                 break;
             case INFO:
                 verify(logger).isInfoEnabled();
@@ -158,7 +163,8 @@ public class JvmGcMonitorServiceTests extends ESTestCase {
                     "[gc][{}] overhead, spent [{}] collecting in the last [{}]",
                     seq,
                     TimeValue.timeValueMillis(current),
-                    TimeValue.timeValueMillis(elapsed));
+                    TimeValue.timeValueMillis(elapsed)
+                );
                 break;
             case DEBUG:
                 verify(logger).isDebugEnabled();
@@ -166,7 +172,8 @@ public class JvmGcMonitorServiceTests extends ESTestCase {
                     "[gc][{}] overhead, spent [{}] collecting in the last [{}]",
                     seq,
                     TimeValue.timeValueMillis(current),
-                    TimeValue.timeValueMillis(elapsed));
+                    TimeValue.timeValueMillis(elapsed)
+                );
                 break;
         }
         verifyNoMoreInteractions(logger);

@@ -41,8 +41,13 @@ import static org.elasticsearch.common.settings.Setting.Property.NodeScope;
  */
 public class EnableAssignmentDecider {
 
-    public static final Setting<Allocation> CLUSTER_TASKS_ALLOCATION_ENABLE_SETTING =
-        new Setting<>("cluster.persistent_tasks.allocation.enable", Allocation.ALL.toString(), Allocation::fromString, Dynamic, NodeScope);
+    public static final Setting<Allocation> CLUSTER_TASKS_ALLOCATION_ENABLE_SETTING = new Setting<>(
+        "cluster.persistent_tasks.allocation.enable",
+        Allocation.ALL.toString(),
+        Allocation::fromString,
+        Dynamic,
+        NodeScope
+    );
 
     private volatile Allocation enableAssignment;
 
@@ -87,8 +92,9 @@ public class EnableAssignmentDecider {
                 try {
                     return valueOf(value);
                 } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException("Illegal value [" + value + "] for ["
-                        + CLUSTER_TASKS_ALLOCATION_ENABLE_SETTING.getKey() + "]");
+                    throw new IllegalArgumentException(
+                        "Illegal value [" + value + "] for [" + CLUSTER_TASKS_ALLOCATION_ENABLE_SETTING.getKey() + "]"
+                    );
                 }
             }
         }

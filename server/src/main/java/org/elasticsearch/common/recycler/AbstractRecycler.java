@@ -19,7 +19,6 @@
 
 package org.elasticsearch.common.recycler;
 
-
 abstract class AbstractRecycler<T> implements Recycler<T> {
 
     protected final Recycler.C<T> c;

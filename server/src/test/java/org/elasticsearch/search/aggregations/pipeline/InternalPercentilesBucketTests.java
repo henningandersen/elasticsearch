@@ -46,13 +46,21 @@ import static org.hamcrest.Matchers.equalTo;
 public class InternalPercentilesBucketTests extends InternalAggregationTestCase<InternalPercentilesBucket> {
 
     @Override
-    protected InternalPercentilesBucket createTestInstance(String name, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    protected InternalPercentilesBucket createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         return createTestInstance(name, pipelineAggregators, metaData, randomPercents(), true);
     }
 
-    private static InternalPercentilesBucket createTestInstance(String name, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData, double[] percents, boolean keyed) {
+    private static InternalPercentilesBucket createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        double[] percents,
+        boolean keyed
+    ) {
         final double[] percentiles = new double[percents.length];
         for (int i = 0; i < percents.length; ++i) {
             percentiles[i] = frequently() ? randomDouble() : Double.NaN;
@@ -60,16 +68,24 @@ public class InternalPercentilesBucketTests extends InternalAggregationTestCase<
         return createTestInstance(name, pipelineAggregators, metaData, percents, percentiles, keyed);
     }
 
-    private static InternalPercentilesBucket createTestInstance(String name, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData, double[] percents, double[] percentiles, boolean keyed) {
+    private static InternalPercentilesBucket createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        double[] percents,
+        double[] percentiles,
+        boolean keyed
+    ) {
         DocValueFormat format = randomNumericDocValueFormat();
         return new InternalPercentilesBucket(name, percents, percentiles, keyed, format, pipelineAggregators, metaData);
     }
 
     @Override
     public void testReduceRandom() {
-        expectThrows(UnsupportedOperationException.class,
-                () -> createTestInstance("name", Collections.emptyList(), null).reduce(null, null));
+        expectThrows(
+            UnsupportedOperationException.class,
+            () -> createTestInstance("name", Collections.emptyList(), null).reduce(null, null)
+        );
     }
 
     @Override
@@ -102,9 +118,14 @@ public class InternalPercentilesBucketTests extends InternalAggregationTestCase<
      * check that we don't rely on the percent array order and that the iterator returns the values in the original order
      */
     public void testPercentOrder() {
-        final double[] percents =  new double[]{ 0.50, 0.25, 0.01, 0.99, 0.60 };
-        InternalPercentilesBucket aggregation = createTestInstance("test", Collections.emptyList(),
-            Collections.emptyMap(), percents, randomBoolean());
+        final double[] percents = new double[] { 0.50, 0.25, 0.01, 0.99, 0.60 };
+        InternalPercentilesBucket aggregation = createTestInstance(
+            "test",
+            Collections.emptyList(),
+            Collections.emptyMap(),
+            percents,
+            randomBoolean()
+        );
         Iterator<Percentile> iterator = aggregation.iterator();
         for (double percent : percents) {
             assertTrue(iterator.hasNext());
@@ -115,12 +136,24 @@ public class InternalPercentilesBucketTests extends InternalAggregationTestCase<
     }
 
     public void testErrorOnDifferentArgumentSize() {
-        final double[] percents =  new double[]{ 0.1, 0.2, 0.3};
-        final double[] percentiles =  new double[]{ 0.10, 0.2};
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> new InternalPercentilesBucket("test", percents,
-                percentiles, randomBoolean(), DocValueFormat.RAW, Collections.emptyList(), Collections.emptyMap()));
-        assertEquals("The number of provided percents and percentiles didn't match. percents: [0.1, 0.2, 0.3], percentiles: [0.1, 0.2]",
-                e.getMessage());
+        final double[] percents = new double[] { 0.1, 0.2, 0.3 };
+        final double[] percentiles = new double[] { 0.10, 0.2 };
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> new InternalPercentilesBucket(
+                "test",
+                percents,
+                percentiles,
+                randomBoolean(),
+                DocValueFormat.RAW,
+                Collections.emptyList(),
+                Collections.emptyMap()
+            )
+        );
+        assertEquals(
+            "The number of provided percents and percentiles didn't match. percents: [0.1, 0.2, 0.3], percentiles: [0.1, 0.2]",
+            e.getMessage()
+        );
     }
 
     public void testParsedAggregationIteratorOrder() throws IOException {
@@ -134,15 +167,21 @@ public class InternalPercentilesBucketTests extends InternalAggregationTestCase<
     }
 
     public void testEmptyRanksXContent() throws IOException {
-        double[] percents = new double[]{1,2,3};
+        double[] percents = new double[] { 1, 2, 3 };
         double[] percentiles = new double[3];
         for (int i = 0; i < 3; ++i) {
             percentiles[i] = randomBoolean() ? Double.NaN : Double.POSITIVE_INFINITY;
         }
         boolean keyed = randomBoolean();
 
-        InternalPercentilesBucket agg = createTestInstance("test", Collections.emptyList(), Collections.emptyMap(),
-            percents, percentiles, keyed);
+        InternalPercentilesBucket agg = createTestInstance(
+            "test",
+            Collections.emptyList(),
+            Collections.emptyMap(),
+            percents,
+            percentiles,
+            keyed
+        );
 
         XContentBuilder builder = JsonXContent.contentBuilder().prettyPrint();
         builder.startObject();
@@ -150,30 +189,30 @@ public class InternalPercentilesBucketTests extends InternalAggregationTestCase<
         builder.endObject();
         String expected;
         if (keyed) {
-            expected = "{\n" +
-                "  \"values\" : {\n" +
-                "    \"1.0\" : null,\n" +
-                "    \"2.0\" : null,\n" +
-                "    \"3.0\" : null\n" +
-                "  }\n" +
-                "}";
+            expected = "{\n"
+                + "  \"values\" : {\n"
+                + "    \"1.0\" : null,\n"
+                + "    \"2.0\" : null,\n"
+                + "    \"3.0\" : null\n"
+                + "  }\n"
+                + "}";
         } else {
-            expected = "{\n" +
-                "  \"values\" : [\n" +
-                "    {\n" +
-                "      \"key\" : 1.0,\n" +
-                "      \"value\" : null\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"key\" : 2.0,\n" +
-                "      \"value\" : null\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"key\" : 3.0,\n" +
-                "      \"value\" : null\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
+            expected = "{\n"
+                + "  \"values\" : [\n"
+                + "    {\n"
+                + "      \"key\" : 1.0,\n"
+                + "      \"value\" : null\n"
+                + "    },\n"
+                + "    {\n"
+                + "      \"key\" : 2.0,\n"
+                + "      \"value\" : null\n"
+                + "    },\n"
+                + "    {\n"
+                + "      \"key\" : 3.0,\n"
+                + "      \"value\" : null\n"
+                + "    }\n"
+                + "  ]\n"
+                + "}";
         }
 
         assertThat(Strings.toString(builder), equalTo(expected));
@@ -193,27 +232,27 @@ public class InternalPercentilesBucketTests extends InternalAggregationTestCase<
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 3)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            percents = Arrays.copyOf(percents, percents.length);
-            percents[percents.length - 1] = randomDouble();
-            break;
-        case 2:
-            percentiles = Arrays.copyOf(percentiles, percentiles.length);
-            percentiles[percentiles.length - 1] = randomDouble();
-            break;
-        case 3:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
-        default:
-            throw new AssertionError("Illegal randomisation branch");
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                percents = Arrays.copyOf(percents, percents.length);
+                percents[percents.length - 1] = randomDouble();
+                break;
+            case 2:
+                percentiles = Arrays.copyOf(percentiles, percentiles.length);
+                percentiles[percentiles.length - 1] = randomDouble();
+                break;
+            case 3:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
+            default:
+                throw new AssertionError("Illegal randomisation branch");
         }
         return new InternalPercentilesBucket(name, percents, percentiles, randomBoolean(), formatter, pipelineAggregators, metaData);
     }

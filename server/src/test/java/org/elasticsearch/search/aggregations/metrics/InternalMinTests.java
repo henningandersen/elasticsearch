@@ -68,26 +68,26 @@ public class InternalMinTests extends InternalAggregationTestCase<InternalMin> {
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 2)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            if (Double.isFinite(value)) {
-                value += between(1, 100);
-            } else {
-                value = between(1, 100);
-            }
-            break;
-        case 2:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
-        default:
-            throw new AssertionError("Illegal randomisation branch");
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                if (Double.isFinite(value)) {
+                    value += between(1, 100);
+                } else {
+                    value = between(1, 100);
+                }
+                break;
+            case 2:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
+            default:
+                throw new AssertionError("Illegal randomisation branch");
         }
         return new InternalMin(name, value, formatter, pipelineAggregators, metaData);
     }

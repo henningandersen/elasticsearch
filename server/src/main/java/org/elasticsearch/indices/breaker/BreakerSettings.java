@@ -67,10 +67,18 @@ public final class BreakerSettings {
 
     @Override
     public String toString() {
-        return "[" + this.name +
-                ",type=" + this.type.toString() +
-                ",durability=" + this.durability.toString() +
-                ",limit=" + this.limitBytes + "/" + new ByteSizeValue(this.limitBytes) +
-                ",overhead=" + this.overhead + "]";
+        return "["
+            + this.name
+            + ",type="
+            + this.type.toString()
+            + ",durability="
+            + this.durability.toString()
+            + ",limit="
+            + this.limitBytes
+            + "/"
+            + new ByteSizeValue(this.limitBytes)
+            + ",overhead="
+            + this.overhead
+            + "]";
     }
 }

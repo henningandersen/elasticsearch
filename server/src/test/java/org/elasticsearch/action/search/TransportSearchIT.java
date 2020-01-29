@@ -34,39 +34,52 @@ public class TransportSearchIT extends ESIntegTestCase {
         try {
             final int numPrimaries1 = randomIntBetween(2, 10);
             final int numPrimaries2 = randomIntBetween(1, 10);
-            assertAcked(prepareCreate("test1")
-                    .setSettings(Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, numPrimaries1)));
-            assertAcked(prepareCreate("test2")
-                    .setSettings(Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, numPrimaries2)));
+            assertAcked(prepareCreate("test1").setSettings(Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, numPrimaries1)));
+            assertAcked(prepareCreate("test2").setSettings(Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, numPrimaries2)));
 
             // no exception
             client().prepareSearch("test1").get();
 
-            assertAcked(client().admin().cluster().prepareUpdateSettings()
-                    .setTransientSettings(Collections.singletonMap(
-                            TransportSearchAction.SHARD_COUNT_LIMIT_SETTING.getKey(), numPrimaries1 - 1)));
+            assertAcked(
+                client().admin()
+                    .cluster()
+                    .prepareUpdateSettings()
+                    .setTransientSettings(
+                        Collections.singletonMap(TransportSearchAction.SHARD_COUNT_LIMIT_SETTING.getKey(), numPrimaries1 - 1)
+                    )
+            );
 
-            IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                    () -> client().prepareSearch("test1").get());
-            assertThat(e.getMessage(), containsString("Trying to query " + numPrimaries1
-                    + " shards, which is over the limit of " + (numPrimaries1 - 1)));
+            IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> client().prepareSearch("test1").get());
+            assertThat(
+                e.getMessage(),
+                containsString("Trying to query " + numPrimaries1 + " shards, which is over the limit of " + (numPrimaries1 - 1))
+            );
 
-            assertAcked(client().admin().cluster().prepareUpdateSettings()
-                    .setTransientSettings(Collections.singletonMap(
-                            TransportSearchAction.SHARD_COUNT_LIMIT_SETTING.getKey(), numPrimaries1)));
+            assertAcked(
+                client().admin()
+                    .cluster()
+                    .prepareUpdateSettings()
+                    .setTransientSettings(Collections.singletonMap(TransportSearchAction.SHARD_COUNT_LIMIT_SETTING.getKey(), numPrimaries1))
+            );
 
             // no exception
             client().prepareSearch("test1").get();
 
-            e = expectThrows(IllegalArgumentException.class,
-                    () -> client().prepareSearch("test1", "test2").get());
-            assertThat(e.getMessage(), containsString("Trying to query " + (numPrimaries1 + numPrimaries2)
-                    + " shards, which is over the limit of " + numPrimaries1));
+            e = expectThrows(IllegalArgumentException.class, () -> client().prepareSearch("test1", "test2").get());
+            assertThat(
+                e.getMessage(),
+                containsString(
+                    "Trying to query " + (numPrimaries1 + numPrimaries2) + " shards, which is over the limit of " + numPrimaries1
+                )
+            );
 
         } finally {
-            assertAcked(client().admin().cluster().prepareUpdateSettings()
-                    .setTransientSettings(Collections.singletonMap(
-                            TransportSearchAction.SHARD_COUNT_LIMIT_SETTING.getKey(), null)));
+            assertAcked(
+                client().admin()
+                    .cluster()
+                    .prepareUpdateSettings()
+                    .setTransientSettings(Collections.singletonMap(TransportSearchAction.SHARD_COUNT_LIMIT_SETTING.getKey(), null))
+            );
         }
     }
 }

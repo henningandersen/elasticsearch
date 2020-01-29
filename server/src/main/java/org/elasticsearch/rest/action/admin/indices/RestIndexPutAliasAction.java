@@ -49,7 +49,7 @@ public class RestIndexPutAliasAction extends BaseRestHandler {
         controller.registerHandler(POST, "/{index}/_aliases/{name}", this);
         controller.registerHandler(POST, "/_aliases/{name}", this);
         controller.registerHandler(PUT, "/{index}/_aliases", this);
-        //we cannot add POST for "/_aliases" because this is the _aliases api already defined in RestIndicesAliasesAction
+        // we cannot add POST for "/_aliases" because this is the _aliases api already defined in RestIndicesAliasesAction
     }
 
     @Override
@@ -85,14 +85,16 @@ public class RestIndexPutAliasAction extends BaseRestHandler {
                         } else if ("routing".equals(currentFieldName)) {
                             routing = parser.textOrNull();
                         } else if ("indexRouting".equals(currentFieldName)
-                                || "index-routing".equals(currentFieldName) || "index_routing".equals(currentFieldName)) {
-                            indexRouting = parser.textOrNull();
-                        } else if ("searchRouting".equals(currentFieldName)
-                                || "search-routing".equals(currentFieldName) || "search_routing".equals(currentFieldName)) {
-                            searchRouting = parser.textOrNull();
-                        } else if ("is_write_index".equals(currentFieldName)) {
-                            writeIndex = parser.booleanValue();
-                        }
+                            || "index-routing".equals(currentFieldName)
+                            || "index_routing".equals(currentFieldName)) {
+                                indexRouting = parser.textOrNull();
+                            } else if ("searchRouting".equals(currentFieldName)
+                                || "search-routing".equals(currentFieldName)
+                                || "search_routing".equals(currentFieldName)) {
+                                    searchRouting = parser.textOrNull();
+                                } else if ("is_write_index".equals(currentFieldName)) {
+                                    writeIndex = parser.booleanValue();
+                                }
                     } else if (token == XContentParser.Token.START_OBJECT) {
                         if ("filter".equals(currentFieldName)) {
                             filter = parser.mapOrdered();

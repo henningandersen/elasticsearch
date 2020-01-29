@@ -48,10 +48,12 @@ public class ValuesSourceConfig<VS extends ValuesSource> {
     public static <VS extends ValuesSource> ValuesSourceConfig<VS> resolve(
         QueryShardContext context,
         ValueType valueType,
-        String field, Script script,
+        String field,
+        Script script,
         Object missing,
         ZoneId timeZone,
-        String format) {
+        String format
+    ) {
         return resolve(context, valueType, field, script, missing, timeZone, format, s -> CoreValuesSourceType.BYTES);
     }
 
@@ -61,7 +63,8 @@ public class ValuesSourceConfig<VS extends ValuesSource> {
     public static <VS extends ValuesSource> ValuesSourceConfig<VS> resolve(
         QueryShardContext context,
         ValueType valueType,
-        String field, Script script,
+        String field,
+        Script script,
         Object missing,
         ZoneId timeZone,
         String format,
@@ -125,7 +128,6 @@ public class ValuesSourceConfig<VS extends ValuesSource> {
             }
         }
 
-
         config.fieldContext(new FieldContext(field, indexFieldData, fieldType));
         config.missing(missing);
         config.timezone(timeZone);
@@ -152,8 +154,11 @@ public class ValuesSourceConfig<VS extends ValuesSource> {
             valueFormat = new DocValueFormat.Decimal(format);
         }
         if (valueFormat instanceof DocValueFormat.DateTime && format != null) {
-            valueFormat = new DocValueFormat.DateTime(DateFormatter.forPattern(format), tz != null ? tz : ZoneOffset.UTC,
-                DateFieldMapper.Resolution.MILLISECONDS);
+            valueFormat = new DocValueFormat.DateTime(
+                DateFormatter.forPattern(format),
+                tz != null ? tz : ZoneOffset.UTC,
+                DateFieldMapper.Resolution.MILLISECONDS
+            );
         }
         return valueFormat;
     }
@@ -253,7 +258,8 @@ public class ValuesSourceConfig<VS extends ValuesSource> {
     public VS toValuesSource(QueryShardContext context, Function<Object, ValuesSource> resolveMissingAny) {
         if (!valid()) {
             throw new IllegalStateException(
-                "value source config is invalid; must have either a field context or a script or marked as unwrapped");
+                "value source config is invalid; must have either a field context or a script or marked as unwrapped"
+            );
         }
 
         final VS vs;

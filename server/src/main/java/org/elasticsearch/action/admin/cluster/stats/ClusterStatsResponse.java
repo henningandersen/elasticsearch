@@ -49,11 +49,13 @@ public class ClusterStatsResponse extends BaseNodesResponse<ClusterStatsNodeResp
         status = in.readOptionalWriteable(ClusterHealthStatus::readFrom);
     }
 
-    public ClusterStatsResponse(long timestamp,
-                                String clusterUUID,
-                                ClusterName clusterName,
-                                List<ClusterStatsNodeResponse> nodes,
-                                List<FailedNodeException> failures) {
+    public ClusterStatsResponse(
+        long timestamp,
+        String clusterUUID,
+        ClusterName clusterName,
+        List<ClusterStatsNodeResponse> nodes,
+        List<FailedNodeException> failures
+    ) {
         super(clusterName, nodes, failures);
         this.clusterUUID = clusterUUID;
         this.timestamp = timestamp;

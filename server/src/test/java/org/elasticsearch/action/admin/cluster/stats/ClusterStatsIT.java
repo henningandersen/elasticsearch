@@ -53,9 +53,10 @@ public class ClusterStatsIT extends ESIntegTestCase {
     }
 
     private void waitForNodes(int numNodes) {
-        ClusterHealthResponse actionGet = client().admin().cluster()
-                .health(Requests.clusterHealthRequest().waitForEvents(Priority.LANGUID)
-                    .waitForNodes(Integer.toString(numNodes))).actionGet();
+        ClusterHealthResponse actionGet = client().admin()
+            .cluster()
+            .health(Requests.clusterHealthRequest().waitForEvents(Priority.LANGUID).waitForNodes(Integer.toString(numNodes)))
+            .actionGet();
         assertThat(actionGet.isTimedOut(), is(false));
     }
 
@@ -76,9 +77,11 @@ public class ClusterStatsIT extends ESIntegTestCase {
             boolean isDataNode = randomBoolean();
             boolean isMasterNode = randomBoolean();
             boolean isIngestNode = randomBoolean();
-            Settings settings = Settings.builder().put(Node.NODE_DATA_SETTING.getKey(), isDataNode)
-                    .put(Node.NODE_MASTER_SETTING.getKey(), isMasterNode).put(Node.NODE_INGEST_SETTING.getKey(), isIngestNode)
-                    .build();
+            Settings settings = Settings.builder()
+                .put(Node.NODE_DATA_SETTING.getKey(), isDataNode)
+                .put(Node.NODE_MASTER_SETTING.getKey(), isMasterNode)
+                .put(Node.NODE_INGEST_SETTING.getKey(), isIngestNode)
+                .build();
             internalCluster().startNode(settings);
             total++;
             waitForNodes(total);

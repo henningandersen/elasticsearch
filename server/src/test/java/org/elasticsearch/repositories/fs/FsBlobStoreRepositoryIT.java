@@ -65,10 +65,18 @@ public class FsBlobStoreRepositoryIT extends ESBlobStoreRepositoryIntegTestCase 
 
         logger.info("--> creating repository {} at {}", repoName, repoPath);
 
-        assertAcked(client().admin().cluster().preparePutRepository(repoName).setType("fs").setSettings(Settings.builder()
-            .put("location", repoPath)
-            .put("compress", randomBoolean())
-            .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)));
+        assertAcked(
+            client().admin()
+                .cluster()
+                .preparePutRepository(repoName)
+                .setType("fs")
+                .setSettings(
+                    Settings.builder()
+                        .put("location", repoPath)
+                        .put("compress", randomBoolean())
+                        .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)
+                )
+        );
 
         final String indexName = randomName();
         int docCount = iterations(10, 1000);
@@ -78,25 +86,33 @@ public class FsBlobStoreRepositoryIT extends ESBlobStoreRepositoryIntegTestCase 
 
         final String snapshotName = randomName();
         logger.info("-->  create snapshot {}:{}", repoName, snapshotName);
-        assertSuccessfulSnapshot(client().admin().cluster().prepareCreateSnapshot(repoName, snapshotName)
-            .setWaitForCompletion(true).setIndices(indexName));
+        assertSuccessfulSnapshot(
+            client().admin().cluster().prepareCreateSnapshot(repoName, snapshotName).setWaitForCompletion(true).setIndices(indexName)
+        );
 
         assertAcked(client().admin().indices().prepareDelete(indexName));
         assertAcked(client().admin().cluster().prepareDeleteRepository(repoName));
 
         final Path deletedPath;
         try (Stream<Path> contents = Files.list(repoPath.resolve("indices"))) {
-            //noinspection OptionalGetWithoutIsPresent because we know there's a subdirectory
+            // noinspection OptionalGetWithoutIsPresent because we know there's a subdirectory
             deletedPath = contents.filter(Files::isDirectory).findAny().get();
             IOUtils.rm(deletedPath);
         }
         assertFalse(Files.exists(deletedPath));
 
-        assertAcked(client().admin().cluster().preparePutRepository(repoName).setType("fs").setSettings(Settings.builder()
-            .put("location", repoPath).put("readonly", true)));
+        assertAcked(
+            client().admin()
+                .cluster()
+                .preparePutRepository(repoName)
+                .setType("fs")
+                .setSettings(Settings.builder().put("location", repoPath).put("readonly", true))
+        );
 
-        final ElasticsearchException exception = expectThrows(ElasticsearchException.class, () ->
-            client().admin().cluster().prepareRestoreSnapshot(repoName, snapshotName).setWaitForCompletion(randomBoolean()).get());
+        final ElasticsearchException exception = expectThrows(
+            ElasticsearchException.class,
+            () -> client().admin().cluster().prepareRestoreSnapshot(repoName, snapshotName).setWaitForCompletion(randomBoolean()).get()
+        );
         assertThat(exception.getRootCause(), instanceOf(NoSuchFileException.class));
 
         assertFalse("deleted path is not recreated in readonly repository", Files.exists(deletedPath));

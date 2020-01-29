@@ -41,9 +41,15 @@ abstract class AbstractInternalHDRPercentiles extends InternalNumericMetricsAggr
     protected final DoubleHistogram state;
     protected final boolean keyed;
 
-    AbstractInternalHDRPercentiles(String name, double[] keys, DoubleHistogram state, boolean keyed, DocValueFormat format,
-            List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    AbstractInternalHDRPercentiles(
+        String name,
+        double[] keys,
+        DoubleHistogram state,
+        boolean keyed,
+        DocValueFormat format,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.keys = keys;
         this.state = state;
@@ -116,19 +122,25 @@ abstract class AbstractInternalHDRPercentiles extends InternalNumericMetricsAggr
         return createReduced(getName(), keys, merged, keyed, pipelineAggregators(), getMetaData());
     }
 
-    protected abstract AbstractInternalHDRPercentiles createReduced(String name, double[] keys, DoubleHistogram merged, boolean keyed,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData);
+    protected abstract AbstractInternalHDRPercentiles createReduced(
+        String name,
+        double[] keys,
+        DoubleHistogram merged,
+        boolean keyed,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    );
 
     @Override
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         if (keyed) {
             builder.startObject(CommonFields.VALUES.getPreferredName());
-            for(int i = 0; i < keys.length; ++i) {
+            for (int i = 0; i < keys.length; ++i) {
                 String key = String.valueOf(keys[i]);
                 double value = value(keys[i]);
                 builder.field(key, state.getTotalCount() == 0 ? null : value);
                 if (format != DocValueFormat.RAW && state.getTotalCount() > 0) {
-                    builder.field(key + "_as_string",  format.format(value).toString());
+                    builder.field(key + "_as_string", format.format(value).toString());
                 }
             }
             builder.endObject();
@@ -156,9 +168,7 @@ abstract class AbstractInternalHDRPercentiles extends InternalNumericMetricsAggr
         if (super.equals(obj) == false) return false;
 
         AbstractInternalHDRPercentiles that = (AbstractInternalHDRPercentiles) obj;
-        return keyed == that.keyed
-                && Arrays.equals(keys, that.keys)
-                && Objects.equals(state, that.state);
+        return keyed == that.keyed && Arrays.equals(keys, that.keys) && Objects.equals(state, that.state);
     }
 
     @Override
@@ -166,10 +176,12 @@ abstract class AbstractInternalHDRPercentiles extends InternalNumericMetricsAggr
         // we cannot use state.hashCode at the moment because of:
         // https://github.com/HdrHistogram/HdrHistogram/issues/81
         // TODO: upgrade the HDRHistogram library
-        return Objects.hash(super.hashCode(),
+        return Objects.hash(
+            super.hashCode(),
             keyed,
             Arrays.hashCode(keys),
             state.getIntegerToDoubleValueConversionRatio(),
-            state.getTotalCount());
+            state.getTotalCount()
+        );
     }
 }

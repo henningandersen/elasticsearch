@@ -66,8 +66,12 @@ public class TaskExecutorTests extends ESTestCase {
 
     @Before
     public void setUpExecutor() {
-        threadExecutor = EsExecutors.newSinglePrioritizing(getClass().getName() + "/" + getTestName(),
-            daemonThreadFactory(Settings.EMPTY, "test_thread"), threadPool.getThreadContext(), threadPool.scheduler());
+        threadExecutor = EsExecutors.newSinglePrioritizing(
+            getClass().getName() + "/" + getTestName(),
+            daemonThreadFactory(Settings.EMPTY, "test_thread"),
+            threadPool.getThreadContext(),
+            threadPool.scheduler()
+        );
     }
 
     @After
@@ -87,7 +91,7 @@ public class TaskExecutorTests extends ESTestCase {
         void execute(List<T> tasks);
 
         default String describeTasks(List<T> tasks) {
-            return tasks.stream().map(T::toString).reduce((s1,s2) -> {
+            return tasks.stream().map(T::toString).reduce((s1, s2) -> {
                 if (s1.isEmpty()) {
                     return s2;
                 } else if (s2.isEmpty()) {
@@ -152,7 +156,6 @@ public class TaskExecutorTests extends ESTestCase {
             threadExecutor.execute(task);
         }
     }
-
 
     public void testTimedOutTaskCleanedUp() throws Exception {
         final CountDownLatch block = new CountDownLatch(1);
@@ -319,8 +322,7 @@ public class TaskExecutorTests extends ESTestCase {
         }
 
         @Override
-        public void onFailure(String source, Exception e) {
-        }
+        public void onFailure(String source, Exception e) {}
 
         @Override
         public Priority priority() {

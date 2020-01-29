@@ -57,19 +57,32 @@ import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
 public class ClusterRerouteRequestTests extends ESTestCase {
     private static final int ROUNDS = 30;
     private final List<Supplier<AllocationCommand>> RANDOM_COMMAND_GENERATORS = List.of(
-            () -> new AllocateReplicaAllocationCommand(
-                    randomAlphaOfLengthBetween(2, 10), between(0, 1000), randomAlphaOfLengthBetween(2, 10)),
-            () -> new AllocateEmptyPrimaryAllocationCommand(
-                    randomAlphaOfLengthBetween(2, 10), between(0, 1000), randomAlphaOfLengthBetween(2, 10), randomBoolean()),
-            () -> new AllocateStalePrimaryAllocationCommand(
-                    randomAlphaOfLengthBetween(2, 10), between(0, 1000), randomAlphaOfLengthBetween(2, 10), randomBoolean()),
-            () -> new CancelAllocationCommand(
-                    randomAlphaOfLengthBetween(2, 10), between(0, 1000), randomAlphaOfLengthBetween(2, 10), randomBoolean()),
-            () -> new MoveAllocationCommand(
-                    randomAlphaOfLengthBetween(2, 10),
-                    between(0, 1000),
-                    randomAlphaOfLengthBetween(2, 10),
-                    randomAlphaOfLengthBetween(2, 10)));
+        () -> new AllocateReplicaAllocationCommand(randomAlphaOfLengthBetween(2, 10), between(0, 1000), randomAlphaOfLengthBetween(2, 10)),
+        () -> new AllocateEmptyPrimaryAllocationCommand(
+            randomAlphaOfLengthBetween(2, 10),
+            between(0, 1000),
+            randomAlphaOfLengthBetween(2, 10),
+            randomBoolean()
+        ),
+        () -> new AllocateStalePrimaryAllocationCommand(
+            randomAlphaOfLengthBetween(2, 10),
+            between(0, 1000),
+            randomAlphaOfLengthBetween(2, 10),
+            randomBoolean()
+        ),
+        () -> new CancelAllocationCommand(
+            randomAlphaOfLengthBetween(2, 10),
+            between(0, 1000),
+            randomAlphaOfLengthBetween(2, 10),
+            randomBoolean()
+        ),
+        () -> new MoveAllocationCommand(
+            randomAlphaOfLengthBetween(2, 10),
+            between(0, 1000),
+            randomAlphaOfLengthBetween(2, 10),
+            randomAlphaOfLengthBetween(2, 10)
+        )
+    );
     private final NamedWriteableRegistry namedWriteableRegistry;
 
     public ClusterRerouteRequestTests() {
@@ -94,8 +107,9 @@ public class ClusterRerouteRequestTests extends ESTestCase {
             assertEquals(request, request);
             assertEquals(request.hashCode(), request.hashCode());
 
-            ClusterRerouteRequest copy = new ClusterRerouteRequest()
-                    .add(request.getCommands().commands().toArray(new AllocationCommand[0]));
+            ClusterRerouteRequest copy = new ClusterRerouteRequest().add(
+                request.getCommands().commands().toArray(new AllocationCommand[0])
+            );
             copy.dryRun(request.dryRun()).explain(request.explain()).timeout(request.timeout()).setRetryFailed(request.isRetryFailed());
             copy.masterNodeTimeout(request.masterNodeTimeout());
             assertEquals(request, copy);

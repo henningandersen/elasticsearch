@@ -42,12 +42,12 @@ public class FsService {
     private final SingleObjectCache<FsInfo> cache;
     private final ClusterInfoService clusterInfoService;
 
-    public static final Setting<TimeValue> REFRESH_INTERVAL_SETTING =
-        Setting.timeSetting(
-            "monitor.fs.refresh_interval",
-            TimeValue.timeValueSeconds(1),
-            TimeValue.timeValueSeconds(1),
-            Property.NodeScope);
+    public static final Setting<TimeValue> REFRESH_INTERVAL_SETTING = Setting.timeSetting(
+        "monitor.fs.refresh_interval",
+        TimeValue.timeValueSeconds(1),
+        TimeValue.timeValueSeconds(1),
+        Property.NodeScope
+    );
 
     public FsService(final Settings settings, final NodeEnvironment nodeEnvironment, ClusterInfoService clusterInfoService) {
         this.probe = new FsProbe(nodeEnvironment);

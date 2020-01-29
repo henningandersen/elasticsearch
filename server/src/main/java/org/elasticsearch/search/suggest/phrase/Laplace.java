@@ -119,7 +119,13 @@ public final class Laplace extends SmoothingModel {
 
     @Override
     public WordScorerFactory buildWordScorerFactory() {
-        return (IndexReader reader, Terms terms, String field, double realWordLikelihood, BytesRef separator)
-                -> new LaplaceScorer(reader, terms,  field, realWordLikelihood, separator, alpha);
+        return (IndexReader reader, Terms terms, String field, double realWordLikelihood, BytesRef separator) -> new LaplaceScorer(
+            reader,
+            terms,
+            field,
+            realWordLikelihood,
+            separator,
+            alpha
+        );
     }
 }

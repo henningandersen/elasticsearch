@@ -36,17 +36,28 @@ import org.elasticsearch.transport.TransportService;
 
 import java.io.IOException;
 
-public class TransportGetStoredScriptAction extends TransportMasterNodeReadAction<GetStoredScriptRequest,
-        GetStoredScriptResponse> {
+public class TransportGetStoredScriptAction extends TransportMasterNodeReadAction<GetStoredScriptRequest, GetStoredScriptResponse> {
 
     private final ScriptService scriptService;
 
     @Inject
-    public TransportGetStoredScriptAction(TransportService transportService, ClusterService clusterService,
-                                          ThreadPool threadPool, ActionFilters actionFilters,
-                                          IndexNameExpressionResolver indexNameExpressionResolver, ScriptService scriptService) {
-        super(GetStoredScriptAction.NAME, transportService, clusterService, threadPool, actionFilters,
-            GetStoredScriptRequest::new, indexNameExpressionResolver);
+    public TransportGetStoredScriptAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        ScriptService scriptService
+    ) {
+        super(
+            GetStoredScriptAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            GetStoredScriptRequest::new,
+            indexNameExpressionResolver
+        );
         this.scriptService = scriptService;
     }
 
@@ -61,8 +72,12 @@ public class TransportGetStoredScriptAction extends TransportMasterNodeReadActio
     }
 
     @Override
-    protected void masterOperation(Task task, GetStoredScriptRequest request, ClusterState state,
-                                   ActionListener<GetStoredScriptResponse> listener) throws Exception {
+    protected void masterOperation(
+        Task task,
+        GetStoredScriptRequest request,
+        ClusterState state,
+        ActionListener<GetStoredScriptResponse> listener
+    ) throws Exception {
         listener.onResponse(new GetStoredScriptResponse(request.id(), scriptService.getStoredScript(state, request)));
     }
 

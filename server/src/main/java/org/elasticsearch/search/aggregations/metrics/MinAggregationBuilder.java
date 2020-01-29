@@ -78,8 +78,12 @@ public class MinAggregationBuilder extends ValuesSourceAggregationBuilder.LeafOn
     }
 
     @Override
-    protected MinAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<Numeric> config,
-                                              AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected MinAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<Numeric> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         return new MinAggregatorFactory(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 

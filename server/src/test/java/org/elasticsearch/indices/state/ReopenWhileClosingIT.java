@@ -120,9 +120,11 @@ public class ReopenWhileClosingIT extends ESIntegTestCase {
     }
 
     private void createIndexWithDocs(final String indexName, final Collection<String> dataOnlyNodes) {
-        createIndex(indexName,
-            Settings.builder().put(indexSettings()).put("index.routing.allocation.include._name", String.join(",", dataOnlyNodes)).build());
-        final int nbDocs =  scaledRandomIntBetween(1, 100);
+        createIndex(
+            indexName,
+            Settings.builder().put(indexSettings()).put("index.routing.allocation.include._name", String.join(",", dataOnlyNodes)).build()
+        );
+        final int nbDocs = scaledRandomIntBetween(1, 100);
         for (int i = 0; i < nbDocs; i++) {
             indexDoc(indexName, String.valueOf(i), "num", i);
         }
@@ -133,12 +135,15 @@ public class ReopenWhileClosingIT extends ESIntegTestCase {
      * Intercepts and blocks the {@link TransportVerifyShardBeforeCloseAction} executed for the given index pattern.
      */
     private Releasable interceptVerifyShardBeforeCloseActions(final String indexPattern, final Runnable onIntercept) {
-        final MockTransportService mockTransportService = (MockTransportService) internalCluster()
-            .getInstance(TransportService.class, internalCluster().getMasterName());
+        final MockTransportService mockTransportService = (MockTransportService) internalCluster().getInstance(
+            TransportService.class,
+            internalCluster().getMasterName()
+        );
 
         final CountDownLatch release = new CountDownLatch(1);
         for (DiscoveryNode node : internalCluster().clusterService().state().getNodes()) {
-            mockTransportService.addSendBehavior(internalCluster().getInstance(TransportService.class, node.getName()),
+            mockTransportService.addSendBehavior(
+                internalCluster().getInstance(TransportService.class, node.getName()),
                 (connection, requestId, action, request, options) -> {
                     if (action.startsWith(TransportVerifyShardBeforeCloseAction.NAME)) {
                         if (request instanceof TransportVerifyShardBeforeCloseAction.ShardRequest) {
@@ -157,7 +162,8 @@ public class ReopenWhileClosingIT extends ESIntegTestCase {
 
                     }
                     connection.sendRequest(requestId, action, request, options);
-                });
+                }
+            );
         }
         final RunOnce releaseOnce = new RunOnce(release::countDown);
         return releaseOnce::run;
@@ -168,9 +174,16 @@ public class ReopenWhileClosingIT extends ESIntegTestCase {
         for (String index : indices) {
             assertThat(clusterState.metaData().indices().get(index).getState(), is(IndexMetaData.State.OPEN));
             assertThat(clusterState.routingTable().index(index), notNullValue());
-            assertThat("Index " + index + " must have only 1 block with [id=" + INDEX_CLOSED_BLOCK_ID + "]",
-                clusterState.blocks().indices().getOrDefault(index, emptySet()).stream()
-                    .filter(clusterBlock -> clusterBlock.id() == INDEX_CLOSED_BLOCK_ID).count(), equalTo(1L));
+            assertThat(
+                "Index " + index + " must have only 1 block with [id=" + INDEX_CLOSED_BLOCK_ID + "]",
+                clusterState.blocks()
+                    .indices()
+                    .getOrDefault(index, emptySet())
+                    .stream()
+                    .filter(clusterBlock -> clusterBlock.id() == INDEX_CLOSED_BLOCK_ID)
+                    .count(),
+                equalTo(1L)
+            );
         }
     }
 }

@@ -113,8 +113,9 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
         sortMode = in.readOptionalWriteable(SortMode::readFromStream);
         if (in.getVersion().before(Version.V_8_0_0)) {
             if (in.readOptionalNamedWriteable(QueryBuilder.class) != null || in.readOptionalString() != null) {
-                throw new IOException("the [sort] options [nested_path] and [nested_filter] are removed in 8.x, " +
-                    "please use [nested] instead");
+                throw new IOException(
+                    "the [sort] options [nested_path] and [nested_filter] are removed in 8.x, " + "please use [nested] instead"
+                );
             }
         }
         nestedSort = in.readOptionalWriteable(NestedSortBuilder::new);
@@ -153,8 +154,7 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
      */
     public ScriptSortBuilder sortMode(SortMode sortMode) {
         Objects.requireNonNull(sortMode, "sort mode cannot be null.");
-        if (ScriptSortType.STRING.equals(type) && (sortMode == SortMode.SUM || sortMode == SortMode.AVG ||
-                sortMode == SortMode.MEDIAN)) {
+        if (ScriptSortType.STRING.equals(type) && (sortMode == SortMode.SUM || sortMode == SortMode.AVG || sortMode == SortMode.MEDIAN)) {
             throw new IllegalArgumentException("script sort of type [string] doesn't support mode [" + sortMode + "]");
         }
         this.sortMode = sortMode;
@@ -204,12 +204,18 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
         return builder;
     }
 
-    private static final ConstructingObjectParser<ScriptSortBuilder, Void> PARSER = new ConstructingObjectParser<>(NAME,
-            a -> new ScriptSortBuilder((Script) a[0], (ScriptSortType) a[1]));
+    private static final ConstructingObjectParser<ScriptSortBuilder, Void> PARSER = new ConstructingObjectParser<>(
+        NAME,
+        a -> new ScriptSortBuilder((Script) a[0], (ScriptSortType) a[1])
+    );
 
     static {
-        PARSER.declareField(constructorArg(), (parser, context) -> Script.parse(parser),
-                Script.SCRIPT_PARSE_FIELD, ValueType.OBJECT_OR_STRING);
+        PARSER.declareField(
+            constructorArg(),
+            (parser, context) -> Script.parse(parser),
+            Script.SCRIPT_PARSE_FIELD,
+            ValueType.OBJECT_OR_STRING
+        );
         PARSER.declareField(constructorArg(), p -> ScriptSortType.fromString(p.text()), TYPE_FIELD, ValueType.STRING);
         PARSER.declareString((b, v) -> b.order(SortOrder.fromString(v)), ORDER_FIELD);
         PARSER.declareString((b, v) -> b.sortMode(SortMode.fromString(v)), SORTMODE_FIELD);
@@ -228,7 +234,6 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
     public static ScriptSortBuilder fromXContent(XContentParser parser, String elementName) {
         return PARSER.apply(parser, null);
     }
-
 
     @Override
     public SortFieldAndFormat build(QueryShardContext context) throws IOException {
@@ -254,16 +259,19 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
                 final StringSortScript.LeafFactory searchScript = factory.newFactory(script.getParams(), context.lookup());
                 fieldComparatorSource = new BytesRefFieldComparatorSource(null, null, valueMode, nested) {
                     StringSortScript leafScript;
+
                     @Override
                     protected SortedBinaryDocValues getValues(LeafReaderContext context) throws IOException {
                         leafScript = searchScript.newInstance(context);
                         final BinaryDocValues values = new AbstractBinaryDocValues() {
                             final BytesRefBuilder spare = new BytesRefBuilder();
+
                             @Override
                             public boolean advanceExact(int doc) throws IOException {
                                 leafScript.setDocument(doc);
                                 return true;
                             }
+
                             @Override
                             public BytesRef binaryValue() {
                                 spare.copyChars(leafScript.execute());
@@ -272,6 +280,7 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
                         };
                         return FieldData.singleton(values);
                     }
+
                     @Override
                     protected void setScorer(Scorable scorer) {
                         leafScript.setScorer(scorer);
@@ -283,6 +292,7 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
                 final NumberSortScript.LeafFactory numberSortScript = numberSortFactory.newFactory(script.getParams(), context.lookup());
                 fieldComparatorSource = new DoubleValuesComparatorSource(null, Double.MAX_VALUE, valueMode, nested) {
                     NumberSortScript leafScript;
+
                     @Override
                     protected SortedNumericDoubleValues getValues(LeafReaderContext context) throws IOException {
                         leafScript = numberSortScript.newInstance(context);
@@ -292,6 +302,7 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
                                 leafScript.setDocument(doc);
                                 return true;
                             }
+
                             @Override
                             public double doubleValue() {
                                 return leafScript.execute();
@@ -299,6 +310,7 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
                         };
                         return FieldData.singleton(values);
                     }
+
                     @Override
                     protected void setScorer(Scorable scorer) {
                         leafScript.setScorer(scorer);
@@ -306,7 +318,7 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
                 };
                 break;
             default:
-            throw new QueryShardException(context, "custom script sort type [" + type + "] not supported");
+                throw new QueryShardException(context, "custom script sort type [" + type + "] not supported");
         }
 
         return new SortFieldAndFormat(new SortField("_script", fieldComparatorSource, reverse), DocValueFormat.RAW);
@@ -321,11 +333,11 @@ public class ScriptSortBuilder extends SortBuilder<ScriptSortBuilder> {
             return false;
         }
         ScriptSortBuilder other = (ScriptSortBuilder) object;
-        return Objects.equals(script, other.script) &&
-                Objects.equals(type, other.type) &&
-                Objects.equals(order, other.order) &&
-                Objects.equals(sortMode, other.sortMode) &&
-                Objects.equals(nestedSort, other.nestedSort);
+        return Objects.equals(script, other.script)
+            && Objects.equals(type, other.type)
+            && Objects.equals(order, other.order)
+            && Objects.equals(sortMode, other.sortMode)
+            && Objects.equals(nestedSort, other.nestedSort);
     }
 
     @Override

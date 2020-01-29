@@ -35,8 +35,7 @@ import java.util.Objects;
 public class InternalValueCount extends InternalNumericMetricsAggregation.SingleValue implements ValueCount {
     private final long value;
 
-    InternalValueCount(String name, long value, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    InternalValueCount(String name, long value, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
         super(name, pipelineAggregators, metaData);
         this.value = value;
     }

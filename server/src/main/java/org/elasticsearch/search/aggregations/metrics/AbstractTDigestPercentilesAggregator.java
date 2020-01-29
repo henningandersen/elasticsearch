@@ -53,9 +53,19 @@ abstract class AbstractTDigestPercentilesAggregator extends NumericMetricsAggreg
     protected final double compression;
     protected final boolean keyed;
 
-    AbstractTDigestPercentilesAggregator(String name, ValuesSource valuesSource, SearchContext context, Aggregator parent,
-            double[] keys, double compression, boolean keyed, DocValueFormat formatter,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    AbstractTDigestPercentilesAggregator(
+        String name,
+        ValuesSource valuesSource,
+        SearchContext context,
+        Aggregator parent,
+        double[] keys,
+        double compression,
+        boolean keyed,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.keyed = keyed;
@@ -71,24 +81,26 @@ abstract class AbstractTDigestPercentilesAggregator extends NumericMetricsAggreg
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         if (valuesSource == null) {
             return LeafBucketCollector.NO_OP_COLLECTOR;
         }
         final BigArrays bigArrays = context.bigArrays();
         if (valuesSource instanceof ValuesSource.Histogram) {
-            final HistogramValues values = ((ValuesSource.Histogram)valuesSource).getHistogramValues(ctx);
+            final HistogramValues values = ((ValuesSource.Histogram) valuesSource).getHistogramValues(ctx);
             return collectHistogramValues(values, bigArrays, sub);
         } else {
-            final SortedNumericDoubleValues values = ((ValuesSource.Numeric)valuesSource).doubleValues(ctx);
+            final SortedNumericDoubleValues values = ((ValuesSource.Numeric) valuesSource).doubleValues(ctx);
             return collectNumeric(values, bigArrays, sub);
         }
 
     }
 
-    private LeafBucketCollector collectNumeric(final SortedNumericDoubleValues values,
-                                               final BigArrays bigArrays, final LeafBucketCollector sub) {
+    private LeafBucketCollector collectNumeric(
+        final SortedNumericDoubleValues values,
+        final BigArrays bigArrays,
+        final LeafBucketCollector sub
+    ) {
         return new LeafBucketCollectorBase(sub, values) {
             @Override
             public void collect(int doc, long bucket) throws IOException {
@@ -103,15 +115,18 @@ abstract class AbstractTDigestPercentilesAggregator extends NumericMetricsAggreg
         };
     }
 
-    private LeafBucketCollector collectHistogramValues(final HistogramValues values,
-                                                       final BigArrays bigArrays, final LeafBucketCollector sub) {
+    private LeafBucketCollector collectHistogramValues(
+        final HistogramValues values,
+        final BigArrays bigArrays,
+        final LeafBucketCollector sub
+    ) {
         return new LeafBucketCollectorBase(sub, values) {
             @Override
             public void collect(int doc, long bucket) throws IOException {
                 TDigestState state = getExistingOrNewHistogram(bigArrays, bucket);
                 if (values.advanceExact(doc)) {
                     final HistogramValue sketch = values.histogram();
-                    while(sketch.next()) {
+                    while (sketch.next()) {
                         state.add(sketch.value(), sketch.count());
                     }
                 }

@@ -65,8 +65,9 @@ public class LeaderCheckerTests extends ESTestCase {
 
     public void testFollowerBehaviour() {
         final DiscoveryNode leader1 = new DiscoveryNode("leader-1", buildNewFakeTransportAddress(), Version.CURRENT);
-        final DiscoveryNode leader2
-            = randomBoolean() ? leader1 : new DiscoveryNode("leader-2", buildNewFakeTransportAddress(), Version.CURRENT);
+        final DiscoveryNode leader2 = randomBoolean()
+            ? leader1
+            : new DiscoveryNode("leader-2", buildNewFakeTransportAddress(), Version.CURRENT);
 
         final DiscoveryNode localNode = new DiscoveryNode("local-node", buildNewFakeTransportAddress(), Version.CURRENT);
         Settings.Builder settingsBuilder = Settings.builder().put(NODE_NAME_SETTING.getKey(), localNode.getId());
@@ -142,18 +143,23 @@ public class LeaderCheckerTests extends ESTestCase {
             }
         };
 
-        final TransportService transportService = mockTransport.createTransportService(settings,
-            deterministicTaskQueue.getThreadPool(), NOOP_TRANSPORT_INTERCEPTOR, boundTransportAddress -> localNode, null, emptySet());
+        final TransportService transportService = mockTransport.createTransportService(
+            settings,
+            deterministicTaskQueue.getThreadPool(),
+            NOOP_TRANSPORT_INTERCEPTOR,
+            boundTransportAddress -> localNode,
+            null,
+            emptySet()
+        );
         transportService.start();
         transportService.acceptIncomingRequests();
 
         final AtomicBoolean leaderFailed = new AtomicBoolean();
 
-        final LeaderChecker leaderChecker = new LeaderChecker(settings, transportService,
-            e -> {
-                assertThat(e.getMessage(), matchesRegex("node \\[.*\\] failed \\[[1-9][0-9]*\\] consecutive checks"));
-                assertTrue(leaderFailed.compareAndSet(false, true));
-            });
+        final LeaderChecker leaderChecker = new LeaderChecker(settings, transportService, e -> {
+            assertThat(e.getMessage(), matchesRegex("node \\[.*\\] failed \\[[1-9][0-9]*\\] consecutive checks"));
+            assertTrue(leaderFailed.compareAndSet(false, true));
+        });
 
         logger.info("--> creating first checker");
         leaderChecker.updateLeader(leader1);
@@ -193,24 +199,29 @@ public class LeaderCheckerTests extends ESTestCase {
                 deterministicTaskQueue.runAllRunnableTasks();
             }
 
-            assertThat(deterministicTaskQueue.getCurrentTimeMillis() - failureTime,
-                lessThanOrEqualTo((leaderCheckIntervalMillis + leaderCheckTimeoutMillis) * leaderCheckRetryCount
-                    // needed because a successful check response might be in flight at the time of failure
-                    + leaderCheckTimeoutMillis
-                ));
+            assertThat(
+                deterministicTaskQueue.getCurrentTimeMillis() - failureTime,
+                lessThanOrEqualTo(
+                    (leaderCheckIntervalMillis + leaderCheckTimeoutMillis) * leaderCheckRetryCount
+                        // needed because a successful check response might be in flight at the time of failure
+                        + leaderCheckTimeoutMillis
+                )
+            );
         }
         leaderChecker.updateLeader(null);
     }
 
     enum Response {
-        SUCCESS, REMOTE_ERROR, DIRECT_ERROR
+        SUCCESS,
+        REMOTE_ERROR,
+        DIRECT_ERROR
     }
 
     public void testFollowerFailsImmediatelyOnDisconnection() {
         final DiscoveryNode localNode = new DiscoveryNode("local-node", buildNewFakeTransportAddress(), Version.CURRENT);
         final DiscoveryNode leader = new DiscoveryNode("leader", buildNewFakeTransportAddress(), Version.CURRENT);
 
-        final Response[] responseHolder = new Response[]{Response.SUCCESS};
+        final Response[] responseHolder = new Response[] { Response.SUCCESS };
 
         final Settings settings = Settings.builder().put(NODE_NAME_SETTING.getKey(), localNode.getId()).build();
         final DeterministicTaskQueue deterministicTaskQueue = new DeterministicTaskQueue(settings, random());
@@ -248,17 +259,22 @@ public class LeaderCheckerTests extends ESTestCase {
             }
         };
 
-        final TransportService transportService = mockTransport.createTransportService(settings,
-            deterministicTaskQueue.getThreadPool(), NOOP_TRANSPORT_INTERCEPTOR, boundTransportAddress -> localNode, null, emptySet());
+        final TransportService transportService = mockTransport.createTransportService(
+            settings,
+            deterministicTaskQueue.getThreadPool(),
+            NOOP_TRANSPORT_INTERCEPTOR,
+            boundTransportAddress -> localNode,
+            null,
+            emptySet()
+        );
         transportService.start();
         transportService.acceptIncomingRequests();
 
         final AtomicBoolean leaderFailed = new AtomicBoolean();
-        final LeaderChecker leaderChecker = new LeaderChecker(settings, transportService,
-            e -> {
-                assertThat(e.getMessage(), anyOf(endsWith("disconnected"), endsWith("disconnected during check")));
-                assertTrue(leaderFailed.compareAndSet(false, true));
-            });
+        final LeaderChecker leaderChecker = new LeaderChecker(settings, transportService, e -> {
+            assertThat(e.getMessage(), anyOf(endsWith("disconnected"), endsWith("disconnected during check")));
+            assertTrue(leaderFailed.compareAndSet(false, true));
+        });
 
         leaderChecker.updateLeader(leader);
         {
@@ -323,15 +339,24 @@ public class LeaderCheckerTests extends ESTestCase {
         final DeterministicTaskQueue deterministicTaskQueue = new DeterministicTaskQueue(settings, random());
         final CapturingTransport capturingTransport = new CapturingTransport();
 
-        final TransportService transportService = capturingTransport.createTransportService(settings,
-            deterministicTaskQueue.getThreadPool(), NOOP_TRANSPORT_INTERCEPTOR, boundTransportAddress -> localNode, null, emptySet());
+        final TransportService transportService = capturingTransport.createTransportService(
+            settings,
+            deterministicTaskQueue.getThreadPool(),
+            NOOP_TRANSPORT_INTERCEPTOR,
+            boundTransportAddress -> localNode,
+            null,
+            emptySet()
+        );
         transportService.start();
         transportService.acceptIncomingRequests();
 
         final LeaderChecker leaderChecker = new LeaderChecker(settings, transportService, e -> fail("shouldn't be checking anything"));
 
-        final DiscoveryNodes discoveryNodes
-            = DiscoveryNodes.builder().add(localNode).localNodeId(localNode.getId()).masterNodeId(localNode.getId()).build();
+        final DiscoveryNodes discoveryNodes = DiscoveryNodes.builder()
+            .add(localNode)
+            .localNodeId(localNode.getId())
+            .masterNodeId(localNode.getId())
+            .build();
 
         {
             leaderChecker.setCurrentNodes(discoveryNodes);
@@ -367,8 +392,10 @@ public class LeaderCheckerTests extends ESTestCase {
             assertFalse(handler.successfulResponseReceived);
             assertThat(handler.transportException.getRootCause(), instanceOf(CoordinationStateRejectedException.class));
             CoordinationStateRejectedException cause = (CoordinationStateRejectedException) handler.transportException.getRootCause();
-            assertThat(cause.getMessage(),
-                equalTo("rejecting leader check from [" + otherNode + "] sent to a node that is no longer the master"));
+            assertThat(
+                cause.getMessage(),
+                equalTo("rejecting leader check from [" + otherNode + "] sent to a node that is no longer the master")
+            );
         }
     }
 
@@ -400,10 +427,13 @@ public class LeaderCheckerTests extends ESTestCase {
 
     public void testLeaderCheckRequestEqualsHashcodeSerialization() {
         LeaderCheckRequest request = new LeaderCheckRequest(
-            new DiscoveryNode(randomAlphaOfLength(10), buildNewFakeTransportAddress(), Version.CURRENT));
-        //noinspection RedundantCast since it is needed for some IDEs (specifically Eclipse 4.8.0) to infer the right type
-        EqualsHashCodeTestUtils.checkEqualsAndHashCode(request,
-                (CopyFunction<LeaderCheckRequest>) rq -> copyWriteable(rq, writableRegistry(), LeaderCheckRequest::new),
-            rq -> new LeaderCheckRequest(new DiscoveryNode(randomAlphaOfLength(10), buildNewFakeTransportAddress(), Version.CURRENT)));
+            new DiscoveryNode(randomAlphaOfLength(10), buildNewFakeTransportAddress(), Version.CURRENT)
+        );
+        // noinspection RedundantCast since it is needed for some IDEs (specifically Eclipse 4.8.0) to infer the right type
+        EqualsHashCodeTestUtils.checkEqualsAndHashCode(
+            request,
+            (CopyFunction<LeaderCheckRequest>) rq -> copyWriteable(rq, writableRegistry(), LeaderCheckRequest::new),
+            rq -> new LeaderCheckRequest(new DiscoveryNode(randomAlphaOfLength(10), buildNewFakeTransportAddress(), Version.CURRENT))
+        );
     }
 }

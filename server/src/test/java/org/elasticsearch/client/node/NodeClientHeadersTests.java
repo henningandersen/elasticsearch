@@ -68,5 +68,4 @@ public class NodeClientHeadersTests extends AbstractClientHeadersTestCase {
         }
     }
 
-
 }

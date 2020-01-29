@@ -70,9 +70,11 @@ public class MedianAbsoluteDeviationAggregationBuilder extends LeafOnly<ValuesSo
         compression = in.readDouble();
     }
 
-    protected MedianAbsoluteDeviationAggregationBuilder(MedianAbsoluteDeviationAggregationBuilder clone,
-                                                        AggregatorFactories.Builder factoriesBuilder,
-                                                        Map<String, Object> metaData) {
+    protected MedianAbsoluteDeviationAggregationBuilder(
+        MedianAbsoluteDeviationAggregationBuilder clone,
+        AggregatorFactories.Builder factoriesBuilder,
+        Map<String, Object> metaData
+    ) {
         super(clone, factoriesBuilder, metaData);
         this.compression = clone.compression;
     }
@@ -90,7 +92,8 @@ public class MedianAbsoluteDeviationAggregationBuilder extends LeafOnly<ValuesSo
     public MedianAbsoluteDeviationAggregationBuilder compression(double compression) {
         if (compression <= 0d) {
             throw new IllegalArgumentException(
-                "[" + COMPRESSION_FIELD.getPreferredName() + "] must be greater than 0. Found [" + compression + "] in [" + name + "]");
+                "[" + COMPRESSION_FIELD.getPreferredName() + "] must be greater than 0. Found [" + compression + "] in [" + name + "]"
+            );
         }
         this.compression = compression;
         return this;
@@ -107,13 +110,21 @@ public class MedianAbsoluteDeviationAggregationBuilder extends LeafOnly<ValuesSo
     }
 
     @Override
-    protected ValuesSourceAggregatorFactory<ValuesSource.Numeric> innerBuild(QueryShardContext queryShardContext,
-                                                                             ValuesSourceConfig<ValuesSource.Numeric> config,
-                                                                             AggregatorFactory parent,
-                                                                             AggregatorFactories.Builder subFactoriesBuilder)
-        throws IOException {
-        return new MedianAbsoluteDeviationAggregatorFactory(name, config, queryShardContext,
-            parent, subFactoriesBuilder, metaData, compression);
+    protected ValuesSourceAggregatorFactory<ValuesSource.Numeric> innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource.Numeric> config,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder
+    ) throws IOException {
+        return new MedianAbsoluteDeviationAggregatorFactory(
+            name,
+            config,
+            queryShardContext,
+            parent,
+            subFactoriesBuilder,
+            metaData,
+            compression
+        );
     }
 
     @Override

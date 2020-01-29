@@ -49,11 +49,24 @@ public class TransportShardMultiGetAction extends TransportSingleShardAction<Mul
     private final IndicesService indicesService;
 
     @Inject
-    public TransportShardMultiGetAction(ClusterService clusterService, TransportService transportService,
-                                        IndicesService indicesService, ThreadPool threadPool, ActionFilters actionFilters,
-                                        IndexNameExpressionResolver indexNameExpressionResolver) {
-        super(ACTION_NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                MultiGetShardRequest::new, ThreadPool.Names.GET);
+    public TransportShardMultiGetAction(
+        ClusterService clusterService,
+        TransportService transportService,
+        IndicesService indicesService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver
+    ) {
+        super(
+            ACTION_NAME,
+            threadPool,
+            clusterService,
+            transportService,
+            actionFilters,
+            indexNameExpressionResolver,
+            MultiGetShardRequest::new,
+            ThreadPool.Names.GET
+        );
         this.indicesService = indicesService;
     }
 
@@ -75,12 +88,12 @@ public class TransportShardMultiGetAction extends TransportSingleShardAction<Mul
     @Override
     protected ShardIterator shards(ClusterState state, InternalRequest request) {
         return clusterService.operationRouting()
-                .getShards(state, request.request().index(), request.request().shardId(), request.request().preference());
+            .getShards(state, request.request().index(), request.request().shardId(), request.request().preference());
     }
 
     @Override
-    protected void asyncShardOperation(
-        MultiGetShardRequest request, ShardId shardId, ActionListener<MultiGetShardResponse> listener) throws IOException {
+    protected void asyncShardOperation(MultiGetShardRequest request, ShardId shardId, ActionListener<MultiGetShardResponse> listener)
+        throws IOException {
         IndexService indexService = indicesService.indexServiceSafe(shardId.getIndex());
         IndexShard indexShard = indexService.getShard(shardId.id());
         if (request.realtime()) { // we are not tied to a refresh cycle here anyway
@@ -109,15 +122,14 @@ public class TransportShardMultiGetAction extends TransportSingleShardAction<Mul
         for (int i = 0; i < request.locations.size(); i++) {
             MultiGetRequest.Item item = request.items.get(i);
             try {
-                GetResult getResult = indexShard.getService().get(item.id(), item.storedFields(), request.realtime(),
-                    item.version(), item.versionType(), item.fetchSourceContext());
+                GetResult getResult = indexShard.getService()
+                    .get(item.id(), item.storedFields(), request.realtime(), item.version(), item.versionType(), item.fetchSourceContext());
                 response.add(request.locations.get(i), new GetResponse(getResult));
             } catch (RuntimeException e) {
                 if (TransportActions.isShardNotAvailableException(e)) {
                     throw e;
                 } else {
-                    logger.debug(() -> new ParameterizedMessage("{} failed to execute multi_get for [{}]", shardId,
-                        item.id()), e);
+                    logger.debug(() -> new ParameterizedMessage("{} failed to execute multi_get for [{}]", shardId, item.id()), e);
                     response.add(request.locations.get(i), new MultiGetResponse.Failure(request.index(), item.id(), e));
                 }
             }
@@ -129,7 +141,8 @@ public class TransportShardMultiGetAction extends TransportSingleShardAction<Mul
     @Override
     protected String getExecutor(MultiGetShardRequest request, ShardId shardId) {
         IndexService indexService = indicesService.indexServiceSafe(shardId.getIndex());
-        return indexService.getIndexSettings().isSearchThrottled() ? ThreadPool.Names.SEARCH_THROTTLED : super.getExecutor(request,
-            shardId);
+        return indexService.getIndexSettings().isSearchThrottled()
+            ? ThreadPool.Names.SEARCH_THROTTLED
+            : super.getExecutor(request, shardId);
     }
 }

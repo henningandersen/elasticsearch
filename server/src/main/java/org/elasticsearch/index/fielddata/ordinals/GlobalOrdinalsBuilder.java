@@ -50,9 +50,14 @@ public enum GlobalOrdinalsBuilder {
     /**
      * Build global ordinals for the provided {@link IndexReader}.
      */
-    public static IndexOrdinalsFieldData build(final IndexReader indexReader, IndexOrdinalsFieldData indexFieldData,
-            IndexSettings indexSettings, CircuitBreakerService breakerService, Logger logger,
-            Function<SortedSetDocValues, ScriptDocValues<?>> scriptFunction) throws IOException {
+    public static IndexOrdinalsFieldData build(
+        final IndexReader indexReader,
+        IndexOrdinalsFieldData indexFieldData,
+        IndexSettings indexSettings,
+        CircuitBreakerService breakerService,
+        Logger logger,
+        Function<SortedSetDocValues, ScriptDocValues<?>> scriptFunction
+    ) throws IOException {
         assert indexReader.leaves().size() > 1;
         long startTimeNS = System.nanoTime();
 
@@ -68,19 +73,27 @@ public enum GlobalOrdinalsBuilder {
 
         if (logger.isDebugEnabled()) {
             logger.debug(
-                    "global-ordinals [{}][{}] took [{}]",
-                    indexFieldData.getFieldName(),
-                    ordinalMap.getValueCount(),
-                    new TimeValue(System.nanoTime() - startTimeNS, TimeUnit.NANOSECONDS)
+                "global-ordinals [{}][{}] took [{}]",
+                indexFieldData.getFieldName(),
+                ordinalMap.getValueCount(),
+                new TimeValue(System.nanoTime() - startTimeNS, TimeUnit.NANOSECONDS)
             );
         }
-        return new GlobalOrdinalsIndexFieldData(indexSettings, indexFieldData.getFieldName(),
-                atomicFD, ordinalMap, memorySizeInBytes, scriptFunction
+        return new GlobalOrdinalsIndexFieldData(
+            indexSettings,
+            indexFieldData.getFieldName(),
+            atomicFD,
+            ordinalMap,
+            memorySizeInBytes,
+            scriptFunction
         );
     }
 
-    public static IndexOrdinalsFieldData buildEmpty(IndexSettings indexSettings, final IndexReader indexReader,
-            IndexOrdinalsFieldData indexFieldData) throws IOException {
+    public static IndexOrdinalsFieldData buildEmpty(
+        IndexSettings indexSettings,
+        final IndexReader indexReader,
+        IndexOrdinalsFieldData indexFieldData
+    ) throws IOException {
         assert indexReader.leaves().size() > 1;
 
         final AtomicOrdinalsFieldData[] atomicFD = new AtomicOrdinalsFieldData[indexReader.leaves().size()];
@@ -103,14 +116,18 @@ public enum GlobalOrdinalsBuilder {
                 }
 
                 @Override
-                public void close() {
-                }
+                public void close() {}
             };
             subs[i] = atomicFD[i].getOrdinalsValues();
         }
         final OrdinalMap ordinalMap = OrdinalMap.build(null, subs, PackedInts.DEFAULT);
-        return new GlobalOrdinalsIndexFieldData(indexSettings, indexFieldData.getFieldName(),
-                atomicFD, ordinalMap, 0, AbstractAtomicOrdinalsFieldData.DEFAULT_SCRIPT_FUNCTION
+        return new GlobalOrdinalsIndexFieldData(
+            indexSettings,
+            indexFieldData.getFieldName(),
+            atomicFD,
+            ordinalMap,
+            0,
+            AbstractAtomicOrdinalsFieldData.DEFAULT_SCRIPT_FUNCTION
         );
     }
 

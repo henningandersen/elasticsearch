@@ -122,7 +122,7 @@ public final class SearchShardIterator extends PlainShardIterator {
         if (superCompareTo != 0 || (o instanceof SearchShardIterator == false)) {
             return superCompareTo;
         }
-        SearchShardIterator searchShardIterator = (SearchShardIterator)o;
+        SearchShardIterator searchShardIterator = (SearchShardIterator) o;
         if (clusterAlias == null && searchShardIterator.getClusterAlias() == null) {
             return 0;
         }

@@ -127,10 +127,20 @@ public interface Repository extends LifecycleComponent {
      * @param writeShardGens     if shard generations should be written to the repository
      * @param listener listener to be called on completion of the snapshot
      */
-    void finalizeSnapshot(SnapshotId snapshotId, ShardGenerations shardGenerations, long startTime, String failure,
-                          int totalShards, List<SnapshotShardFailure> shardFailures, long repositoryStateId,
-                          boolean includeGlobalState, MetaData clusterMetaData, Map<String, Object> userMetadata,
-                          boolean writeShardGens, ActionListener<SnapshotInfo> listener);
+    void finalizeSnapshot(
+        SnapshotId snapshotId,
+        ShardGenerations shardGenerations,
+        long startTime,
+        String failure,
+        int totalShards,
+        List<SnapshotShardFailure> shardFailures,
+        long repositoryStateId,
+        boolean includeGlobalState,
+        MetaData clusterMetaData,
+        Map<String, Object> userMetadata,
+        boolean writeShardGens,
+        ActionListener<SnapshotInfo> listener
+    );
 
     /**
      * Deletes snapshot
@@ -151,7 +161,6 @@ public interface Repository extends LifecycleComponent {
      * Returns restore throttle time in nanoseconds
      */
     long getRestoreThrottleTimeInNanos();
-
 
     /**
      * Verifies repository on the master node and returns the verification token.
@@ -202,9 +211,17 @@ public interface Repository extends LifecycleComponent {
      * @param userMetadata        user metadata of the snapshot found in {@link SnapshotsInProgress.Entry#userMetadata()}
      * @param listener            listener invoked on completion
      */
-    void snapshotShard(Store store, MapperService mapperService, SnapshotId snapshotId, IndexId indexId, IndexCommit snapshotIndexCommit,
-                       IndexShardSnapshotStatus snapshotStatus, boolean writeShardGens, Map<String, Object> userMetadata,
-                       ActionListener<String> listener);
+    void snapshotShard(
+        Store store,
+        MapperService mapperService,
+        SnapshotId snapshotId,
+        IndexId indexId,
+        IndexCommit snapshotIndexCommit,
+        IndexShardSnapshotStatus snapshotStatus,
+        boolean writeShardGens,
+        Map<String, Object> userMetadata,
+        ActionListener<String> listener
+    );
 
     /**
      * Restores snapshot of the shard.
@@ -217,8 +234,15 @@ public interface Repository extends LifecycleComponent {
      * @param recoveryState   recovery state
      * @param listener        listener to invoke once done
      */
-    void restoreShard(Store store, SnapshotId snapshotId, IndexId indexId, ShardId snapshotShardId, RecoveryState recoveryState,
-                      ActionListener<Void> listener);
+    void restoreShard(
+        Store store,
+        SnapshotId snapshotId,
+        IndexId indexId,
+        ShardId snapshotShardId,
+        RecoveryState recoveryState,
+        ActionListener<Void> listener
+    );
+
     /**
      * Retrieve shard snapshot status for the stored snapshot
      *

@@ -56,8 +56,7 @@ public class ExplainRequest extends SingleShardRequest<ExplainRequest> implement
 
     long nowInMillis;
 
-    public ExplainRequest() {
-    }
+    public ExplainRequest() {}
 
     public ExplainRequest(String index, String id) {
         this.index = index;
@@ -135,7 +134,6 @@ public class ExplainRequest extends SingleShardRequest<ExplainRequest> implement
     public FetchSourceContext fetchSourceContext() {
         return fetchSourceContext;
     }
-
 
     public String[] storedFields() {
         return storedFields;

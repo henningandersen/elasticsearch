@@ -34,15 +34,27 @@ public abstract class ValuesSourceAggregatorFactory<VS extends ValuesSource> ext
 
     protected ValuesSourceConfig<VS> config;
 
-    public ValuesSourceAggregatorFactory(String name, ValuesSourceConfig<VS> config, QueryShardContext queryShardContext,
-            AggregatorFactory parent, AggregatorFactories.Builder subFactoriesBuilder, Map<String, Object> metaData) throws IOException {
+    public ValuesSourceAggregatorFactory(
+        String name,
+        ValuesSourceConfig<VS> config,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.config = config;
     }
 
     @Override
-    public Aggregator createInternal(SearchContext searchContext, Aggregator parent, boolean collectsFromSingleBucket,
-                                     List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    public Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         VS vs = config.toValuesSource(queryShardContext, this::resolveMissingAny);
         if (vs == null) {
             return createUnmapped(searchContext, parent, pipelineAggregators, metaData);
@@ -65,16 +77,20 @@ public abstract class ValuesSourceAggregatorFactory<VS extends ValuesSource> ext
         return ValuesSource.Bytes.WithOrdinals.EMPTY;
     }
 
-    protected abstract Aggregator createUnmapped(SearchContext searchContext,
-                                                 Aggregator parent,
-                                                 List<PipelineAggregator> pipelineAggregators,
-                                                 Map<String, Object> metaData) throws IOException;
+    protected abstract Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException;
 
-    protected abstract Aggregator doCreateInternal(VS valuesSource,
-                                                   SearchContext searchContext,
-                                                   Aggregator parent,
-                                                   boolean collectsFromSingleBucket,
-                                                   List<PipelineAggregator> pipelineAggregators,
-                                                   Map<String, Object> metaData) throws IOException;
+    protected abstract Aggregator doCreateInternal(
+        VS valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException;
 
 }

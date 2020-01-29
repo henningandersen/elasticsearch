@@ -74,8 +74,8 @@ public class NestedPathFieldMapper extends MetadataFieldMapper {
 
     public static class TypeParser implements MetadataFieldMapper.TypeParser {
         @Override
-        public MetadataFieldMapper.Builder<?,?> parse(String name, Map<String, Object> node,
-                                                      ParserContext parserContext) throws MapperParsingException {
+        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             throw new MapperParsingException(name(parserContext.mapperService().getIndexSettings().getSettings()) + " is not configurable");
         }
 
@@ -88,8 +88,7 @@ public class NestedPathFieldMapper extends MetadataFieldMapper {
 
     public static final class NestedPathFieldType extends StringFieldType {
 
-        NestedPathFieldType() {
-        }
+        NestedPathFieldType() {}
 
         protected NestedPathFieldType(NestedPathFieldType ref) {
             super(ref);
@@ -117,8 +116,7 @@ public class NestedPathFieldMapper extends MetadataFieldMapper {
     }
 
     private NestedPathFieldMapper(IndexSettings indexSettings, MappedFieldType existing) {
-        this(existing == null ? defaultFieldType(indexSettings) : existing.clone(),
-            indexSettings);
+        this(existing == null ? defaultFieldType(indexSettings) : existing.clone(), indexSettings);
     }
 
     private NestedPathFieldMapper(MappedFieldType fieldType, IndexSettings indexSettings) {
@@ -144,8 +142,7 @@ public class NestedPathFieldMapper extends MetadataFieldMapper {
     }
 
     @Override
-    protected void parseCreateField(ParseContext context, List<IndexableField> fields) throws IOException {
-    }
+    protected void parseCreateField(ParseContext context, List<IndexableField> fields) throws IOException {}
 
     @Override
     protected String contentType() {

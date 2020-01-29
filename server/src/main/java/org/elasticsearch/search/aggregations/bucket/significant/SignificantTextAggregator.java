@@ -65,18 +65,26 @@ public class SignificantTextAggregator extends BucketsAggregator {
     private final DocValueFormat format = DocValueFormat.RAW;
     private final String fieldName;
     private final String[] sourceFieldNames;
-    private DuplicateByteSequenceSpotter dupSequenceSpotter = null ;
+    private DuplicateByteSequenceSpotter dupSequenceSpotter = null;
     private long lastTrieSize;
     private static final int MEMORY_GROWTH_REPORTING_INTERVAL_BYTES = 5000;
 
-
-
-    public SignificantTextAggregator(String name, AggregatorFactories factories,
-            SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-            BucketCountThresholds bucketCountThresholds, IncludeExclude.StringFilter includeExclude,
-            SignificanceHeuristic significanceHeuristic, SignificantTextAggregatorFactory termsAggFactory,
-            String fieldName, String [] sourceFieldNames, boolean filterDuplicateText,
-            Map<String, Object> metaData) throws IOException {
+    public SignificantTextAggregator(
+        String name,
+        AggregatorFactories factories,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        BucketCountThresholds bucketCountThresholds,
+        IncludeExclude.StringFilter includeExclude,
+        SignificanceHeuristic significanceHeuristic,
+        SignificantTextAggregatorFactory termsAggFactory,
+        String fieldName,
+        String[] sourceFieldNames,
+        boolean filterDuplicateText,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData);
         this.bucketCountThresholds = bucketCountThresholds;
         this.includeExclude = includeExclude;
@@ -85,18 +93,14 @@ public class SignificantTextAggregator extends BucketsAggregator {
         this.fieldName = fieldName;
         this.sourceFieldNames = sourceFieldNames;
         bucketOrds = new BytesRefHash(1, context.bigArrays());
-        if(filterDuplicateText){
+        if (filterDuplicateText) {
             dupSequenceSpotter = new DuplicateByteSequenceSpotter();
             lastTrieSize = dupSequenceSpotter.getEstimatedSizeInBytes();
         }
     }
 
-
-
-
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         final BytesRefBuilder previous = new BytesRefBuilder();
         return new LeafBucketCollectorBase(sub, null) {
 
@@ -110,7 +114,7 @@ public class SignificantTextAggregator extends BucketsAggregator {
             }
 
             private void processTokenStream(int doc, long bucket, TokenStream ts, BytesRefHash inDocTerms, String fieldText)
-                    throws IOException{
+                throws IOException {
                 if (dupSequenceSpotter != null) {
                     ts = new DeDuplicatingTokenFilter(ts, dupSequenceSpotter);
                 }
@@ -143,16 +147,17 @@ public class SignificantTextAggregator extends BucketsAggregator {
                         }
                     }
 
-                } finally{
+                } finally {
                     ts.close();
                 }
             }
 
             private void collectFromSource(int doc, long bucket, String indexedFieldName, String[] sourceFieldNames) throws IOException {
                 MappedFieldType fieldType = context.getQueryShardContext().fieldMapper(indexedFieldName);
-                if(fieldType == null){
-                    throw new IllegalArgumentException("Aggregation [" + name + "] cannot process field ["+indexedFieldName
-                            +"] since it is not present");
+                if (fieldType == null) {
+                    throw new IllegalArgumentException(
+                        "Aggregation [" + name + "] cannot process field [" + indexedFieldName + "] since it is not present"
+                    );
                 }
 
                 SourceLookup sourceLookup = context.lookup().source();
@@ -177,7 +182,7 @@ public class SignificantTextAggregator extends BucketsAggregator {
                             processTokenStream(doc, bucket, ts, inDocTerms, fieldText);
                         }
                     }
-                } finally{
+                } finally {
                     Releasables.close(inDocTerms);
                 }
             }
@@ -231,11 +236,19 @@ public class SignificantTextAggregator extends BucketsAggregator {
             list[i] = bucket;
         }
 
-        return new SignificantStringTerms( name, bucketCountThresholds.getRequiredSize(),
-                bucketCountThresholds.getMinDocCount(), pipelineAggregators(),
-                metaData(), format, subsetSize, supersetSize, significanceHeuristic, Arrays.asList(list));
+        return new SignificantStringTerms(
+            name,
+            bucketCountThresholds.getRequiredSize(),
+            bucketCountThresholds.getMinDocCount(),
+            pipelineAggregators(),
+            metaData(),
+            format,
+            subsetSize,
+            supersetSize,
+            significanceHeuristic,
+            Arrays.asList(list)
+        );
     }
-
 
     @Override
     public SignificantStringTerms buildEmptyAggregation() {
@@ -243,8 +256,18 @@ public class SignificantTextAggregator extends BucketsAggregator {
         ContextIndexSearcher searcher = context.searcher();
         IndexReader topReader = searcher.getIndexReader();
         int supersetSize = topReader.numDocs();
-        return new SignificantStringTerms(name, bucketCountThresholds.getRequiredSize(), bucketCountThresholds.getMinDocCount(),
-                pipelineAggregators(), metaData(), format, 0, supersetSize, significanceHeuristic, emptyList());
+        return new SignificantStringTerms(
+            name,
+            bucketCountThresholds.getRequiredSize(),
+            bucketCountThresholds.getMinDocCount(),
+            pipelineAggregators(),
+            metaData(),
+            format,
+            0,
+            supersetSize,
+            significanceHeuristic,
+            emptyList()
+        );
     }
 
     @Override

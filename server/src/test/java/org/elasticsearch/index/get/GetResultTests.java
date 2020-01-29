@@ -59,30 +59,40 @@ public class GetResultTests extends ESTestCase {
         GetResult expectedGetResult = tuple.v2();
         boolean humanReadable = randomBoolean();
         BytesReference originalBytes = toShuffledXContent(getResult, xContentType, ToXContent.EMPTY_PARAMS, humanReadable, "_source");
-        //test that we can parse what we print out
+        // test that we can parse what we print out
         GetResult parsedGetResult;
         try (XContentParser parser = createParser(xContentType.xContent(), originalBytes)) {
             parsedGetResult = GetResult.fromXContent(parser);
             assertNull(parser.nextToken());
         }
         assertEquals(expectedGetResult, parsedGetResult);
-        //print the parsed object out and test that the output is the same as the original output
+        // print the parsed object out and test that the output is the same as the original output
         BytesReference finalBytes = toXContent(parsedGetResult, xContentType, humanReadable);
         assertToXContentEquivalent(originalBytes, finalBytes, xContentType);
-        //check that the source stays unchanged, no shuffling of keys nor anything like that
+        // check that the source stays unchanged, no shuffling of keys nor anything like that
         assertEquals(expectedGetResult.sourceAsString(), parsedGetResult.sourceAsString());
     }
 
     public void testToXContent() throws IOException {
         {
-            GetResult getResult = new GetResult("index", "id", 0, 1, 1, true, new BytesArray("{ \"field1\" : " +
-                    "\"value1\", \"field2\":\"value2\"}"), singletonMap("field1", new DocumentField("field1",
-                    singletonList("value1"))), singletonMap("field1", new DocumentField("metafield",
-                            singletonList("metavalue"))));
+            GetResult getResult = new GetResult(
+                "index",
+                "id",
+                0,
+                1,
+                1,
+                true,
+                new BytesArray("{ \"field1\" : " + "\"value1\", \"field2\":\"value2\"}"),
+                singletonMap("field1", new DocumentField("field1", singletonList("value1"))),
+                singletonMap("field1", new DocumentField("metafield", singletonList("metavalue")))
+            );
             String output = Strings.toString(getResult);
-            assertEquals("{\"_index\":\"index\",\"_id\":\"id\",\"_version\":1,\"_seq_no\":0,\"_primary_term\":1," +
-                "\"metafield\":\"metavalue\",\"found\":true,\"_source\":{ \"field1\" : \"value1\", \"field2\":\"value2\"}," +
-                "\"fields\":{\"field1\":[\"value1\"]}}", output);
+            assertEquals(
+                "{\"_index\":\"index\",\"_id\":\"id\",\"_version\":1,\"_seq_no\":0,\"_primary_term\":1,"
+                    + "\"metafield\":\"metavalue\",\"found\":true,\"_source\":{ \"field1\" : \"value1\", \"field2\":\"value2\"},"
+                    + "\"fields\":{\"field1\":[\"value1\"]}}",
+                output
+            );
         }
         {
             GetResult getResult = new GetResult("index", "id", UNASSIGNED_SEQ_NO, 0, 1, false, null, null, null);
@@ -97,9 +107,17 @@ public class GetResultTests extends ESTestCase {
         GetResult getResult = tuple.v1();
         // We don't expect to retrieve the index/type/id of the GetResult because they are not rendered
         // by the toXContentEmbedded method.
-        GetResult expectedGetResult = new GetResult(null, null, tuple.v2().getSeqNo(), tuple.v2().getPrimaryTerm(), -1,
-                tuple.v2().isExists(), tuple.v2().sourceRef(), tuple.v2().getDocumentFields(),
-            tuple.v2().getMetadataFields());
+        GetResult expectedGetResult = new GetResult(
+            null,
+            null,
+            tuple.v2().getSeqNo(),
+            tuple.v2().getPrimaryTerm(),
+            -1,
+            tuple.v2().isExists(),
+            tuple.v2().sourceRef(),
+            tuple.v2().getDocumentFields(),
+            tuple.v2().getMetadataFields()
+        );
 
         boolean humanReadable = randomBoolean();
         BytesReference originalBytes = toXContentEmbedded(getResult, xContentType, humanReadable);
@@ -112,10 +130,10 @@ public class GetResultTests extends ESTestCase {
             assertNull(parser.nextToken());
         }
         assertEquals(expectedGetResult, parsedEmbeddedGetResult);
-        //print the parsed object out and test that the output is the same as the original output
+        // print the parsed object out and test that the output is the same as the original output
         BytesReference finalBytes = toXContentEmbedded(parsedEmbeddedGetResult, xContentType, humanReadable);
         assertToXContentEquivalent(originalBytes, finalBytes, xContentType);
-        //check that the source stays unchanged, no shuffling of keys nor anything like that
+        // check that the source stays unchanged, no shuffling of keys nor anything like that
         assertEquals(expectedGetResult.sourceAsString(), parsedEmbeddedGetResult.sourceAsString());
     }
 
@@ -124,12 +142,24 @@ public class GetResultTests extends ESTestCase {
         fields.put("foo", new DocumentField("foo", singletonList("bar")));
         fields.put("baz", new DocumentField("baz", Arrays.asList("baz_0", "baz_1")));
 
-        GetResult getResult = new GetResult("index", "id", 0, 1, 2, true,
-                new BytesArray("{\"foo\":\"bar\",\"baz\":[\"baz_0\",\"baz_1\"]}"), fields, null);
+        GetResult getResult = new GetResult(
+            "index",
+            "id",
+            0,
+            1,
+            2,
+            true,
+            new BytesArray("{\"foo\":\"bar\",\"baz\":[\"baz_0\",\"baz_1\"]}"),
+            fields,
+            null
+        );
 
         BytesReference originalBytes = toXContentEmbedded(getResult, XContentType.JSON, false);
-        assertEquals("{\"_seq_no\":0,\"_primary_term\":1,\"found\":true,\"_source\":{\"foo\":\"bar\",\"baz\":[\"baz_0\",\"baz_1\"]}," +
-                "\"fields\":{\"foo\":[\"bar\"],\"baz\":[\"baz_0\",\"baz_1\"]}}", originalBytes.utf8ToString());
+        assertEquals(
+            "{\"_seq_no\":0,\"_primary_term\":1,\"found\":true,\"_source\":{\"foo\":\"bar\",\"baz\":[\"baz_0\",\"baz_1\"]},"
+                + "\"fields\":{\"foo\":[\"bar\"],\"baz\":[\"baz_0\",\"baz_1\"]}}",
+            originalBytes.utf8ToString()
+        );
     }
 
     public void testToXContentEmbeddedNotFound() throws IOException {
@@ -167,32 +197,99 @@ public class GetResultTests extends ESTestCase {
     }
 
     public static GetResult copyGetResult(GetResult getResult) {
-        return new GetResult(getResult.getIndex(), getResult.getId(),
-            getResult.getSeqNo(), getResult.getPrimaryTerm(), getResult.getVersion(),
-            getResult.isExists(), getResult.internalSourceRef(), getResult.getDocumentFields(), getResult.getMetadataFields());
+        return new GetResult(
+            getResult.getIndex(),
+            getResult.getId(),
+            getResult.getSeqNo(),
+            getResult.getPrimaryTerm(),
+            getResult.getVersion(),
+            getResult.isExists(),
+            getResult.internalSourceRef(),
+            getResult.getDocumentFields(),
+            getResult.getMetadataFields()
+        );
     }
 
     public static GetResult mutateGetResult(GetResult getResult) {
         List<Supplier<GetResult>> mutations = new ArrayList<>();
-        mutations.add(() -> new GetResult(randomUnicodeOfLength(15), getResult.getId(),
-            getResult.getSeqNo(), getResult.getPrimaryTerm(), getResult.getVersion(),
-                getResult.isExists(), getResult.internalSourceRef(), getResult.getFields(), null));
-        mutations.add(() -> new GetResult(getResult.getIndex(), randomUnicodeOfLength(15),
-            getResult.getSeqNo(), getResult.getPrimaryTerm(), getResult.getVersion(),
-            getResult.isExists(), getResult.internalSourceRef(), getResult.getFields(), null));
-        mutations.add(() -> new GetResult(getResult.getIndex(), getResult.getId(),
-            getResult.getSeqNo(), getResult.getPrimaryTerm(), randomNonNegativeLong(),
-            getResult.isExists(), getResult.internalSourceRef(), getResult.getFields(), null));
-        mutations.add(() -> new GetResult(getResult.getIndex(), getResult.getId(),
-            getResult.isExists() ? UNASSIGNED_SEQ_NO : getResult.getSeqNo(),
-            getResult.isExists() ? 0 : getResult.getPrimaryTerm(),
-            getResult.getVersion(), getResult.isExists() == false, getResult.internalSourceRef(), getResult.getFields(), null));
-        mutations.add(() -> new GetResult(getResult.getIndex(), getResult.getId(),
-            getResult.getSeqNo(), getResult.getPrimaryTerm(), getResult.getVersion(), getResult.isExists(),
-            RandomObjects.randomSource(random()), getResult.getFields(), null));
-        mutations.add(() -> new GetResult(getResult.getIndex(), getResult.getId(),
-            getResult.getSeqNo(), getResult.getPrimaryTerm(), getResult.getVersion(),
-                getResult.isExists(), getResult.internalSourceRef(), randomDocumentFields(XContentType.JSON).v1(), null));
+        mutations.add(
+            () -> new GetResult(
+                randomUnicodeOfLength(15),
+                getResult.getId(),
+                getResult.getSeqNo(),
+                getResult.getPrimaryTerm(),
+                getResult.getVersion(),
+                getResult.isExists(),
+                getResult.internalSourceRef(),
+                getResult.getFields(),
+                null
+            )
+        );
+        mutations.add(
+            () -> new GetResult(
+                getResult.getIndex(),
+                randomUnicodeOfLength(15),
+                getResult.getSeqNo(),
+                getResult.getPrimaryTerm(),
+                getResult.getVersion(),
+                getResult.isExists(),
+                getResult.internalSourceRef(),
+                getResult.getFields(),
+                null
+            )
+        );
+        mutations.add(
+            () -> new GetResult(
+                getResult.getIndex(),
+                getResult.getId(),
+                getResult.getSeqNo(),
+                getResult.getPrimaryTerm(),
+                randomNonNegativeLong(),
+                getResult.isExists(),
+                getResult.internalSourceRef(),
+                getResult.getFields(),
+                null
+            )
+        );
+        mutations.add(
+            () -> new GetResult(
+                getResult.getIndex(),
+                getResult.getId(),
+                getResult.isExists() ? UNASSIGNED_SEQ_NO : getResult.getSeqNo(),
+                getResult.isExists() ? 0 : getResult.getPrimaryTerm(),
+                getResult.getVersion(),
+                getResult.isExists() == false,
+                getResult.internalSourceRef(),
+                getResult.getFields(),
+                null
+            )
+        );
+        mutations.add(
+            () -> new GetResult(
+                getResult.getIndex(),
+                getResult.getId(),
+                getResult.getSeqNo(),
+                getResult.getPrimaryTerm(),
+                getResult.getVersion(),
+                getResult.isExists(),
+                RandomObjects.randomSource(random()),
+                getResult.getFields(),
+                null
+            )
+        );
+        mutations.add(
+            () -> new GetResult(
+                getResult.getIndex(),
+                getResult.getId(),
+                getResult.getSeqNo(),
+                getResult.getPrimaryTerm(),
+                getResult.getVersion(),
+                getResult.isExists(),
+                getResult.internalSourceRef(),
+                randomDocumentFields(XContentType.JSON).v1(),
+                null
+            )
+        );
         return randomFrom(mutations).get();
     }
 
@@ -233,12 +330,21 @@ public class GetResultTests extends ESTestCase {
             exists = false;
         }
         GetResult getResult = new GetResult(index, id, seqNo, primaryTerm, version, exists, source, fields, metaFields);
-        GetResult expectedGetResult = new GetResult(index, id, seqNo, primaryTerm, version, exists, source,
-            expectedFields, expectedMetaFields);
+        GetResult expectedGetResult = new GetResult(
+            index,
+            id,
+            seqNo,
+            primaryTerm,
+            version,
+            exists,
+            source,
+            expectedFields,
+            expectedMetaFields
+        );
         return Tuple.tuple(getResult, expectedGetResult);
     }
 
-    public static Tuple<Map<String, DocumentField>,Map<String, DocumentField>> randomDocumentFields(XContentType xContentType) {
+    public static Tuple<Map<String, DocumentField>, Map<String, DocumentField>> randomDocumentFields(XContentType xContentType) {
         int numFields = randomIntBetween(2, 10);
         Map<String, DocumentField> fields = new HashMap<>(numFields);
         Map<String, DocumentField> expectedFields = new HashMap<>(numFields);
@@ -254,7 +360,7 @@ public class GetResultTests extends ESTestCase {
     }
 
     private static BytesReference toXContentEmbedded(GetResult getResult, XContentType xContentType, boolean humanReadable)
-            throws IOException {
+        throws IOException {
         return XContentHelper.toXContent(getResult::toXContentEmbedded, xContentType, humanReadable);
     }
 }

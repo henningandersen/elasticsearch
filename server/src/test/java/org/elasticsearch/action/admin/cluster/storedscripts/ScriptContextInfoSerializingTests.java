@@ -47,8 +47,9 @@ public class ScriptContextInfoSerializingTests extends AbstractSerializingTestCa
     }
 
     @Override
-    protected Writeable.Reader<ScriptContextInfo> instanceReader() { return ScriptContextInfo::new; }
-
+    protected Writeable.Reader<ScriptContextInfo> instanceReader() {
+        return ScriptContextInfo::new;
+    }
 
     @Override
     protected ScriptContextInfo mutateInstance(ScriptContextInfo instance) throws IOException {
@@ -68,11 +69,7 @@ public class ScriptContextInfoSerializingTests extends AbstractSerializingTestCa
                     instance.getters
                 );
             case 1:
-                return new ScriptContextInfo(
-                    instance.name,
-                    ScriptMethodInfoSerializingTests.mutate(instance.execute),
-                    instance.getters
-                );
+                return new ScriptContextInfo(instance.name, ScriptMethodInfoSerializingTests.mutate(instance.execute), instance.getters);
             default:
                 return new ScriptContextInfo(
                     instance.name,
@@ -107,11 +104,13 @@ public class ScriptContextInfoSerializingTests extends AbstractSerializingTestCa
         for (int i = 0; i < size; i++) {
             String name = randomValueOtherThanMany(names::contains, () -> randomAlphaOfLengthBetween(MIN_LENGTH, MAX_LENGTH));
             names.add(name);
-            instances.add(new ScriptContextInfo(
-                name,
-                ScriptMethodInfoSerializingTests.randomInstance(ScriptMethodInfoSerializingTests.NameType.EXECUTE),
-                ScriptMethodInfoSerializingTests.randomGetterInstances()
-            ));
+            instances.add(
+                new ScriptContextInfo(
+                    name,
+                    ScriptMethodInfoSerializingTests.randomInstance(ScriptMethodInfoSerializingTests.NameType.EXECUTE),
+                    ScriptMethodInfoSerializingTests.randomGetterInstances()
+                )
+            );
         }
         return Collections.unmodifiableSet(instances);
     }

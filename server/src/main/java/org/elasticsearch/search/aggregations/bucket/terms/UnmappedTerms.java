@@ -45,14 +45,25 @@ public class UnmappedTerms extends InternalTerms<UnmappedTerms, UnmappedTerms.Bu
      * {@linkplain UnmappedTerms} doesn't ever need to build it because it never returns any buckets.
      */
     protected abstract static class Bucket extends InternalTerms.Bucket<Bucket> {
-        private Bucket(long docCount, InternalAggregations aggregations, boolean showDocCountError, long docCountError,
-                DocValueFormat formatter) {
+        private Bucket(
+            long docCount,
+            InternalAggregations aggregations,
+            boolean showDocCountError,
+            long docCountError,
+            DocValueFormat formatter
+        ) {
             super(docCount, aggregations, showDocCountError, docCountError, formatter);
         }
     }
 
-    public UnmappedTerms(String name, BucketOrder order, int requiredSize, long minDocCount,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    public UnmappedTerms(
+        String name,
+        BucketOrder order,
+        int requiredSize,
+        long minDocCount,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, order, requiredSize, minDocCount, pipelineAggregators, metaData);
     }
 
@@ -114,8 +125,7 @@ public class UnmappedTerms extends InternalTerms<UnmappedTerms, UnmappedTerms.Bu
     }
 
     @Override
-    protected void setDocCountError(long docCountError) {
-    }
+    protected void setDocCountError(long docCountError) {}
 
     @Override
     protected int getShardSize() {

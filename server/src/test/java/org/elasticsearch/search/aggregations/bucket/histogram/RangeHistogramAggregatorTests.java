@@ -45,8 +45,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
 
     public void testDoubles() throws Exception {
         RangeType rangeType = RangeType.DOUBLE;
-        try (Directory dir = newDirectory();
-             RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
+        try (Directory dir = newDirectory(); RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
             for (RangeFieldMapper.Range range : new RangeFieldMapper.Range[] {
                 new RangeFieldMapper.Range(rangeType, 1.0D, 5.0D, true, true), // bucket 0 5
                 new RangeFieldMapper.Range(rangeType, -3.1, 4.2, true, true), // bucket -5, 0
@@ -59,9 +58,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
                 w.addDocument(doc);
             }
 
-            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg")
-                .field("field")
-                .interval(5);
+            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg").field("field").interval(5);
             MappedFieldType fieldType = new RangeFieldMapper.Builder("field", rangeType).fieldType();
             fieldType.setName("field");
 
@@ -93,8 +90,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
 
     public void testLongs() throws Exception {
         RangeType rangeType = RangeType.LONG;
-        try (Directory dir = newDirectory();
-             RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
+        try (Directory dir = newDirectory(); RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
             for (RangeFieldMapper.Range range : new RangeFieldMapper.Range[] {
                 new RangeFieldMapper.Range(rangeType, 1L, 5L, true, true), // bucket 0 5
                 new RangeFieldMapper.Range(rangeType, -3L, 4L, true, true), // bucket -5, 0
@@ -107,9 +103,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
                 w.addDocument(doc);
             }
 
-            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg")
-                .field("field")
-                .interval(5);
+            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg").field("field").interval(5);
             MappedFieldType fieldType = new RangeFieldMapper.Builder("field", rangeType).fieldType();
             fieldType.setName("field");
 
@@ -141,21 +135,20 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
 
     public void testMultipleRanges() throws Exception {
         RangeType rangeType = RangeType.LONG;
-        try (Directory dir = newDirectory();
-             RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
+        try (Directory dir = newDirectory(); RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
             Document doc = new Document();
-            BytesRef encodedRange = rangeType.encodeRanges(Set.of(
-                new RangeFieldMapper.Range(rangeType, 1L, 5L, true, true), // bucket 0 5
-                new RangeFieldMapper.Range(rangeType, -3L, 4L, true, true), // bucket -5, 0
-                new RangeFieldMapper.Range(rangeType, 4L, 13L, true, true), // bucket 0, 5, 10
-                new RangeFieldMapper.Range(rangeType, 42L, 49L, true, true) // bucket 40, 45
-            ));
+            BytesRef encodedRange = rangeType.encodeRanges(
+                Set.of(
+                    new RangeFieldMapper.Range(rangeType, 1L, 5L, true, true), // bucket 0 5
+                    new RangeFieldMapper.Range(rangeType, -3L, 4L, true, true), // bucket -5, 0
+                    new RangeFieldMapper.Range(rangeType, 4L, 13L, true, true), // bucket 0, 5, 10
+                    new RangeFieldMapper.Range(rangeType, 42L, 49L, true, true) // bucket 40, 45
+                )
+            );
             doc.add(new BinaryDocValuesField("field", encodedRange));
             w.addDocument(doc);
 
-            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg")
-                .field("field")
-                .interval(5);
+            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg").field("field").interval(5);
             MappedFieldType fieldType = new RangeFieldMapper.Builder("field", rangeType).fieldType();
             fieldType.setName("field");
 
@@ -188,21 +181,20 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
 
     public void testMultipleRangesLotsOfOverlap() throws Exception {
         RangeType rangeType = RangeType.LONG;
-        try (Directory dir = newDirectory();
-             RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
+        try (Directory dir = newDirectory(); RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
             Document doc = new Document();
-            BytesRef encodedRange = rangeType.encodeRanges(Set.of(
-                new RangeFieldMapper.Range(rangeType, 1L, 2L, true, true), // bucket 0
-                new RangeFieldMapper.Range(rangeType, 1L, 4L, true, true), // bucket 0
-                new RangeFieldMapper.Range(rangeType, 1L, 13L, true, true), // bucket 0, 5, 10
-                new RangeFieldMapper.Range(rangeType, 1L, 5L, true, true) // bucket 0, 5
-            ));
+            BytesRef encodedRange = rangeType.encodeRanges(
+                Set.of(
+                    new RangeFieldMapper.Range(rangeType, 1L, 2L, true, true), // bucket 0
+                    new RangeFieldMapper.Range(rangeType, 1L, 4L, true, true), // bucket 0
+                    new RangeFieldMapper.Range(rangeType, 1L, 13L, true, true), // bucket 0, 5, 10
+                    new RangeFieldMapper.Range(rangeType, 1L, 5L, true, true) // bucket 0, 5
+                )
+            );
             doc.add(new BinaryDocValuesField("field", encodedRange));
             w.addDocument(doc);
 
-            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg")
-                .field("field")
-                .interval(5);
+            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg").field("field").interval(5);
             MappedFieldType fieldType = new RangeFieldMapper.Builder("field", rangeType).fieldType();
             fieldType.setName("field");
 
@@ -226,8 +218,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
 
     public void testLongsIrrationalInterval() throws Exception {
         RangeType rangeType = RangeType.LONG;
-        try (Directory dir = newDirectory();
-             RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
+        try (Directory dir = newDirectory(); RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
             for (RangeFieldMapper.Range range : new RangeFieldMapper.Range[] {
                 new RangeFieldMapper.Range(rangeType, 1L, 5L, true, true), // bucket 0 5
                 new RangeFieldMapper.Range(rangeType, -3L, 4L, true, true), // bucket -5, 0
@@ -239,9 +230,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
                 w.addDocument(doc);
             }
 
-            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg")
-                .field("field")
-                .interval(Math.PI);
+            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg").field("field").interval(Math.PI);
             MappedFieldType fieldType = new RangeFieldMapper.Builder("field", rangeType).fieldType();
             fieldType.setName("field");
 
@@ -273,12 +262,11 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
 
     public void testMinDocCount() throws Exception {
         RangeType rangeType = RangeType.LONG;
-        try (Directory dir = newDirectory();
-             RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
+        try (Directory dir = newDirectory(); RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
             for (RangeFieldMapper.Range range : new RangeFieldMapper.Range[] {
                 new RangeFieldMapper.Range(rangeType, -14L, -11L, true, true), // bucket -15
                 new RangeFieldMapper.Range(rangeType, 0L, 9L, true, true), // bucket 0, 5
-                new RangeFieldMapper.Range(rangeType, 6L, 12L, true, true), // bucket  5, 10
+                new RangeFieldMapper.Range(rangeType, 6L, 12L, true, true), // bucket 5, 10
                 new RangeFieldMapper.Range(rangeType, 13L, 14L, true, true), // bucket 10
             }) {
                 Document doc = new Document();
@@ -287,10 +275,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
                 w.addDocument(doc);
             }
 
-            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg")
-                .field("field")
-                .interval(5)
-                .minDocCount(2);
+            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg").field("field").interval(5).minDocCount(2);
             MappedFieldType fieldType = new RangeFieldMapper.Builder("field", rangeType).fieldType();
             fieldType.setName("field");
 
@@ -310,8 +295,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
 
     public void testOffset() throws Exception {
         RangeType rangeType = RangeType.DOUBLE;
-        try (Directory dir = newDirectory();
-             RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
+        try (Directory dir = newDirectory(); RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
             for (RangeFieldMapper.Range range : new RangeFieldMapper.Range[] {
                 new RangeFieldMapper.Range(rangeType, 1.0D, 5.0D, true, true), // bucket -1, 4
                 new RangeFieldMapper.Range(rangeType, -3.1, 4.2, true, true), // bucket -6 -1 4
@@ -324,17 +308,14 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
                 w.addDocument(doc);
             }
 
-            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg")
-                .field("field")
-                .interval(5)
-                .offset(4);
+            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg").field("field").interval(5).offset(4);
             MappedFieldType fieldType = new RangeFieldMapper.Builder("field", rangeType).fieldType();
             fieldType.setName("field");
 
             try (IndexReader reader = w.getReader()) {
                 IndexSearcher searcher = new IndexSearcher(reader);
                 InternalHistogram histogram = search(searcher, new MatchAllDocsQuery(), aggBuilder, fieldType);
-                //assertEquals(7, histogram.getBuckets().size());
+                // assertEquals(7, histogram.getBuckets().size());
 
                 assertEquals(-6d, histogram.getBuckets().get(0).getKey());
                 assertEquals(1, histogram.getBuckets().get(0).getDocCount());
@@ -362,8 +343,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
 
     public void testOffsetGtInterval() throws Exception {
         RangeType rangeType = RangeType.DOUBLE;
-        try (Directory dir = newDirectory();
-             RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
+        try (Directory dir = newDirectory(); RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
             for (RangeFieldMapper.Range range : new RangeFieldMapper.Range[] {
                 new RangeFieldMapper.Range(rangeType, 1.0D, 5.0D, true, true), // bucket 0 5
                 new RangeFieldMapper.Range(rangeType, -3.1, 4.2, true, true), // bucket -5, 0
@@ -382,8 +362,7 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
             final double interval = 5;
             final double expectedOffset = offset % interval;
 
-            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg")
-                .field("field")
+            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg").field("field")
                 .interval(interval)
                 .offset(offset);
             MappedFieldType fieldType = new RangeFieldMapper.Builder("field", rangeType).fieldType();
@@ -415,21 +394,25 @@ public class RangeHistogramAggregatorTests extends AggregatorTestCase {
         }
     }
 
-
     public void testIpRangesUnsupported() throws Exception {
         RangeType rangeType = RangeType.IP;
-        try (Directory dir = newDirectory();
-             RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
+        try (Directory dir = newDirectory(); RandomIndexWriter w = new RandomIndexWriter(random(), dir)) {
             Document doc = new Document();
-            BytesRef encodedRange =
-                rangeType.encodeRanges(Collections.singleton(new RangeFieldMapper.Range(rangeType, InetAddresses.forString("10.0.0.1"),
-                    InetAddresses.forString("10.0.0.10"), true, true)));
+            BytesRef encodedRange = rangeType.encodeRanges(
+                Collections.singleton(
+                    new RangeFieldMapper.Range(
+                        rangeType,
+                        InetAddresses.forString("10.0.0.1"),
+                        InetAddresses.forString("10.0.0.10"),
+                        true,
+                        true
+                    )
+                )
+            );
             doc.add(new BinaryDocValuesField("field", encodedRange));
             w.addDocument(doc);
 
-            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg")
-                .field("field")
-                .interval(5);
+            HistogramAggregationBuilder aggBuilder = new HistogramAggregationBuilder("my_agg").field("field").interval(5);
             MappedFieldType fieldType = new RangeFieldMapper.Builder("field", rangeType).fieldType();
             fieldType.setName("field");
 

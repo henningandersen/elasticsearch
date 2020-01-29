@@ -52,16 +52,15 @@ public class ScriptScoreQueryBuilderTests extends AbstractQueryTestCase<ScriptSc
     }
 
     public void testFromJson() throws IOException {
-        String json =
-            "{\n" +
-                "  \"script_score\" : {\n" +
-                "    \"query\" : { \"match_all\" : {} },\n" +
-                "    \"script\" : {\n" +
-                "      \"source\" : \"doc['field'].value\" \n" +
-                "    },\n" +
-                "    \"min_score\" : 2.0\n" +
-                "  }\n" +
-                "}";
+        String json = "{\n"
+            + "  \"script_score\" : {\n"
+            + "    \"query\" : { \"match_all\" : {} },\n"
+            + "    \"script\" : {\n"
+            + "      \"source\" : \"doc['field'].value\" \n"
+            + "    },\n"
+            + "    \"min_score\" : 2.0\n"
+            + "  }\n"
+            + "}";
 
         ScriptScoreQueryBuilder parsed = (ScriptScoreQueryBuilder) parseQuery(json);
         assertEquals(json, 2, parsed.getMinScore(), 0.0001);
@@ -71,15 +70,9 @@ public class ScriptScoreQueryBuilderTests extends AbstractQueryTestCase<ScriptSc
         String scriptStr = "1";
         Script script = new Script(ScriptType.INLINE, MockScriptEngine.NAME, scriptStr, Collections.emptyMap());
 
-        expectThrows(
-            IllegalArgumentException.class,
-            () -> new ScriptScoreQueryBuilder(matchAllQuery(), null)
-        );
+        expectThrows(IllegalArgumentException.class, () -> new ScriptScoreQueryBuilder(matchAllQuery(), null));
 
-        expectThrows(
-            IllegalArgumentException.class,
-            () -> new ScriptScoreQueryBuilder(null, script)
-        );
+        expectThrows(IllegalArgumentException.class, () -> new ScriptScoreQueryBuilder(null, script));
     }
 
     /**

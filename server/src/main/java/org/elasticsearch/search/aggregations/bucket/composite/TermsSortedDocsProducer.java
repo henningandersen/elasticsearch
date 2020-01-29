@@ -39,8 +39,8 @@ class TermsSortedDocsProducer extends SortedDocsProducer {
     }
 
     @Override
-    DocIdSet processLeaf(Query query, CompositeValuesCollectorQueue queue,
-                         LeafReaderContext context, boolean fillDocIdSet) throws IOException {
+    DocIdSet processLeaf(Query query, CompositeValuesCollectorQueue queue, LeafReaderContext context, boolean fillDocIdSet)
+        throws IOException {
         final Terms terms = context.reader().terms(field);
         if (terms == null) {
             // no value for the field
@@ -51,7 +51,7 @@ class TermsSortedDocsProducer extends SortedDocsProducer {
         final TermsEnum te = terms.iterator();
         if (lowerValue != null) {
             if (te.seekCeil(lowerValue) == TermsEnum.SeekStatus.END) {
-                return DocIdSet.EMPTY ;
+                return DocIdSet.EMPTY;
             }
         } else {
             if (te.next() == null) {

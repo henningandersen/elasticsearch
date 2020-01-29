@@ -48,11 +48,16 @@ public class InternalScriptedMetricTests extends InternalAggregationTestCase<Int
     private static final String REDUCE_SCRIPT_NAME = "reduceScript";
     private boolean hasReduceScript;
     private Supplier<Object>[] valueTypes;
-    private final Supplier<Object>[] leafValueSuppliers = new Supplier[] { () -> randomInt(), () -> randomLong(), () -> randomDouble(),
-            () -> randomFloat(), () -> randomBoolean(), () -> randomAlphaOfLength(5), () -> new GeoPoint(randomDouble(), randomDouble()),
-            () -> null };
-    private final Supplier<Object>[] nestedValueSuppliers = new Supplier[] { () -> new HashMap<String, Object>(),
-            () -> new ArrayList<>() };
+    private final Supplier<Object>[] leafValueSuppliers = new Supplier[] {
+        () -> randomInt(),
+        () -> randomLong(),
+        () -> randomDouble(),
+        () -> randomFloat(),
+        () -> randomBoolean(),
+        () -> randomAlphaOfLength(5),
+        () -> new GeoPoint(randomDouble(), randomDouble()),
+        () -> null };
+    private final Supplier<Object>[] nestedValueSuppliers = new Supplier[] { () -> new HashMap<String, Object>(), () -> new ArrayList<>() };
 
     @Override
     public void setUp() throws Exception {
@@ -72,8 +77,11 @@ public class InternalScriptedMetricTests extends InternalAggregationTestCase<Int
     }
 
     @Override
-    protected InternalScriptedMetric createTestInstance(String name, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    protected InternalScriptedMetric createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         Map<String, Object> params = new HashMap<>();
         if (randomBoolean()) {
             params.put(randomAlphaOfLength(5), randomAlphaOfLength(5));
@@ -96,7 +104,7 @@ public class InternalScriptedMetricTests extends InternalAggregationTestCase<Int
                 map.put(randomAlphaOfLength(5), randomValue(valueTypes, level + 1));
             }
         } else if (value instanceof List) {
-            int elements = randomIntBetween(1,5);
+            int elements = randomIntBetween(1, 5);
             List<Object> list = (List<Object>) value;
             for (int i = 0; i < elements; i++) {
                 list.add(randomValue(valueTypes, level + 1));
@@ -115,9 +123,11 @@ public class InternalScriptedMetricTests extends InternalAggregationTestCase<Int
     protected ScriptService mockScriptService() {
         // mock script always returns the size of the input aggs list as result
         @SuppressWarnings("unchecked")
-        MockScriptEngine scriptEngine = new MockScriptEngine(MockScriptEngine.NAME,
-                Collections.singletonMap(REDUCE_SCRIPT_NAME, script -> ((List<Object>) script.get("states")).size()),
-                Collections.emptyMap());
+        MockScriptEngine scriptEngine = new MockScriptEngine(
+            MockScriptEngine.NAME,
+            Collections.singletonMap(REDUCE_SCRIPT_NAME, script -> ((List<Object>) script.get("states")).size()),
+            Collections.emptyMap()
+        );
         Map<String, ScriptEngine> engines = Collections.singletonMap(scriptEngine.getType(), scriptEngine);
         return new ScriptService(Settings.EMPTY, engines, ScriptModule.CORE_CONTEXTS);
     }
@@ -177,13 +187,13 @@ public class InternalScriptedMetricTests extends InternalAggregationTestCase<Int
                 assertValues(expectedMap.get(key), actualMap.get(key));
             }
         } else if (expected instanceof List) {
-                List<Object> expectedList = (List<Object>) expected;
-                List<Object> actualList = (List<Object>) actual;
-                assertEquals(expectedList.size(), actualList.size());
-                Iterator<Object> actualIterator = actualList.iterator();
-                for (Object element : expectedList) {
-                    assertValues(element, actualIterator.next());
-                }
+            List<Object> expectedList = (List<Object>) expected;
+            List<Object> actualList = (List<Object>) actual;
+            assertEquals(expectedList.size(), actualList.size());
+            Iterator<Object> actualIterator = actualList.iterator();
+            for (Object element : expectedList) {
+                assertValues(element, actualIterator.next());
+            }
         } else {
             assertEquals(expected, actual);
         }
@@ -202,40 +212,45 @@ public class InternalScriptedMetricTests extends InternalAggregationTestCase<Int
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 3)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            Object newValue = randomValue(valueTypes, 0);
-            while ((newValue == null && value == null) || (newValue != null && newValue.equals(value))) {
-                int levels = randomIntBetween(1, 3);
-                Supplier[] valueTypes = new Supplier[levels];
-                for (int i = 0; i < levels; i++) {
-                    if (i < levels - 1) {
-                        valueTypes[i] = randomFrom(nestedValueSuppliers);
-                    } else {
-                        // the last one needs to be a leaf value, not map or
-                        // list
-                        valueTypes[i] = randomFrom(leafValueSuppliers);
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                Object newValue = randomValue(valueTypes, 0);
+                while ((newValue == null && value == null) || (newValue != null && newValue.equals(value))) {
+                    int levels = randomIntBetween(1, 3);
+                    Supplier[] valueTypes = new Supplier[levels];
+                    for (int i = 0; i < levels; i++) {
+                        if (i < levels - 1) {
+                            valueTypes[i] = randomFrom(nestedValueSuppliers);
+                        } else {
+                            // the last one needs to be a leaf value, not map or
+                            // list
+                            valueTypes[i] = randomFrom(leafValueSuppliers);
+                        }
                     }
+                    newValue = randomValue(valueTypes, 0);
                 }
-                newValue = randomValue(valueTypes, 0);
-            }
-            value = newValue;
-            break;
-        case 2:
-            reduceScript = new Script(ScriptType.INLINE, MockScriptEngine.NAME, REDUCE_SCRIPT_NAME + "-mutated", Collections.emptyMap());
-            break;
-        case 3:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
-        default:
-            throw new AssertionError("Illegal randomisation branch");
+                value = newValue;
+                break;
+            case 2:
+                reduceScript = new Script(
+                    ScriptType.INLINE,
+                    MockScriptEngine.NAME,
+                    REDUCE_SCRIPT_NAME + "-mutated",
+                    Collections.emptyMap()
+                );
+                break;
+            case 3:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
+            default:
+                throw new AssertionError("Illegal randomisation branch");
         }
         return new InternalScriptedMetric(name, value, reduceScript, pipelineAggregators, metaData);
     }

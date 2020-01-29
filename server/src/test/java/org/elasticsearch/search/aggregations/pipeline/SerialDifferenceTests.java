@@ -47,7 +47,7 @@ public class SerialDifferenceTests extends BasePipelineAggregationTestCase<Seria
         }
         return factory;
     }
-    
+
     /**
      * The validation should verify the parent aggregation is allowed.
      */
@@ -70,9 +70,13 @@ public class SerialDifferenceTests extends BasePipelineAggregationTestCase<Seria
         TestAggregatorFactory parentFactory = TestAggregatorFactory.createInstance();
 
         final SerialDiffPipelineAggregationBuilder builder = new SerialDiffPipelineAggregationBuilder("name", "invalid_agg>metric");
-        IllegalStateException ex = expectThrows(IllegalStateException.class,
-                () -> builder.validate(parentFactory, Collections.emptySet(), aggBuilders));
-        assertEquals("serial_diff aggregation [name] must have a histogram, date_histogram or auto_date_histogram as parent",
-                ex.getMessage());
+        IllegalStateException ex = expectThrows(
+            IllegalStateException.class,
+            () -> builder.validate(parentFactory, Collections.emptySet(), aggBuilders)
+        );
+        assertEquals(
+            "serial_diff aggregation [name] must have a histogram, date_histogram or auto_date_histogram as parent",
+            ex.getMessage()
+        );
     }
 }

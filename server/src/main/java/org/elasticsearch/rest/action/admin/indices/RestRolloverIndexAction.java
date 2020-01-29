@@ -30,7 +30,7 @@ import org.elasticsearch.rest.action.RestToXContentListener;
 import java.io.IOException;
 
 public class RestRolloverIndexAction extends BaseRestHandler {
-    
+
     public RestRolloverIndexAction(RestController controller) {
         controller.registerHandler(RestRequest.Method.POST, "/{index}/_rollover", this);
         controller.registerHandler(RestRequest.Method.POST, "/{index}/_rollover/{new_index}", this);
@@ -48,8 +48,8 @@ public class RestRolloverIndexAction extends BaseRestHandler {
         rolloverIndexRequest.dryRun(request.paramAsBoolean("dry_run", false));
         rolloverIndexRequest.timeout(request.paramAsTime("timeout", rolloverIndexRequest.timeout()));
         rolloverIndexRequest.masterNodeTimeout(request.paramAsTime("master_timeout", rolloverIndexRequest.masterNodeTimeout()));
-        rolloverIndexRequest.getCreateIndexRequest().waitForActiveShards(
-                ActiveShardCount.parseString(request.param("wait_for_active_shards")));
+        rolloverIndexRequest.getCreateIndexRequest()
+            .waitForActiveShards(ActiveShardCount.parseString(request.param("wait_for_active_shards")));
         return channel -> client.admin().indices().rolloverIndex(rolloverIndexRequest, new RestToXContentListener<>(channel));
     }
 }

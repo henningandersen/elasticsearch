@@ -97,7 +97,7 @@ public class ReplicaShardAllocatorSyncIdIT extends ESIntegTestCase {
         }
     }
 
-    public static class SyncedFlushPlugin  extends Plugin implements EnginePlugin {
+    public static class SyncedFlushPlugin extends Plugin implements EnginePlugin {
         @Override
         public Optional<EngineFactory> getEngineFactory(IndexSettings indexSettings) {
             return Optional.of(SyncedFlushEngine::new);
@@ -130,20 +130,31 @@ public class ReplicaShardAllocatorSyncIdIT extends ESIntegTestCase {
         String indexName = "test";
         String nodeWithPrimary = internalCluster().startNode();
         assertAcked(
-            client().admin().indices().prepareCreate(indexName)
-                .setSettings(Settings.builder()
-                    .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-                    .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
-                    .put(MergePolicyConfig.INDEX_MERGE_ENABLED, "false")
-                    .put(IndexSettings.INDEX_SOFT_DELETES_RETENTION_LEASE_PERIOD_SETTING.getKey(), "1ms") // expire PRRLs quickly
-                    .put(IndexService.RETENTION_LEASE_SYNC_INTERVAL_SETTING.getKey(), "100ms")
-                    .put(IndexService.GLOBAL_CHECKPOINT_SYNC_INTERVAL_SETTING.getKey(), "100ms")
-                    .put(UnassignedInfo.INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING.getKey(), "1ms")));
+            client().admin()
+                .indices()
+                .prepareCreate(indexName)
+                .setSettings(
+                    Settings.builder()
+                        .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+                        .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
+                        .put(MergePolicyConfig.INDEX_MERGE_ENABLED, "false")
+                        .put(IndexSettings.INDEX_SOFT_DELETES_RETENTION_LEASE_PERIOD_SETTING.getKey(), "1ms") // expire PRRLs quickly
+                        .put(IndexService.RETENTION_LEASE_SYNC_INTERVAL_SETTING.getKey(), "100ms")
+                        .put(IndexService.GLOBAL_CHECKPOINT_SYNC_INTERVAL_SETTING.getKey(), "100ms")
+                        .put(UnassignedInfo.INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING.getKey(), "1ms")
+                )
+        );
         String nodeWithReplica = internalCluster().startDataOnlyNode();
         Settings nodeWithReplicaSettings = internalCluster().dataPathSettings(nodeWithReplica);
         ensureGreen(indexName);
-        indexRandom(randomBoolean(), randomBoolean(), randomBoolean(), IntStream.range(0, between(100, 500))
-            .mapToObj(n -> client().prepareIndex(indexName).setSource("f", "v")).collect(Collectors.toList()));
+        indexRandom(
+            randomBoolean(),
+            randomBoolean(),
+            randomBoolean(),
+            IntStream.range(0, between(100, 500))
+                .mapToObj(n -> client().prepareIndex(indexName).setSource("f", "v"))
+                .collect(Collectors.toList())
+        );
         client().admin().indices().prepareFlush(indexName).get();
         if (randomBoolean()) {
             client().admin().indices().prepareForceMerge(indexName).get();
@@ -159,8 +170,10 @@ public class ReplicaShardAllocatorSyncIdIT extends ESIntegTestCase {
         });
         CountDownLatch blockRecovery = new CountDownLatch(1);
         CountDownLatch recoveryStarted = new CountDownLatch(1);
-        MockTransportService transportServiceOnPrimary
-            = (MockTransportService) internalCluster().getInstance(TransportService.class, nodeWithPrimary);
+        MockTransportService transportServiceOnPrimary = (MockTransportService) internalCluster().getInstance(
+            TransportService.class,
+            nodeWithPrimary
+        );
         transportServiceOnPrimary.addSendBehavior((connection, requestId, action, request, options) -> {
             if (PeerRecoveryTargetService.Actions.FILES_INFO.equals(action)) {
                 recoveryStarted.countDown();
@@ -189,26 +202,41 @@ public class ReplicaShardAllocatorSyncIdIT extends ESIntegTestCase {
         internalCluster().ensureAtLeastNumDataNodes(numOfReplicas + 2);
         String indexName = "test";
         assertAcked(
-            client().admin().indices().prepareCreate(indexName)
-                .setSettings(Settings.builder()
-                    .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-                    .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, numOfReplicas)
-                    .put(MergePolicyConfig.INDEX_MERGE_ENABLED, "false")
-                    .put(IndexSettings.INDEX_TRANSLOG_FLUSH_THRESHOLD_SIZE_SETTING.getKey(), randomIntBetween(10, 100) + "kb")
-                    .put(IndexSettings.INDEX_SOFT_DELETES_RETENTION_LEASE_PERIOD_SETTING.getKey(), "1ms") // expire PRRLs quickly
-                    .put(IndexService.GLOBAL_CHECKPOINT_SYNC_INTERVAL_SETTING.getKey(), "100ms")
-                    .put(IndexService.RETENTION_LEASE_SYNC_INTERVAL_SETTING.getKey(), "100ms")));
+            client().admin()
+                .indices()
+                .prepareCreate(indexName)
+                .setSettings(
+                    Settings.builder()
+                        .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+                        .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, numOfReplicas)
+                        .put(MergePolicyConfig.INDEX_MERGE_ENABLED, "false")
+                        .put(IndexSettings.INDEX_TRANSLOG_FLUSH_THRESHOLD_SIZE_SETTING.getKey(), randomIntBetween(10, 100) + "kb")
+                        .put(IndexSettings.INDEX_SOFT_DELETES_RETENTION_LEASE_PERIOD_SETTING.getKey(), "1ms") // expire PRRLs quickly
+                        .put(IndexService.GLOBAL_CHECKPOINT_SYNC_INTERVAL_SETTING.getKey(), "100ms")
+                        .put(IndexService.RETENTION_LEASE_SYNC_INTERVAL_SETTING.getKey(), "100ms")
+                )
+        );
         ensureGreen(indexName);
-        indexRandom(randomBoolean(), false, randomBoolean(), IntStream.range(0, between(200, 500))
-            .mapToObj(n -> client().prepareIndex(indexName).setSource("f", "v")).collect(Collectors.toList()));
+        indexRandom(
+            randomBoolean(),
+            false,
+            randomBoolean(),
+            IntStream.range(0, between(200, 500))
+                .mapToObj(n -> client().prepareIndex(indexName).setSource("f", "v"))
+                .collect(Collectors.toList())
+        );
         client().admin().indices().prepareFlush(indexName).get();
         if (randomBoolean()) {
             client().admin().indices().prepareForceMerge(indexName).get();
         }
         ensureGlobalCheckpointAdvancedAndSynced(indexName);
         syncFlush(indexName);
-        assertAcked(client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().put("cluster.routing.allocation.enable", "primaries").build()));
+        assertAcked(
+            client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().put("cluster.routing.allocation.enable", "primaries").build())
+        );
         internalCluster().fullRestart();
         ensureYellow(indexName);
         // Wait until the peer recovery retention leases of the offline node are expired
@@ -217,8 +245,12 @@ public class ReplicaShardAllocatorSyncIdIT extends ESIntegTestCase {
                 assertThat(shardStats.getRetentionLeaseStats().retentionLeases().leases(), hasSize(1));
             }
         });
-        assertAcked(client().admin().cluster().prepareUpdateSettings()
-            .setPersistentSettings(Settings.builder().putNull("cluster.routing.allocation.enable").build()));
+        assertAcked(
+            client().admin()
+                .cluster()
+                .prepareUpdateSettings()
+                .setPersistentSettings(Settings.builder().putNull("cluster.routing.allocation.enable").build())
+        );
         ensureGreen(indexName);
         assertNoOpRecoveries(indexName);
     }

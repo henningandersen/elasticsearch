@@ -24,7 +24,7 @@ import org.elasticsearch.test.AbstractXContentTestCase;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VerifyRepositoryResponseTests  extends AbstractXContentTestCase<VerifyRepositoryResponse> {
+public class VerifyRepositoryResponseTests extends AbstractXContentTestCase<VerifyRepositoryResponse> {
 
     @Override
     protected VerifyRepositoryResponse doParseInstance(XContentParser parser) {

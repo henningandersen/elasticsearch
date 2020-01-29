@@ -120,16 +120,14 @@ public class ActionListenerTests extends ESTestCase {
         List<AtomicReference<Exception>> excList = new ArrayList<>();
         List<ActionListener<Boolean>> listeners = new ArrayList<>();
 
-        final int listenerToFail = randomBoolean() ? -1 : randomIntBetween(0, numListeners-1);
+        final int listenerToFail = randomBoolean() ? -1 : randomIntBetween(0, numListeners - 1);
         for (int i = 0; i < numListeners; i++) {
             AtomicReference<Boolean> reference = new AtomicReference<>();
             AtomicReference<Exception> exReference = new AtomicReference<>();
             refList.add(reference);
             excList.add(exReference);
             boolean fail = i == listenerToFail;
-            CheckedConsumer<Boolean, ? extends Exception> handler = (o) -> {
-                reference.set(o);
-            };
+            CheckedConsumer<Boolean, ? extends Exception> handler = (o) -> { reference.set(o); };
             listeners.add(ActionListener.wrap(handler, (e) -> {
                 exReference.set(e);
                 if (fail) {
@@ -174,15 +172,13 @@ public class ActionListenerTests extends ESTestCase {
     public void testRunBefore() {
         {
             AtomicBoolean afterSuccess = new AtomicBoolean();
-            ActionListener<Object> listener =
-                ActionListener.runBefore(ActionListener.wrap(r -> {}, e -> {}), () -> afterSuccess.set(true));
+            ActionListener<Object> listener = ActionListener.runBefore(ActionListener.wrap(r -> {}, e -> {}), () -> afterSuccess.set(true));
             listener.onResponse(null);
             assertThat(afterSuccess.get(), equalTo(true));
         }
         {
             AtomicBoolean afterFailure = new AtomicBoolean();
-            ActionListener<Object> listener =
-                ActionListener.runBefore(ActionListener.wrap(r -> {}, e -> {}), () -> afterFailure.set(true));
+            ActionListener<Object> listener = ActionListener.runBefore(ActionListener.wrap(r -> {}, e -> {}), () -> afterFailure.set(true));
             listener.onFailure(null);
             assertThat(afterFailure.get(), equalTo(true));
         }
@@ -196,6 +192,7 @@ public class ActionListenerTests extends ESTestCase {
             public void onResponse(Object o) {
                 onResponseTimes.getAndIncrement();
             }
+
             @Override
             public void onFailure(Exception e) {
                 onFailureTimes.getAndIncrement();

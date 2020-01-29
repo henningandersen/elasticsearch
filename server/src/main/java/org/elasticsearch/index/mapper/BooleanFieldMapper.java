@@ -84,15 +84,21 @@ public class BooleanFieldMapper extends FieldMapper {
         @Override
         public BooleanFieldMapper build(BuilderContext context) {
             setupFieldType(context);
-            return new BooleanFieldMapper(name, fieldType, defaultFieldType,
-                context.indexSettings(), multiFieldsBuilder.build(this, context), copyTo);
+            return new BooleanFieldMapper(
+                name,
+                fieldType,
+                defaultFieldType,
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                copyTo
+            );
         }
     }
 
     public static class TypeParser implements Mapper.TypeParser {
         @Override
         public BooleanFieldMapper.Builder parse(String name, Map<String, Object> node, ParserContext parserContext)
-                throws MapperParsingException {
+            throws MapperParsingException {
             BooleanFieldMapper.Builder builder = new BooleanFieldMapper.Builder(name);
             parseField(builder, name, node, parserContext);
             for (Iterator<Map.Entry<String, Object>> iterator = node.entrySet().iterator(); iterator.hasNext();) {
@@ -140,7 +146,7 @@ public class BooleanFieldMapper extends FieldMapper {
 
         @Override
         public Boolean nullValue() {
-            return (Boolean)super.nullValue();
+            return (Boolean) super.nullValue();
         }
 
         @Override
@@ -163,8 +169,7 @@ public class BooleanFieldMapper extends FieldMapper {
                 case "false":
                     return Values.FALSE;
                 default:
-                    throw new IllegalArgumentException("Can't parse boolean value [" +
-                                    sValue + "], expected [true] or [false]");
+                    throw new IllegalArgumentException("Can't parse boolean value [" + sValue + "], expected [true] or [false]");
             }
         }
 
@@ -173,13 +178,13 @@ public class BooleanFieldMapper extends FieldMapper {
             if (value == null) {
                 return null;
             }
-            switch(value.toString()) {
-            case "F":
-                return false;
-            case "T":
-                return true;
-            default:
-                throw new IllegalArgumentException("Expected [T] or [F] but got [" + value + "]");
+            switch (value.toString()) {
+                case "F":
+                    return false;
+                case "T":
+                    return true;
+                default:
+                    throw new IllegalArgumentException("Expected [T] or [F] but got [" + value + "]");
             }
         }
 
@@ -195,8 +200,9 @@ public class BooleanFieldMapper extends FieldMapper {
                 throw new IllegalArgumentException("Field [" + name() + "] of type [" + typeName() + "] does not support custom formats");
             }
             if (timeZone != null) {
-                throw new IllegalArgumentException("Field [" + name() + "] of type [" + typeName()
-                    + "] does not support custom time zones");
+                throw new IllegalArgumentException(
+                    "Field [" + name() + "] of type [" + typeName() + "] does not support custom time zones"
+                );
             }
             return DocValueFormat.BOOLEAN;
         }
@@ -204,15 +210,24 @@ public class BooleanFieldMapper extends FieldMapper {
         @Override
         public Query rangeQuery(Object lowerTerm, Object upperTerm, boolean includeLower, boolean includeUpper, QueryShardContext context) {
             failIfNotIndexed();
-            return new TermRangeQuery(name(),
+            return new TermRangeQuery(
+                name(),
                 lowerTerm == null ? null : indexedValueForSearch(lowerTerm),
                 upperTerm == null ? null : indexedValueForSearch(upperTerm),
-                includeLower, includeUpper);
+                includeLower,
+                includeUpper
+            );
         }
     }
 
-    protected BooleanFieldMapper(String simpleName, MappedFieldType fieldType, MappedFieldType defaultFieldType,
-                                 Settings indexSettings, MultiFields multiFields, CopyTo copyTo) {
+    protected BooleanFieldMapper(
+        String simpleName,
+        MappedFieldType fieldType,
+        MappedFieldType defaultFieldType,
+        Settings indexSettings,
+        MultiFields multiFields,
+        CopyTo copyTo
+    ) {
         super(simpleName, fieldType, defaultFieldType, indexSettings, multiFields, copyTo);
     }
 

@@ -122,7 +122,7 @@ public class InnerHitBuilderTests extends ESTestCase {
             InnerHitBuilder innerHit = randomInnerHits();
             XContentBuilder builder = XContentFactory.contentBuilder(randomFrom(XContentType.values()));
             innerHit.toXContent(builder, ToXContent.EMPTY_PARAMS);
-            //fields is printed out as an object but parsed into a List where order matters, we disable shuffling
+            // fields is printed out as an object but parsed into a List where order matters, we disable shuffling
             XContentBuilder shuffled = shuffleXContent(builder, "fields");
             try (XContentParser parser = createParser(shuffled)) {
                 InnerHitBuilder secondInnerHits = InnerHitBuilder.fromXContent(parser);
@@ -144,6 +144,7 @@ public class InnerHitBuilderTests extends ESTestCase {
         innerHitBuilder.setSeqNoAndPrimaryTerm(false); // not supported by nested queries
         return innerHitBuilder;
     }
+
     public static InnerHitBuilder randomInnerHits() {
         InnerHitBuilder innerHits = new InnerHitBuilder();
         innerHits.setName(randomAlphaOfLengthBetween(5, 16));
@@ -156,11 +157,10 @@ public class InnerHitBuilderTests extends ESTestCase {
         if (randomBoolean()) {
             innerHits.setStoredFieldNames(randomListStuff(16, () -> randomAlphaOfLengthBetween(1, 16)));
         }
-        innerHits.setDocValueFields(randomListStuff(16,
-                () -> new FieldAndFormat(randomAlphaOfLengthBetween(1, 16), null)));
+        innerHits.setDocValueFields(randomListStuff(16, () -> new FieldAndFormat(randomAlphaOfLengthBetween(1, 16), null)));
         // Random script fields deduped on their field name.
         Map<String, SearchSourceBuilder.ScriptField> scriptFields = new HashMap<>();
-        for (SearchSourceBuilder.ScriptField field: randomListStuff(16, InnerHitBuilderTests::randomScript)) {
+        for (SearchSourceBuilder.ScriptField field : randomListStuff(16, InnerHitBuilderTests::randomScript)) {
             scriptFields.put(field.fieldName(), field);
         }
         innerHits.setScriptFields(new HashSet<>(scriptFields.values()));
@@ -169,17 +169,18 @@ public class InnerHitBuilderTests extends ESTestCase {
         if (randomInt == 0) {
             randomFetchSourceContext = new FetchSourceContext(true, Strings.EMPTY_ARRAY, Strings.EMPTY_ARRAY);
         } else if (randomInt == 1) {
-            randomFetchSourceContext = new FetchSourceContext(true,
-                    generateRandomStringArray(12, 16, false),
-                    generateRandomStringArray(12, 16, false)
+            randomFetchSourceContext = new FetchSourceContext(
+                true,
+                generateRandomStringArray(12, 16, false),
+                generateRandomStringArray(12, 16, false)
             );
         } else {
             randomFetchSourceContext = new FetchSourceContext(randomBoolean());
         }
         innerHits.setFetchSourceContext(randomFetchSourceContext);
         if (randomBoolean()) {
-            innerHits.setSorts(randomListStuff(16,
-                    () -> SortBuilders.fieldSort(randomAlphaOfLengthBetween(5, 20)).order(randomFrom(SortOrder.values())))
+            innerHits.setSorts(
+                randomListStuff(16, () -> SortBuilders.fieldSort(randomAlphaOfLengthBetween(5, 20)).order(randomFrom(SortOrder.values())))
             );
         }
         innerHits.setHighlightBuilder(HighlightBuilderTests.randomHighlighterBuilder());
@@ -198,17 +199,24 @@ public class InnerHitBuilderTests extends ESTestCase {
         modifiers.add(() -> copy.setName(randomValueOtherThan(copy.getName(), () -> randomAlphaOfLengthBetween(1, 16))));
         modifiers.add(() -> {
             if (randomBoolean()) {
-                copy.setDocValueFields(randomValueOtherThan(copy.getDocValueFields(),
-                        () -> randomListStuff(16, () -> new FieldAndFormat(randomAlphaOfLengthBetween(1, 16), null))));
+                copy.setDocValueFields(
+                    randomValueOtherThan(
+                        copy.getDocValueFields(),
+                        () -> randomListStuff(16, () -> new FieldAndFormat(randomAlphaOfLengthBetween(1, 16), null))
+                    )
+                );
             } else {
                 copy.addDocValueField(randomAlphaOfLengthBetween(1, 16));
             }
         });
         modifiers.add(() -> {
             if (randomBoolean()) {
-                copy.setScriptFields(randomValueOtherThan(copy.getScriptFields(), () -> {
-                    return new HashSet<>(randomListStuff(16, InnerHitBuilderTests::randomScript));
-                }));
+                copy.setScriptFields(
+                    randomValueOtherThan(
+                        copy.getScriptFields(),
+                        () -> { return new HashSet<>(randomListStuff(16, InnerHitBuilderTests::randomScript)); }
+                    )
+                );
             } else {
                 SearchSourceBuilder.ScriptField script = randomScript();
                 copy.addScriptField(script.fieldName(), script.script());
@@ -219,35 +227,46 @@ public class InnerHitBuilderTests extends ESTestCase {
             if (randomBoolean()) {
                 randomFetchSourceContext = new FetchSourceContext(randomBoolean());
             } else {
-                randomFetchSourceContext = new FetchSourceContext(true, generateRandomStringArray(12, 16, false),
-                        generateRandomStringArray(12, 16, false));
+                randomFetchSourceContext = new FetchSourceContext(
+                    true,
+                    generateRandomStringArray(12, 16, false),
+                    generateRandomStringArray(12, 16, false)
+                );
             }
             return randomFetchSourceContext;
         })));
         modifiers.add(() -> {
-                if (randomBoolean()) {
-                    final List<SortBuilder<?>> sortBuilders = randomValueOtherThan(copy.getSorts(), () -> {
-                        List<SortBuilder<?>> builders = randomListStuff(16,
-                                () -> SortBuilders.fieldSort(randomAlphaOfLengthBetween(5, 20)).order(randomFrom(SortOrder.values())));
-                        return builders;
-                    });
-                    copy.setSorts(sortBuilders);
-                } else {
-                    copy.addSort(SortBuilders.fieldSort(randomAlphaOfLengthBetween(5, 20)));
-                }
+            if (randomBoolean()) {
+                final List<SortBuilder<?>> sortBuilders = randomValueOtherThan(copy.getSorts(), () -> {
+                    List<SortBuilder<?>> builders = randomListStuff(
+                        16,
+                        () -> SortBuilders.fieldSort(randomAlphaOfLengthBetween(5, 20)).order(randomFrom(SortOrder.values()))
+                    );
+                    return builders;
+                });
+                copy.setSorts(sortBuilders);
+            } else {
+                copy.addSort(SortBuilders.fieldSort(randomAlphaOfLengthBetween(5, 20)));
+            }
         });
-        modifiers.add(() -> copy
-                .setHighlightBuilder(randomValueOtherThan(copy.getHighlightBuilder(), HighlightBuilderTests::randomHighlighterBuilder)));
+        modifiers.add(
+            () -> copy.setHighlightBuilder(
+                randomValueOtherThan(copy.getHighlightBuilder(), HighlightBuilderTests::randomHighlighterBuilder)
+            )
+        );
         modifiers.add(() -> {
-                if (copy.getStoredFieldsContext() == null || randomBoolean()) {
-                    List<String> previous = copy.getStoredFieldsContext() == null ?
-                        Collections.emptyList() : copy.getStoredFieldsContext().fieldNames();
-                    List<String> newValues = randomValueOtherThan(previous,
-                            () -> randomListStuff(1, 16, () -> randomAlphaOfLengthBetween(1, 16)));
-                    copy.setStoredFieldNames(newValues);
-                } else {
-                    copy.getStoredFieldsContext().addFieldName(randomAlphaOfLengthBetween(1, 16));
-                }
+            if (copy.getStoredFieldsContext() == null || randomBoolean()) {
+                List<String> previous = copy.getStoredFieldsContext() == null
+                    ? Collections.emptyList()
+                    : copy.getStoredFieldsContext().fieldNames();
+                List<String> newValues = randomValueOtherThan(
+                    previous,
+                    () -> randomListStuff(1, 16, () -> randomAlphaOfLengthBetween(1, 16))
+                );
+                copy.setStoredFieldNames(newValues);
+            } else {
+                copy.getStoredFieldsContext().addFieldName(randomAlphaOfLengthBetween(1, 16));
+            }
         });
         randomFrom(modifiers).run();
         return copy;
@@ -262,8 +281,12 @@ public class InnerHitBuilderTests extends ESTestCase {
                 randomMap.put(String.valueOf(i), randomAlphaOfLength(16));
             }
         }
-        Script script = new Script(randomScriptType, randomScriptType == ScriptType.STORED ? null : randomAlphaOfLengthBetween(1, 4),
-            randomAlphaOfLength(128), randomMap);
+        Script script = new Script(
+            randomScriptType,
+            randomScriptType == ScriptType.STORED ? null : randomAlphaOfLengthBetween(1, 4),
+            randomAlphaOfLength(128),
+            randomMap
+        );
         return new SearchSourceBuilder.ScriptField(randomAlphaOfLengthBetween(1, 32), script, randomBoolean());
     }
 
@@ -289,7 +312,8 @@ public class InnerHitBuilderTests extends ESTestCase {
         innerHit.addDocValueField("foo");
         innerHit.addDocValueField("@timestamp", "epoch_millis");
         assertEquals(
-                Arrays.asList(new FieldAndFormat("foo", null), new FieldAndFormat("@timestamp", "epoch_millis")),
-                innerHit.getDocValueFields());
+            Arrays.asList(new FieldAndFormat("foo", null), new FieldAndFormat("@timestamp", "epoch_millis")),
+            innerHit.getDocValueFields()
+        );
     }
 }

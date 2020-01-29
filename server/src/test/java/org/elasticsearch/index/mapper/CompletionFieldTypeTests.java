@@ -35,23 +35,24 @@ public class CompletionFieldTypeTests extends FieldTypeTestCase {
         addModifier(new Modifier("preserve_separators", false) {
             @Override
             public void modify(MappedFieldType ft) {
-                CompletionFieldMapper.CompletionFieldType cft = (CompletionFieldMapper.CompletionFieldType)ft;
+                CompletionFieldMapper.CompletionFieldType cft = (CompletionFieldMapper.CompletionFieldType) ft;
                 cft.setPreserveSep(false);
             }
         });
         addModifier(new Modifier("preserve_position_increments", false) {
             @Override
             public void modify(MappedFieldType ft) {
-                CompletionFieldMapper.CompletionFieldType cft = (CompletionFieldMapper.CompletionFieldType)ft;
+                CompletionFieldMapper.CompletionFieldType cft = (CompletionFieldMapper.CompletionFieldType) ft;
                 cft.setPreservePositionIncrements(false);
             }
         });
         addModifier(new Modifier("context_mappings", false) {
             @Override
             public void modify(MappedFieldType ft) {
-                CompletionFieldMapper.CompletionFieldType cft = (CompletionFieldMapper.CompletionFieldType)ft;
-                ContextMappings contextMappings = new ContextMappings(Arrays.asList(ContextBuilder.category("foo").build(),
-                    ContextBuilder.geo("geo").build()));
+                CompletionFieldMapper.CompletionFieldType cft = (CompletionFieldMapper.CompletionFieldType) ft;
+                ContextMappings contextMappings = new ContextMappings(
+                    Arrays.asList(ContextBuilder.category("foo").build(), ContextBuilder.geo("geo").build())
+                );
                 cft.setContextMappings(contextMappings);
             }
         });

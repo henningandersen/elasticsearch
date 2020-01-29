@@ -74,12 +74,34 @@ public class FilterRepository implements Repository {
     }
 
     @Override
-    public void finalizeSnapshot(SnapshotId snapshotId, ShardGenerations shardGenerations, long startTime, String failure,
-                                 int totalShards, List<SnapshotShardFailure> shardFailures, long repositoryStateId,
-                                 boolean includeGlobalState, MetaData metaData, Map<String, Object> userMetadata,
-                                 boolean writeShardGens, ActionListener<SnapshotInfo> listener) {
-        in.finalizeSnapshot(snapshotId, shardGenerations, startTime, failure, totalShards, shardFailures, repositoryStateId,
-            includeGlobalState, metaData, userMetadata, writeShardGens, listener);
+    public void finalizeSnapshot(
+        SnapshotId snapshotId,
+        ShardGenerations shardGenerations,
+        long startTime,
+        String failure,
+        int totalShards,
+        List<SnapshotShardFailure> shardFailures,
+        long repositoryStateId,
+        boolean includeGlobalState,
+        MetaData metaData,
+        Map<String, Object> userMetadata,
+        boolean writeShardGens,
+        ActionListener<SnapshotInfo> listener
+    ) {
+        in.finalizeSnapshot(
+            snapshotId,
+            shardGenerations,
+            startTime,
+            failure,
+            totalShards,
+            shardFailures,
+            repositoryStateId,
+            includeGlobalState,
+            metaData,
+            userMetadata,
+            writeShardGens,
+            listener
+        );
     }
 
     @Override
@@ -118,15 +140,39 @@ public class FilterRepository implements Repository {
     }
 
     @Override
-    public void snapshotShard(Store store, MapperService mapperService, SnapshotId snapshotId, IndexId indexId,
-                              IndexCommit snapshotIndexCommit, IndexShardSnapshotStatus snapshotStatus, boolean writeShardGens,
-                              Map<String, Object> userMetadata, ActionListener<String> listener) {
+    public void snapshotShard(
+        Store store,
+        MapperService mapperService,
+        SnapshotId snapshotId,
+        IndexId indexId,
+        IndexCommit snapshotIndexCommit,
+        IndexShardSnapshotStatus snapshotStatus,
+        boolean writeShardGens,
+        Map<String, Object> userMetadata,
+        ActionListener<String> listener
+    ) {
         in.snapshotShard(
-            store, mapperService, snapshotId, indexId, snapshotIndexCommit, snapshotStatus, writeShardGens, userMetadata, listener);
+            store,
+            mapperService,
+            snapshotId,
+            indexId,
+            snapshotIndexCommit,
+            snapshotStatus,
+            writeShardGens,
+            userMetadata,
+            listener
+        );
     }
+
     @Override
-    public void restoreShard(Store store, SnapshotId snapshotId, IndexId indexId, ShardId snapshotShardId, RecoveryState recoveryState,
-                             ActionListener<Void> listener) {
+    public void restoreShard(
+        Store store,
+        SnapshotId snapshotId,
+        IndexId indexId,
+        ShardId snapshotShardId,
+        RecoveryState recoveryState,
+        ActionListener<Void> listener
+    ) {
         in.restoreShard(store, snapshotId, indexId, snapshotShardId, recoveryState, listener);
     }
 

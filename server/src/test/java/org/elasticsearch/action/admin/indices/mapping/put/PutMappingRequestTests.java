@@ -44,9 +44,11 @@ public class PutMappingRequestTests extends ESTestCase {
         r.setConcreteIndex(new Index("foo", "bar"));
         ex = r.validate();
         assertNotNull("source validation should fail", ex);
-        assertEquals(ex.getMessage(),
-            "Validation Failed: 1: either concrete index or unresolved indices can be set," +
-                " concrete index: [[foo/bar]] and indices: [myindex];");
+        assertEquals(
+            ex.getMessage(),
+            "Validation Failed: 1: either concrete index or unresolved indices can be set,"
+                + " concrete index: [[foo/bar]] and indices: [myindex];"
+        );
     }
 
     /**
@@ -55,8 +57,7 @@ public class PutMappingRequestTests extends ESTestCase {
      * paired correctly
      */
     public void testBuildFromSimplifiedDef() {
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> PutMappingRequest.simpleMapping("only_field"));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> PutMappingRequest.simpleMapping("only_field"));
         assertEquals("mapping source must be pairs of fieldnames and properties definition.", e.getMessage());
     }
 }

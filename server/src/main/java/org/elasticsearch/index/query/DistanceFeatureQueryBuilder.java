@@ -62,15 +62,20 @@ public class DistanceFeatureQueryBuilder extends AbstractQueryBuilder<DistanceFe
     private final String pivot;
 
     private static final ConstructingObjectParser<DistanceFeatureQueryBuilder, Void> PARSER = new ConstructingObjectParser<>(
-        "distance_feature", false,
+        "distance_feature",
+        false,
         args -> new DistanceFeatureQueryBuilder((String) args[0], (Origin) args[1], (String) args[2])
     );
 
     static {
         PARSER.declareString(constructorArg(), FIELD_FIELD);
         // origin: number or string for date and date_nanos fields; string, array, object for geo fields
-        PARSER.declareField(constructorArg(), DistanceFeatureQueryBuilder.Origin::originFromXContent,
-            ORIGIN_FIELD, ObjectParser.ValueType.OBJECT_ARRAY_STRING_OR_NUMBER);
+        PARSER.declareField(
+            constructorArg(),
+            DistanceFeatureQueryBuilder.Origin::originFromXContent,
+            ORIGIN_FIELD,
+            ObjectParser.ValueType.OBJECT_ARRAY_STRING_OR_NUMBER
+        );
         PARSER.declareString(constructorArg(), PIVOT_FIELD);
         declareStandardFields(PARSER);
     }
@@ -136,14 +141,24 @@ public class DistanceFeatureQueryBuilder extends AbstractQueryBuilder<DistanceFe
             } else if (originObj instanceof String) {
                 originGeoPoint = GeoUtils.parseFromString((String) originObj);
             } else {
-                throw new IllegalArgumentException("Illegal type ["+ origin.getClass() + "] for [origin]! " +
-                    "Must be of type [geo_point] or [string] for geo_point fields!");
+                throw new IllegalArgumentException(
+                    "Illegal type ["
+                        + origin.getClass()
+                        + "] for [origin]! "
+                        + "Must be of type [geo_point] or [string] for geo_point fields!"
+                );
             }
             double pivotDouble = DistanceUnit.DEFAULT.parse(pivot, DistanceUnit.DEFAULT);
             return LatLonPoint.newDistanceFeatureQuery(field, boost, originGeoPoint.lat(), originGeoPoint.lon(), pivotDouble);
         }
-        throw new IllegalArgumentException("Illegal data type of [" + fieldType.typeName() + "]!"+
-            "[" + NAME + "] query can only be run on a date, date_nanos or geo_point field type!");
+        throw new IllegalArgumentException(
+            "Illegal data type of ["
+                + fieldType.typeName()
+                + "]!"
+                + "["
+                + NAME
+                + "] query can only be run on a date, date_nanos or geo_point field type!"
+        );
     }
 
     String fieldName() {
@@ -186,16 +201,18 @@ public class DistanceFeatureQueryBuilder extends AbstractQueryBuilder<DistanceFe
         private static Origin originFromXContent(XContentParser parser) throws IOException {
             if (parser.currentToken() == XContentParser.Token.VALUE_NUMBER) {
                 return new Origin(parser.longValue());
-            } else if(parser.currentToken() == XContentParser.Token.VALUE_STRING) {
+            } else if (parser.currentToken() == XContentParser.Token.VALUE_STRING) {
                 return new Origin(parser.text());
             } else if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
                 return new Origin(GeoUtils.parseGeoPoint(parser));
             } else if (parser.currentToken() == XContentParser.Token.START_ARRAY) {
                 return new Origin(GeoUtils.parseGeoPoint(parser));
             } else {
-                throw new ParsingException(parser.getTokenLocation(),
-                    "Illegal type while parsing [origin]! Must be [number] or [string] for date and date_nanos fields;" +
-                    " or [string], [array], [object] for geo_point fields!");
+                throw new ParsingException(
+                    parser.getTokenLocation(),
+                    "Illegal type while parsing [origin]! Must be [number] or [string] for date and date_nanos fields;"
+                        + " or [string], [array], [object] for geo_point fields!"
+                );
             }
         }
 

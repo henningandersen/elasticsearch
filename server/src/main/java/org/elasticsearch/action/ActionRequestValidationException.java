@@ -21,5 +21,4 @@ package org.elasticsearch.action;
 
 import org.elasticsearch.common.ValidationException;
 
-public class ActionRequestValidationException extends ValidationException {
-}
+public class ActionRequestValidationException extends ValidationException {}

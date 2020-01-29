@@ -68,8 +68,13 @@ public abstract class MultiFileTransfer<Request extends MultiFileTransfer.ChunkR
     private final Iterator<StoreFileMetaData> remainingFiles;
     private Tuple<StoreFileMetaData, Request> readAheadRequest = null;
 
-    protected MultiFileTransfer(Logger logger, ThreadContext threadContext, ActionListener<Void> listener,
-                                int maxConcurrentFileChunks, List<StoreFileMetaData> files) {
+    protected MultiFileTransfer(
+        Logger logger,
+        ThreadContext threadContext,
+        ActionListener<Void> listener,
+        int maxConcurrentFileChunks,
+        List<StoreFileMetaData> files
+    ) {
         this.logger = logger;
         this.maxConcurrentFileChunks = maxConcurrentFileChunks;
         this.listener = listener;
@@ -94,8 +99,14 @@ public abstract class MultiFileTransfer<Request extends MultiFileTransfer.ChunkR
         if (status != Status.PROCESSING) {
             assert status == Status.FAILED : "must not receive any response after the transfer was completed";
             // These exceptions will be ignored as we record only the first failure, log them for debugging purpose.
-            items.stream().filter(item -> item.v1().failure != null).forEach(item ->
-                logger.debug(new ParameterizedMessage("failed to transfer a file chunk request {}", item.v1().md), item.v1().failure));
+            items.stream()
+                .filter(item -> item.v1().failure != null)
+                .forEach(
+                    item -> logger.debug(
+                        new ParameterizedMessage("failed to transfer a file chunk request {}", item.v1().md),
+                        item.v1().failure
+                    )
+                );
             return;
         }
         try {
@@ -121,9 +132,10 @@ public abstract class MultiFileTransfer<Request extends MultiFileTransfer.ChunkR
                     return;
                 }
                 final long requestSeqId = requestSeqIdTracker.generateSeqNo();
-                executeChunkRequest(request.v2(), ActionListener.wrap(
-                    r -> addItem(requestSeqId, request.v1(), null),
-                    e -> addItem(requestSeqId, request.v1(), e)));
+                executeChunkRequest(
+                    request.v2(),
+                    ActionListener.wrap(r -> addItem(requestSeqId, request.v1(), null), e -> addItem(requestSeqId, request.v1(), e))
+                );
             }
             // While we are waiting for the responses, we can prepare the next request in advance
             // so we can send it immediately when the responses arrive to reduce the transfer time.

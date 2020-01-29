@@ -41,10 +41,12 @@ class MapperMergeValidator {
      * @param fieldAliasMappers The newly added field alias mappers.
      * @param fieldTypes Any existing field and field alias mappers, collected into a lookup structure.
      */
-    public static void validateNewMappers(Collection<ObjectMapper> objectMappers,
-                                          Collection<FieldMapper> fieldMappers,
-                                          Collection<FieldAliasMapper> fieldAliasMappers,
-                                          FieldTypeLookup fieldTypes) {
+    public static void validateNewMappers(
+        Collection<ObjectMapper> objectMappers,
+        Collection<FieldMapper> fieldMappers,
+        Collection<FieldAliasMapper> fieldAliasMappers,
+        FieldTypeLookup fieldTypes
+    ) {
         Set<String> objectFullNames = new HashSet<>();
         for (ObjectMapper objectMapper : objectMappers) {
             String fullPath = objectMapper.fullPath();
@@ -83,8 +85,7 @@ class MapperMergeValidator {
     /**
      * Checks that the new field mapper does not conflict with existing mappings.
      */
-    private static void validateFieldMapper(FieldMapper fieldMapper,
-                                            FieldTypeLookup fieldTypes) {
+    private static void validateFieldMapper(FieldMapper fieldMapper, FieldTypeLookup fieldTypes) {
         MappedFieldType newFieldType = fieldMapper.fieldType();
         MappedFieldType existingFieldType = fieldTypes.get(newFieldType.name());
 
@@ -92,8 +93,9 @@ class MapperMergeValidator {
             List<String> conflicts = new ArrayList<>();
             existingFieldType.checkCompatibility(newFieldType, conflicts);
             if (conflicts.isEmpty() == false) {
-                throw new IllegalArgumentException("Mapper for [" + newFieldType.name() +
-                    "] conflicts with existing mapping:\n" + conflicts.toString());
+                throw new IllegalArgumentException(
+                    "Mapper for [" + newFieldType.name() + "] conflicts with existing mapping:\n" + conflicts.toString()
+                );
             }
         }
     }
@@ -104,25 +106,30 @@ class MapperMergeValidator {
      * Note that this method assumes that new concrete fields have already been processed, so that it
      * can verify that an alias refers to an existing concrete field.
      */
-    private static void validateFieldAliasMapper(String aliasName,
-                                                 String path,
-                                                 Set<String> fieldMappers,
-                                                 Set<String> fieldAliasMappers) {
+    private static void validateFieldAliasMapper(String aliasName, String path, Set<String> fieldMappers, Set<String> fieldAliasMappers) {
         if (path.equals(aliasName)) {
-            throw new IllegalArgumentException("Invalid [path] value [" + path + "] for field alias [" +
-                aliasName + "]: an alias cannot refer to itself.");
+            throw new IllegalArgumentException(
+                "Invalid [path] value [" + path + "] for field alias [" + aliasName + "]: an alias cannot refer to itself."
+            );
         }
 
         if (fieldAliasMappers.contains(path)) {
-            throw new IllegalArgumentException("Invalid [path] value [" + path + "] for field alias [" +
-                aliasName + "]: an alias cannot refer to another alias.");
+            throw new IllegalArgumentException(
+                "Invalid [path] value [" + path + "] for field alias [" + aliasName + "]: an alias cannot refer to another alias."
+            );
         }
 
         if (fieldMappers.contains(path) == false) {
-            throw new IllegalArgumentException("Invalid [path] value [" + path + "] for field alias [" +
-                aliasName + "]: an alias must refer to an existing field in the mappings.");
+            throw new IllegalArgumentException(
+                "Invalid [path] value ["
+                    + path
+                    + "] for field alias ["
+                    + aliasName
+                    + "]: an alias must refer to an existing field in the mappings."
+            );
         }
     }
+
     /**
      * Verifies that each field reference, e.g. the value of copy_to or the target
      * of a field alias, corresponds to a valid part of the mapping.
@@ -132,17 +139,21 @@ class MapperMergeValidator {
      * @param fullPathObjectMappers All object mappers, indexed by their full path.
      * @param fieldTypes All field and field alias mappers, collected into a lookup structure.
      */
-    public static void validateFieldReferences(List<FieldMapper> fieldMappers,
-                                               List<FieldAliasMapper> fieldAliasMappers,
-                                               Map<String, ObjectMapper> fullPathObjectMappers,
-                                               FieldTypeLookup fieldTypes) {
+    public static void validateFieldReferences(
+        List<FieldMapper> fieldMappers,
+        List<FieldAliasMapper> fieldAliasMappers,
+        Map<String, ObjectMapper> fullPathObjectMappers,
+        FieldTypeLookup fieldTypes
+    ) {
         validateCopyTo(fieldMappers, fullPathObjectMappers, fieldTypes);
         validateFieldAliasTargets(fieldAliasMappers, fullPathObjectMappers);
     }
 
-    private static void validateCopyTo(List<FieldMapper> fieldMappers,
-                                       Map<String, ObjectMapper> fullPathObjectMappers,
-                                       FieldTypeLookup fieldTypes) {
+    private static void validateCopyTo(
+        List<FieldMapper> fieldMappers,
+        Map<String, ObjectMapper> fullPathObjectMappers,
+        FieldTypeLookup fieldTypes
+    ) {
         for (FieldMapper mapper : fieldMappers) {
             if (mapper.copyTo() != null && mapper.copyTo().copyToFields().isEmpty() == false) {
                 String sourceParent = parentObject(mapper.name());
@@ -168,8 +179,10 @@ class MapperMergeValidator {
         }
     }
 
-    private static void validateFieldAliasTargets(List<FieldAliasMapper> fieldAliasMappers,
-                                                  Map<String, ObjectMapper> fullPathObjectMappers) {
+    private static void validateFieldAliasTargets(
+        List<FieldAliasMapper> fieldAliasMappers,
+        Map<String, ObjectMapper> fullPathObjectMappers
+    ) {
         for (FieldAliasMapper mapper : fieldAliasMappers) {
             String aliasName = mapper.name();
             String path = mapper.path();
@@ -178,15 +191,16 @@ class MapperMergeValidator {
             String pathScope = getNestedScope(path, fullPathObjectMappers);
 
             if (!Objects.equals(aliasScope, pathScope)) {
-                StringBuilder message = new StringBuilder("Invalid [path] value [" + path + "] for field alias [" +
-                    aliasName + "]: an alias must have the same nested scope as its target. ");
-                message.append(aliasScope == null
-                    ? "The alias is not nested"
-                    : "The alias's nested scope is [" + aliasScope + "]");
+                StringBuilder message = new StringBuilder(
+                    "Invalid [path] value ["
+                        + path
+                        + "] for field alias ["
+                        + aliasName
+                        + "]: an alias must have the same nested scope as its target. "
+                );
+                message.append(aliasScope == null ? "The alias is not nested" : "The alias's nested scope is [" + aliasScope + "]");
                 message.append(", but ");
-                message.append(pathScope == null
-                    ? "the target is not nested."
-                    : "the target's nested scope is [" + pathScope + "].");
+                message.append(pathScope == null ? "the target is not nested." : "the target's nested scope is [" + pathScope + "].");
                 throw new IllegalArgumentException(message.toString());
             }
         }
@@ -211,9 +225,13 @@ class MapperMergeValidator {
         }
         if (targetIsParentOfSource == false) {
             throw new IllegalArgumentException(
-                "Illegal combination of [copy_to] and [nested] mappings: [copy_to] may only copy data to the current nested " +
-                    "document or any of its parents, however one [copy_to] directive is trying to copy data from nested object [" +
-                    source + "] to [" + target + "]");
+                "Illegal combination of [copy_to] and [nested] mappings: [copy_to] may only copy data to the current nested "
+                    + "document or any of its parents, however one [copy_to] directive is trying to copy data from nested object ["
+                    + source
+                    + "] to ["
+                    + target
+                    + "]"
+            );
         }
     }
 

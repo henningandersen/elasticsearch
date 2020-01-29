@@ -114,25 +114,29 @@ public class TermsLookup implements Writeable, ToXContentFragment {
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {
                 switch (currentFieldName) {
-                case "index":
-                    index = parser.text();
-                    break;
-                case "id":
-                    id = parser.text();
-                    break;
-                case "routing":
-                    routing = parser.textOrNull();
-                    break;
-                case "path":
-                    path = parser.text();
-                    break;
-                default:
-                    throw new ParsingException(parser.getTokenLocation(), "[" + TermsQueryBuilder.NAME +
-                        "] query does not support [" + currentFieldName + "] within lookup element");
+                    case "index":
+                        index = parser.text();
+                        break;
+                    case "id":
+                        id = parser.text();
+                        break;
+                    case "routing":
+                        routing = parser.textOrNull();
+                        break;
+                    case "path":
+                        path = parser.text();
+                        break;
+                    default:
+                        throw new ParsingException(
+                            parser.getTokenLocation(),
+                            "[" + TermsQueryBuilder.NAME + "] query does not support [" + currentFieldName + "] within lookup element"
+                        );
                 }
             } else {
-                throw new ParsingException(parser.getTokenLocation(), "[" + TermsQueryBuilder.NAME + "] unknown token ["
-                    + token + "] after [" + currentFieldName + "]");
+                throw new ParsingException(
+                    parser.getTokenLocation(),
+                    "[" + TermsQueryBuilder.NAME + "] unknown token [" + token + "] after [" + currentFieldName + "]"
+                );
             }
         }
         return new TermsLookup(index, id, path).routing(routing);
@@ -168,9 +172,9 @@ public class TermsLookup implements Writeable, ToXContentFragment {
             return false;
         }
         TermsLookup other = (TermsLookup) obj;
-        return Objects.equals(index, other.index) &&
-                Objects.equals(id, other.id) &&
-                Objects.equals(path, other.path) &&
-                Objects.equals(routing, other.routing);
+        return Objects.equals(index, other.index)
+            && Objects.equals(id, other.id)
+            && Objects.equals(path, other.path)
+            && Objects.equals(routing, other.routing);
     }
 }

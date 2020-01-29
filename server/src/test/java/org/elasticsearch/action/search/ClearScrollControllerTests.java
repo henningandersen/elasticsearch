@@ -77,15 +77,13 @@ public class ClearScrollControllerTests extends ESTestCase {
         };
         ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
         clearScrollRequest.scrollIds(Arrays.asList("_all"));
-        ClearScrollController controller = new ClearScrollController(clearScrollRequest, listener,
-            nodes, logger, searchTransportService);
+        ClearScrollController controller = new ClearScrollController(clearScrollRequest, listener, nodes, logger, searchTransportService);
         controller.run();
         latch.await();
         assertEquals(3, nodesInvoked.size());
         Collections.sort(nodesInvoked, Comparator.comparing(DiscoveryNode::getId));
         assertEquals(nodesInvoked, Arrays.asList(node1, node2, node3));
     }
-
 
     public void testClearScrollIds() throws IOException, InterruptedException {
         DiscoveryNode node1 = new DiscoveryNode("node_1", buildNewFakeTransportAddress(), Version.CURRENT);
@@ -121,8 +119,11 @@ public class ClearScrollControllerTests extends ESTestCase {
         SearchTransportService searchTransportService = new SearchTransportService(null, null) {
 
             @Override
-            public void sendFreeContext(Transport.Connection connection, long contextId,
-                                        ActionListener<SearchFreeContextResponse> listener) {
+            public void sendFreeContext(
+                Transport.Connection connection,
+                long contextId,
+                ActionListener<SearchFreeContextResponse> listener
+            ) {
                 nodesInvoked.add(connection.getNode());
                 boolean freed = randomBoolean();
                 if (freed) {
@@ -139,8 +140,7 @@ public class ClearScrollControllerTests extends ESTestCase {
         };
         ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
         clearScrollRequest.scrollIds(Arrays.asList(scrollId));
-        ClearScrollController controller = new ClearScrollController(clearScrollRequest, listener,
-            nodes, logger, searchTransportService);
+        ClearScrollController controller = new ClearScrollController(clearScrollRequest, listener, nodes, logger, searchTransportService);
         controller.run();
         latch.await();
         assertEquals(3, nodesInvoked.size());
@@ -189,8 +189,11 @@ public class ClearScrollControllerTests extends ESTestCase {
         SearchTransportService searchTransportService = new SearchTransportService(null, null) {
 
             @Override
-            public void sendFreeContext(Transport.Connection connection, long contextId,
-                                        ActionListener<SearchFreeContextResponse> listener) {
+            public void sendFreeContext(
+                Transport.Connection connection,
+                long contextId,
+                ActionListener<SearchFreeContextResponse> listener
+            ) {
                 nodesInvoked.add(connection.getNode());
                 boolean freed = randomBoolean();
                 boolean fail = randomBoolean();
@@ -220,8 +223,7 @@ public class ClearScrollControllerTests extends ESTestCase {
         };
         ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
         clearScrollRequest.scrollIds(Arrays.asList(scrollId));
-        ClearScrollController controller = new ClearScrollController(clearScrollRequest, listener,
-            nodes, logger, searchTransportService);
+        ClearScrollController controller = new ClearScrollController(clearScrollRequest, listener, nodes, logger, searchTransportService);
         controller.run();
         latch.await();
         assertEquals(3 - numConnectionFailures.get(), nodesInvoked.size());

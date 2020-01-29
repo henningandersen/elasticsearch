@@ -49,7 +49,7 @@ public class Maps {
         assertImmutableMap(map, key, value);
         assert map.containsKey(key) == false : "expected entry [" + key + "] to not already be present in map";
         return Stream.concat(map.entrySet().stream(), Stream.of(entry(key, value)))
-                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     /**
@@ -69,7 +69,7 @@ public class Maps {
         Objects.requireNonNull(value);
         assertImmutableMap(map, key, value);
         return Stream.concat(map.entrySet().stream().filter(k -> key.equals(k.getKey()) == false), Stream.of(entry(key, value)))
-                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private static <K, V> void assertImmutableMap(final Map<K, V> map, final K key, final V value) {
@@ -95,7 +95,8 @@ public class Maps {
      * @return an immutable map containing the specified entries
      */
     public static <K, V> Map<K, V> ofEntries(final Collection<Map.Entry<K, V>> entries) {
-        @SuppressWarnings("unchecked") final Map<K, V> map = Map.ofEntries(entries.toArray(Map.Entry[]::new));
+        @SuppressWarnings("unchecked")
+        final Map<K, V> map = Map.ofEntries(entries.toArray(Map.Entry[]::new));
         return map;
     }
 
@@ -114,8 +115,9 @@ public class Maps {
         if (left == null || right == null || left.size() != right.size()) {
             return false;
         }
-        return left.entrySet().stream()
-                .allMatch(e -> right.containsKey(e.getKey()) && Objects.deepEquals(e.getValue(), right.get(e.getKey())));
+        return left.entrySet()
+            .stream()
+            .allMatch(e -> right.containsKey(e.getKey()) && Objects.deepEquals(e.getValue(), right.get(e.getKey())));
     }
 
 }

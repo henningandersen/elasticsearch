@@ -55,7 +55,7 @@ class BulkByScrollResponseBuilder extends StatusBuilder {
 
     public void setFailures(List<Object> failures) {
         if (failures != null) {
-            for (Object object: failures) {
+            for (Object object : failures) {
                 if (object instanceof Failure) {
                     bulkFailures.add((Failure) object);
                 } else if (object instanceof SearchFailure) {

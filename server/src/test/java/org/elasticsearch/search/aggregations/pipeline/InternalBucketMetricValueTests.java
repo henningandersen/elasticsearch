@@ -22,9 +22,6 @@ package org.elasticsearch.search.aggregations.pipeline;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.search.DocValueFormat;
 import org.elasticsearch.search.aggregations.ParsedAggregation;
-import org.elasticsearch.search.aggregations.pipeline.BucketMetricValue;
-import org.elasticsearch.search.aggregations.pipeline.InternalBucketMetricValue;
-import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
 import org.elasticsearch.test.InternalAggregationTestCase;
 
 import java.util.Arrays;
@@ -36,10 +33,14 @@ import java.util.Map;
 public class InternalBucketMetricValueTests extends InternalAggregationTestCase<InternalBucketMetricValue> {
 
     @Override
-    protected InternalBucketMetricValue createTestInstance(String name, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
-        double value = frequently() ? randomDoubleBetween(-10000, 100000, true)
-                : randomFrom(new Double[] { Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NaN });
+    protected InternalBucketMetricValue createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
+        double value = frequently()
+            ? randomDoubleBetween(-10000, 100000, true)
+            : randomFrom(new Double[] { Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NaN });
         String[] keys = new String[randomIntBetween(0, 5)];
         for (int i = 0; i < keys.length; i++) {
             keys[i] = randomAlphaOfLength(10);
@@ -49,9 +50,10 @@ public class InternalBucketMetricValueTests extends InternalAggregationTestCase<
 
     @Override
     public void testReduceRandom() {
-        expectThrows(UnsupportedOperationException.class,
-                () -> createTestInstance("name", Collections.emptyList(), null).reduce(null,
-                        null));
+        expectThrows(
+            UnsupportedOperationException.class,
+            () -> createTestInstance("name", Collections.emptyList(), null).reduce(null, null)
+        );
     }
 
     @Override
@@ -87,30 +89,30 @@ public class InternalBucketMetricValueTests extends InternalAggregationTestCase<
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 3)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            if (Double.isFinite(value)) {
-                value += between(1, 100);
-            } else {
-                value = randomDoubleBetween(0, 100000, true);
-            }
-            break;
-        case 2:
-            keys = Arrays.copyOf(keys, keys.length + 1);
-            keys[keys.length - 1] = randomAlphaOfLengthBetween(1, 20);
-            break;
-        case 3:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
-        default:
-            throw new AssertionError("Illegal randomisation branch");
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                if (Double.isFinite(value)) {
+                    value += between(1, 100);
+                } else {
+                    value = randomDoubleBetween(0, 100000, true);
+                }
+                break;
+            case 2:
+                keys = Arrays.copyOf(keys, keys.length + 1);
+                keys[keys.length - 1] = randomAlphaOfLengthBetween(1, 20);
+                break;
+            case 3:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
+            default:
+                throw new AssertionError("Illegal randomisation branch");
         }
         return new InternalBucketMetricValue(name, keys, value, formatter, pipelineAggregators, metaData);
     }

@@ -49,4 +49,3 @@ public interface LocalNodeMasterListener {
     String executorName();
 
 }
-

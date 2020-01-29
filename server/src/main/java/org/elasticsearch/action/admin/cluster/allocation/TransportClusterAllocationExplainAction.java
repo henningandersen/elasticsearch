@@ -55,8 +55,9 @@ import java.util.List;
  * The {@code TransportClusterAllocationExplainAction} is responsible for actually executing the explanation of a shard's allocation on the
  * master node in the cluster.
  */
-public class TransportClusterAllocationExplainAction
-        extends TransportMasterNodeAction<ClusterAllocationExplainRequest, ClusterAllocationExplainResponse> {
+public class TransportClusterAllocationExplainAction extends TransportMasterNodeAction<
+    ClusterAllocationExplainRequest,
+    ClusterAllocationExplainResponse> {
 
     private static final Logger logger = LogManager.getLogger(TransportClusterAllocationExplainAction.class);
 
@@ -66,13 +67,26 @@ public class TransportClusterAllocationExplainAction
     private final GatewayAllocator gatewayAllocator;
 
     @Inject
-    public TransportClusterAllocationExplainAction(TransportService transportService, ClusterService clusterService,
-                                                   ThreadPool threadPool, ActionFilters actionFilters,
-                                                   IndexNameExpressionResolver indexNameExpressionResolver,
-                                                   ClusterInfoService clusterInfoService, AllocationDeciders allocationDeciders,
-                                                   ShardsAllocator shardAllocator, GatewayAllocator gatewayAllocator) {
-        super(ClusterAllocationExplainAction.NAME, transportService, clusterService, threadPool, actionFilters,
-            ClusterAllocationExplainRequest::new, indexNameExpressionResolver);
+    public TransportClusterAllocationExplainAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        ClusterInfoService clusterInfoService,
+        AllocationDeciders allocationDeciders,
+        ShardsAllocator shardAllocator,
+        GatewayAllocator gatewayAllocator
+    ) {
+        super(
+            ClusterAllocationExplainAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            ClusterAllocationExplainRequest::new,
+            indexNameExpressionResolver
+        );
         this.clusterInfoService = clusterInfoService;
         this.allocationDeciders = allocationDeciders;
         this.shardAllocator = shardAllocator;
@@ -95,33 +109,48 @@ public class TransportClusterAllocationExplainAction
     }
 
     @Override
-    protected void masterOperation(Task task, final ClusterAllocationExplainRequest request, final ClusterState state,
-                                   final ActionListener<ClusterAllocationExplainResponse> listener) {
+    protected void masterOperation(
+        Task task,
+        final ClusterAllocationExplainRequest request,
+        final ClusterState state,
+        final ActionListener<ClusterAllocationExplainResponse> listener
+    ) {
         final RoutingNodes routingNodes = state.getRoutingNodes();
         final ClusterInfo clusterInfo = clusterInfoService.getClusterInfo();
-        final RoutingAllocation allocation = new RoutingAllocation(allocationDeciders, routingNodes, state,
-                clusterInfo, System.nanoTime());
+        final RoutingAllocation allocation = new RoutingAllocation(allocationDeciders, routingNodes, state, clusterInfo, System.nanoTime());
 
         ShardRouting shardRouting = findShardToExplain(request, allocation);
         logger.debug("explaining the allocation for [{}], found shard [{}]", request, shardRouting);
 
-        ClusterAllocationExplanation cae = explainShard(shardRouting, allocation,
-            request.includeDiskInfo() ? clusterInfo : null, request.includeYesDecisions(), gatewayAllocator, shardAllocator);
+        ClusterAllocationExplanation cae = explainShard(
+            shardRouting,
+            allocation,
+            request.includeDiskInfo() ? clusterInfo : null,
+            request.includeYesDecisions(),
+            gatewayAllocator,
+            shardAllocator
+        );
         listener.onResponse(new ClusterAllocationExplainResponse(cae));
     }
 
     // public for testing
-    public static ClusterAllocationExplanation explainShard(ShardRouting shardRouting, RoutingAllocation allocation,
-                                                            ClusterInfo clusterInfo, boolean includeYesDecisions,
-                                                            GatewayAllocator gatewayAllocator, ShardsAllocator shardAllocator) {
+    public static ClusterAllocationExplanation explainShard(
+        ShardRouting shardRouting,
+        RoutingAllocation allocation,
+        ClusterInfo clusterInfo,
+        boolean includeYesDecisions,
+        GatewayAllocator gatewayAllocator,
+        ShardsAllocator shardAllocator
+    ) {
         allocation.setDebugMode(includeYesDecisions ? DebugMode.ON : DebugMode.EXCLUDE_YES_DECISIONS);
 
         ShardAllocationDecision shardDecision;
         if (shardRouting.initializing() || shardRouting.relocating()) {
             shardDecision = ShardAllocationDecision.NOT_TAKEN;
         } else {
-            AllocateUnassignedDecision allocateDecision = shardRouting.unassigned() ?
-                gatewayAllocator.decideUnassignedShardAllocation(shardRouting, allocation) : AllocateUnassignedDecision.NOT_TAKEN;
+            AllocateUnassignedDecision allocateDecision = shardRouting.unassigned()
+                ? gatewayAllocator.decideUnassignedShardAllocation(shardRouting, allocation)
+                : AllocateUnassignedDecision.NOT_TAKEN;
             if (allocateDecision.isDecisionTaken() == false) {
                 shardDecision = shardAllocator.decideShardAllocation(shardRouting, allocation);
             } else {
@@ -129,10 +158,13 @@ public class TransportClusterAllocationExplainAction
             }
         }
 
-        return new ClusterAllocationExplanation(shardRouting,
+        return new ClusterAllocationExplanation(
+            shardRouting,
             shardRouting.currentNodeId() != null ? allocation.nodes().get(shardRouting.currentNodeId()) : null,
             shardRouting.relocatingNodeId() != null ? allocation.nodes().get(shardRouting.relocatingNodeId()) : null,
-            clusterInfo, shardDecision);
+            clusterInfo,
+            shardDecision
+        );
     }
 
     // public for testing
@@ -158,7 +190,8 @@ public class TransportClusterAllocationExplainAction
                     // the primary is assigned to a node other than the node specified in the request
                     if (primaryNode.getId().equals(foundShard.currentNodeId()) == false) {
                         throw new IllegalArgumentException(
-                                "unable to find primary shard assigned to node [" + request.getCurrentNode() + "]");
+                            "unable to find primary shard assigned to node [" + request.getCurrentNode() + "]"
+                        );
                     }
                 }
             } else {
@@ -175,8 +208,9 @@ public class TransportClusterAllocationExplainAction
                         }
                     }
                     if (foundShard == null) {
-                        throw new IllegalArgumentException("unable to find a replica shard assigned to node [" +
-                                                            request.getCurrentNode() + "]");
+                        throw new IllegalArgumentException(
+                            "unable to find a replica shard assigned to node [" + request.getCurrentNode() + "]"
+                        );
                     }
                 } else {
                     if (replicaShardRoutings.size() > 0) {

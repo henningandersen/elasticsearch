@@ -110,7 +110,6 @@ public class LegacyGeoShapeQueryProcessor implements AbstractGeometryFieldMapper
         }
     }
 
-
     /**
      * Builds JTS shape from a geometry
      * <p>
@@ -119,7 +118,6 @@ public class LegacyGeoShapeQueryProcessor implements AbstractGeometryFieldMapper
     private static Shape buildS4J(Geometry geometry) {
         return geometryToShapeBuilder(geometry).buildS4J();
     }
-
 
     public static ShapeBuilder<?, ?, ?> geometryToShapeBuilder(Geometry geometry) {
         ShapeBuilder<?, ?, ?> shapeBuilder = geometry.visit(new GeometryVisitor<>() {
@@ -186,9 +184,11 @@ public class LegacyGeoShapeQueryProcessor implements AbstractGeometryFieldMapper
 
             @Override
             public ShapeBuilder<?, ?, ?> visit(Polygon polygon) {
-                PolygonBuilder polygonBuilder =
-                    new PolygonBuilder((LineStringBuilder) visit((Line) polygon.getPolygon()),
-                        ShapeBuilder.Orientation.RIGHT, false);
+                PolygonBuilder polygonBuilder = new PolygonBuilder(
+                    (LineStringBuilder) visit((Line) polygon.getPolygon()),
+                    ShapeBuilder.Orientation.RIGHT,
+                    false
+                );
                 for (int i = 0; i < polygon.getNumberOfHoles(); i++) {
                     polygonBuilder.hole((LineStringBuilder) visit((Line) polygon.getHole(i)));
                 }
@@ -197,8 +197,10 @@ public class LegacyGeoShapeQueryProcessor implements AbstractGeometryFieldMapper
 
             @Override
             public ShapeBuilder<?, ?, ?> visit(Rectangle rectangle) {
-                return new EnvelopeBuilder(new Coordinate(rectangle.getMinX(), rectangle.getMaxY()),
-                    new Coordinate(rectangle.getMaxX(), rectangle.getMinY()));
+                return new EnvelopeBuilder(
+                    new Coordinate(rectangle.getMinX(), rectangle.getMaxY()),
+                    new Coordinate(rectangle.getMaxX(), rectangle.getMinY())
+                );
             }
         });
         return shapeBuilder;

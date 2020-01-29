@@ -109,8 +109,11 @@ public class BoolQueryBuilderTests extends AbstractQueryTestCase<BoolQueryBuilde
         }
     }
 
-    private static List<BooleanClause> getBooleanClauses(List<QueryBuilder> queryBuilders,
-                                                            BooleanClause.Occur occur, QueryShardContext context) throws IOException {
+    private static List<BooleanClause> getBooleanClauses(
+        List<QueryBuilder> queryBuilders,
+        BooleanClause.Occur occur,
+        QueryShardContext context
+    ) throws IOException {
         List<BooleanClause> clauses = new ArrayList<>();
         for (QueryBuilder query : queryBuilders) {
             Query innerQuery = query.toQuery(context);
@@ -126,8 +129,7 @@ public class BoolQueryBuilderTests extends AbstractQueryTestCase<BoolQueryBuilde
         Map<String, BoolQueryBuilder> alternateVersions = new HashMap<>();
         BoolQueryBuilder tempQueryBuilder = createTestQueryBuilder();
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
-        String contentString = "{\n" +
-                "    \"bool\" : {\n";
+        String contentString = "{\n" + "    \"bool\" : {\n";
         if (tempQueryBuilder.must().size() > 0) {
             QueryBuilder must = tempQueryBuilder.must().get(0);
             contentString += "\"must\": " + must.toString() + ",";
@@ -184,7 +186,7 @@ public class BoolQueryBuilderTests extends AbstractQueryTestCase<BoolQueryBuilde
         assertThat(booleanClause.getOccur(), equalTo(BooleanClause.Occur.FILTER));
         assertThat(booleanClause.getQuery(), instanceOf(BooleanQuery.class));
         BooleanQuery innerBooleanQuery = (BooleanQuery) booleanClause.getQuery();
-        //we didn't set minimum should match initially, there are no should clauses so it should be 0
+        // we didn't set minimum should match initially, there are no should clauses so it should be 0
         assertThat(innerBooleanQuery.getMinimumNumberShouldMatch(), equalTo(0));
         assertThat(innerBooleanQuery.clauses().size(), equalTo(1));
         BooleanClause innerBooleanClause = innerBooleanQuery.clauses().get(0);
@@ -194,86 +196,78 @@ public class BoolQueryBuilderTests extends AbstractQueryTestCase<BoolQueryBuilde
 
     public void testMinShouldMatchBiggerThanNumberOfShouldClauses() throws Exception {
         BooleanQuery bq = (BooleanQuery) parseQuery(
-            boolQuery()
-                .should(termQuery("foo", "bar"))
-                .should(termQuery("foo2", "bar2"))
-                .minimumShouldMatch("3")).toQuery(createShardContext());
+            boolQuery().should(termQuery("foo", "bar")).should(termQuery("foo2", "bar2")).minimumShouldMatch("3")
+        ).toQuery(createShardContext());
         assertEquals(3, bq.getMinimumNumberShouldMatch());
 
-        bq = (BooleanQuery) parseQuery(
-            boolQuery()
-                .should(termQuery("foo", "bar"))
-                .should(termQuery("foo2", "bar2"))
-                .minimumShouldMatch(3)).toQuery(createShardContext());
+        bq = (BooleanQuery) parseQuery(boolQuery().should(termQuery("foo", "bar")).should(termQuery("foo2", "bar2")).minimumShouldMatch(3))
+            .toQuery(createShardContext());
         assertEquals(3, bq.getMinimumNumberShouldMatch());
     }
 
     public void testMinShouldMatchDisableCoord() throws Exception {
         BooleanQuery bq = (BooleanQuery) parseQuery(
-                boolQuery()
-                        .should(termQuery("foo", "bar"))
-                        .should(termQuery("foo2", "bar2"))
-                        .minimumShouldMatch("3")).toQuery(createShardContext());
+            boolQuery().should(termQuery("foo", "bar")).should(termQuery("foo2", "bar2")).minimumShouldMatch("3")
+        ).toQuery(createShardContext());
         assertEquals(3, bq.getMinimumNumberShouldMatch());
     }
 
     public void testFromJson() throws IOException {
-        String query =
-                "{" +
-                "\"bool\" : {" +
-                "  \"must\" : [ {" +
-                "    \"term\" : {" +
-                "      \"user\" : {" +
-                "        \"value\" : \"kimchy\"," +
-                "        \"boost\" : 1.0" +
-                "      }" +
-                "    }" +
-                "  } ]," +
-                "  \"filter\" : [ {" +
-                "    \"term\" : {" +
-                "      \"tag\" : {" +
-                "        \"value\" : \"tech\"," +
-                "        \"boost\" : 1.0" +
-                "      }" +
-                "    }" +
-                "  } ]," +
-                "  \"must_not\" : [ {" +
-                "    \"range\" : {" +
-                "      \"age\" : {" +
-                "        \"from\" : 10," +
-                "        \"to\" : 20," +
-                "        \"include_lower\" : true," +
-                "        \"include_upper\" : true," +
-                "        \"boost\" : 1.0" +
-                "      }" +
-                "    }" +
-                "  } ]," +
-                "  \"should\" : [ {" +
-                "    \"term\" : {" +
-                "      \"tag\" : {" +
-                "        \"value\" : \"wow\"," +
-                "        \"boost\" : 1.0" +
-                "      }" +
-                "    }" +
-                "  }, {" +
-                "    \"term\" : {" +
-                "      \"tag\" : {" +
-                "        \"value\" : \"elasticsearch\"," +
-                "        \"boost\" : 1.0" +
-                "      }" +
-                "    }" +
-                "  } ]," +
-                "  \"minimum_should_match\" : \"23\"," +
-                "  \"boost\" : 42.0" +
-                "}" +
-              "}";
+        String query = "{"
+            + "\"bool\" : {"
+            + "  \"must\" : [ {"
+            + "    \"term\" : {"
+            + "      \"user\" : {"
+            + "        \"value\" : \"kimchy\","
+            + "        \"boost\" : 1.0"
+            + "      }"
+            + "    }"
+            + "  } ],"
+            + "  \"filter\" : [ {"
+            + "    \"term\" : {"
+            + "      \"tag\" : {"
+            + "        \"value\" : \"tech\","
+            + "        \"boost\" : 1.0"
+            + "      }"
+            + "    }"
+            + "  } ],"
+            + "  \"must_not\" : [ {"
+            + "    \"range\" : {"
+            + "      \"age\" : {"
+            + "        \"from\" : 10,"
+            + "        \"to\" : 20,"
+            + "        \"include_lower\" : true,"
+            + "        \"include_upper\" : true,"
+            + "        \"boost\" : 1.0"
+            + "      }"
+            + "    }"
+            + "  } ],"
+            + "  \"should\" : [ {"
+            + "    \"term\" : {"
+            + "      \"tag\" : {"
+            + "        \"value\" : \"wow\","
+            + "        \"boost\" : 1.0"
+            + "      }"
+            + "    }"
+            + "  }, {"
+            + "    \"term\" : {"
+            + "      \"tag\" : {"
+            + "        \"value\" : \"elasticsearch\","
+            + "        \"boost\" : 1.0"
+            + "      }"
+            + "    }"
+            + "  } ],"
+            + "  \"minimum_should_match\" : \"23\","
+            + "  \"boost\" : 42.0"
+            + "}"
+            + "}";
 
         BoolQueryBuilder queryBuilder = (BoolQueryBuilder) parseQuery(query);
         checkGeneratedJson(query, queryBuilder);
 
         assertEquals(query, 42, queryBuilder.boost, 0.00001);
         assertEquals(query, "23", queryBuilder.minimumShouldMatch());
-        assertEquals(query, "kimchy", ((TermQueryBuilder)queryBuilder.must().get(0)).value());
+        assertEquals(query, "kimchy", ((TermQueryBuilder) queryBuilder.must().get(0)).value());
     }
 
     /**
@@ -359,15 +353,14 @@ public class BoolQueryBuilderTests extends AbstractQueryTestCase<BoolQueryBuilde
         assertEquals(new MatchNoneQueryBuilder(), rewritten);
 
         boolQueryBuilder = new BoolQueryBuilder();
-        boolQueryBuilder.must(new TermQueryBuilder("foo","bar"));
+        boolQueryBuilder.must(new TermQueryBuilder("foo", "bar"));
         boolQueryBuilder.filter(new WrapperQueryBuilder(new WrapperQueryBuilder(new MatchNoneQueryBuilder().toString()).toString()));
         rewritten = boolQueryBuilder.rewrite(createShardContext());
         assertEquals(new MatchNoneQueryBuilder(), rewritten);
 
         boolQueryBuilder = new BoolQueryBuilder();
-        boolQueryBuilder.must(new TermQueryBuilder("foo","bar"));
-        boolQueryBuilder.filter(new BoolQueryBuilder().should(new TermQueryBuilder("foo","bar"))
-            .filter(new MatchNoneQueryBuilder()));
+        boolQueryBuilder.must(new TermQueryBuilder("foo", "bar"));
+        boolQueryBuilder.filter(new BoolQueryBuilder().should(new TermQueryBuilder("foo", "bar")).filter(new MatchNoneQueryBuilder()));
         rewritten = Rewriteable.rewrite(boolQueryBuilder, createShardContext());
         assertEquals(new MatchNoneQueryBuilder(), rewritten);
 

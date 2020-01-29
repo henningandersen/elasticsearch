@@ -117,7 +117,7 @@ public class FiltersAggregatorTests extends AggregatorTestCase {
         FiltersAggregationBuilder builder = new FiltersAggregationBuilder("test", keys);
         builder.otherBucket(true);
         builder.otherBucketKey("other");
-        for (boolean doReduce : new boolean[] {true, false}) {
+        for (boolean doReduce : new boolean[] { true, false }) {
             final InternalFilters filters;
             if (doReduce) {
                 filters = searchAndReduce(indexSearcher, new MatchAllDocsQuery(), builder, fieldType);
@@ -150,7 +150,7 @@ public class FiltersAggregatorTests extends AggregatorTestCase {
                 // make sure we have more than one segment to test the merge
                 indexWriter.commit();
             }
-            int value = randomInt(maxTerm-1);
+            int value = randomInt(maxTerm - 1);
             expectedBucketCount[value] += 1;
             document.add(new Field("field", Integer.toString(value), fieldType));
             indexWriter.addDocument(document);
@@ -179,7 +179,7 @@ public class FiltersAggregatorTests extends AggregatorTestCase {
             builder.otherBucket(true);
             builder.otherBucketKey("other");
 
-            for (boolean doReduce : new boolean[]{true, false}) {
+            for (boolean doReduce : new boolean[] { true, false }) {
                 final InternalFilters response;
                 if (doReduce) {
                     response = searchAndReduce(indexSearcher, new MatchAllDocsQuery(), builder, fieldType);

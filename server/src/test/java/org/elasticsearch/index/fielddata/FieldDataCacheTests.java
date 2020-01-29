@@ -65,8 +65,7 @@ public class FieldDataCacheTests extends ESTestCase {
             }
         }
         iw.close();
-        DirectoryReader ir =
-            ElasticsearchDirectoryReader.wrap(DirectoryReader.open(dir), new ShardId("_index", "_na_", 0));
+        DirectoryReader ir = ElasticsearchDirectoryReader.wrap(DirectoryReader.open(dir), new ShardId("_index", "_na_", 0));
 
         DummyAccountingFieldDataCache fieldDataCache = new DummyAccountingFieldDataCache();
         // Testing SortedSetDVOrdinalsIndexFieldData:
@@ -88,25 +87,35 @@ public class FieldDataCacheTests extends ESTestCase {
     }
 
     private SortedSetDVOrdinalsIndexFieldData createSortedDV(String fieldName, IndexFieldDataCache indexFieldDataCache) {
-        return new SortedSetDVOrdinalsIndexFieldData(createIndexSettings(), indexFieldDataCache, fieldName, new NoneCircuitBreakerService(),
-                AbstractAtomicOrdinalsFieldData.DEFAULT_SCRIPT_FUNCTION);
+        return new SortedSetDVOrdinalsIndexFieldData(
+            createIndexSettings(),
+            indexFieldDataCache,
+            fieldName,
+            new NoneCircuitBreakerService(),
+            AbstractAtomicOrdinalsFieldData.DEFAULT_SCRIPT_FUNCTION
+        );
     }
 
     private PagedBytesIndexFieldData createPagedBytes(String fieldName, IndexFieldDataCache indexFieldDataCache) {
-        return new PagedBytesIndexFieldData(createIndexSettings(), fieldName, indexFieldDataCache, new NoneCircuitBreakerService(),
-                TextFieldMapper.Defaults.FIELDDATA_MIN_FREQUENCY,
-                TextFieldMapper.Defaults.FIELDDATA_MAX_FREQUENCY,
-                TextFieldMapper.Defaults.FIELDDATA_MIN_SEGMENT_SIZE);
+        return new PagedBytesIndexFieldData(
+            createIndexSettings(),
+            fieldName,
+            indexFieldDataCache,
+            new NoneCircuitBreakerService(),
+            TextFieldMapper.Defaults.FIELDDATA_MIN_FREQUENCY,
+            TextFieldMapper.Defaults.FIELDDATA_MAX_FREQUENCY,
+            TextFieldMapper.Defaults.FIELDDATA_MIN_SEGMENT_SIZE
+        );
     }
 
     private IndexSettings createIndexSettings() {
         Settings settings = Settings.EMPTY;
         IndexMetaData indexMetaData = IndexMetaData.builder("_name")
-                .settings(Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT))
-                .numberOfShards(1)
-                .numberOfReplicas(0)
-                .creationDate(System.currentTimeMillis())
-                .build();
+            .settings(Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT))
+            .numberOfShards(1)
+            .numberOfReplicas(0)
+            .creationDate(System.currentTimeMillis())
+            .build();
         return new IndexSettings(indexMetaData, settings);
     }
 
@@ -121,19 +130,17 @@ public class FieldDataCacheTests extends ESTestCase {
         }
 
         @Override
-        public <FD extends AtomicFieldData, IFD extends IndexFieldData.Global<FD>> IFD load(DirectoryReader indexReader,
-            IFD indexFieldData) throws Exception {
+        public <FD extends AtomicFieldData, IFD extends IndexFieldData.Global<FD>> IFD load(DirectoryReader indexReader, IFD indexFieldData)
+            throws Exception {
             cachedGlobally++;
             return (IFD) indexFieldData.localGlobalDirect(indexReader);
         }
 
         @Override
-        public void clear() {
-        }
+        public void clear() {}
 
         @Override
-        public void clear(String fieldName) {
-        }
+        public void clear(String fieldName) {}
     }
 
 }

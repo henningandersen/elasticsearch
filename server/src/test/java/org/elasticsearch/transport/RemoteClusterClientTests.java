@@ -46,14 +46,21 @@ public class RemoteClusterClientTests extends ESTestCase {
 
     public void testConnectAndExecuteRequest() throws Exception {
         Settings remoteSettings = Settings.builder().put(ClusterName.CLUSTER_NAME_SETTING.getKey(), "foo_bar_cluster").build();
-        try (MockTransportService remoteTransport = startTransport("remote_node", Collections.emptyList(), Version.CURRENT, threadPool,
-            remoteSettings)) {
+        try (
+            MockTransportService remoteTransport = startTransport(
+                "remote_node",
+                Collections.emptyList(),
+                Version.CURRENT,
+                threadPool,
+                remoteSettings
+            )
+        ) {
             DiscoveryNode remoteNode = remoteTransport.getLocalDiscoNode();
 
             Settings localSettings = Settings.builder()
                 .put(RemoteClusterService.ENABLE_REMOTE_CLUSTERS.getKey(), true)
-                .put("cluster.remote.test.seeds",
-                    remoteNode.getAddress().getAddress() + ":" + remoteNode.getAddress().getPort()).build();
+                .put("cluster.remote.test.seeds", remoteNode.getAddress().getAddress() + ":" + remoteNode.getAddress().getPort())
+                .build();
             try (MockTransportService service = MockTransportService.createNewService(localSettings, Version.CURRENT, threadPool, null)) {
                 service.start();
                 // following two log lines added to investigate #41745, can be removed once issue is closed
@@ -67,8 +74,10 @@ public class RemoteClusterClientTests extends ESTestCase {
                 assertNotNull(clusterStateResponse);
                 assertEquals("foo_bar_cluster", clusterStateResponse.getState().getClusterName().value());
                 // also test a failure, there is no handler for scroll registered
-                ActionNotFoundTransportException ex = expectThrows(ActionNotFoundTransportException.class,
-                    () -> client.prepareSearchScroll("").get());
+                ActionNotFoundTransportException ex = expectThrows(
+                    ActionNotFoundTransportException.class,
+                    () -> client.prepareSearchScroll("").get()
+                );
                 assertEquals("No handler for action [indices:data/read/scroll]", ex.getMessage());
             }
         }
@@ -76,13 +85,20 @@ public class RemoteClusterClientTests extends ESTestCase {
 
     public void testEnsureWeReconnect() throws Exception {
         Settings remoteSettings = Settings.builder().put(ClusterName.CLUSTER_NAME_SETTING.getKey(), "foo_bar_cluster").build();
-        try (MockTransportService remoteTransport = startTransport("remote_node", Collections.emptyList(), Version.CURRENT, threadPool,
-            remoteSettings)) {
+        try (
+            MockTransportService remoteTransport = startTransport(
+                "remote_node",
+                Collections.emptyList(),
+                Version.CURRENT,
+                threadPool,
+                remoteSettings
+            )
+        ) {
             DiscoveryNode remoteNode = remoteTransport.getLocalDiscoNode();
             Settings localSettings = Settings.builder()
                 .put(RemoteClusterService.ENABLE_REMOTE_CLUSTERS.getKey(), true)
-                .put("cluster.remote.test.seeds",
-                    remoteNode.getAddress().getAddress() + ":" + remoteNode.getAddress().getPort()).build();
+                .put("cluster.remote.test.seeds", remoteNode.getAddress().getAddress() + ":" + remoteNode.getAddress().getPort())
+                .build();
             try (MockTransportService service = MockTransportService.createNewService(localSettings, Version.CURRENT, threadPool, null)) {
                 Semaphore semaphore = new Semaphore(1);
                 service.start();
@@ -102,9 +118,9 @@ public class RemoteClusterClientTests extends ESTestCase {
                 for (int i = 0; i < 10; i++) {
                     semaphore.acquire();
                     try {
-                        service.getRemoteClusterService().getConnections().forEach(con -> {
-                            con.getConnectionManager().disconnectFromNode(remoteNode);
-                        });
+                        service.getRemoteClusterService()
+                            .getConnections()
+                            .forEach(con -> { con.getConnectionManager().disconnectFromNode(remoteNode); });
                         semaphore.acquire();
                         RemoteClusterService remoteClusterService = service.getRemoteClusterService();
                         Client client = remoteClusterService.getRemoteClusterClient(threadPool, "test");

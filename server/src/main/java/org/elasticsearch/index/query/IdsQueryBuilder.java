@@ -130,7 +130,6 @@ public class IdsQueryBuilder extends AbstractQueryBuilder<IdsQueryBuilder> {
         }
     }
 
-
     @Override
     public String getWriteableName() {
         return NAME;
@@ -143,7 +142,7 @@ public class IdsQueryBuilder extends AbstractQueryBuilder<IdsQueryBuilder> {
             return new MatchNoDocsQuery("No mappings");
         }
         if (this.ids.isEmpty()) {
-             return Queries.newMatchNoDocsQuery("Missing ids in \"" + this.getName() + "\" query.");
+            return Queries.newMatchNoDocsQuery("Missing ids in \"" + this.getName() + "\" query.");
         } else {
             return idField.termsQuery(new ArrayList<>(ids), context);
         }

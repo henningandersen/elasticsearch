@@ -58,25 +58,26 @@ public class CreateIndexRequestTests extends ESTestCase {
     }
 
     public void testTopLevelKeys() {
-        String createIndex =
-                "{\n"
-                + "  \"FOO_SHOULD_BE_ILLEGAL_HERE\": {\n"
-                + "    \"BAR_IS_THE_SAME\": 42\n"
-                + "  },\n"
-                + "  \"mappings\": {\n"
-                + "    \"test\": {\n"
-                + "      \"properties\": {\n"
-                + "        \"field1\": {\n"
-                + "          \"type\": \"text\"\n"
-                + "       }\n"
-                + "     }\n"
-                + "    }\n"
-                + "  }\n"
-                + "}";
+        String createIndex = "{\n"
+            + "  \"FOO_SHOULD_BE_ILLEGAL_HERE\": {\n"
+            + "    \"BAR_IS_THE_SAME\": 42\n"
+            + "  },\n"
+            + "  \"mappings\": {\n"
+            + "    \"test\": {\n"
+            + "      \"properties\": {\n"
+            + "        \"field1\": {\n"
+            + "          \"type\": \"text\"\n"
+            + "       }\n"
+            + "     }\n"
+            + "    }\n"
+            + "  }\n"
+            + "}";
 
         CreateIndexRequest request = new CreateIndexRequest();
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
-                () -> {request.source(createIndex, XContentType.JSON);});
+        ElasticsearchParseException e = expectThrows(
+            ElasticsearchParseException.class,
+            () -> { request.source(createIndex, XContentType.JSON); }
+        );
         assertEquals("unknown key [FOO_SHOULD_BE_ILLEGAL_HERE] for create index", e.getMessage());
     }
 
@@ -85,34 +86,38 @@ public class CreateIndexRequestTests extends ESTestCase {
         CreateIndexRequest request2 = new CreateIndexRequest("bar");
         {
             XContentBuilder builder = XContentFactory.contentBuilder(randomFrom(XContentType.values()));
-            builder.startObject().startObject("properties")
+            builder.startObject()
+                .startObject("properties")
                 .startObject("field1")
-                    .field("type", "text")
+                .field("type", "text")
                 .endObject()
                 .startObject("field2")
-                    .startObject("properties")
-                        .startObject("field21")
-                            .field("type", "keyword")
-                        .endObject()
-                    .endObject()
+                .startObject("properties")
+                .startObject("field21")
+                .field("type", "keyword")
                 .endObject()
-            .endObject().endObject();
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject();
             request1.mapping(builder);
             builder = XContentFactory.contentBuilder(randomFrom(XContentType.values()));
-            builder.startObject().startObject("_doc")
+            builder.startObject()
+                .startObject("_doc")
                 .startObject("properties")
-                    .startObject("field1")
-                        .field("type", "text")
-                    .endObject()
-                    .startObject("field2")
-                        .startObject("properties")
-                            .startObject("field21")
-                                .field("type", "keyword")
-                            .endObject()
-                        .endObject()
-                    .endObject()
+                .startObject("field1")
+                .field("type", "text")
                 .endObject()
-            .endObject().endObject();
+                .startObject("field2")
+                .startObject("properties")
+                .startObject("field21")
+                .field("type", "keyword")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject();
             request2.mapping(builder);
             assertEquals(request1.mappings(), request2.mappings());
         }
@@ -133,10 +138,18 @@ public class CreateIndexRequestTests extends ESTestCase {
         for (Map.Entry<String, String> expectedEntry : expected.entrySet()) {
             String expectedValue = expectedEntry.getValue();
             String actualValue = actual.get(expectedEntry.getKey());
-            try (XContentParser expectedJson = JsonXContent.jsonXContent.createParser(NamedXContentRegistry.EMPTY,
-                    LoggingDeprecationHandler.INSTANCE, expectedValue);
-                 XContentParser actualJson = JsonXContent.jsonXContent.createParser(NamedXContentRegistry.EMPTY,
-                    LoggingDeprecationHandler.INSTANCE, actualValue)){
+            try (
+                XContentParser expectedJson = JsonXContent.jsonXContent.createParser(
+                    NamedXContentRegistry.EMPTY,
+                    LoggingDeprecationHandler.INSTANCE,
+                    expectedValue
+                );
+                XContentParser actualJson = JsonXContent.jsonXContent.createParser(
+                    NamedXContentRegistry.EMPTY,
+                    LoggingDeprecationHandler.INSTANCE,
+                    actualValue
+                )
+            ) {
                 assertEquals(expectedJson.map(), actualJson.map());
             }
         }

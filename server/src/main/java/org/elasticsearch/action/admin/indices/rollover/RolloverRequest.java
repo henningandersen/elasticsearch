@@ -56,19 +56,32 @@ public class RolloverRequest extends AcknowledgedRequest<RolloverRequest> implem
     private static final ParseField MAX_SIZE_CONDITION = new ParseField(MaxSizeCondition.NAME);
 
     static {
-        CONDITION_PARSER.declareString((conditions, s) ->
-                conditions.put(MaxAgeCondition.NAME, new MaxAgeCondition(TimeValue.parseTimeValue(s, MaxAgeCondition.NAME))),
-                MAX_AGE_CONDITION);
-        CONDITION_PARSER.declareLong((conditions, value) ->
-                conditions.put(MaxDocsCondition.NAME, new MaxDocsCondition(value)), MAX_DOCS_CONDITION);
-        CONDITION_PARSER.declareString((conditions, s) ->
-                conditions.put(MaxSizeCondition.NAME, new MaxSizeCondition(ByteSizeValue.parseBytesSizeValue(s, MaxSizeCondition.NAME))),
-                MAX_SIZE_CONDITION);
+        CONDITION_PARSER.declareString(
+            (conditions, s) -> conditions.put(MaxAgeCondition.NAME, new MaxAgeCondition(TimeValue.parseTimeValue(s, MaxAgeCondition.NAME))),
+            MAX_AGE_CONDITION
+        );
+        CONDITION_PARSER.declareLong(
+            (conditions, value) -> conditions.put(MaxDocsCondition.NAME, new MaxDocsCondition(value)),
+            MAX_DOCS_CONDITION
+        );
+        CONDITION_PARSER.declareString(
+            (conditions, s) -> conditions.put(
+                MaxSizeCondition.NAME,
+                new MaxSizeCondition(ByteSizeValue.parseBytesSizeValue(s, MaxSizeCondition.NAME))
+            ),
+            MAX_SIZE_CONDITION
+        );
 
-        PARSER.declareField((parser, request, context) -> CONDITION_PARSER.parse(parser, request.conditions, null),
-            CONDITIONS, ObjectParser.ValueType.OBJECT);
-        PARSER.declareField((parser, request, context) -> request.createIndexRequest.settings(parser.map()),
-            CreateIndexRequest.SETTINGS, ObjectParser.ValueType.OBJECT);
+        PARSER.declareField(
+            (parser, request, context) -> CONDITION_PARSER.parse(parser, request.conditions, null),
+            CONDITIONS,
+            ObjectParser.ValueType.OBJECT
+        );
+        PARSER.declareField(
+            (parser, request, context) -> request.createIndexRequest.settings(parser.map()),
+            CreateIndexRequest.SETTINGS,
+            ObjectParser.ValueType.OBJECT
+        );
         PARSER.declareField((parser, request, context) -> {
             // a type is not included, add a dummy _doc type
             Map<String, Object> mappings = parser.map();
@@ -77,15 +90,18 @@ public class RolloverRequest extends AcknowledgedRequest<RolloverRequest> implem
             }
             request.createIndexRequest.mapping(mappings);
         }, CreateIndexRequest.MAPPINGS, ObjectParser.ValueType.OBJECT);
-        PARSER.declareField((parser, request, context) -> request.createIndexRequest.aliases(parser.map()),
-            CreateIndexRequest.ALIASES, ObjectParser.ValueType.OBJECT);
+        PARSER.declareField(
+            (parser, request, context) -> request.createIndexRequest.aliases(parser.map()),
+            CreateIndexRequest.ALIASES,
+            ObjectParser.ValueType.OBJECT
+        );
     }
 
     private String alias;
     private String newIndexName;
     private boolean dryRun;
     private Map<String, Condition<?>> conditions = new HashMap<>(2);
-    //the index name "_na_" is never read back, what matters are settings, mappings and aliases
+    // the index name "_na_" is never read back, what matters are settings, mappings and aliases
     private CreateIndexRequest createIndexRequest = new CreateIndexRequest("_na_");
 
     public RolloverRequest(StreamInput in) throws IOException {
@@ -132,7 +148,7 @@ public class RolloverRequest extends AcknowledgedRequest<RolloverRequest> implem
 
     @Override
     public String[] indices() {
-        return new String[] {alias};
+        return new String[] { alias };
     }
 
     @Override
@@ -153,6 +169,7 @@ public class RolloverRequest extends AcknowledgedRequest<RolloverRequest> implem
     public void setNewIndexName(String newIndexName) {
         this.newIndexName = newIndexName;
     }
+
     /**
      * Sets if the rollover should not be executed when conditions are met
      */
@@ -199,7 +216,6 @@ public class RolloverRequest extends AcknowledgedRequest<RolloverRequest> implem
         }
         this.conditions.put(maxSizeCondition.name, maxSizeCondition);
     }
-
 
     public boolean isDryRun() {
         return dryRun;

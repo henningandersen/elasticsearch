@@ -41,11 +41,22 @@ import java.util.List;
 public class TransportGetAliasesAction extends TransportMasterNodeReadAction<GetAliasesRequest, GetAliasesResponse> {
 
     @Inject
-    public TransportGetAliasesAction(TransportService transportService, ClusterService clusterService,
-                                     ThreadPool threadPool, ActionFilters actionFilters,
-                                     IndexNameExpressionResolver indexNameExpressionResolver) {
-        super(GetAliasesAction.NAME, transportService, clusterService, threadPool, actionFilters, GetAliasesRequest::new,
-            indexNameExpressionResolver);
+    public TransportGetAliasesAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver
+    ) {
+        super(
+            GetAliasesAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            GetAliasesRequest::new,
+            indexNameExpressionResolver
+        );
     }
 
     @Override
@@ -56,8 +67,8 @@ public class TransportGetAliasesAction extends TransportMasterNodeReadAction<Get
 
     @Override
     protected ClusterBlockException checkBlock(GetAliasesRequest request, ClusterState state) {
-        return state.blocks().indicesBlockedException(ClusterBlockLevel.METADATA_READ,
-            indexNameExpressionResolver.concreteIndexNames(state, request));
+        return state.blocks()
+            .indicesBlockedException(ClusterBlockLevel.METADATA_READ, indexNameExpressionResolver.concreteIndexNames(state, request));
     }
 
     @Override
@@ -75,8 +86,11 @@ public class TransportGetAliasesAction extends TransportMasterNodeReadAction<Get
     /**
      * Fills alias result with empty entries for requested indices when no specific aliases were requested.
      */
-    static ImmutableOpenMap<String, List<AliasMetaData>> postProcess(GetAliasesRequest request, String[] concreteIndices,
-                                                                     ImmutableOpenMap<String, List<AliasMetaData>> aliases) {
+    static ImmutableOpenMap<String, List<AliasMetaData>> postProcess(
+        GetAliasesRequest request,
+        String[] concreteIndices,
+        ImmutableOpenMap<String, List<AliasMetaData>> aliases
+    ) {
         boolean noAliasesSpecified = request.getOriginalAliases() == null || request.getOriginalAliases().length == 0;
         ImmutableOpenMap.Builder<String, List<AliasMetaData>> mapBuilder = ImmutableOpenMap.builder(aliases);
         for (String index : concreteIndices) {

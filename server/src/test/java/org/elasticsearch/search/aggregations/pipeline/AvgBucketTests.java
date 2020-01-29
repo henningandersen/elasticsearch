@@ -44,17 +44,27 @@ public class AvgBucketTests extends AbstractBucketMetricsTestCase<AvgBucketPipel
 
         // First try to point to a non-existent agg
         final AvgBucketPipelineAggregationBuilder builder = new AvgBucketPipelineAggregationBuilder("name", "invalid_agg>metric");
-        IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-                () -> builder.validate(null, aggBuilders, Collections.emptySet()));
-        assertEquals(PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
-                + " aggregation does not exist for aggregation [name]: invalid_agg>metric", ex.getMessage());
+        IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> builder.validate(null, aggBuilders, Collections.emptySet())
+        );
+        assertEquals(
+            PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
+                + " aggregation does not exist for aggregation [name]: invalid_agg>metric",
+            ex.getMessage()
+        );
 
         // Now try to point to a single bucket agg
         AvgBucketPipelineAggregationBuilder builder2 = new AvgBucketPipelineAggregationBuilder("name", "global>metric");
         ex = expectThrows(IllegalArgumentException.class, () -> builder2.validate(null, aggBuilders, Collections.emptySet()));
-        assertEquals("The first aggregation in " + PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
-                + " must be a multi-bucket aggregation for aggregation [name] found :" + GlobalAggregationBuilder.class.getName()
-                + " for buckets path: global>metric", ex.getMessage());
+        assertEquals(
+            "The first aggregation in "
+                + PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
+                + " must be a multi-bucket aggregation for aggregation [name] found :"
+                + GlobalAggregationBuilder.class.getName()
+                + " for buckets path: global>metric",
+            ex.getMessage()
+        );
 
         // Now try to point to a valid multi-bucket agg (no exception should be thrown)
         AvgBucketPipelineAggregationBuilder builder3 = new AvgBucketPipelineAggregationBuilder("name", "terms>metric");

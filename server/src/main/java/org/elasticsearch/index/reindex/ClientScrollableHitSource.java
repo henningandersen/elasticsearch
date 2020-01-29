@@ -58,9 +58,16 @@ public class ClientScrollableHitSource extends ScrollableHitSource {
     private final ParentTaskAssigningClient client;
     private final SearchRequest firstSearchRequest;
 
-    public ClientScrollableHitSource(Logger logger, BackoffPolicy backoffPolicy, ThreadPool threadPool, Runnable countSearchRetry,
-                                     Consumer<AsyncResponse> onResponse, Consumer<Exception> fail,
-                                     ParentTaskAssigningClient client, SearchRequest firstSearchRequest) {
+    public ClientScrollableHitSource(
+        Logger logger,
+        BackoffPolicy backoffPolicy,
+        ThreadPool threadPool,
+        Runnable countSearchRetry,
+        Consumer<AsyncResponse> onResponse,
+        Consumer<Exception> fail,
+        ParentTaskAssigningClient client,
+        SearchRequest firstSearchRequest
+    ) {
         super(logger, backoffPolicy, threadPool, countSearchRetry, onResponse, fail);
         this.client = client;
         this.firstSearchRequest = firstSearchRequest;
@@ -70,8 +77,10 @@ public class ClientScrollableHitSource extends ScrollableHitSource {
     @Override
     public void doStart(RejectAwareActionListener<Response> searchListener) {
         if (logger.isDebugEnabled()) {
-            logger.debug("executing initial scroll against {}",
-                isEmpty(firstSearchRequest.indices()) ? "all indices" : firstSearchRequest.indices());
+            logger.debug(
+                "executing initial scroll against {}",
+                isEmpty(firstSearchRequest.indices()) ? "all indices" : firstSearchRequest.indices()
+            );
         }
         client.search(firstSearchRequest, wrapListener(searchListener));
     }
@@ -136,7 +145,7 @@ public class ClientScrollableHitSource extends ScrollableHitSource {
             failures = emptyList();
         } else {
             failures = new ArrayList<>(response.getShardFailures().length);
-            for (ShardSearchFailure failure: response.getShardFailures()) {
+            for (ShardSearchFailure failure : response.getShardFailures()) {
                 String nodeId = failure.shard() == null ? null : failure.shard().getNodeId();
                 failures.add(new SearchFailure(failure.getCause(), failure.index(), failure.shardId(), nodeId));
             }
@@ -146,14 +155,13 @@ public class ClientScrollableHitSource extends ScrollableHitSource {
             hits = emptyList();
         } else {
             hits = new ArrayList<>(response.getHits().getHits().length);
-            for (SearchHit hit: response.getHits().getHits()) {
+            for (SearchHit hit : response.getHits().getHits()) {
                 hits.add(new ClientHit(hit));
             }
             hits = unmodifiableList(hits);
         }
         long total = response.getHits().getTotalHits().value;
-        return new Response(response.isTimedOut(), failures, total,
-                hits, response.getScrollId());
+        return new Response(response.isTimedOut(), failures, total, hits, response.getScrollId());
     }
 
     private static class ClientHit implements Hit {
@@ -184,6 +192,7 @@ public class ClientScrollableHitSource extends ScrollableHitSource {
         public XContentType getXContentType() {
             return XContentHelper.xContentType(source);
         }
+
         @Override
         public long getVersion() {
             return delegate.getVersion();

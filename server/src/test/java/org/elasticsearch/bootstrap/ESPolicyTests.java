@@ -28,12 +28,12 @@ import java.security.Permissions;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 
-/** 
+/**
  * Tests for ESPolicy
  */
 public class ESPolicyTests extends ESTestCase {
 
-    /** 
+    /**
      * test restricting privileges to no permissions actually works
      */
     public void testRestrictPrivileges() {
@@ -46,9 +46,7 @@ public class ESPolicyTests extends ESTestCase {
 
         PermissionCollection noPermissions = new Permissions();
         AccessControlContext noPermissionsAcc = new AccessControlContext(
-            new ProtectionDomain[] {
-                new ProtectionDomain(null, noPermissions)
-            }
+            new ProtectionDomain[] { new ProtectionDomain(null, noPermissions) }
         );
         try {
             AccessController.doPrivileged(new PrivilegedAction<Void>() {

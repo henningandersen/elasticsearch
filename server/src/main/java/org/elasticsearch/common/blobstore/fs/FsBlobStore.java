@@ -45,8 +45,8 @@ public class FsBlobStore implements BlobStore {
         if (this.readOnly == false) {
             Files.createDirectories(path);
         }
-        this.bufferSizeInBytes = (int) settings.getAsBytesSize("repositories.fs.buffer_size",
-            new ByteSizeValue(100, ByteSizeUnit.KB)).getBytes();
+        this.bufferSizeInBytes = (int) settings.getAsBytesSize("repositories.fs.buffer_size", new ByteSizeValue(100, ByteSizeUnit.KB))
+            .getBytes();
     }
 
     @Override

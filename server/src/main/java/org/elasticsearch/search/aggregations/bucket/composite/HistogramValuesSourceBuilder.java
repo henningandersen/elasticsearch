@@ -47,6 +47,7 @@ public class HistogramValuesSourceBuilder extends CompositeValuesSourceBuilder<H
         PARSER.declareDouble(HistogramValuesSourceBuilder::interval, Histogram.INTERVAL_FIELD);
         CompositeValuesSourceParserHelper.declareValuesSourceFields(PARSER, ValueType.NUMERIC);
     }
+
     static HistogramValuesSourceBuilder parse(String name, XContentParser parser) throws IOException {
         return PARSER.parse(parser, new HistogramValuesSourceBuilder(name), null);
     }
@@ -119,8 +120,7 @@ public class HistogramValuesSourceBuilder extends CompositeValuesSourceBuilder<H
             ValuesSource.Numeric numeric = (ValuesSource.Numeric) orig;
             final HistogramValuesSource vs = new HistogramValuesSource(numeric, interval);
             final MappedFieldType fieldType = config.fieldContext() != null ? config.fieldContext().fieldType() : null;
-            return new CompositeValuesSourceConfig(name, fieldType, vs, config.format(), order(),
-                missingBucket(), script() != null);
+            return new CompositeValuesSourceConfig(name, fieldType, vs, config.format(), order(), missingBucket(), script() != null);
         } else {
             throw new IllegalArgumentException("invalid source, expected numeric, got " + orig.getClass().getSimpleName());
         }

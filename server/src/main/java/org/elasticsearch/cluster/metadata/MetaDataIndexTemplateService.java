@@ -75,10 +75,14 @@ public class MetaDataIndexTemplateService {
     private final NamedXContentRegistry xContentRegistry;
 
     @Inject
-    public MetaDataIndexTemplateService(ClusterService clusterService,
-                                        MetaDataCreateIndexService metaDataCreateIndexService,
-                                        AliasValidator aliasValidator, IndicesService indicesService,
-                                        IndexScopedSettings indexScopedSettings, NamedXContentRegistry xContentRegistry) {
+    public MetaDataIndexTemplateService(
+        ClusterService clusterService,
+        MetaDataCreateIndexService metaDataCreateIndexService,
+        AliasValidator aliasValidator,
+        IndicesService indicesService,
+        IndexScopedSettings indexScopedSettings,
+        NamedXContentRegistry xContentRegistry
+    ) {
         this.clusterService = clusterService;
         this.aliasValidator = aliasValidator;
         this.indicesService = indicesService;
@@ -155,45 +159,50 @@ public class MetaDataIndexTemplateService {
 
         final IndexTemplateMetaData.Builder templateBuilder = IndexTemplateMetaData.builder(request.name);
 
-        clusterService.submitStateUpdateTask("create-index-template [" + request.name + "], cause [" + request.cause + "]",
-                new ClusterStateUpdateTask(Priority.URGENT) {
+        clusterService.submitStateUpdateTask(
+            "create-index-template [" + request.name + "], cause [" + request.cause + "]",
+            new ClusterStateUpdateTask(Priority.URGENT) {
 
-            @Override
-            public TimeValue timeout() {
-                return request.masterTimeout;
-            }
-
-            @Override
-            public void onFailure(String source, Exception e) {
-                listener.onFailure(e);
-            }
-
-            @Override
-            public ClusterState execute(ClusterState currentState) throws Exception {
-                if (request.create && currentState.metaData().templates().containsKey(request.name)) {
-                    throw new IllegalArgumentException("index_template [" + request.name + "] already exists");
+                @Override
+                public TimeValue timeout() {
+                    return request.masterTimeout;
                 }
 
-                validateAndAddTemplate(request, templateBuilder, indicesService, xContentRegistry);
-
-                for (Alias alias : request.aliases) {
-                    AliasMetaData aliasMetaData = AliasMetaData.builder(alias.name()).filter(alias.filter())
-                        .indexRouting(alias.indexRouting()).searchRouting(alias.searchRouting()).build();
-                    templateBuilder.putAlias(aliasMetaData);
+                @Override
+                public void onFailure(String source, Exception e) {
+                    listener.onFailure(e);
                 }
-                IndexTemplateMetaData template = templateBuilder.build();
 
-                MetaData.Builder builder = MetaData.builder(currentState.metaData()).put(template);
+                @Override
+                public ClusterState execute(ClusterState currentState) throws Exception {
+                    if (request.create && currentState.metaData().templates().containsKey(request.name)) {
+                        throw new IllegalArgumentException("index_template [" + request.name + "] already exists");
+                    }
 
-                logger.info("adding template [{}] for index patterns {}", request.name, request.indexPatterns);
-                return ClusterState.builder(currentState).metaData(builder).build();
+                    validateAndAddTemplate(request, templateBuilder, indicesService, xContentRegistry);
+
+                    for (Alias alias : request.aliases) {
+                        AliasMetaData aliasMetaData = AliasMetaData.builder(alias.name())
+                            .filter(alias.filter())
+                            .indexRouting(alias.indexRouting())
+                            .searchRouting(alias.searchRouting())
+                            .build();
+                        templateBuilder.putAlias(aliasMetaData);
+                    }
+                    IndexTemplateMetaData template = templateBuilder.build();
+
+                    MetaData.Builder builder = MetaData.builder(currentState.metaData()).put(template);
+
+                    logger.info("adding template [{}] for index patterns {}", request.name, request.indexPatterns);
+                    return ClusterState.builder(currentState).metaData(builder).build();
+                }
+
+                @Override
+                public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
+                    listener.onResponse(new PutResponse(true));
+                }
             }
-
-            @Override
-            public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
-                listener.onResponse(new PutResponse(true));
-            }
-        });
+        );
     }
 
     /**
@@ -235,7 +244,8 @@ public class MetaDataIndexTemplateService {
         // then we need to exclude global templates
         if (isHidden == null) {
             final Optional<IndexTemplateMetaData> templateWithHiddenSetting = matchedTemplates.stream()
-                .filter(template -> IndexMetaData.INDEX_HIDDEN_SETTING.exists(template.settings())).findFirst();
+                .filter(template -> IndexMetaData.INDEX_HIDDEN_SETTING.exists(template.settings()))
+                .findFirst();
             if (templateWithHiddenSetting.isPresent()) {
                 final boolean templatedIsHidden = IndexMetaData.INDEX_HIDDEN_SETTING.get(templateWithHiddenSetting.get().settings());
                 if (templatedIsHidden) {
@@ -244,28 +254,38 @@ public class MetaDataIndexTemplateService {
                 }
                 // validate that hidden didn't change
                 final Optional<IndexTemplateMetaData> templateWithHiddenSettingPostRemoval = matchedTemplates.stream()
-                    .filter(template -> IndexMetaData.INDEX_HIDDEN_SETTING.exists(template.settings())).findFirst();
-                if (templateWithHiddenSettingPostRemoval.isEmpty() ||
-                    templateWithHiddenSetting.get() != templateWithHiddenSettingPostRemoval.get()) {
-                    throw new IllegalStateException("A global index template [" + templateWithHiddenSetting.get().name() +
-                        "] defined the index hidden setting, which is not allowed");
+                    .filter(template -> IndexMetaData.INDEX_HIDDEN_SETTING.exists(template.settings()))
+                    .findFirst();
+                if (templateWithHiddenSettingPostRemoval.isEmpty()
+                    || templateWithHiddenSetting.get() != templateWithHiddenSettingPostRemoval.get()) {
+                    throw new IllegalStateException(
+                        "A global index template ["
+                            + templateWithHiddenSetting.get().name()
+                            + "] defined the index hidden setting, which is not allowed"
+                    );
                 }
             }
         }
         return matchedTemplates;
     }
 
-    private static void validateAndAddTemplate(final PutRequest request, IndexTemplateMetaData.Builder templateBuilder,
-            IndicesService indicesService, NamedXContentRegistry xContentRegistry) throws Exception {
+    private static void validateAndAddTemplate(
+        final PutRequest request,
+        IndexTemplateMetaData.Builder templateBuilder,
+        IndicesService indicesService,
+        NamedXContentRegistry xContentRegistry
+    ) throws Exception {
         Index createdIndex = null;
         final String temporaryIndexName = UUIDs.randomBase64UUID();
         try {
             // use the provided values, otherwise just pick valid dummy values
             int dummyPartitionSize = IndexMetaData.INDEX_ROUTING_PARTITION_SIZE_SETTING.get(request.settings);
-            int dummyShards = request.settings.getAsInt(IndexMetaData.SETTING_NUMBER_OF_SHARDS,
-                    dummyPartitionSize == 1 ? 1 : dummyPartitionSize + 1);
+            int dummyShards = request.settings.getAsInt(
+                IndexMetaData.SETTING_NUMBER_OF_SHARDS,
+                dummyPartitionSize == 1 ? 1 : dummyPartitionSize + 1
+            );
 
-            //create index service for parsing and validating "mappings"
+            // create index service for parsing and validating "mappings"
             Settings dummySettings = Settings.builder()
                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
                 .put(request.settings)
@@ -289,8 +309,12 @@ public class MetaDataIndexTemplateService {
                 } catch (Exception e) {
                     throw new MapperParsingException("Failed to parse mapping: {}", e, request.mappings);
                 }
-                dummyIndexService.mapperService().merge(MapperService.SINGLE_MAPPING_NAME,
-                    MapperService.parseMapping(xContentRegistry, request.mappings), MergeReason.MAPPING_UPDATE);
+                dummyIndexService.mapperService()
+                    .merge(
+                        MapperService.SINGLE_MAPPING_NAME,
+                        MapperService.parseMapping(xContentRegistry, request.mappings),
+                        MergeReason.MAPPING_UPDATE
+                    );
             }
 
         } finally {
@@ -317,7 +341,7 @@ public class MetaDataIndexTemplateService {
         if (!request.name.toLowerCase(Locale.ROOT).equals(request.name)) {
             validationErrors.add("name must be lower cased");
         }
-        for(String indexPattern : request.indexPatterns) {
+        for (String indexPattern : request.indexPatterns) {
             if (indexPattern.contains(" ")) {
                 validationErrors.add("template must not contain a space");
             }
@@ -359,11 +383,12 @@ public class MetaDataIndexTemplateService {
         }
 
         for (Alias alias : request.aliases) {
-            //we validate the alias only partially, as we don't know yet to which index it'll get applied to
+            // we validate the alias only partially, as we don't know yet to which index it'll get applied to
             aliasValidator.validateAliasStandalone(alias);
             if (request.indexPatterns.contains(alias.name())) {
-                throw new IllegalArgumentException("Alias [" + alias.name() +
-                    "] cannot be the same as any pattern in [" + String.join(", ", request.indexPatterns) + "]");
+                throw new IllegalArgumentException(
+                    "Alias [" + alias.name() + "] cannot be the same as any pattern in [" + String.join(", ", request.indexPatterns) + "]"
+                );
             }
         }
     }

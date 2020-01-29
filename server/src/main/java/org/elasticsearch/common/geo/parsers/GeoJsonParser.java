@@ -42,8 +42,7 @@ import java.util.List;
  * complies with geojson specification: https://tools.ietf.org/html/rfc7946
  */
 abstract class GeoJsonParser {
-    protected static ShapeBuilder parse(XContentParser parser, AbstractGeometryFieldMapper shapeMapper)
-        throws IOException {
+    protected static ShapeBuilder parse(XContentParser parser, AbstractGeometryFieldMapper shapeMapper) throws IOException {
         GeoShapeType shapeType = null;
         DistanceUnit.Distance radius = null;
         CoordinateNode coordinateNode = null;
@@ -52,9 +51,7 @@ abstract class GeoJsonParser {
         Orientation orientation = (shapeMapper == null)
             ? AbstractGeometryFieldMapper.Defaults.ORIENTATION.value()
             : shapeMapper.orientation();
-        Explicit<Boolean> coerce = (shapeMapper == null)
-            ? AbstractGeometryFieldMapper.Defaults.COERCE
-            : shapeMapper.coerce();
+        Explicit<Boolean> coerce = (shapeMapper == null) ? AbstractGeometryFieldMapper.Defaults.COERCE : shapeMapper.coerce();
         Explicit<Boolean> ignoreZValue = (shapeMapper == null)
             ? AbstractGeometryFieldMapper.Defaults.IGNORE_Z_VALUE
             : shapeMapper.ignoreZValue();
@@ -71,8 +68,12 @@ abstract class GeoJsonParser {
                         subParser.nextToken();
                         final GeoShapeType type = GeoShapeType.forName(subParser.text());
                         if (shapeType != null && shapeType.equals(type) == false) {
-                            malformedException = ShapeParser.FIELD_TYPE + " already parsed as ["
-                                + shapeType + "] cannot redefine as [" + type + "]";
+                            malformedException = ShapeParser.FIELD_TYPE
+                                + " already parsed as ["
+                                + shapeType
+                                + "] cannot redefine as ["
+                                + type
+                                + "]";
                         } else {
                             shapeType = type;
                         }
@@ -80,16 +81,14 @@ abstract class GeoJsonParser {
                         subParser.nextToken();
                         CoordinateNode tempNode = parseCoordinates(subParser, ignoreZValue.value());
                         if (coordinateNode != null && tempNode.numDimensions() != coordinateNode.numDimensions()) {
-                            throw new ElasticsearchParseException("Exception parsing coordinates: " +
-                                "number of dimensions do not match");
+                            throw new ElasticsearchParseException("Exception parsing coordinates: " + "number of dimensions do not match");
                         }
                         coordinateNode = tempNode;
                     } else if (ShapeParser.FIELD_GEOMETRIES.match(fieldName, subParser.getDeprecationHandler())) {
                         if (shapeType == null) {
                             shapeType = GeoShapeType.GEOMETRYCOLLECTION;
                         } else if (shapeType.equals(GeoShapeType.GEOMETRYCOLLECTION) == false) {
-                            malformedException = "cannot have [" + ShapeParser.FIELD_GEOMETRIES + "] with type set to ["
-                                + shapeType + "]";
+                            malformedException = "cannot have [" + ShapeParser.FIELD_GEOMETRIES + "] with type set to [" + shapeType + "]";
                         }
                         subParser.nextToken();
                         geometryCollections = parseGeometries(subParser, shapeMapper);
@@ -97,8 +96,7 @@ abstract class GeoJsonParser {
                         if (shapeType == null) {
                             shapeType = GeoShapeType.CIRCLE;
                         } else if (shapeType != null && shapeType.equals(GeoShapeType.CIRCLE) == false) {
-                            malformedException = "cannot have [" + CircleBuilder.FIELD_RADIUS + "] with type set to ["
-                                + shapeType + "]";
+                            malformedException = "cannot have [" + CircleBuilder.FIELD_RADIUS + "] with type set to [" + shapeType + "]";
                         }
                         subParser.nextToken();
                         radius = DistanceUnit.Distance.parseDistance(subParser.text());
@@ -126,8 +124,7 @@ abstract class GeoJsonParser {
         } else if (geometryCollections == null && GeoShapeType.GEOMETRYCOLLECTION == shapeType) {
             throw new ElasticsearchParseException("geometries not included");
         } else if (radius != null && GeoShapeType.CIRCLE != shapeType) {
-            throw new ElasticsearchParseException("field [{}] is supported for [{}] only", CircleBuilder.FIELD_RADIUS,
-                CircleBuilder.TYPE);
+            throw new ElasticsearchParseException("field [{}] is supported for [{}] only", CircleBuilder.FIELD_RADIUS, CircleBuilder.TYPE);
         }
 
         if (shapeType.equals(GeoShapeType.GEOMETRYCOLLECTION)) {
@@ -157,9 +154,9 @@ abstract class GeoJsonParser {
 
         XContentParser.Token token = parser.nextToken();
         // Base cases
-        if (token != XContentParser.Token.START_ARRAY &&
-            token != XContentParser.Token.END_ARRAY &&
-            token != XContentParser.Token.VALUE_NULL) {
+        if (token != XContentParser.Token.START_ARRAY
+            && token != XContentParser.Token.END_ARRAY
+            && token != XContentParser.Token.VALUE_NULL) {
             return new CoordinateNode(parseCoordinate(parser, ignoreZValue));
         } else if (token == XContentParser.Token.VALUE_NULL) {
             throw new IllegalArgumentException("coordinates cannot contain NULL values)");
@@ -208,8 +205,7 @@ abstract class GeoJsonParser {
      * @return Geometry[] geometries of the GeometryCollection
      * @throws IOException Thrown if an error occurs while reading from the XContentParser
      */
-    static GeometryCollectionBuilder parseGeometries(XContentParser parser, AbstractGeometryFieldMapper mapper) throws
-        IOException {
+    static GeometryCollectionBuilder parseGeometries(XContentParser parser, AbstractGeometryFieldMapper mapper) throws IOException {
         if (parser.currentToken() != XContentParser.Token.START_ARRAY) {
             throw new ElasticsearchParseException("geometries must be an array of geojson objects");
         }

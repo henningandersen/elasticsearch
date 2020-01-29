@@ -66,30 +66,50 @@ public class ExternalFieldMapperTests extends ESSingleNodeTestCase {
         Settings settings = Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, version).build();
         IndexService indexService = createIndex("test", settings);
         MapperRegistry mapperRegistry = new MapperRegistry(
-                singletonMap(ExternalMapperPlugin.EXTERNAL, new ExternalMapper.TypeParser(ExternalMapperPlugin.EXTERNAL, "foo")),
-                singletonMap(ExternalMetadataMapper.CONTENT_TYPE, new ExternalMetadataMapper.TypeParser()), MapperPlugin.NOOP_FIELD_FILTER);
+            singletonMap(ExternalMapperPlugin.EXTERNAL, new ExternalMapper.TypeParser(ExternalMapperPlugin.EXTERNAL, "foo")),
+            singletonMap(ExternalMetadataMapper.CONTENT_TYPE, new ExternalMetadataMapper.TypeParser()),
+            MapperPlugin.NOOP_FIELD_FILTER
+        );
 
         Supplier<QueryShardContext> queryShardContext = () -> {
             return indexService.newQueryShardContext(0, null, () -> { throw new UnsupportedOperationException(); }, null);
         };
-        DocumentMapperParser parser = new DocumentMapperParser(indexService.getIndexSettings(), indexService.mapperService(),
-                indexService.xContentRegistry(), indexService.similarityService(), mapperRegistry, queryShardContext);
-        DocumentMapper documentMapper = parser.parse("type", new CompressedXContent(
-                Strings.toString(XContentFactory.jsonBuilder().startObject().startObject("type")
-                .startObject(ExternalMetadataMapper.CONTENT_TYPE)
-                .endObject()
-                .startObject("properties")
-                    .startObject("field").field("type", "external").endObject()
-                .endObject()
-            .endObject().endObject())
-        ));
-
-        ParsedDocument doc = documentMapper.parse(new SourceToParse("test", "1", BytesReference
-                .bytes(XContentFactory.jsonBuilder()
+        DocumentMapperParser parser = new DocumentMapperParser(
+            indexService.getIndexSettings(),
+            indexService.mapperService(),
+            indexService.xContentRegistry(),
+            indexService.similarityService(),
+            mapperRegistry,
+            queryShardContext
+        );
+        DocumentMapper documentMapper = parser.parse(
+            "type",
+            new CompressedXContent(
+                Strings.toString(
+                    XContentFactory.jsonBuilder()
                         .startObject()
-                            .field("field", "1234")
-                        .endObject()),
-                XContentType.JSON));
+                        .startObject("type")
+                        .startObject(ExternalMetadataMapper.CONTENT_TYPE)
+                        .endObject()
+                        .startObject("properties")
+                        .startObject("field")
+                        .field("type", "external")
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                )
+            )
+        );
+
+        ParsedDocument doc = documentMapper.parse(
+            new SourceToParse(
+                "test",
+                "1",
+                BytesReference.bytes(XContentFactory.jsonBuilder().startObject().field("field", "1234").endObject()),
+                XContentType.JSON
+            )
+        );
 
         assertThat(doc.rootDoc().getField("field.bool"), notNullValue());
         assertThat(doc.rootDoc().getField("field.bool").stringValue(), is("T"));
@@ -119,29 +139,47 @@ public class ExternalFieldMapperTests extends ESSingleNodeTestCase {
         Supplier<QueryShardContext> queryShardContext = () -> {
             return indexService.newQueryShardContext(0, null, () -> { throw new UnsupportedOperationException(); }, null);
         };
-        DocumentMapperParser parser = new DocumentMapperParser(indexService.getIndexSettings(), indexService.mapperService(),
-                indexService.xContentRegistry(), indexService.similarityService(), mapperRegistry, queryShardContext);
+        DocumentMapperParser parser = new DocumentMapperParser(
+            indexService.getIndexSettings(),
+            indexService.mapperService(),
+            indexService.xContentRegistry(),
+            indexService.similarityService(),
+            mapperRegistry,
+            queryShardContext
+        );
 
-        DocumentMapper documentMapper = parser.parse("type", new CompressedXContent(
-                Strings
-                .toString(XContentFactory.jsonBuilder().startObject().startObject("type").startObject("properties")
-                .startObject("field")
-                    .field("type", ExternalMapperPlugin.EXTERNAL)
-                    .startObject("fields")
-                        .startObject("field")
-                            .field("type", "text")
-                            .field("store", true)
-                        .endObject()
-                    .endObject()
-                .endObject()
-                .endObject().endObject().endObject())));
-
-        ParsedDocument doc = documentMapper.parse(new SourceToParse("test", "1", BytesReference
-                .bytes(XContentFactory.jsonBuilder()
+        DocumentMapper documentMapper = parser.parse(
+            "type",
+            new CompressedXContent(
+                Strings.toString(
+                    XContentFactory.jsonBuilder()
                         .startObject()
-                            .field("field", "1234")
-                        .endObject()),
-                XContentType.JSON));
+                        .startObject("type")
+                        .startObject("properties")
+                        .startObject("field")
+                        .field("type", ExternalMapperPlugin.EXTERNAL)
+                        .startObject("fields")
+                        .startObject("field")
+                        .field("type", "text")
+                        .field("store", true)
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                        .endObject()
+                )
+            )
+        );
+
+        ParsedDocument doc = documentMapper.parse(
+            new SourceToParse(
+                "test",
+                "1",
+                BytesReference.bytes(XContentFactory.jsonBuilder().startObject().field("field", "1234").endObject()),
+                XContentType.JSON
+            )
+        );
 
         assertThat(doc.rootDoc().getField("field.bool"), notNullValue());
         assertThat(doc.rootDoc().getField("field.bool").stringValue(), is("T"));

@@ -78,8 +78,12 @@ public class SumAggregationBuilder extends ValuesSourceAggregationBuilder.LeafOn
     }
 
     @Override
-    protected SumAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<Numeric> config,
-                                              AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected SumAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<Numeric> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         return new SumAggregatorFactory(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 

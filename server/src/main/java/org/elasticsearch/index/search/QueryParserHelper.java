@@ -52,7 +52,7 @@ public final class QueryParserHelper {
             float boost = 1.0f;
             if (boostIndex != -1) {
                 fieldName = field.substring(0, boostIndex);
-                boost = Float.parseFloat(field.substring(boostIndex+1));
+                boost = Float.parseFloat(field.substring(boostIndex + 1));
             } else {
                 fieldName = field;
             }
@@ -65,8 +65,7 @@ public final class QueryParserHelper {
         return fieldsAndWeights;
     }
 
-    public static Map<String, Float> resolveMappingFields(QueryShardContext context,
-                                                          Map<String, Float> fieldsAndWeights) {
+    public static Map<String, Float> resolveMappingFields(QueryShardContext context, Map<String, Float> fieldsAndWeights) {
         return resolveMappingFields(context, fieldsAndWeights, null);
     }
 
@@ -79,9 +78,11 @@ public final class QueryParserHelper {
      *                    The original name of the field is kept if adding the suffix to the field name does not point to a valid field
      *                    in the mapping.
      */
-    public static Map<String, Float> resolveMappingFields(QueryShardContext context,
-                                                          Map<String, Float> fieldsAndWeights,
-                                                          String fieldSuffix) {
+    public static Map<String, Float> resolveMappingFields(
+        QueryShardContext context,
+        Map<String, Float> fieldsAndWeights,
+        String fieldSuffix
+    ) {
         Map<String, Float> resolvedFields = new HashMap<>();
         for (Map.Entry<String, Float> fieldEntry : fieldsAndWeights.entrySet()) {
             boolean allField = Regex.isMatchAllPattern(fieldEntry.getKey());
@@ -112,8 +113,13 @@ public final class QueryParserHelper {
      *                       If false, only searchable field types are added.
      * @param acceptMetadataField Whether metadata fields should be added when a pattern is expanded.
      */
-    public static Map<String, Float> resolveMappingField(QueryShardContext context, String fieldOrPattern, float weight,
-                                                         boolean acceptAllTypes, boolean acceptMetadataField) {
+    public static Map<String, Float> resolveMappingField(
+        QueryShardContext context,
+        String fieldOrPattern,
+        float weight,
+        boolean acceptAllTypes,
+        boolean acceptMetadataField
+    ) {
         return resolveMappingField(context, fieldOrPattern, weight, acceptAllTypes, acceptMetadataField, null);
     }
 
@@ -130,8 +136,14 @@ public final class QueryParserHelper {
      *                    The original name of the field is kept if adding the suffix to the field name does not point to a valid field
      *                    in the mapping.
      */
-    public static Map<String, Float> resolveMappingField(QueryShardContext context, String fieldOrPattern, float weight,
-                                                         boolean acceptAllTypes, boolean acceptMetadataField, String fieldSuffix) {
+    public static Map<String, Float> resolveMappingField(
+        QueryShardContext context,
+        String fieldOrPattern,
+        float weight,
+        boolean acceptAllTypes,
+        boolean acceptMetadataField,
+        String fieldSuffix
+    ) {
         Set<String> allFields = context.simpleMatchToIndexNames(fieldOrPattern);
         Map<String, Float> fields = new HashMap<>();
 

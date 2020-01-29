@@ -94,12 +94,24 @@ public class SnapshotsInProgress extends AbstractNamedDiffable<Custom> implement
         private final long repositoryStateId;
         // see #useShardGenerations
         private final boolean useShardGenerations;
-        @Nullable private final Map<String, Object> userMetadata;
-        @Nullable private final String failure;
+        @Nullable
+        private final Map<String, Object> userMetadata;
+        @Nullable
+        private final String failure;
 
-        public Entry(Snapshot snapshot, boolean includeGlobalState, boolean partial, State state, List<IndexId> indices,
-                     long startTime, long repositoryStateId, ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards,
-                     String failure, Map<String, Object> userMetadata, boolean useShardGenerations) {
+        public Entry(
+            Snapshot snapshot,
+            boolean includeGlobalState,
+            boolean partial,
+            State state,
+            List<IndexId> indices,
+            long startTime,
+            long repositoryStateId,
+            ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards,
+            String failure,
+            Map<String, Object> userMetadata,
+            boolean useShardGenerations
+        ) {
             this.state = state;
             this.snapshot = snapshot;
             this.includeGlobalState = includeGlobalState;
@@ -120,40 +132,108 @@ public class SnapshotsInProgress extends AbstractNamedDiffable<Custom> implement
             this.useShardGenerations = useShardGenerations;
         }
 
-        private static boolean assertShardsConsistent(State state, List<IndexId> indices,
-                                                      ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards) {
+        private static boolean assertShardsConsistent(
+            State state,
+            List<IndexId> indices,
+            ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards
+        ) {
             if ((state == State.INIT || state == State.ABORTED) && shards.isEmpty()) {
                 return true;
             }
             final Set<String> indexNames = indices.stream().map(IndexId::getName).collect(Collectors.toSet());
             final Set<String> indexNamesInShards = new HashSet<>();
             shards.keysIt().forEachRemaining(s -> indexNamesInShards.add(s.getIndexName()));
-            assert indexNames.equals(indexNamesInShards)
-                : "Indices in shards " + indexNamesInShards + " differ from expected indices " + indexNames + " for state [" + state + "]";
+            assert indexNames.equals(indexNamesInShards) : "Indices in shards "
+                + indexNamesInShards
+                + " differ from expected indices "
+                + indexNames
+                + " for state ["
+                + state
+                + "]";
             return true;
         }
 
-        public Entry(Snapshot snapshot, boolean includeGlobalState, boolean partial, State state, List<IndexId> indices,
-                     long startTime, long repositoryStateId, ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards,
-                     Map<String, Object> userMetadata, boolean useShardGenerations) {
-            this(snapshot, includeGlobalState, partial, state, indices, startTime, repositoryStateId, shards, null, userMetadata,
-                useShardGenerations);
+        public Entry(
+            Snapshot snapshot,
+            boolean includeGlobalState,
+            boolean partial,
+            State state,
+            List<IndexId> indices,
+            long startTime,
+            long repositoryStateId,
+            ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards,
+            Map<String, Object> userMetadata,
+            boolean useShardGenerations
+        ) {
+            this(
+                snapshot,
+                includeGlobalState,
+                partial,
+                state,
+                indices,
+                startTime,
+                repositoryStateId,
+                shards,
+                null,
+                userMetadata,
+                useShardGenerations
+            );
         }
 
-        public Entry(Entry entry, State state, List<IndexId> indices, long repositoryStateId,
-                     ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards, boolean useShardGenerations, String failure) {
-            this(entry.snapshot, entry.includeGlobalState, entry.partial, state, indices, entry.startTime, repositoryStateId, shards,
-                failure, entry.userMetadata, useShardGenerations);
+        public Entry(
+            Entry entry,
+            State state,
+            List<IndexId> indices,
+            long repositoryStateId,
+            ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards,
+            boolean useShardGenerations,
+            String failure
+        ) {
+            this(
+                entry.snapshot,
+                entry.includeGlobalState,
+                entry.partial,
+                state,
+                indices,
+                entry.startTime,
+                repositoryStateId,
+                shards,
+                failure,
+                entry.userMetadata,
+                useShardGenerations
+            );
         }
 
         public Entry(Entry entry, State state, ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards) {
-            this(entry.snapshot, entry.includeGlobalState, entry.partial, state, entry.indices, entry.startTime,
-                entry.repositoryStateId, shards, entry.failure, entry.userMetadata, entry.useShardGenerations);
+            this(
+                entry.snapshot,
+                entry.includeGlobalState,
+                entry.partial,
+                state,
+                entry.indices,
+                entry.startTime,
+                entry.repositoryStateId,
+                shards,
+                entry.failure,
+                entry.userMetadata,
+                entry.useShardGenerations
+            );
         }
 
         public Entry(Entry entry, State state, ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards, String failure) {
-            this(entry.snapshot, entry.includeGlobalState, entry.partial, state, entry.indices, entry.startTime,
-                 entry.repositoryStateId, shards, failure, entry.userMetadata, entry.useShardGenerations);
+            this(
+                entry.snapshot,
+                entry.includeGlobalState,
+                entry.partial,
+                state,
+                entry.indices,
+                entry.startTime,
+                entry.repositoryStateId,
+                shards,
+                failure,
+                entry.userMetadata,
+                entry.useShardGenerations
+            );
         }
 
         public Entry(Entry entry, ImmutableOpenMap<ShardId, ShardSnapshotStatus> shards) {
@@ -403,8 +483,10 @@ public class SnapshotsInProgress extends AbstractNamedDiffable<Custom> implement
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             ShardSnapshotStatus status = (ShardSnapshotStatus) o;
-            return Objects.equals(nodeId, status.nodeId) && Objects.equals(reason, status.reason)
-                && Objects.equals(generation, status.generation) && state == status.state;
+            return Objects.equals(nodeId, status.nodeId)
+                && Objects.equals(reason, status.reason)
+                && Objects.equals(generation, status.generation)
+                && state == status.state;
         }
 
         @Override
@@ -539,18 +621,19 @@ public class SnapshotsInProgress extends AbstractNamedDiffable<Custom> implement
             } else {
                 useShardGenerations = false;
             }
-            entries[i] = new Entry(snapshot,
-                                   includeGlobalState,
-                                   partial,
-                                   state,
-                                   Collections.unmodifiableList(indexBuilder),
-                                   startTime,
-                                   repositoryStateId,
-                                   builder.build(),
-                                   failure,
-                                   userMetadata,
-                                   useShardGenerations
-                );
+            entries[i] = new Entry(
+                snapshot,
+                includeGlobalState,
+                partial,
+                state,
+                Collections.unmodifiableList(indexBuilder),
+                startTime,
+                repositoryStateId,
+                builder.build(),
+                failure,
+                userMetadata,
+                useShardGenerations
+            );
         }
         this.entries = Arrays.asList(entries);
     }

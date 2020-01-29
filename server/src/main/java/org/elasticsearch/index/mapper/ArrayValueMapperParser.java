@@ -25,5 +25,4 @@ package org.elasticsearch.index.mapper;
  *
  *
  */
-public interface ArrayValueMapperParser {
-}
+public interface ArrayValueMapperParser {}

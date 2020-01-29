@@ -17,9 +17,7 @@
  * under the License.
  */
 
-
 package org.elasticsearch.search.aggregations.bucket.significant.heuristics;
-
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -91,10 +89,9 @@ public class GND extends NXYSignificanceHeuristic {
             // perfect co-occurrence
             return 1.0;
         }
-        double score = (Math.max(Math.log(fx), Math.log(fy)) - Math.log(fxy)) /
-                (Math.log(N) - Math.min(Math.log(fx), Math.log(fy)));
+        double score = (Math.max(Math.log(fx), Math.log(fy)) - Math.log(fxy)) / (Math.log(N) - Math.min(Math.log(fx), Math.log(fy)));
 
-        //we must invert the order of terms because GND scores relevant terms low
+        // we must invert the order of terms because GND scores relevant terms low
         score = Math.exp(-1.0d * score);
         return score;
     }
@@ -126,4 +123,3 @@ public class GND extends NXYSignificanceHeuristic {
         }
     }
 }
-

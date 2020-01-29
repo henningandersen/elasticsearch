@@ -65,11 +65,23 @@ class DateHistogramAggregator extends BucketsAggregator {
 
     private final LongHash bucketOrds;
 
-    DateHistogramAggregator(String name, AggregatorFactories factories, Rounding rounding, Rounding shardRounding,
-            BucketOrder order, boolean keyed,
-            long minDocCount, @Nullable ExtendedBounds extendedBounds, @Nullable ValuesSource.Numeric valuesSource,
-            DocValueFormat formatter, SearchContext aggregationContext,
-            Aggregator parent, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    DateHistogramAggregator(
+        String name,
+        AggregatorFactories factories,
+        Rounding rounding,
+        Rounding shardRounding,
+        BucketOrder order,
+        boolean keyed,
+        long minDocCount,
+        @Nullable ExtendedBounds extendedBounds,
+        @Nullable ValuesSource.Numeric valuesSource,
+        DocValueFormat formatter,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
 
         super(name, factories, aggregationContext, parent, pipelineAggregators, metaData);
         this.rounding = rounding;
@@ -93,8 +105,7 @@ class DateHistogramAggregator extends BucketsAggregator {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         if (valuesSource == null) {
             return LeafBucketCollector.NO_OP_COLLECTOR;
         }
@@ -146,19 +157,39 @@ class DateHistogramAggregator extends BucketsAggregator {
         // value source will be null for unmapped fields
         // Important: use `rounding` here, not `shardRounding`
         InternalDateHistogram.EmptyBucketInfo emptyBucketInfo = minDocCount == 0
-                ? new InternalDateHistogram.EmptyBucketInfo(rounding.withoutOffset(), buildEmptySubAggregations(), extendedBounds)
-                : null;
-        return new InternalDateHistogram(name, buckets, order, minDocCount, rounding.offset(), emptyBucketInfo, formatter, keyed,
-                pipelineAggregators(), metaData());
+            ? new InternalDateHistogram.EmptyBucketInfo(rounding.withoutOffset(), buildEmptySubAggregations(), extendedBounds)
+            : null;
+        return new InternalDateHistogram(
+            name,
+            buckets,
+            order,
+            minDocCount,
+            rounding.offset(),
+            emptyBucketInfo,
+            formatter,
+            keyed,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override
     public InternalAggregation buildEmptyAggregation() {
         InternalDateHistogram.EmptyBucketInfo emptyBucketInfo = minDocCount == 0
-                ? new InternalDateHistogram.EmptyBucketInfo(rounding, buildEmptySubAggregations(), extendedBounds)
-                : null;
-        return new InternalDateHistogram(name, Collections.emptyList(), order, minDocCount, rounding.offset(), emptyBucketInfo, formatter,
-                keyed, pipelineAggregators(), metaData());
+            ? new InternalDateHistogram.EmptyBucketInfo(rounding, buildEmptySubAggregations(), extendedBounds)
+            : null;
+        return new InternalDateHistogram(
+            name,
+            Collections.emptyList(),
+            order,
+            minDocCount,
+            rounding.offset(),
+            emptyBucketInfo,
+            formatter,
+            keyed,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override

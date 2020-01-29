@@ -47,15 +47,13 @@ public class RestFieldCapabilitiesAction extends BaseRestHandler {
     }
 
     @Override
-    public RestChannelConsumer prepareRequest(final RestRequest request,
-                                              final NodeClient client) throws IOException {
+    public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
         String[] indices = Strings.splitStringByCommaToArray(request.param("index"));
-        FieldCapabilitiesRequest fieldRequest = new FieldCapabilitiesRequest()
-            .fields(Strings.splitStringByCommaToArray(request.param("fields")))
-            .indices(indices);
+        FieldCapabilitiesRequest fieldRequest = new FieldCapabilitiesRequest().fields(
+            Strings.splitStringByCommaToArray(request.param("fields"))
+        ).indices(indices);
 
-        fieldRequest.indicesOptions(
-            IndicesOptions.fromRequest(request, fieldRequest.indicesOptions()));
+        fieldRequest.indicesOptions(IndicesOptions.fromRequest(request, fieldRequest.indicesOptions()));
         fieldRequest.includeUnmapped(request.paramAsBoolean("include_unmapped", false));
         return channel -> client.fieldCaps(fieldRequest, new RestToXContentListener<>(channel));
     }

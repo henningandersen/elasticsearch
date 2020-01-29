@@ -35,8 +35,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
-public class PercentilesBucketPipelineAggregationBuilder
-        extends BucketMetricsPipelineAggregationBuilder<PercentilesBucketPipelineAggregationBuilder> {
+public class PercentilesBucketPipelineAggregationBuilder extends BucketMetricsPipelineAggregationBuilder<
+    PercentilesBucketPipelineAggregationBuilder> {
     public static final String NAME = "percentiles_bucket";
     static final ParseField PERCENTS_FIELD = new ParseField("percents");
     static final ParseField KEYED_FIELD = new ParseField("keyed");
@@ -51,8 +51,7 @@ public class PercentilesBucketPipelineAggregationBuilder
     /**
      * Read from a stream.
      */
-    public PercentilesBucketPipelineAggregationBuilder(StreamInput in)
-            throws IOException {
+    public PercentilesBucketPipelineAggregationBuilder(StreamInput in) throws IOException {
         super(in, NAME);
         percents = in.readDoubleArray();
         keyed = in.readBoolean();
@@ -80,8 +79,9 @@ public class PercentilesBucketPipelineAggregationBuilder
         }
         for (Double p : percents) {
             if (p == null || p < 0.0 || p > 100.0) {
-                throw new IllegalArgumentException(PERCENTS_FIELD.getPreferredName()
-                        + " must only contain non-null doubles from 0.0-100.0 inclusive");
+                throw new IllegalArgumentException(
+                    PERCENTS_FIELD.getPreferredName() + " must only contain non-null doubles from 0.0-100.0 inclusive"
+                );
             }
         }
         this.percents = percents;
@@ -109,14 +109,18 @@ public class PercentilesBucketPipelineAggregationBuilder
     }
 
     @Override
-    public void doValidate(AggregatorFactory parent, Collection<AggregationBuilder> aggFactories,
-            Collection<PipelineAggregationBuilder> pipelineAggregatorFactories) {
+    public void doValidate(
+        AggregatorFactory parent,
+        Collection<AggregationBuilder> aggFactories,
+        Collection<PipelineAggregationBuilder> pipelineAggregatorFactories
+    ) {
         super.doValidate(parent, aggFactories, pipelineAggregatorFactories);
 
         for (Double p : percents) {
             if (p == null || p < 0.0 || p > 100.0) {
-                throw new IllegalStateException(PERCENTS_FIELD.getPreferredName()
-                        + " must only contain non-null doubles from 0.0-100.0 inclusive");
+                throw new IllegalStateException(
+                    PERCENTS_FIELD.getPreferredName() + " must only contain non-null doubles from 0.0-100.0 inclusive"
+                );
             }
         }
     }
@@ -133,11 +137,16 @@ public class PercentilesBucketPipelineAggregationBuilder
     public static final PipelineAggregator.Parser PARSER = new BucketMetricsParser() {
 
         @Override
-        protected PercentilesBucketPipelineAggregationBuilder buildFactory(String pipelineAggregatorName,
-                                                                          String bucketsPath, Map<String, Object> params) {
+        protected PercentilesBucketPipelineAggregationBuilder buildFactory(
+            String pipelineAggregatorName,
+            String bucketsPath,
+            Map<String, Object> params
+        ) {
 
-            PercentilesBucketPipelineAggregationBuilder factory = new
-                PercentilesBucketPipelineAggregationBuilder(pipelineAggregatorName, bucketsPath);
+            PercentilesBucketPipelineAggregationBuilder factory = new PercentilesBucketPipelineAggregationBuilder(
+                pipelineAggregatorName,
+                bucketsPath
+            );
 
             double[] percents = (double[]) params.get(PERCENTS_FIELD.getPreferredName());
             if (percents != null) {
@@ -153,7 +162,7 @@ public class PercentilesBucketPipelineAggregationBuilder
 
         @Override
         protected boolean token(XContentParser parser, String field, XContentParser.Token token, Map<String, Object> params)
-                throws IOException {
+            throws IOException {
             if (PERCENTS_FIELD.match(field, parser.getDeprecationHandler()) && token == XContentParser.Token.START_ARRAY) {
                 DoubleArrayList percents = new DoubleArrayList(10);
                 while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
@@ -161,8 +170,7 @@ public class PercentilesBucketPipelineAggregationBuilder
                 }
                 params.put(PERCENTS_FIELD.getPreferredName(), percents.toArray());
                 return true;
-            }
-            else if (KEYED_FIELD.match(field, parser.getDeprecationHandler()) && token == XContentParser.Token.VALUE_BOOLEAN){
+            } else if (KEYED_FIELD.match(field, parser.getDeprecationHandler()) && token == XContentParser.Token.VALUE_BOOLEAN) {
                 params.put(KEYED_FIELD.getPreferredName(), parser.booleanValue());
                 return true;
             }
@@ -182,8 +190,7 @@ public class PercentilesBucketPipelineAggregationBuilder
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         PercentilesBucketPipelineAggregationBuilder other = (PercentilesBucketPipelineAggregationBuilder) obj;
-        return Objects.deepEquals(percents, other.percents)
-            && Objects.equals(keyed, other.keyed);
+        return Objects.deepEquals(percents, other.percents) && Objects.equals(keyed, other.keyed);
     }
 
     @Override

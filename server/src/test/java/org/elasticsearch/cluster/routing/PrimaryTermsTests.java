@@ -58,28 +58,30 @@ public class PrimaryTermsTests extends ESAllocationTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        this.allocationService = createAllocationService(Settings.builder()
+        this.allocationService = createAllocationService(
+            Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", Integer.MAX_VALUE) // don't limit recoveries
                 .put("cluster.routing.allocation.node_initial_primaries_recoveries", Integer.MAX_VALUE)
-                .build());
+                .build()
+        );
         this.numberOfShards = randomIntBetween(1, 5);
         this.numberOfReplicas = randomIntBetween(0, 5);
         logger.info("Setup test with {} shards and {} replicas.", this.numberOfShards, this.numberOfReplicas);
         this.primaryTermsPerIndex.clear();
-        MetaData metaData = MetaData.builder()
-                .put(createIndexMetaData(TEST_INDEX_1))
-                .put(createIndexMetaData(TEST_INDEX_2))
-                .build();
+        MetaData metaData = MetaData.builder().put(createIndexMetaData(TEST_INDEX_1)).put(createIndexMetaData(TEST_INDEX_2)).build();
 
-        RoutingTable routingTable = new RoutingTable.Builder()
-                .add(new IndexRoutingTable.Builder(metaData.index(TEST_INDEX_1).getIndex()).initializeAsNew(metaData.index(TEST_INDEX_1))
-                        .build())
-                .add(new IndexRoutingTable.Builder(metaData.index(TEST_INDEX_2).getIndex()).initializeAsNew(metaData.index(TEST_INDEX_2))
-                        .build())
-                .build();
+        RoutingTable routingTable = new RoutingTable.Builder().add(
+            new IndexRoutingTable.Builder(metaData.index(TEST_INDEX_1).getIndex()).initializeAsNew(metaData.index(TEST_INDEX_1)).build()
+        )
+            .add(
+                new IndexRoutingTable.Builder(metaData.index(TEST_INDEX_2).getIndex()).initializeAsNew(metaData.index(TEST_INDEX_2)).build()
+            )
+            .build();
 
         this.clusterState = ClusterState.builder(org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
-            .metaData(metaData).routingTable(routingTable).build();
+            .metaData(metaData)
+            .routingTable(routingTable)
+            .build();
     }
 
     /**
@@ -122,17 +124,22 @@ public class PrimaryTermsTests extends ESAllocationTestCase {
         ClusterState previousClusterState = this.clusterState;
         ClusterState.Builder builder = ClusterState.builder(newClusterState).incrementVersion();
         if (previousClusterState.routingTable() != newClusterState.routingTable()) {
-            builder.routingTable(RoutingTable.builder(newClusterState.routingTable()).version(newClusterState.routingTable().version() + 1)
-                    .build());
+            builder.routingTable(
+                RoutingTable.builder(newClusterState.routingTable()).version(newClusterState.routingTable().version() + 1).build()
+            );
         }
         if (previousClusterState.metaData() != newClusterState.metaData()) {
             builder.metaData(MetaData.builder(newClusterState.metaData()).version(newClusterState.metaData().version() + 1));
         }
         this.clusterState = builder.build();
         final ClusterStateHealth clusterHealth = new ClusterStateHealth(clusterState);
-        logger.info("applied reroute. active shards: p [{}], t [{}], init shards: [{}], relocating: [{}]",
-                clusterHealth.getActivePrimaryShards(), clusterHealth.getActiveShards(),
-                clusterHealth.getInitializingShards(), clusterHealth.getRelocatingShards());
+        logger.info(
+            "applied reroute. active shards: p [{}], t [{}], init shards: [{}], relocating: [{}]",
+            clusterHealth.getActivePrimaryShards(),
+            clusterHealth.getActiveShards(),
+            clusterHealth.getInitializingShards(),
+            clusterHealth.getRelocatingShards()
+        );
     }
 
     private void failSomePrimaries(String index) {
@@ -147,7 +154,7 @@ public class PrimaryTermsTests extends ESAllocationTestCase {
             failedShards.add(new FailedShard(indexShardRoutingTable.shard(shard).primaryShard(), "test", null, randomBoolean()));
             incrementPrimaryTerm(index, shard); // the primary failure should increment the primary term;
         }
-        applyRerouteResult(allocationService.applyFailedShards(this.clusterState, failedShards,Collections.emptyList()));
+        applyRerouteResult(allocationService.applyFailedShards(this.clusterState, failedShards, Collections.emptyList()));
     }
 
     private void addNodes() {
@@ -164,10 +171,9 @@ public class PrimaryTermsTests extends ESAllocationTestCase {
 
     private IndexMetaData.Builder createIndexMetaData(String indexName) {
         primaryTermsPerIndex.put(indexName, new long[numberOfShards]);
-        final IndexMetaData.Builder builder = new IndexMetaData.Builder(indexName)
-                .settings(DEFAULT_SETTINGS)
-                .numberOfReplicas(this.numberOfReplicas)
-                .numberOfShards(this.numberOfShards);
+        final IndexMetaData.Builder builder = new IndexMetaData.Builder(indexName).settings(DEFAULT_SETTINGS)
+            .numberOfReplicas(this.numberOfReplicas)
+            .numberOfShards(this.numberOfShards);
         for (int i = 0; i < numberOfShards; i++) {
             builder.primaryTerm(i, randomInt(200));
             primaryTermsPerIndex.get(indexName)[i] = builder.primaryTerm(i);
@@ -184,8 +190,11 @@ public class PrimaryTermsTests extends ESAllocationTestCase {
         final IndexMetaData indexMetaData = clusterState.metaData().index(index);
         for (IndexShardRoutingTable shardRoutingTable : this.clusterState.routingTable().index(index)) {
             final int shard = shardRoutingTable.shardId().id();
-            assertThat("primary term mismatch between indexMetaData of [" + index + "] and shard [" + shard + "]'s routing",
-                    indexMetaData.primaryTerm(shard), equalTo(terms[shard]));
+            assertThat(
+                "primary term mismatch between indexMetaData of [" + index + "] and shard [" + shard + "]'s routing",
+                indexMetaData.primaryTerm(shard),
+                equalTo(terms[shard])
+            );
         }
     }
 

@@ -145,9 +145,10 @@ public class MergeSchedulerSettingsTests extends ESTestCase {
     }
 
     public void testMaxThreadAndMergeCount() {
-        IllegalArgumentException exc =
-            expectThrows(IllegalArgumentException.class,
-                () -> new MergeSchedulerConfig(new IndexSettings(createMetaData(10, 4, -1), Settings.EMPTY)));
+        IllegalArgumentException exc = expectThrows(
+            IllegalArgumentException.class,
+            () -> new MergeSchedulerConfig(new IndexSettings(createMetaData(10, 4, -1), Settings.EMPTY))
+        );
         assertThat(exc.getMessage(), containsString("maxThreadCount (= 10) should be <= maxMergeCount (= 4)"));
 
         IndexSettings settings = new IndexSettings(createMetaData(-1, -1, 2), Settings.EMPTY);
@@ -172,12 +173,10 @@ public class MergeSchedulerSettingsTests extends ESTestCase {
         assertEquals(45, settings.getMergeSchedulerConfig().getMaxMergeCount());
 
         final IndexSettings finalSettings = settings;
-        exc = expectThrows(IllegalArgumentException.class,
-            () -> finalSettings.updateIndexMetaData(createMetaData(40, 30, -1)));
+        exc = expectThrows(IllegalArgumentException.class, () -> finalSettings.updateIndexMetaData(createMetaData(40, 30, -1)));
         assertThat(exc.getMessage(), containsString("maxThreadCount (= 40) should be <= maxMergeCount (= 30)"));
 
-        exc = expectThrows(IllegalArgumentException.class,
-            () -> finalSettings.updateIndexMetaData(createMetaData(-1, 3, 8)));
+        exc = expectThrows(IllegalArgumentException.class, () -> finalSettings.updateIndexMetaData(createMetaData(-1, 3, 8)));
         assertThat(exc.getMessage(), containsString("maxThreadCount (= 4) should be <= maxMergeCount (= 3)"));
     }
 }

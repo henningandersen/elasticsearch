@@ -33,15 +33,25 @@ import java.util.Map;
 public class InternalStatsBucketTests extends InternalStatsTests {
 
     @Override
-    protected InternalStatsBucket createInstance(String name, long count, double sum, double min, double max,
-            DocValueFormat formatter, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    protected InternalStatsBucket createInstance(
+        String name,
+        long count,
+        double sum,
+        double min,
+        double max,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         return new InternalStatsBucket(name, count, sum, min, max, formatter, pipelineAggregators, metaData);
     }
 
     @Override
     public void testReduceRandom() {
-        expectThrows(UnsupportedOperationException.class,
-                () -> createTestInstance("name", Collections.emptyList(), null).reduce(null, null));
+        expectThrows(
+            UnsupportedOperationException.class,
+            () -> createTestInstance("name", Collections.emptyList(), null).reduce(null, null)
+        );
     }
 
     @Override

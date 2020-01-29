@@ -26,16 +26,20 @@ public class GeoPointShapeQueryTests extends GeoQueryTests {
 
     @Override
     protected XContentBuilder createDefaultMapping() throws Exception {
-        XContentBuilder xcb = XContentFactory.jsonBuilder().startObject()
-            .startObject("properties").startObject("location")
+        XContentBuilder xcb = XContentFactory.jsonBuilder()
+            .startObject()
+            .startObject("properties")
+            .startObject("location")
             .field("type", "geo_point")
-            .endObject().endObject().endObject();
+            .endObject()
+            .endObject()
+            .endObject();
 
         return xcb;
     }
 
     public void testIndexPointsFilterRectangle() throws Exception {
-        //super.testIndexPointsFilterRectangle(Strings.toString(createDefaultMapping()));
+        // super.testIndexPointsFilterRectangle(Strings.toString(createDefaultMapping()));
     }
 
 }

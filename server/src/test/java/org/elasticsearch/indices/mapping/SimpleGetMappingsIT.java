@@ -58,21 +58,28 @@ public class SimpleGetMappingsIT extends ESIntegTestCase {
     }
 
     private XContentBuilder getMappingForType() throws IOException {
-        return jsonBuilder().startObject().startObject("_doc").startObject("properties")
-                .startObject("field1").field("type", "text").endObject()
-                .endObject().endObject().endObject();
+        return jsonBuilder().startObject()
+            .startObject("_doc")
+            .startObject("properties")
+            .startObject("field1")
+            .field("type", "text")
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject();
     }
 
     public void testSimpleGetMappings() throws Exception {
-        client().admin().indices().prepareCreate("indexa")
-                .setMapping(getMappingForType())
-                .execute().actionGet();
-        client().admin().indices().prepareCreate("indexb")
-                .setMapping(getMappingForType())
-                .execute().actionGet();
+        client().admin().indices().prepareCreate("indexa").setMapping(getMappingForType()).execute().actionGet();
+        client().admin().indices().prepareCreate("indexb").setMapping(getMappingForType()).execute().actionGet();
 
-        ClusterHealthResponse clusterHealth = client().admin().cluster().prepareHealth()
-            .setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus().execute().actionGet();
+        ClusterHealthResponse clusterHealth = client().admin()
+            .cluster()
+            .prepareHealth()
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForGreenStatus()
+            .execute()
+            .actionGet();
         assertThat(clusterHealth.isTimedOut(), equalTo(false));
 
         // Get all mappings
@@ -94,9 +101,7 @@ public class SimpleGetMappingsIT extends ESIntegTestCase {
     }
 
     public void testGetMappingsWithBlocks() throws IOException {
-        client().admin().indices().prepareCreate("test")
-                .setMapping(getMappingForType())
-                .execute().actionGet();
+        client().admin().indices().prepareCreate("test").setMapping(getMappingForType()).execute().actionGet();
         ensureGreen();
 
         for (String block : Arrays.asList(SETTING_BLOCKS_READ, SETTING_BLOCKS_WRITE, SETTING_READ_ONLY)) {

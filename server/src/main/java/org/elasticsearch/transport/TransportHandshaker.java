@@ -54,8 +54,13 @@ final class TransportHandshaker {
     private final HandshakeResponseSender handshakeResponseSender;
     private volatile DiscoveryNode localNode;
 
-    TransportHandshaker(ClusterName clusterName, Version version, ThreadPool threadPool, HandshakeRequestSender handshakeRequestSender,
-                        HandshakeResponseSender handshakeResponseSender) {
+    TransportHandshaker(
+        ClusterName clusterName,
+        Version version,
+        ThreadPool threadPool,
+        HandshakeRequestSender handshakeRequestSender,
+        HandshakeResponseSender handshakeResponseSender
+    ) {
         this.clusterName = clusterName;
         this.version = version;
         this.threadPool = threadPool;
@@ -71,8 +76,9 @@ final class TransportHandshaker {
         numHandshakes.inc();
         final HandshakeResponseHandler handler = new HandshakeResponseHandler(requestId, version, listener);
         pendingHandshakes.put(requestId, handler);
-        channel.addCloseListener(ActionListener.wrap(
-            () -> handler.handleLocalException(new TransportException("handshake failed because connection reset"))));
+        channel.addCloseListener(
+            ActionListener.wrap(() -> handler.handleLocalException(new TransportException("handshake failed because connection reset")))
+        );
         boolean success = false;
         try {
             // for the request we use the minCompatVersion since we don't know what's the version of the node we talk to
@@ -84,7 +90,8 @@ final class TransportHandshaker {
             threadPool.schedule(
                 () -> handler.handleLocalException(new ConnectTransportException(node, "handshake_timeout[" + timeout + "]")),
                 timeout,
-                ThreadPool.Names.GENERIC);
+                ThreadPool.Names.GENERIC
+            );
             success = true;
         } catch (Exception e) {
             handler.handleLocalException(new ConnectTransportException(node, "failure to send " + HANDSHAKE_ACTION_NAME, e));
@@ -104,8 +111,15 @@ final class TransportHandshaker {
         HandshakeRequest handshakeRequest = new HandshakeRequest(stream);
         final int nextByte = stream.read();
         if (nextByte != -1) {
-            throw new IllegalStateException("Handshake request not fully read for requestId [" + requestId + "], action ["
-                + TransportHandshaker.HANDSHAKE_ACTION_NAME + "], available [" + stream.available() + "]; resetting");
+            throw new IllegalStateException(
+                "Handshake request not fully read for requestId ["
+                    + requestId
+                    + "], action ["
+                    + TransportHandshaker.HANDSHAKE_ACTION_NAME
+                    + "], available ["
+                    + stream.available()
+                    + "]; resetting"
+            );
         }
         HandshakeResponse response = new HandshakeResponse(handshakeRequest.version, this.version, this.clusterName, this.localNode);
         handshakeResponseSender.sendResponse(version, channel, response, requestId);
@@ -146,8 +160,15 @@ final class TransportHandshaker {
             if (isDone.compareAndSet(false, true)) {
                 Version version = response.version;
                 if (currentVersion.isCompatible(version) == false) {
-                    listener.onFailure(new IllegalStateException("Received message from unsupported version: [" + version
-                        + "] minimal compatible version is: [" + currentVersion.minimumCompatibilityVersion() + "]"));
+                    listener.onFailure(
+                        new IllegalStateException(
+                            "Received message from unsupported version: ["
+                                + version
+                                + "] minimal compatible version is: ["
+                                + currentVersion.minimumCompatibilityVersion()
+                                + "]"
+                        )
+                    );
                 } else {
                     listener.onResponse(version);
                 }

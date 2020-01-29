@@ -40,12 +40,18 @@ public class ClusterStateTests extends ESTestCase {
         ClusterName name = ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY);
         ClusterState noMaster1 = ClusterState.builder(name).version(randomInt(5)).nodes(nodes).build();
         ClusterState noMaster2 = ClusterState.builder(name).version(randomInt(5)).nodes(nodes).build();
-        ClusterState withMaster1a = ClusterState.builder(name).version(randomInt(5)).nodes(DiscoveryNodes.builder(nodes)
-            .masterNodeId(node1.getId())).build();
-        ClusterState withMaster1b = ClusterState.builder(name).version(randomInt(5)).nodes(DiscoveryNodes.builder(nodes)
-            .masterNodeId(node1.getId())).build();
-        ClusterState withMaster2 = ClusterState.builder(name).version(randomInt(5)).nodes(DiscoveryNodes.builder(nodes)
-            .masterNodeId(node2.getId())).build();
+        ClusterState withMaster1a = ClusterState.builder(name)
+            .version(randomInt(5))
+            .nodes(DiscoveryNodes.builder(nodes).masterNodeId(node1.getId()))
+            .build();
+        ClusterState withMaster1b = ClusterState.builder(name)
+            .version(randomInt(5))
+            .nodes(DiscoveryNodes.builder(nodes).masterNodeId(node1.getId()))
+            .build();
+        ClusterState withMaster2 = ClusterState.builder(name)
+            .version(randomInt(5))
+            .nodes(DiscoveryNodes.builder(nodes).masterNodeId(node2.getId()))
+            .build();
 
         // states with no master should never supersede anything
         assertFalse(noMaster1.supersedes(noMaster2));

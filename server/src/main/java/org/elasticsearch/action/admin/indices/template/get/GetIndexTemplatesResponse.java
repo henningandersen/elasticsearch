@@ -41,7 +41,7 @@ public class GetIndexTemplatesResponse extends ActionResponse implements ToXCont
         super(in);
         int size = in.readVInt();
         indexTemplates = new ArrayList<>();
-        for (int i = 0 ; i < size ; i++) {
+        for (int i = 0; i < size; i++) {
             indexTemplates.add(IndexTemplateMetaData.readFrom(in));
         }
     }

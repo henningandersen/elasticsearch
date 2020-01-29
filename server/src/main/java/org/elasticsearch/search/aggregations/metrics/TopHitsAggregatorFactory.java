@@ -54,23 +54,26 @@ class TopHitsAggregatorFactory extends AggregatorFactory {
     private final List<ScriptFieldsContext.ScriptField> scriptFields;
     private final FetchSourceContext fetchSourceContext;
 
-    TopHitsAggregatorFactory(String name,
-                                int from,
-                                int size,
-                                boolean explain,
-                                boolean version,
-                                boolean seqNoAndPrimaryTerm,
-                                boolean trackScores,
-                                Optional<SortAndFormats> sort,
-                                HighlightBuilder highlightBuilder,
-                                StoredFieldsContext storedFieldsContext,
-                                List<FieldAndFormat> docValueFields,
-                                List<ScriptFieldsContext.ScriptField> scriptFields,
-                                FetchSourceContext fetchSourceContext,
-                                QueryShardContext queryShardContext,
-                                AggregatorFactory parent,
-                                AggregatorFactories.Builder subFactories,
-                                Map<String, Object> metaData) throws IOException {
+    TopHitsAggregatorFactory(
+        String name,
+        int from,
+        int size,
+        boolean explain,
+        boolean version,
+        boolean seqNoAndPrimaryTerm,
+        boolean trackScores,
+        Optional<SortAndFormats> sort,
+        HighlightBuilder highlightBuilder,
+        StoredFieldsContext storedFieldsContext,
+        List<FieldAndFormat> docValueFields,
+        List<ScriptFieldsContext.ScriptField> scriptFields,
+        FetchSourceContext fetchSourceContext,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactories,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, queryShardContext, parent, subFactories, metaData);
         this.from = from;
         this.size = size;
@@ -87,11 +90,13 @@ class TopHitsAggregatorFactory extends AggregatorFactory {
     }
 
     @Override
-    public Aggregator createInternal(SearchContext searchContext,
-                                        Aggregator parent,
-                                        boolean collectsFromSingleBucket,
-                                        List<PipelineAggregator> pipelineAggregators,
-                                        Map<String, Object> metaData) throws IOException {
+    public Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         SubSearchContext subSearchContext = new SubSearchContext(searchContext);
         subSearchContext.parsedQuery(searchContext.parsedQuery());
         subSearchContext.explain(explain);
@@ -111,15 +116,22 @@ class TopHitsAggregatorFactory extends AggregatorFactory {
         }
         for (ScriptFieldsContext.ScriptField field : scriptFields) {
             subSearchContext.scriptFields().add(field);
-            }
+        }
         if (fetchSourceContext != null) {
             subSearchContext.fetchSourceContext(fetchSourceContext);
         }
         if (highlightBuilder != null) {
             subSearchContext.highlight(highlightBuilder.build(searchContext.getQueryShardContext()));
         }
-        return new TopHitsAggregator(searchContext.fetchPhase(), subSearchContext, name, searchContext, parent,
-                pipelineAggregators, metaData);
+        return new TopHitsAggregator(
+            searchContext.fetchPhase(),
+            subSearchContext,
+            name,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
 
 }

@@ -92,7 +92,8 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
             HierarchyCircuitBreakerService.ACCOUNTING_CIRCUIT_BREAKER_OVERHEAD_SETTING,
             HierarchyCircuitBreakerService.IN_FLIGHT_REQUESTS_CIRCUIT_BREAKER_LIMIT_SETTING,
             HierarchyCircuitBreakerService.IN_FLIGHT_REQUESTS_CIRCUIT_BREAKER_OVERHEAD_SETTING,
-            HierarchyCircuitBreakerService.TOTAL_CIRCUIT_BREAKER_LIMIT_SETTING).forEach(s -> resetSettings.putNull(s.getKey()));
+            HierarchyCircuitBreakerService.TOTAL_CIRCUIT_BREAKER_LIMIT_SETTING
+        ).forEach(s -> resetSettings.putNull(s.getKey()));
         assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(resetSettings));
     }
 
@@ -128,8 +129,12 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
             logger.info("--> noop breakers used, skipping test");
             return;
         }
-        assertAcked(prepareCreate("cb-test", 1, Settings.builder().put(SETTING_NUMBER_OF_REPLICAS, between(0, 1)))
-                .setMapping("test", "type=text,fielddata=true"));
+        assertAcked(
+            prepareCreate("cb-test", 1, Settings.builder().put(SETTING_NUMBER_OF_REPLICAS, between(0, 1))).setMapping(
+                "test",
+                "type=text,fielddata=true"
+            )
+        );
         final Client client = client();
 
         // index some different terms so we have some field data for loading
@@ -145,9 +150,9 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
 
         // Update circuit breaker settings
         Settings settings = Settings.builder()
-                .put(HierarchyCircuitBreakerService.FIELDDATA_CIRCUIT_BREAKER_LIMIT_SETTING.getKey(), "100b")
-                .put(HierarchyCircuitBreakerService.FIELDDATA_CIRCUIT_BREAKER_OVERHEAD_SETTING.getKey(), 1.05)
-                .build();
+            .put(HierarchyCircuitBreakerService.FIELDDATA_CIRCUIT_BREAKER_LIMIT_SETTING.getKey(), "100b")
+            .put(HierarchyCircuitBreakerService.FIELDDATA_CIRCUIT_BREAKER_OVERHEAD_SETTING.getKey(), 1.05)
+            .build();
         assertAcked(client.admin().cluster().prepareUpdateSettings().setTransientSettings(settings));
 
         // execute a search that loads field data (sorting on the "test" field)
@@ -176,8 +181,13 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
         final Client client = client();
 
         // Create an index where the mappings have a field data filter
-        assertAcked(prepareCreate("ramtest").setSource("{\"mappings\": {\"type\": {\"properties\": {\"test\": " +
-                "{\"type\": \"text\",\"fielddata\": true,\"fielddata_frequency_filter\": {\"max\": 10000}}}}}}", XContentType.JSON));
+        assertAcked(
+            prepareCreate("ramtest").setSource(
+                "{\"mappings\": {\"type\": {\"properties\": {\"test\": "
+                    + "{\"type\": \"text\",\"fielddata\": true,\"fielddata_frequency_filter\": {\"max\": 10000}}}}}}",
+                XContentType.JSON
+            )
+        );
 
         ensureGreen("ramtest");
 
@@ -197,9 +207,9 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
 
         // Update circuit breaker settings
         Settings settings = Settings.builder()
-                .put(HierarchyCircuitBreakerService.FIELDDATA_CIRCUIT_BREAKER_LIMIT_SETTING.getKey(), "100b")
-                .put(HierarchyCircuitBreakerService.FIELDDATA_CIRCUIT_BREAKER_OVERHEAD_SETTING.getKey(), 1.05)
-                .build();
+            .put(HierarchyCircuitBreakerService.FIELDDATA_CIRCUIT_BREAKER_LIMIT_SETTING.getKey(), "100b")
+            .put(HierarchyCircuitBreakerService.FIELDDATA_CIRCUIT_BREAKER_OVERHEAD_SETTING.getKey(), 1.05)
+            .build();
         assertAcked(client.admin().cluster().prepareUpdateSettings().setTransientSettings(settings));
 
         // execute a search that loads field data (sorting on the "test" field)
@@ -230,8 +240,8 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
 
         // Make request breaker limited to a small amount
         Settings resetSettings = Settings.builder()
-                .put(HierarchyCircuitBreakerService.REQUEST_CIRCUIT_BREAKER_LIMIT_SETTING.getKey(), "10b")
-                .build();
+            .put(HierarchyCircuitBreakerService.REQUEST_CIRCUIT_BREAKER_LIMIT_SETTING.getKey(), "10b")
+            .build();
         assertAcked(client.admin().cluster().prepareUpdateSettings().setTransientSettings(resetSettings));
 
         // index some different terms so we have some field data for loading
@@ -264,8 +274,8 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
 
         // Make request breaker limited to a small amount
         Settings resetSettings = Settings.builder()
-                .put(HierarchyCircuitBreakerService.REQUEST_CIRCUIT_BREAKER_LIMIT_SETTING.getKey(), "100b")
-                .build();
+            .put(HierarchyCircuitBreakerService.REQUEST_CIRCUIT_BREAKER_LIMIT_SETTING.getKey(), "100b")
+            .build();
         assertAcked(client.admin().cluster().prepareUpdateSettings().setTransientSettings(resetSettings));
 
         // index some different terms so we have some field data for loading
@@ -279,9 +289,9 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
         // A terms aggregation on the "test" field should trip the bucket circuit breaker
         try {
             SearchResponse resp = client.prepareSearch("cb-test")
-                    .setQuery(matchAllQuery())
-                    .addAggregation(terms("my_terms").field("test"))
-                    .get();
+                .setQuery(matchAllQuery())
+                .addAggregation(terms("my_terms").field("test"))
+                .get();
             assertTrue("there should be shard failures", resp.getFailedShards() > 0);
             fail("aggregation should have tripped the breaker");
         } catch (Exception e) {
@@ -296,12 +306,18 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
     public void clearFieldData() throws Exception {
         client().admin().indices().prepareClearCache().setFieldDataCache(true).execute().actionGet();
         assertBusy(() -> {
-            NodesStatsResponse resp = client().admin().cluster().prepareNodesStats()
-                    .clear().setBreaker(true).get(new TimeValue(15, TimeUnit.SECONDS));
+            NodesStatsResponse resp = client().admin()
+                .cluster()
+                .prepareNodesStats()
+                .clear()
+                .setBreaker(true)
+                .get(new TimeValue(15, TimeUnit.SECONDS));
             for (NodeStats nStats : resp.getNodes()) {
-                assertThat("fielddata breaker never reset back to 0",
-                        nStats.getBreaker().getStats(CircuitBreaker.FIELDDATA).getEstimated(),
-                        equalTo(0L));
+                assertThat(
+                    "fielddata breaker never reset back to 0",
+                    nStats.getBreaker().getStats(CircuitBreaker.FIELDDATA).getEstimated(),
+                    equalTo(0L)
+                );
             }
         }, 30, TimeUnit.SECONDS);
     }
@@ -349,9 +365,17 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
         // is not blocked by the above inflight circuit breaker
         reset();
 
-        assertThat(client().admin().cluster().prepareState().get()
-            .getState().metaData().transientSettings().get(HierarchyCircuitBreakerService.TOTAL_CIRCUIT_BREAKER_LIMIT_SETTING.getKey()),
-            nullValue());
+        assertThat(
+            client().admin()
+                .cluster()
+                .prepareState()
+                .get()
+                .getState()
+                .metaData()
+                .transientSettings()
+                .get(HierarchyCircuitBreakerService.TOTAL_CIRCUIT_BREAKER_LIMIT_SETTING.getKey()),
+            nullValue()
+        );
 
     }
 
@@ -379,12 +403,15 @@ public class CircuitBreakerServiceIT extends ESIntegTestCase {
         NodeStats targetNode = dataNodeStats.get(0);
         NodeStats sourceNode = dataNodeStats.get(1);
 
-        assertAcked(prepareCreate("index").setSettings(Settings.builder()
-            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
-            .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-            .put("index.routing.allocation.include._name", targetNode.getNode().getName())
-            .put(EnableAllocationDecider.INDEX_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Rebalance.NONE)
-        ));
+        assertAcked(
+            prepareCreate("index").setSettings(
+                Settings.builder()
+                    .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
+                    .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+                    .put("index.routing.allocation.include._name", targetNode.getNode().getName())
+                    .put(EnableAllocationDecider.INDEX_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Rebalance.NONE)
+            )
+        );
 
         Client client = client(sourceNode.getNode().getName());
 

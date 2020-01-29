@@ -56,8 +56,13 @@ public class IndicesSegmentResponse extends BroadcastResponse {
         }
     }
 
-    IndicesSegmentResponse(ShardSegments[] shards, int totalShards, int successfulShards, int failedShards,
-                           List<DefaultShardOperationFailedException> shardFailures) {
+    IndicesSegmentResponse(
+        ShardSegments[] shards,
+        int totalShards,
+        int successfulShards,
+        int failedShards,
+        List<DefaultShardOperationFailedException> shardFailures
+    ) {
         super(totalShards, successfulShards, failedShards, shardFailures);
         this.shards = shards;
     }
@@ -174,11 +179,9 @@ public class IndicesSegmentResponse extends BroadcastResponse {
             builder.startObject();
             builder.field("field", field.getField());
             if (field instanceof SortedNumericSortField) {
-                builder.field("mode", ((SortedNumericSortField) field).getSelector()
-                    .toString().toLowerCase(Locale.ROOT));
+                builder.field("mode", ((SortedNumericSortField) field).getSelector().toString().toLowerCase(Locale.ROOT));
             } else if (field instanceof SortedSetSortField) {
-                builder.field("mode", ((SortedSetSortField) field).getSelector()
-                    .toString().toLowerCase(Locale.ROOT));
+                builder.field("mode", ((SortedSetSortField) field).getSelector().toString().toLowerCase(Locale.ROOT));
             }
             if (field.getMissingValue() != null) {
                 builder.field("missing", field.getMissingValue().toString());

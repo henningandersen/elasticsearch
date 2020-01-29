@@ -118,9 +118,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class ClusterStateChanges {
-    private static final Settings SETTINGS = Settings.builder()
-            .put(PATH_HOME_SETTING.getKey(), "dummy")
-            .build();
+    private static final Settings SETTINGS = Settings.builder().put(PATH_HOME_SETTING.getKey(), "dummy").build();
 
     private static final Logger logger = LogManager.getLogger(ClusterStateChanges.class);
     private final AllocationService allocationService;
@@ -141,16 +139,22 @@ public class ClusterStateChanges {
 
     public ClusterStateChanges(NamedXContentRegistry xContentRegistry, ThreadPool threadPool) {
         ClusterSettings clusterSettings = new ClusterSettings(SETTINGS, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS);
-        allocationService = new AllocationService(new AllocationDeciders(
-            new HashSet<>(Arrays.asList(new SameShardAllocationDecider(SETTINGS, clusterSettings),
-                new ReplicaAfterPrimaryActiveAllocationDecider(),
-                new RandomAllocationDeciderTests.RandomAllocationDecider(getRandom())))),
-            new TestGatewayAllocator(), new BalancedShardsAllocator(SETTINGS),
-            EmptyClusterInfoService.INSTANCE);
-        shardFailedClusterStateTaskExecutor
-            = new ShardStateAction.ShardFailedClusterStateTaskExecutor(allocationService, null, logger);
-        shardStartedClusterStateTaskExecutor
-            = new ShardStateAction.ShardStartedClusterStateTaskExecutor(allocationService, null, logger);
+        allocationService = new AllocationService(
+            new AllocationDeciders(
+                new HashSet<>(
+                    Arrays.asList(
+                        new SameShardAllocationDecider(SETTINGS, clusterSettings),
+                        new ReplicaAfterPrimaryActiveAllocationDecider(),
+                        new RandomAllocationDeciderTests.RandomAllocationDecider(getRandom())
+                    )
+                )
+            ),
+            new TestGatewayAllocator(),
+            new BalancedShardsAllocator(SETTINGS),
+            EmptyClusterInfoService.INSTANCE
+        );
+        shardFailedClusterStateTaskExecutor = new ShardStateAction.ShardFailedClusterStateTaskExecutor(allocationService, null, logger);
+        shardStartedClusterStateTaskExecutor = new ShardStateAction.ShardStartedClusterStateTaskExecutor(allocationService, null, logger);
         ActionFilters actionFilters = new ActionFilters(Collections.emptySet());
         IndexNameExpressionResolver indexNameExpressionResolver = new IndexNameExpressionResolver();
         DestructiveOperations destructiveOperations = new DestructiveOperations(SETTINGS, clusterSettings);
@@ -163,28 +167,34 @@ public class ClusterStateChanges {
         IndicesService indicesService = mock(IndicesService.class);
         // MetaDataCreateIndexService creates indices using its IndicesService instance to check mappings -> fake it here
         try {
-            @SuppressWarnings("unchecked") final List<IndexEventListener> listeners = anyList();
-            when(indicesService.createIndex(any(IndexMetaData.class), listeners, anyBoolean()))
-                .then(invocationOnMock -> {
-                    IndexService indexService = mock(IndexService.class);
-                    IndexMetaData indexMetaData = (IndexMetaData)invocationOnMock.getArguments()[0];
-                    when(indexService.index()).thenReturn(indexMetaData.getIndex());
-                    MapperService mapperService = mock(MapperService.class);
-                    when(indexService.mapperService()).thenReturn(mapperService);
-                    when(mapperService.documentMapper()).thenReturn(null);
-                    when(indexService.getIndexEventListener()).thenReturn(new IndexEventListener() {});
-                    when(indexService.getIndexSortSupplier()).thenReturn(() -> null);
-                    return indexService;
+            @SuppressWarnings("unchecked")
+            final List<IndexEventListener> listeners = anyList();
+            when(indicesService.createIndex(any(IndexMetaData.class), listeners, anyBoolean())).then(invocationOnMock -> {
+                IndexService indexService = mock(IndexService.class);
+                IndexMetaData indexMetaData = (IndexMetaData) invocationOnMock.getArguments()[0];
+                when(indexService.index()).thenReturn(indexMetaData.getIndex());
+                MapperService mapperService = mock(MapperService.class);
+                when(indexService.mapperService()).thenReturn(mapperService);
+                when(mapperService.documentMapper()).thenReturn(null);
+                when(indexService.getIndexEventListener()).thenReturn(new IndexEventListener() {
+                });
+                when(indexService.getIndexSortSupplier()).thenReturn(() -> null);
+                return indexService;
             });
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
 
         // services
-        TransportService transportService = new TransportService(SETTINGS, transport, threadPool,
+        TransportService transportService = new TransportService(
+            SETTINGS,
+            transport,
+            threadPool,
             TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-            boundAddress -> DiscoveryNode.createLocal(SETTINGS, boundAddress.publishAddress(), UUIDs.randomBase64UUID()), clusterSettings,
-            Collections.emptySet());
+            boundAddress -> DiscoveryNode.createLocal(SETTINGS, boundAddress.publishAddress(), UUIDs.randomBase64UUID()),
+            clusterSettings,
+            Collections.emptySet()
+        );
         MetaDataIndexUpgradeService metaDataIndexUpgradeService = new MetaDataIndexUpgradeService(SETTINGS, xContentRegistry, null, null) {
             // metaData upgrader should do nothing
             @Override
@@ -194,31 +204,103 @@ public class ClusterStateChanges {
         };
         NodeClient client = new NodeClient(Settings.EMPTY, threadPool);
         Map<ActionType, TransportAction> actions = new HashMap<>();
-        actions.put(TransportVerifyShardBeforeCloseAction.TYPE, new TransportVerifyShardBeforeCloseAction(SETTINGS,
-            transportService, clusterService, indicesService, threadPool, null, actionFilters));
+        actions.put(
+            TransportVerifyShardBeforeCloseAction.TYPE,
+            new TransportVerifyShardBeforeCloseAction(
+                SETTINGS,
+                transportService,
+                clusterService,
+                indicesService,
+                threadPool,
+                null,
+                actionFilters
+            )
+        );
         client.initialize(actions, transportService.getTaskManager(), null, null);
 
-        MetaDataIndexStateService indexStateService = new MetaDataIndexStateService(clusterService, allocationService,
-            metaDataIndexUpgradeService, indicesService, threadPool, client);
+        MetaDataIndexStateService indexStateService = new MetaDataIndexStateService(
+            clusterService,
+            allocationService,
+            metaDataIndexUpgradeService,
+            indicesService,
+            threadPool,
+            client
+        );
         MetaDataDeleteIndexService deleteIndexService = new MetaDataDeleteIndexService(SETTINGS, clusterService, allocationService);
-        MetaDataUpdateSettingsService metaDataUpdateSettingsService = new MetaDataUpdateSettingsService(clusterService,
-            allocationService, IndexScopedSettings.DEFAULT_SCOPED_SETTINGS, indicesService, threadPool);
-        MetaDataCreateIndexService createIndexService = new MetaDataCreateIndexService(SETTINGS, clusterService, indicesService,
-            allocationService, new AliasValidator(), environment,
-            IndexScopedSettings.DEFAULT_SCOPED_SETTINGS, threadPool, xContentRegistry, Collections.emptyList(), true);
+        MetaDataUpdateSettingsService metaDataUpdateSettingsService = new MetaDataUpdateSettingsService(
+            clusterService,
+            allocationService,
+            IndexScopedSettings.DEFAULT_SCOPED_SETTINGS,
+            indicesService,
+            threadPool
+        );
+        MetaDataCreateIndexService createIndexService = new MetaDataCreateIndexService(
+            SETTINGS,
+            clusterService,
+            indicesService,
+            allocationService,
+            new AliasValidator(),
+            environment,
+            IndexScopedSettings.DEFAULT_SCOPED_SETTINGS,
+            threadPool,
+            xContentRegistry,
+            Collections.emptyList(),
+            true
+        );
 
-        transportCloseIndexAction = new TransportCloseIndexAction(SETTINGS, transportService, clusterService, threadPool,
-            indexStateService, clusterSettings, actionFilters, indexNameExpressionResolver, destructiveOperations);
-        transportOpenIndexAction = new TransportOpenIndexAction(transportService,
-            clusterService, threadPool, indexStateService, actionFilters, indexNameExpressionResolver, destructiveOperations);
-        transportDeleteIndexAction = new TransportDeleteIndexAction(transportService,
-            clusterService, threadPool, deleteIndexService, actionFilters, indexNameExpressionResolver, destructiveOperations);
+        transportCloseIndexAction = new TransportCloseIndexAction(
+            SETTINGS,
+            transportService,
+            clusterService,
+            threadPool,
+            indexStateService,
+            clusterSettings,
+            actionFilters,
+            indexNameExpressionResolver,
+            destructiveOperations
+        );
+        transportOpenIndexAction = new TransportOpenIndexAction(
+            transportService,
+            clusterService,
+            threadPool,
+            indexStateService,
+            actionFilters,
+            indexNameExpressionResolver,
+            destructiveOperations
+        );
+        transportDeleteIndexAction = new TransportDeleteIndexAction(
+            transportService,
+            clusterService,
+            threadPool,
+            deleteIndexService,
+            actionFilters,
+            indexNameExpressionResolver,
+            destructiveOperations
+        );
         transportUpdateSettingsAction = new TransportUpdateSettingsAction(
-            transportService, clusterService, threadPool, metaDataUpdateSettingsService, actionFilters, indexNameExpressionResolver);
+            transportService,
+            clusterService,
+            threadPool,
+            metaDataUpdateSettingsService,
+            actionFilters,
+            indexNameExpressionResolver
+        );
         transportClusterRerouteAction = new TransportClusterRerouteAction(
-            transportService, clusterService, threadPool, allocationService, actionFilters, indexNameExpressionResolver);
+            transportService,
+            clusterService,
+            threadPool,
+            allocationService,
+            actionFilters,
+            indexNameExpressionResolver
+        );
         transportCreateIndexAction = new TransportCreateIndexAction(
-            transportService, clusterService, threadPool, createIndexService, actionFilters, indexNameExpressionResolver);
+            transportService,
+            clusterService,
+            threadPool,
+            createIndexService,
+            actionFilters,
+            indexNameExpressionResolver
+        );
 
         nodeRemovalExecutor = new NodeRemovalClusterStateTaskExecutor(allocationService, logger);
         joinTaskExecutor = new JoinTaskExecutor(allocationService, logger, (s, p, r) -> {});
@@ -230,13 +312,17 @@ public class ClusterStateChanges {
 
     public ClusterState closeIndices(ClusterState state, CloseIndexRequest request) {
         final Index[] concreteIndices = Arrays.stream(request.indices())
-            .map(index -> state.metaData().index(index).getIndex()).toArray(Index[]::new);
+            .map(index -> state.metaData().index(index).getIndex())
+            .toArray(Index[]::new);
 
         final Map<Index, ClusterBlock> blockedIndices = new HashMap<>();
         ClusterState newState = MetaDataIndexStateServiceUtils.addIndexClosedBlocks(concreteIndices, blockedIndices, state);
 
-        newState = MetaDataIndexStateServiceUtils.closeRoutingTable(newState, blockedIndices,
-            blockedIndices.keySet().stream().collect(Collectors.toMap(Function.identity(), CloseIndexResponse.IndexResult::new)));
+        newState = MetaDataIndexStateServiceUtils.closeRoutingTable(
+            newState,
+            blockedIndices,
+            blockedIndices.keySet().stream().collect(Collectors.toMap(Function.identity(), CloseIndexResponse.IndexResult::new))
+        );
         return allocationService.reroute(newState, "indices closed");
     }
 
@@ -257,46 +343,63 @@ public class ClusterStateChanges {
     }
 
     public ClusterState addNodes(ClusterState clusterState, List<DiscoveryNode> nodes) {
-        return runTasks(joinTaskExecutor, clusterState, nodes.stream().map(node -> new JoinTaskExecutor.Task(node, "dummy reason"))
-            .collect(Collectors.toList()));
+        return runTasks(
+            joinTaskExecutor,
+            clusterState,
+            nodes.stream().map(node -> new JoinTaskExecutor.Task(node, "dummy reason")).collect(Collectors.toList())
+        );
     }
 
     public ClusterState joinNodesAndBecomeMaster(ClusterState clusterState, List<DiscoveryNode> nodes) {
         List<JoinTaskExecutor.Task> joinNodes = new ArrayList<>();
         joinNodes.add(JoinTaskExecutor.newBecomeMasterTask());
         joinNodes.add(JoinTaskExecutor.newFinishElectionTask());
-        joinNodes.addAll(nodes.stream().map(node -> new JoinTaskExecutor.Task(node, "dummy reason"))
-            .collect(Collectors.toList()));
+        joinNodes.addAll(nodes.stream().map(node -> new JoinTaskExecutor.Task(node, "dummy reason")).collect(Collectors.toList()));
 
         return runTasks(joinTaskExecutor, clusterState, joinNodes);
     }
 
     public ClusterState removeNodes(ClusterState clusterState, List<DiscoveryNode> nodes) {
-        return runTasks(nodeRemovalExecutor, clusterState, nodes.stream()
-            .map(n -> new NodeRemovalClusterStateTaskExecutor.Task(n, "dummy reason")).collect(Collectors.toList()));
+        return runTasks(
+            nodeRemovalExecutor,
+            clusterState,
+            nodes.stream().map(n -> new NodeRemovalClusterStateTaskExecutor.Task(n, "dummy reason")).collect(Collectors.toList())
+        );
     }
 
     public ClusterState applyFailedShards(ClusterState clusterState, List<FailedShard> failedShards) {
-        List<FailedShardEntry> entries = failedShards.stream().map(failedShard ->
-            new FailedShardEntry(failedShard.getRoutingEntry().shardId(), failedShard.getRoutingEntry().allocationId().getId(),
-                0L, failedShard.getMessage(), failedShard.getFailure(), failedShard.markAsStale()))
+        List<FailedShardEntry> entries = failedShards.stream()
+            .map(
+                failedShard -> new FailedShardEntry(
+                    failedShard.getRoutingEntry().shardId(),
+                    failedShard.getRoutingEntry().allocationId().getId(),
+                    0L,
+                    failedShard.getMessage(),
+                    failedShard.getFailure(),
+                    failedShard.markAsStale()
+                )
+            )
             .collect(Collectors.toList());
         return runTasks(shardFailedClusterStateTaskExecutor, clusterState, entries);
     }
 
     public ClusterState applyStartedShards(ClusterState clusterState, List<ShardRouting> startedShards) {
-        final Map<ShardRouting, Long> entries = startedShards.stream()
-            .collect(Collectors.toMap(Function.identity(), startedShard -> {
-                final IndexMetaData indexMetaData = clusterState.metaData().index(startedShard.shardId().getIndex());
-                return indexMetaData != null ? indexMetaData.primaryTerm(startedShard.shardId().id()) : 0L;
-            }));
+        final Map<ShardRouting, Long> entries = startedShards.stream().collect(Collectors.toMap(Function.identity(), startedShard -> {
+            final IndexMetaData indexMetaData = clusterState.metaData().index(startedShard.shardId().getIndex());
+            return indexMetaData != null ? indexMetaData.primaryTerm(startedShard.shardId().id()) : 0L;
+        }));
         return applyStartedShards(clusterState, entries);
     }
 
     public ClusterState applyStartedShards(ClusterState clusterState, Map<ShardRouting, Long> startedShards) {
-        return runTasks(shardStartedClusterStateTaskExecutor, clusterState, startedShards.entrySet().stream()
-            .map(e -> new StartedShardEntry(e.getKey().shardId(), e.getKey().allocationId().getId(), e.getValue(), "shard started"))
-            .collect(Collectors.toList()));
+        return runTasks(
+            shardStartedClusterStateTaskExecutor,
+            clusterState,
+            startedShards.entrySet()
+                .stream()
+                .map(e -> new StartedShardEntry(e.getKey().shardId(), e.getKey().allocationId().getId(), e.getValue(), "shard started"))
+                .collect(Collectors.toList())
+        );
     }
 
     private <T> ClusterState runTasks(ClusterStateTaskExecutor<T> executor, ClusterState clusterState, List<T> entries) {
@@ -314,7 +417,10 @@ public class ClusterStateChanges {
     }
 
     private <Request extends MasterNodeRequest<Request>, Response extends ActionResponse> ClusterState execute(
-        TransportMasterNodeAction<Request, Response> masterNodeAction, Request request, ClusterState clusterState) {
+        TransportMasterNodeAction<Request, Response> masterNodeAction,
+        Request request,
+        ClusterState clusterState
+    ) {
         return executeClusterStateUpdateTask(clusterState, () -> {
             try {
                 TransportMasterNodeActionUtils.runMasterOperation(masterNodeAction, request, clusterState, new PlainActionFuture<>());
@@ -327,7 +433,7 @@ public class ClusterStateChanges {
     private ClusterState executeClusterStateUpdateTask(ClusterState state, Runnable runnable) {
         ClusterState[] result = new ClusterState[1];
         doAnswer(invocationOnMock -> {
-            ClusterStateUpdateTask task = (ClusterStateUpdateTask)invocationOnMock.getArguments()[1];
+            ClusterStateUpdateTask task = (ClusterStateUpdateTask) invocationOnMock.getArguments()[1];
             result[0] = task.execute(state);
             return null;
         }).when(clusterService).submitStateUpdateTask(anyString(), any(ClusterStateUpdateTask.class));

@@ -62,13 +62,16 @@ class CardinalityAggregator extends NumericMetricsAggregator.SingleValue {
 
     private Collector collector;
 
-    CardinalityAggregator(String name,
-                            ValuesSource valuesSource,
-                            int precision,
-                            SearchContext context,
-                            Aggregator parent,
-                            List<PipelineAggregator> pipelineAggregators,
-                            Map<String, Object> metaData) throws IOException {
+    CardinalityAggregator(
+        String name,
+        ValuesSource valuesSource,
+        int precision,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.precision = precision;
@@ -87,8 +90,9 @@ class CardinalityAggregator extends NumericMetricsAggregator.SingleValue {
 
         if (valuesSource instanceof ValuesSource.Numeric) {
             ValuesSource.Numeric source = (ValuesSource.Numeric) valuesSource;
-            MurmurHash3Values hashValues = source.isFloatingPoint() ?
-                MurmurHash3Values.hash(source.doubleValues(ctx)) : MurmurHash3Values.hash(source.longValues(ctx));
+            MurmurHash3Values hashValues = source.isFloatingPoint()
+                ? MurmurHash3Values.hash(source.doubleValues(ctx))
+                : MurmurHash3Values.hash(source.longValues(ctx));
             return new DirectCollector(counts, hashValues);
         }
 
@@ -112,8 +116,7 @@ class CardinalityAggregator extends NumericMetricsAggregator.SingleValue {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         postCollectLastCollector();
 
         collector = pickCollector(ctx);
@@ -236,8 +239,7 @@ class CardinalityAggregator extends NumericMetricsAggregator.SingleValue {
         private final HyperLogLogPlusPlus counts;
         private ObjectArray<FixedBitSet> visitedOrds;
 
-        OrdinalsCollector(HyperLogLogPlusPlus counts, SortedSetDocValues values,
-                BigArrays bigArrays) {
+        OrdinalsCollector(HyperLogLogPlusPlus counts, SortedSetDocValues values, BigArrays bigArrays) {
             if (values.getValueCount() > Integer.MAX_VALUE) {
                 throw new IllegalArgumentException();
             }
@@ -275,8 +277,9 @@ class CardinalityAggregator extends NumericMetricsAggregator.SingleValue {
 
             final org.elasticsearch.common.hash.MurmurHash3.Hash128 hash = new org.elasticsearch.common.hash.MurmurHash3.Hash128();
             try (LongArray hashes = bigArrays.newLongArray(maxOrd, false)) {
-                for (int ord = allVisitedOrds.nextSetBit(0); ord < DocIdSetIterator.NO_MORE_DOCS;
-                        ord = ord + 1 < maxOrd ? allVisitedOrds.nextSetBit(ord + 1) : DocIdSetIterator.NO_MORE_DOCS) {
+                for (int ord = allVisitedOrds.nextSetBit(0); ord < DocIdSetIterator.NO_MORE_DOCS; ord = ord + 1 < maxOrd
+                    ? allVisitedOrds.nextSetBit(ord + 1)
+                    : DocIdSetIterator.NO_MORE_DOCS) {
                     final BytesRef value = values.lookupOrd(ord);
                     org.elasticsearch.common.hash.MurmurHash3.hash128(value.bytes, value.offset, value.length, 0, hash);
                     hashes.set(ord, hash.h1);
@@ -285,8 +288,9 @@ class CardinalityAggregator extends NumericMetricsAggregator.SingleValue {
                 for (long bucket = visitedOrds.size() - 1; bucket >= 0; --bucket) {
                     final FixedBitSet bits = visitedOrds.get(bucket);
                     if (bits != null) {
-                        for (int ord = bits.nextSetBit(0); ord < DocIdSetIterator.NO_MORE_DOCS;
-                                ord = ord + 1 < maxOrd ? bits.nextSetBit(ord + 1) : DocIdSetIterator.NO_MORE_DOCS) {
+                        for (int ord = bits.nextSetBit(0); ord < DocIdSetIterator.NO_MORE_DOCS; ord = ord + 1 < maxOrd
+                            ? bits.nextSetBit(ord + 1)
+                            : DocIdSetIterator.NO_MORE_DOCS) {
                             counts.collect(bucket, hashes.get(ord));
                         }
                     }
@@ -383,8 +387,7 @@ class CardinalityAggregator extends NumericMetricsAggregator.SingleValue {
 
         private static class Bytes extends MurmurHash3Values {
 
-            private final org.elasticsearch.common.hash.MurmurHash3.Hash128 hash =
-                new org.elasticsearch.common.hash.MurmurHash3.Hash128();
+            private final org.elasticsearch.common.hash.MurmurHash3.Hash128 hash = new org.elasticsearch.common.hash.MurmurHash3.Hash128();
 
             private final SortedBinaryDocValues values;
 

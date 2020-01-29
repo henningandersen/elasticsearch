@@ -141,7 +141,7 @@ public class InetAddresses {
                 return null;  // :$ requires ::$
             }
         } else {
-            // Otherwise, allocate the entire address to partsHi.  The endpoints
+            // Otherwise, allocate the entire address to partsHi. The endpoints
             // could still be empty, but parseHextet() will check for that.
             partsHi = parts.length;
             partsLo = 0;
@@ -245,7 +245,7 @@ public class InetAddresses {
         byte[] bytes = ip.getAddress();
         int[] hextets = new int[IPV6_PART_COUNT];
         for (int i = 0; i < hextets.length; i++) {
-            hextets[i] =  (bytes[2 * i] & 255) << 8 | bytes[2 * i + 1] & 255;
+            hextets[i] = (bytes[2 * i] & 255) << 8 | bytes[2 * i + 1] & 255;
         }
         compressLongestRunOfZeroes(hextets);
         return hextetsToIPv6String(hextets);
@@ -292,12 +292,12 @@ public class InetAddresses {
      * @param hextets {@code int[]} array of eight 16-bit hextets, or -1s
      */
     private static String hextetsToIPv6String(int[] hextets) {
-    /*
-     * While scanning the array, handle these state transitions:
-     *   start->num => "num"     start->gap => "::"
-     *   num->num   => ":num"    num->gap   => "::"
-     *   gap->num   => "num"     gap->gap   => ""
-     */
+        /*
+         * While scanning the array, handle these state transitions:
+         *   start->num => "num"     start->gap => "::"
+         *   num->num   => ":num"    num->gap   => "::"
+         *   gap->num   => "num"     gap->gap   => ""
+         */
         StringBuilder buf = new StringBuilder(39);
         boolean lastWasNumber = false;
         for (int i = 0; i < hextets.length; i++) {
@@ -370,14 +370,22 @@ public class InetAddresses {
             final String addressString = fields[0];
             final InetAddress address = forString(addressString);
             if (addressString.contains(":") && address.getAddress().length == 4) {
-                throw new IllegalArgumentException("CIDR notation is not allowed with IPv6-mapped IPv4 address [" + addressString +
-                        " as it introduces ambiguity as to whether the prefix length should be interpreted as a v4 prefix length or a" +
-                        " v6 prefix length");
+                throw new IllegalArgumentException(
+                    "CIDR notation is not allowed with IPv6-mapped IPv4 address ["
+                        + addressString
+                        + " as it introduces ambiguity as to whether the prefix length should be interpreted as a v4 prefix length or a"
+                        + " v6 prefix length"
+                );
             }
             final int prefixLength = Integer.parseInt(fields[1]);
             if (prefixLength < 0 || prefixLength > 8 * address.getAddress().length) {
-                throw new IllegalArgumentException("Illegal prefix length [" + prefixLength + "] in [" + maskedAddress +
-                        "]. Must be 0-32 for IPv4 ranges, 0-128 for IPv6 ranges");
+                throw new IllegalArgumentException(
+                    "Illegal prefix length ["
+                        + prefixLength
+                        + "] in ["
+                        + maskedAddress
+                        + "]. Must be 0-32 for IPv4 ranges, 0-128 for IPv6 ranges"
+                );
             }
             return new Tuple<>(address, prefixLength);
         } else {

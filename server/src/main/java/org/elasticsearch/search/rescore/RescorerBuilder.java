@@ -38,7 +38,10 @@ import java.util.Objects;
  * The abstract base builder for instances of {@link RescorerBuilder}.
  */
 public abstract class RescorerBuilder<RB extends RescorerBuilder<RB>>
-        implements NamedWriteable, ToXContentObject, Rewriteable<RescorerBuilder<RB>> {
+    implements
+        NamedWriteable,
+        ToXContentObject,
+        Rewriteable<RescorerBuilder<RB>> {
     public static final int DEFAULT_WINDOW_SIZE = 10;
 
     protected Integer windowSize;
@@ -48,8 +51,7 @@ public abstract class RescorerBuilder<RB extends RescorerBuilder<RB>>
     /**
      * Construct an empty RescoreBuilder.
      */
-    public RescorerBuilder() {
-    }
+    public RescorerBuilder() {}
 
     /**
      * Read from a stream.

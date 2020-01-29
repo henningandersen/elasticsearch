@@ -46,8 +46,11 @@ public final class DropProcessor extends AbstractProcessor {
     public static final class Factory implements Processor.Factory {
 
         @Override
-        public Processor create(final Map<String, Processor.Factory> processorFactories, final String tag,
-            final Map<String, Object> config) {
+        public Processor create(
+            final Map<String, Processor.Factory> processorFactories,
+            final String tag,
+            final Map<String, Object> config
+        ) {
             return new DropProcessor(tag);
         }
     }

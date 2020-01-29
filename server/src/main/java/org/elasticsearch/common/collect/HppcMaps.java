@@ -28,12 +28,11 @@ import java.util.Iterator;
 
 public final class HppcMaps {
 
-    private HppcMaps() {
-    }
+    private HppcMaps() {}
 
     /**
      * Returns a new map with the given number of expected elements.
-     * 
+     *
      * @param expectedElements
      *          The expected number of elements guaranteed not to cause buffer
      *          expansion (inclusive).
@@ -58,7 +57,7 @@ public final class HppcMaps {
 
     /**
      * Returns a map like {@link #newMap(int)} that does not accept <code>null</code> keys
-     * 
+     *
      * @param expectedElements
      *          The expected number of elements guaranteed not to cause buffer
      *          expansion (inclusive).
@@ -69,7 +68,7 @@ public final class HppcMaps {
 
     /**
      * Wraps the given map and prevent adding of <code>null</code> keys.
-     * 
+     *
      * @param expectedElements
      *          The expected number of elements guaranteed not to cause buffer
      *          expansion (inclusive).

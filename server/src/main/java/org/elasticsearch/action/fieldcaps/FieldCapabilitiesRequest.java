@@ -49,8 +49,7 @@ public final class FieldCapabilitiesRequest extends ActionRequest implements Ind
     // pkg private API mainly for cross cluster search to signal that we do multiple reductions ie. the results should not be merged
     private boolean mergeResults = true;
 
-    private static final ObjectParser<FieldCapabilitiesRequest, Void> PARSER =
-        new ObjectParser<>(NAME, FieldCapabilitiesRequest::new);
+    private static final ObjectParser<FieldCapabilitiesRequest, Void> PARSER = new ObjectParser<>(NAME, FieldCapabilitiesRequest::new);
 
     static {
         PARSER.declareStringArray(fromList(String.class, FieldCapabilitiesRequest::fields), FIELDS_FIELD);
@@ -165,11 +164,11 @@ public final class FieldCapabilitiesRequest extends ActionRequest implements Ind
         if (o == null || getClass() != o.getClass()) return false;
 
         FieldCapabilitiesRequest that = (FieldCapabilitiesRequest) o;
-        return  Arrays.equals(indices, that.indices) &&
-            Objects.equals(indicesOptions, that.indicesOptions) &&
-            Arrays.equals(fields, that.fields) &&
-            Objects.equals(mergeResults, that.mergeResults) &&
-            includeUnmapped == that.includeUnmapped;
+        return Arrays.equals(indices, that.indices)
+            && Objects.equals(indicesOptions, that.indicesOptions)
+            && Arrays.equals(fields, that.fields)
+            && Objects.equals(mergeResults, that.mergeResults)
+            && includeUnmapped == that.includeUnmapped;
     }
 
     @Override

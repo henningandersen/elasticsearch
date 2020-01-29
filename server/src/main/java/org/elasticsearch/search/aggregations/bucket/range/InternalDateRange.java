@@ -36,26 +36,42 @@ public class InternalDateRange extends InternalRange<InternalDateRange.Bucket, I
 
     public static class Bucket extends InternalRange.Bucket {
 
-        public Bucket(String key, double from, double to, long docCount, List<InternalAggregation> aggregations, boolean keyed,
-                DocValueFormat formatter) {
+        public Bucket(
+            String key,
+            double from,
+            double to,
+            long docCount,
+            List<InternalAggregation> aggregations,
+            boolean keyed,
+            DocValueFormat formatter
+        ) {
             super(key, from, to, docCount, new InternalAggregations(aggregations), keyed, formatter);
         }
 
-        public Bucket(String key, double from, double to, long docCount, InternalAggregations aggregations, boolean keyed,
-                DocValueFormat formatter) {
+        public Bucket(
+            String key,
+            double from,
+            double to,
+            long docCount,
+            InternalAggregations aggregations,
+            boolean keyed,
+            DocValueFormat formatter
+        ) {
             super(key, from, to, docCount, aggregations, keyed, formatter);
         }
 
         @Override
         public Object getFrom() {
-            return Double.isInfinite(((Number) from).doubleValue()) ? null :
-                Instant.ofEpochMilli(((Number) from).longValue()).atZone(ZoneOffset.UTC);
+            return Double.isInfinite(((Number) from).doubleValue())
+                ? null
+                : Instant.ofEpochMilli(((Number) from).longValue()).atZone(ZoneOffset.UTC);
         }
 
         @Override
         public Object getTo() {
-            return Double.isInfinite(((Number) to).doubleValue()) ? null :
-                Instant.ofEpochMilli(((Number) to).longValue()).atZone(ZoneOffset.UTC);
+            return Double.isInfinite(((Number) to).doubleValue())
+                ? null
+                : Instant.ofEpochMilli(((Number) to).longValue()).atZone(ZoneOffset.UTC);
         }
 
         private Double internalGetFrom() {
@@ -87,32 +103,64 @@ public class InternalDateRange extends InternalRange<InternalDateRange.Bucket, I
         }
 
         @Override
-        public InternalDateRange create(String name, List<InternalDateRange.Bucket> ranges, DocValueFormat formatter, boolean keyed,
-                List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+        public InternalDateRange create(
+            String name,
+            List<InternalDateRange.Bucket> ranges,
+            DocValueFormat formatter,
+            boolean keyed,
+            List<PipelineAggregator> pipelineAggregators,
+            Map<String, Object> metaData
+        ) {
             return new InternalDateRange(name, ranges, formatter, keyed, pipelineAggregators, metaData);
         }
 
         @Override
         public InternalDateRange create(List<Bucket> ranges, InternalDateRange prototype) {
-            return new InternalDateRange(prototype.name, ranges, prototype.format, prototype.keyed, prototype.pipelineAggregators(),
-                    prototype.metaData);
+            return new InternalDateRange(
+                prototype.name,
+                ranges,
+                prototype.format,
+                prototype.keyed,
+                prototype.pipelineAggregators(),
+                prototype.metaData
+            );
         }
 
         @Override
-        public Bucket createBucket(String key, double from, double to, long docCount, InternalAggregations aggregations, boolean keyed,
-                DocValueFormat formatter) {
+        public Bucket createBucket(
+            String key,
+            double from,
+            double to,
+            long docCount,
+            InternalAggregations aggregations,
+            boolean keyed,
+            DocValueFormat formatter
+        ) {
             return new Bucket(key, from, to, docCount, aggregations, keyed, formatter);
         }
 
         @Override
         public Bucket createBucket(InternalAggregations aggregations, Bucket prototype) {
-            return new Bucket(prototype.getKey(), prototype.internalGetFrom(), prototype.internalGetTo(),
-                prototype.getDocCount(), aggregations, prototype.getKeyed(), prototype.getFormat());
+            return new Bucket(
+                prototype.getKey(),
+                prototype.internalGetFrom(),
+                prototype.internalGetTo(),
+                prototype.getDocCount(),
+                aggregations,
+                prototype.getKeyed(),
+                prototype.getFormat()
+            );
         }
     }
 
-    InternalDateRange(String name, List<InternalDateRange.Bucket> ranges, DocValueFormat formatter, boolean keyed,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    InternalDateRange(
+        String name,
+        List<InternalDateRange.Bucket> ranges,
+        DocValueFormat formatter,
+        boolean keyed,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, ranges, formatter, keyed, pipelineAggregators, metaData);
     }
 

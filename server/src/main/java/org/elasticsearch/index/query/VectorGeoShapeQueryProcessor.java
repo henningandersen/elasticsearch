@@ -53,8 +53,7 @@ public class VectorGeoShapeQueryProcessor implements AbstractGeometryFieldMapper
     public Query process(Geometry shape, String fieldName, ShapeRelation relation, QueryShardContext context) {
         // CONTAINS queries are not supported by VECTOR strategy for indices created before version 7.5.0 (Lucene 8.3.0)
         if (relation == ShapeRelation.CONTAINS && context.indexVersionCreated().before(Version.V_7_5_0)) {
-            throw new QueryShardException(context,
-                ShapeRelation.CONTAINS + " query relation not supported for Field [" + fieldName + "].");
+            throw new QueryShardException(context, ShapeRelation.CONTAINS + " query relation not supported for Field [" + fieldName + "].");
         }
         // wrap geoQuery as a ConstantScoreQuery
         return getVectorQueryFromShape(shape, fieldName, relation, context);
@@ -139,8 +138,7 @@ public class VectorGeoShapeQueryProcessor implements AbstractGeometryFieldMapper
 
         @Override
         public Query visit(MultiPoint multiPoint) {
-            throw new QueryShardException(context, "Field [" + fieldName + "] does not support " + GeoShapeType.MULTIPOINT +
-                " queries");
+            throw new QueryShardException(context, "Field [" + fieldName + "] does not support " + GeoShapeType.MULTIPOINT + " queries");
         }
 
         @Override
@@ -161,8 +159,7 @@ public class VectorGeoShapeQueryProcessor implements AbstractGeometryFieldMapper
                 // intersects is more efficient.
                 luceneRelation = ShapeField.QueryRelation.INTERSECTS;
             }
-            return LatLonShape.newBoxQuery(fieldName, luceneRelation,
-                point.getY(), point.getY(), point.getX(), point.getX());
+            return LatLonShape.newBoxQuery(fieldName, luceneRelation, point.getY(), point.getY(), point.getX(), point.getX());
         }
 
         @Override
@@ -172,17 +169,22 @@ public class VectorGeoShapeQueryProcessor implements AbstractGeometryFieldMapper
 
         @Override
         public Query visit(Rectangle r) {
-            return LatLonShape.newBoxQuery(fieldName, relation.getLuceneRelation(),
-                r.getMinY(), r.getMaxY(), r.getMinX(), r.getMaxX());
+            return LatLonShape.newBoxQuery(fieldName, relation.getLuceneRelation(), r.getMinY(), r.getMaxY(), r.getMinX(), r.getMaxX());
         }
 
         private void validateIsGeoShapeFieldType() {
             if (fieldType instanceof GeoShapeFieldMapper.GeoShapeFieldType == false) {
-                throw new QueryShardException(context, "Expected " + GeoShapeFieldMapper.CONTENT_TYPE
-                    + " field type for Field [" + fieldName + "] but found " + fieldType.typeName());
+                throw new QueryShardException(
+                    context,
+                    "Expected "
+                        + GeoShapeFieldMapper.CONTENT_TYPE
+                        + " field type for Field ["
+                        + fieldName
+                        + "] but found "
+                        + fieldType.typeName()
+                );
             }
         }
     }
 
 }
-

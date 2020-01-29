@@ -36,7 +36,7 @@ import java.util.Set;
 
 import static java.util.Collections.singletonMap;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class LeafFieldsLookup implements Map<Object, Object> {
 
     private final MapperService mapperService;
@@ -59,7 +59,6 @@ public class LeafFieldsLookup implements Map<Object, Object> {
         this.docId = docId;
         clearCache();
     }
-
 
     @Override
     public Object get(Object key) {

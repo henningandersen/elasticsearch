@@ -54,9 +54,8 @@ public class BulkPrimaryExecutionContextTests extends ESTestCase {
         }
 
         ArrayList<DocWriteRequest<?>> visitedRequests = new ArrayList<>();
-        for (BulkPrimaryExecutionContext context = new BulkPrimaryExecutionContext(shardRequest, null);
-             context.hasMoreOperationsToExecute();
-             ) {
+        for (BulkPrimaryExecutionContext context = new BulkPrimaryExecutionContext(shardRequest, null); context
+            .hasMoreOperationsToExecute();) {
             visitedRequests.add(context.getCurrent());
             context.setRequestToExecute(context.getCurrent());
             // using failures prevents caring about types
@@ -89,8 +88,7 @@ public class BulkPrimaryExecutionContextTests extends ESTestCase {
             }
             items[i] = new BulkItemRequest(i, request);
         }
-        return new BulkShardRequest(new ShardId("index", "_na_", 0),
-            randomFrom(WriteRequest.RefreshPolicy.values()), items);
+        return new BulkShardRequest(new ShardId("index", "_na_", 0), randomFrom(WriteRequest.RefreshPolicy.values()), items);
     }
 
     public void testTranslogLocation() {

@@ -74,9 +74,7 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
     public void testTwoNodesNoMasterBlock() throws Exception {
         internalCluster().setBootstrapMasterNodeIndex(1);
 
-        Settings settings = Settings.builder()
-                .put("discovery.initial_state_timeout", "500ms")
-                .build();
+        Settings settings = Settings.builder().put("discovery.initial_state_timeout", "500ms").build();
 
         logger.info("--> start first node");
         String node1Name = internalCluster().startNode(settings);
@@ -89,8 +87,13 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
         logger.info("--> start second node, cluster should be formed");
         String node2Name = internalCluster().startNode(settings);
 
-        ClusterHealthResponse clusterHealthResponse = client().admin().cluster().prepareHealth()
-            .setWaitForEvents(Priority.LANGUID).setWaitForNodes("2").execute().actionGet();
+        ClusterHealthResponse clusterHealthResponse = client().admin()
+            .cluster()
+            .prepareHealth()
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForNodes("2")
+            .execute()
+            .actionGet();
         assertThat(clusterHealthResponse.isTimedOut(), equalTo(false));
 
         state = client().admin().cluster().prepareState().setLocal(true).execute().actionGet().getState();
@@ -109,21 +112,37 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
             client().prepareIndex("test").setId(Integer.toString(i)).setSource("field", "value").execute().actionGet();
         }
         // make sure that all shards recovered before trying to flush
-        assertThat(client().admin().cluster().prepareHealth("test")
-            .setWaitForActiveShards(numShards.totalNumShards).execute().actionGet().getActiveShards(), equalTo(numShards.totalNumShards));
+        assertThat(
+            client().admin()
+                .cluster()
+                .prepareHealth("test")
+                .setWaitForActiveShards(numShards.totalNumShards)
+                .execute()
+                .actionGet()
+                .getActiveShards(),
+            equalTo(numShards.totalNumShards)
+        );
         // flush for simpler debugging
         flushAndRefresh();
 
         logger.info("--> verify we get the data back");
         for (int i = 0; i < 10; i++) {
-            assertThat(client().prepareSearch().setSize(0).setQuery(QueryBuilders.matchAllQuery())
-                .execute().actionGet().getHits().getTotalHits().value, equalTo(100L));
+            assertThat(
+                client().prepareSearch()
+                    .setSize(0)
+                    .setQuery(QueryBuilders.matchAllQuery())
+                    .execute()
+                    .actionGet()
+                    .getHits()
+                    .getTotalHits().value,
+                equalTo(100L)
+            );
         }
 
         String masterNode = internalCluster().getMasterName();
         String otherNode = node1Name.equals(masterNode) ? node2Name : node1Name;
         logger.info("--> add voting config exclusion for non-master node, to be sure it's not elected");
-        client().execute(AddVotingConfigExclusionsAction.INSTANCE, new AddVotingConfigExclusionsRequest(new String[]{otherNode})).get();
+        client().execute(AddVotingConfigExclusionsAction.INSTANCE, new AddVotingConfigExclusionsRequest(new String[] { otherNode })).get();
         logger.info("--> stop master node, no master block should appear");
         Settings masterDataPathSettings = internalCluster().dataPathSettings(masterNode);
         internalCluster().stopRandomNode(InternalTestCluster.nameFilter(masterNode));
@@ -142,8 +161,14 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
         logger.info("--> starting the previous master node again...");
         node2Name = internalCluster().startNode(Settings.builder().put(settings).put(masterDataPathSettings).build());
 
-        clusterHealthResponse = client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID)
-            .setWaitForYellowStatus().setWaitForNodes("2").execute().actionGet();
+        clusterHealthResponse = client().admin()
+            .cluster()
+            .prepareHealth()
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForYellowStatus()
+            .setWaitForNodes("2")
+            .execute()
+            .actionGet();
         assertThat(clusterHealthResponse.isTimedOut(), equalTo(false));
 
         state = client().admin().cluster().prepareState().setLocal(true).execute().actionGet().getState();
@@ -170,7 +195,7 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
         masterNode = internalCluster().getMasterName();
         otherNode = node1Name.equals(masterNode) ? node2Name : node1Name;
         logger.info("--> add voting config exclusion for master node, to be sure it's not elected");
-        client().execute(AddVotingConfigExclusionsAction.INSTANCE, new AddVotingConfigExclusionsRequest(new String[]{masterNode})).get();
+        client().execute(AddVotingConfigExclusionsAction.INSTANCE, new AddVotingConfigExclusionsRequest(new String[] { masterNode })).get();
         logger.info("--> stop non-master node, no master block should appear");
         Settings otherNodeDataPathSettings = internalCluster().dataPathSettings(otherNode);
         internalCluster().stopRandomNode(InternalTestCluster.nameFilter(otherNode));
@@ -184,8 +209,14 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
         internalCluster().startNode(Settings.builder().put(settings).put(otherNodeDataPathSettings).build());
 
         ensureGreen();
-        clusterHealthResponse = client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID)
-            .setWaitForNodes("2").setWaitForGreenStatus().execute().actionGet();
+        clusterHealthResponse = client().admin()
+            .cluster()
+            .prepareHealth()
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForNodes("2")
+            .setWaitForGreenStatus()
+            .execute()
+            .actionGet();
         assertThat(clusterHealthResponse.isTimedOut(), equalTo(false));
 
         state = client().admin().cluster().prepareState().setLocal(true).execute().actionGet().getState();
@@ -209,9 +240,7 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
     public void testThreeNodesNoMasterBlock() throws Exception {
         internalCluster().setBootstrapMasterNodeIndex(2);
 
-        Settings settings = Settings.builder()
-                .put("discovery.initial_state_timeout", "500ms")
-                .build();
+        Settings settings = Settings.builder().put("discovery.initial_state_timeout", "500ms").build();
 
         logger.info("--> start first 2 nodes");
         internalCluster().startNodes(2, settings);
@@ -229,8 +258,13 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
         internalCluster().startNode(settings);
 
         ensureGreen();
-        ClusterHealthResponse clusterHealthResponse = client().admin().cluster().prepareHealth()
-            .setWaitForEvents(Priority.LANGUID).setWaitForNodes("3").execute().actionGet();
+        ClusterHealthResponse clusterHealthResponse = client().admin()
+            .cluster()
+            .prepareHealth()
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForNodes("3")
+            .execute()
+            .actionGet();
         assertThat(clusterHealthResponse.isTimedOut(), equalTo(false));
 
         state = client().admin().cluster().prepareState().execute().actionGet().getState();
@@ -244,8 +278,16 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
         }
         ensureGreen();
         // make sure that all shards recovered before trying to flush
-        assertThat(client().admin().cluster().prepareHealth("test")
-            .setWaitForActiveShards(numShards.totalNumShards).execute().actionGet().isTimedOut(), equalTo(false));
+        assertThat(
+            client().admin()
+                .cluster()
+                .prepareHealth("test")
+                .setWaitForActiveShards(numShards.totalNumShards)
+                .execute()
+                .actionGet()
+                .isTimedOut(),
+            equalTo(false)
+        );
         // flush for simpler debugging
         client().admin().indices().prepareFlush().execute().actionGet();
 
@@ -255,8 +297,9 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
             assertHitCount(client().prepareSearch().setSize(0).setQuery(QueryBuilders.matchAllQuery()).execute().actionGet(), 100);
         }
 
-        List<String> nonMasterNodes = new ArrayList<>(Sets.difference(Sets.newHashSet(internalCluster().getNodeNames()),
-            Collections.singleton(internalCluster().getMasterName())));
+        List<String> nonMasterNodes = new ArrayList<>(
+            Sets.difference(Sets.newHashSet(internalCluster().getNodeNames()), Collections.singleton(internalCluster().getMasterName()))
+        );
         Settings nonMasterDataPathSettings1 = internalCluster().dataPathSettings(nonMasterNodes.get(0));
         Settings nonMasterDataPathSettings2 = internalCluster().dataPathSettings(nonMasterNodes.get(1));
         internalCluster().stopRandomNonMasterNode();
@@ -287,9 +330,7 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
     public void testCannotCommitStateThreeNodes() throws Exception {
         internalCluster().setBootstrapMasterNodeIndex(2);
 
-        Settings settings = Settings.builder()
-                .put("discovery.initial_state_timeout", "500ms")
-                .build();
+        Settings settings = Settings.builder().put("discovery.initial_state_timeout", "500ms").build();
 
         internalCluster().startNodes(3, settings);
         ensureStableCluster(3);
@@ -298,8 +339,9 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
         Set<String> otherNodes = new HashSet<>(Arrays.asList(internalCluster().getNodeNames()));
         otherNodes.remove(master);
         NetworkDisruption partition = new NetworkDisruption(
-                new TwoPartitions(Collections.singleton(master), otherNodes),
-                new NetworkDisruption.NetworkDisconnect());
+            new TwoPartitions(Collections.singleton(master), otherNodes),
+            new NetworkDisruption.NetworkDisconnect()
+        );
         internalCluster().setDisruptionScheme(partition);
 
         final CountDownLatch latch = new CountDownLatch(1);
@@ -316,9 +358,10 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
             public ClusterState execute(ClusterState currentState) throws Exception {
                 logger.debug("--> starting the disruption, preventing cluster state publishing");
                 partition.startDisrupting();
-                MetaData.Builder metaData = MetaData.builder(currentState.metaData()).persistentSettings(
+                MetaData.Builder metaData = MetaData.builder(currentState.metaData())
+                    .persistentSettings(
                         Settings.builder().put(currentState.metaData().persistentSettings()).put("_SHOULD_NOT_BE_THERE_", true).build()
-                );
+                    );
                 return ClusterState.builder(currentState).metaData(metaData).build();
             }
 
@@ -341,9 +384,15 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
         // otherwise persistent setting (which is a part of accepted state on old master) will be propagated to other nodes
         logger.debug("--> wait for master to be elected in major partition");
         assertBusy(() -> {
-            DiscoveryNode masterNode =
-                    internalCluster().client(randomFrom(otherNodes))
-                            .admin().cluster().prepareState().execute().actionGet().getState().nodes().getMasterNode();
+            DiscoveryNode masterNode = internalCluster().client(randomFrom(otherNodes))
+                .admin()
+                .cluster()
+                .prepareState()
+                .execute()
+                .actionGet()
+                .getState()
+                .nodes()
+                .getMasterNode();
             assertThat(masterNode, notNullValue());
             assertThat(masterNode.getName(), not(equalTo(master)));
         });
@@ -355,8 +404,11 @@ public class MinimumMasterNodesIT extends ESIntegTestCase {
 
         for (String node : internalCluster().getNodeNames()) {
             Settings nodeSetting = internalCluster().clusterService(node).state().metaData().settings();
-            assertThat(node + " processed the cluster state despite of a min master node violation",
-                nodeSetting.get("_SHOULD_NOT_BE_THERE_"), nullValue());
+            assertThat(
+                node + " processed the cluster state despite of a min master node violation",
+                nodeSetting.get("_SHOULD_NOT_BE_THERE_"),
+                nullValue()
+            );
         }
 
     }

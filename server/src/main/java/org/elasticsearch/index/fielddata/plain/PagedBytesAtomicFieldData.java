@@ -43,8 +43,7 @@ public class PagedBytesAtomicFieldData extends AbstractAtomicOrdinalsFieldData {
     }
 
     @Override
-    public void close() {
-    }
+    public void close() {}
 
     @Override
     public long ramBytesUsed() {
@@ -59,9 +58,10 @@ public class PagedBytesAtomicFieldData extends AbstractAtomicOrdinalsFieldData {
     @Override
     public Collection<Accountable> getChildResources() {
         return List.of(
-                Accountables.namedAccountable("ordinals", ordinals),
-                Accountables.namedAccountable("term bytes", bytes),
-                Accountables.namedAccountable("term offsets", termOrdToBytesOffset));
+            Accountables.namedAccountable("ordinals", ordinals),
+            Accountables.namedAccountable("term bytes", bytes),
+            Accountables.namedAccountable("term offsets", termOrdToBytesOffset)
+        );
     }
 
     @Override

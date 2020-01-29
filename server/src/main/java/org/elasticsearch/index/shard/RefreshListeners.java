@@ -82,8 +82,14 @@ public final class RefreshListeners implements ReferenceManager.RefreshListener,
      */
     private volatile Translog.Location lastRefreshedLocation;
 
-    public RefreshListeners(IntSupplier getMaxRefreshListeners, Runnable forceRefresh, Executor listenerExecutor, Logger logger,
-                            ThreadContext threadContext, MeanMetric refreshMetric) {
+    public RefreshListeners(
+        IntSupplier getMaxRefreshListeners,
+        Runnable forceRefresh,
+        Executor listenerExecutor,
+        Logger logger,
+        ThreadContext threadContext,
+        MeanMetric refreshMetric
+    ) {
         this.getMaxRefreshListeners = getMaxRefreshListeners;
         this.forceRefresh = forceRefresh;
         this.listenerExecutor = listenerExecutor;

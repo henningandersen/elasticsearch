@@ -120,8 +120,10 @@ public class FieldMaskingSpanQueryBuilder extends AbstractQueryBuilder<FieldMask
                     }
                     inner = (SpanQueryBuilder) query;
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(), "[field_masking_span] query does not support ["
-                            + currentFieldName + "]");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "[field_masking_span] query does not support [" + currentFieldName + "]"
+                    );
                 }
             } else {
                 if (AbstractQueryBuilder.BOOST_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
@@ -131,8 +133,10 @@ public class FieldMaskingSpanQueryBuilder extends AbstractQueryBuilder<FieldMask
                 } else if (AbstractQueryBuilder.NAME_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                     queryName = parser.text();
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "[field_masking_span] query does not support [" + currentFieldName + "]");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "[field_masking_span] query does not support [" + currentFieldName + "]"
+                    );
                 }
             }
         }
@@ -158,7 +162,7 @@ public class FieldMaskingSpanQueryBuilder extends AbstractQueryBuilder<FieldMask
         }
         Query innerQuery = queryBuilder.toQuery(context);
         assert innerQuery instanceof SpanQuery;
-        return new FieldMaskingSpanQuery((SpanQuery)innerQuery, fieldInQuery);
+        return new FieldMaskingSpanQuery((SpanQuery) innerQuery, fieldInQuery);
     }
 
     @Override
@@ -168,8 +172,7 @@ public class FieldMaskingSpanQueryBuilder extends AbstractQueryBuilder<FieldMask
 
     @Override
     protected boolean doEquals(FieldMaskingSpanQueryBuilder other) {
-        return Objects.equals(queryBuilder, other.queryBuilder) &&
-               Objects.equals(fieldName, other.fieldName);
+        return Objects.equals(queryBuilder, other.queryBuilder) && Objects.equals(fieldName, other.fieldName);
     }
 
     @Override

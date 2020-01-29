@@ -56,7 +56,7 @@ public class SearchSortValues implements ToXContentFragment, Writeable {
         this.rawSortValues = rawSortValues;
         this.formattedSortValues = Arrays.copyOf(rawSortValues, rawSortValues.length);
         for (int i = 0; i < rawSortValues.length; ++i) {
-            //we currently format only BytesRef but we may want to change that in the future
+            // we currently format only BytesRef but we may want to change that in the future
             Object sortValue = rawSortValues[i];
             if (sortValue instanceof BytesRef) {
                 this.formattedSortValues[i] = sortValueFormats[i].format((BytesRef) sortValue);
@@ -115,8 +115,7 @@ public class SearchSortValues implements ToXContentFragment, Writeable {
             return false;
         }
         SearchSortValues that = (SearchSortValues) o;
-        return Arrays.equals(formattedSortValues, that.formattedSortValues) &&
-            Arrays.equals(rawSortValues, that.rawSortValues);
+        return Arrays.equals(formattedSortValues, that.formattedSortValues) && Arrays.equals(rawSortValues, that.rawSortValues);
     }
 
     @Override

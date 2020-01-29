@@ -49,19 +49,21 @@ public class PrefixQueryBuilderTests extends AbstractQueryTestCase<PrefixQueryBu
     protected Map<String, PrefixQueryBuilder> getAlternateVersions() {
         Map<String, PrefixQueryBuilder> alternateVersions = new HashMap<>();
         PrefixQueryBuilder prefixQuery = randomPrefixQuery();
-        String contentString = "{\n" +
-                "    \"prefix\" : {\n" +
-                "        \"" + prefixQuery.fieldName() + "\" : \"" + prefixQuery.value() + "\"\n" +
-                "    }\n" +
-                "}";
+        String contentString = "{\n"
+            + "    \"prefix\" : {\n"
+            + "        \""
+            + prefixQuery.fieldName()
+            + "\" : \""
+            + prefixQuery.value()
+            + "\"\n"
+            + "    }\n"
+            + "}";
         alternateVersions.put(contentString, prefixQuery);
         return alternateVersions;
     }
 
     private static PrefixQueryBuilder randomPrefixQuery() {
-        String fieldName = randomFrom(STRING_FIELD_NAME,
-            STRING_ALIAS_FIELD_NAME,
-            randomAlphaOfLengthBetween(1, 10));
+        String fieldName = randomFrom(STRING_FIELD_NAME, STRING_ALIAS_FIELD_NAME, randomAlphaOfLengthBetween(1, 10));
         String value = randomAlphaOfLengthBetween(1, 10);
         return new PrefixQueryBuilder(fieldName, value);
     }
@@ -96,8 +98,7 @@ public class PrefixQueryBuilderTests extends AbstractQueryTestCase<PrefixQueryBu
     }
 
     public void testFromJson() throws IOException {
-        String json =
-                "{    \"prefix\" : { \"user\" :  { \"value\" : \"ki\", \"boost\" : 2.0 } }}";
+        String json = "{    \"prefix\" : { \"user\" :  { \"value\" : \"ki\", \"boost\" : 2.0 } }}";
 
         PrefixQueryBuilder parsed = (PrefixQueryBuilder) parseQuery(json);
         checkGeneratedJson(json, parsed);
@@ -110,38 +111,32 @@ public class PrefixQueryBuilderTests extends AbstractQueryTestCase<PrefixQueryBu
     public void testNumeric() throws Exception {
         PrefixQueryBuilder query = prefixQuery(INT_FIELD_NAME, "12*");
         QueryShardContext context = createShardContext();
-        QueryShardException e = expectThrows(QueryShardException.class,
-                () -> query.toQuery(context));
-        assertEquals("Can only use prefix queries on keyword and text fields - not on [mapped_int] which is of type [integer]",
-                e.getMessage());
+        QueryShardException e = expectThrows(QueryShardException.class, () -> query.toQuery(context));
+        assertEquals(
+            "Can only use prefix queries on keyword and text fields - not on [mapped_int] which is of type [integer]",
+            e.getMessage()
+        );
     }
 
     public void testParseFailsWithMultipleFields() throws IOException {
-        String json =
-                "{\n" +
-                "    \"prefix\": {\n" +
-                "      \"user1\": {\n" +
-                "        \"value\": \"ki\"\n" +
-                "      },\n" +
-                "      \"user2\": {\n" +
-                "        \"value\": \"ki\"\n" +
-                "      }\n" +
-                "    }\n" +
-                "}";
+        String json = "{\n"
+            + "    \"prefix\": {\n"
+            + "      \"user1\": {\n"
+            + "        \"value\": \"ki\"\n"
+            + "      },\n"
+            + "      \"user2\": {\n"
+            + "        \"value\": \"ki\"\n"
+            + "      }\n"
+            + "    }\n"
+            + "}";
         ParsingException e = expectThrows(ParsingException.class, () -> parseQuery(json));
         assertEquals("[prefix] query doesn't support multiple fields, found [user1] and [user2]", e.getMessage());
 
-        String shortJson =
-                "{\n" +
-                "    \"prefix\": {\n" +
-                "      \"user1\": \"ki\",\n" +
-                "      \"user2\": \"ki\"\n" +
-                "    }\n" +
-                "}";
+        String shortJson = "{\n" + "    \"prefix\": {\n" + "      \"user1\": \"ki\",\n" + "      \"user2\": \"ki\"\n" + "    }\n" + "}";
         e = expectThrows(ParsingException.class, () -> parseQuery(shortJson));
         assertEquals("[prefix] query doesn't support multiple fields, found [user1] and [user2]", e.getMessage());
     }
-    
+
     public void testRewriteIndexQueryToMatchNone() throws Exception {
         PrefixQueryBuilder query = prefixQuery("_index", "does_not_exist");
         QueryShardContext queryShardContext = createShardContext();

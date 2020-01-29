@@ -22,7 +22,6 @@ package org.elasticsearch.transport;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.concurrent.CompletableContext;
 
-
 /**
  * Abstract Transport.Connection that provides common close logic.
  */

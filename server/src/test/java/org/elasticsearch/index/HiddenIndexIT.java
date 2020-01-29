@@ -41,14 +41,16 @@ import static org.hamcrest.Matchers.is;
 public class HiddenIndexIT extends ESIntegTestCase {
 
     public void testHiddenIndexSearch() {
-        assertAcked(client().admin().indices().prepareCreate("hidden-index")
-            .setSettings(Settings.builder().put("index.hidden", true).build())
-            .get());
+        assertAcked(
+            client().admin().indices().prepareCreate("hidden-index").setSettings(Settings.builder().put("index.hidden", true).build()).get()
+        );
         client().prepareIndex("hidden-index").setSource("foo", "bar").setRefreshPolicy(RefreshPolicy.IMMEDIATE).get();
 
         // default not visible to wildcard expansion
-        SearchResponse searchResponse =
-            client().prepareSearch(randomFrom("*", "_all", "h*", "*index")).setSize(1000).setQuery(QueryBuilders.matchAllQuery()).get();
+        SearchResponse searchResponse = client().prepareSearch(randomFrom("*", "_all", "h*", "*index"))
+            .setSize(1000)
+            .setQuery(QueryBuilders.matchAllQuery())
+            .get();
         boolean matchedHidden = Arrays.stream(searchResponse.getHits().getHits()).anyMatch(hit -> "hidden-index".equals(hit.getIndex()));
         assertFalse(matchedHidden);
 
@@ -67,30 +69,60 @@ public class HiddenIndexIT extends ESIntegTestCase {
         assertTrue(matchedHidden);
 
         // implicit based on use of pattern starting with . and a wildcard
-        assertAcked(client().admin().indices().prepareCreate(".hidden-index")
-            .setSettings(Settings.builder().put("index.hidden", true).build())
-            .get());
+        assertAcked(
+            client().admin()
+                .indices()
+                .prepareCreate(".hidden-index")
+                .setSettings(Settings.builder().put("index.hidden", true).build())
+                .get()
+        );
         client().prepareIndex(".hidden-index").setSource("foo", "bar").setRefreshPolicy(RefreshPolicy.IMMEDIATE).get();
-        searchResponse = client().prepareSearch(randomFrom(".*", ".hidden-*"))
-            .setSize(1000)
-            .setQuery(QueryBuilders.matchAllQuery())
-            .get();
+        searchResponse = client().prepareSearch(randomFrom(".*", ".hidden-*")).setSize(1000).setQuery(QueryBuilders.matchAllQuery()).get();
         matchedHidden = Arrays.stream(searchResponse.getHits().getHits()).anyMatch(hit -> ".hidden-index".equals(hit.getIndex()));
         assertTrue(matchedHidden);
     }
 
     public void testGlobalTemplatesDoNotApply() {
-        assertAcked(client().admin().indices().preparePutTemplate("a_global_template").setPatterns(List.of("*"))
-            .setMapping("foo", "type=text").get());
-        assertAcked(client().admin().indices().preparePutTemplate("not_global_template").setPatterns(List.of("a*"))
-            .setMapping("bar", "type=text").get());
-        assertAcked(client().admin().indices().preparePutTemplate("specific_template").setPatterns(List.of("a_hidden_index"))
-            .setMapping("baz", "type=text").get());
-        assertAcked(client().admin().indices().preparePutTemplate("unused_template").setPatterns(List.of("not_used"))
-            .setMapping("foobar", "type=text").get());
+        assertAcked(
+            client().admin()
+                .indices()
+                .preparePutTemplate("a_global_template")
+                .setPatterns(List.of("*"))
+                .setMapping("foo", "type=text")
+                .get()
+        );
+        assertAcked(
+            client().admin()
+                .indices()
+                .preparePutTemplate("not_global_template")
+                .setPatterns(List.of("a*"))
+                .setMapping("bar", "type=text")
+                .get()
+        );
+        assertAcked(
+            client().admin()
+                .indices()
+                .preparePutTemplate("specific_template")
+                .setPatterns(List.of("a_hidden_index"))
+                .setMapping("baz", "type=text")
+                .get()
+        );
+        assertAcked(
+            client().admin()
+                .indices()
+                .preparePutTemplate("unused_template")
+                .setPatterns(List.of("not_used"))
+                .setMapping("foobar", "type=text")
+                .get()
+        );
 
-        assertAcked(client().admin().indices().prepareCreate("a_hidden_index")
-            .setSettings(Settings.builder().put("index.hidden", true).build()).get());
+        assertAcked(
+            client().admin()
+                .indices()
+                .prepareCreate("a_hidden_index")
+                .setSettings(Settings.builder().put("index.hidden", true).build())
+                .get()
+        );
 
         GetMappingsResponse mappingsResponse = client().admin().indices().prepareGetMappings("a_hidden_index").get();
         assertThat(mappingsResponse.mappings().size(), is(1));
@@ -108,20 +140,28 @@ public class HiddenIndexIT extends ESIntegTestCase {
     }
 
     public void testGlobalTemplateCannotMakeIndexHidden() {
-        InvalidIndexTemplateException invalidIndexTemplateException = expectThrows(InvalidIndexTemplateException.class,
-            () -> client().admin().indices().preparePutTemplate("a_global_template")
+        InvalidIndexTemplateException invalidIndexTemplateException = expectThrows(
+            InvalidIndexTemplateException.class,
+            () -> client().admin()
+                .indices()
+                .preparePutTemplate("a_global_template")
                 .setPatterns(List.of("*"))
                 .setSettings(Settings.builder().put("index.hidden", randomBoolean()).build())
-                .get());
+                .get()
+        );
         assertThat(invalidIndexTemplateException.getMessage(), containsString("global templates may not specify the setting index.hidden"));
     }
 
     public void testNonGlobalTemplateCanMakeIndexHidden() {
-        assertAcked(client().admin().indices().preparePutTemplate("a_global_template")
-            .setPatterns(List.of("my_hidden_pattern*"))
-            .setMapping("foo", "type=text")
-            .setSettings(Settings.builder().put("index.hidden", true).build())
-            .get());
+        assertAcked(
+            client().admin()
+                .indices()
+                .preparePutTemplate("a_global_template")
+                .setPatterns(List.of("my_hidden_pattern*"))
+                .setMapping("foo", "type=text")
+                .setSettings(Settings.builder().put("index.hidden", true).build())
+                .get()
+        );
         assertAcked(client().admin().indices().prepareCreate("my_hidden_pattern1").get());
         GetSettingsResponse getSettingsResponse = client().admin().indices().prepareGetSettings("my_hidden_pattern1").get();
         assertThat(getSettingsResponse.getSetting("my_hidden_pattern1", "index.hidden"), is("true"));

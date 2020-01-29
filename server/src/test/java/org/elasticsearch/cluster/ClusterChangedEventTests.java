@@ -58,9 +58,11 @@ public class ClusterChangedEventTests extends ESTestCase {
     private static final String NODE_ID_PREFIX = "node_";
     private static final String INITIAL_CLUSTER_ID = UUIDs.randomBase64UUID();
     // the initial indices which every cluster state test starts out with
-    private static final List<Index> initialIndices = Arrays.asList(new Index("idx1", UUIDs.randomBase64UUID()),
-                                                                    new Index("idx2", UUIDs.randomBase64UUID()),
-                                                                    new Index("idx3", UUIDs.randomBase64UUID()));
+    private static final List<Index> initialIndices = Arrays.asList(
+        new Index("idx1", UUIDs.randomBase64UUID()),
+        new Index("idx2", UUIDs.randomBase64UUID()),
+        new Index("idx3", UUIDs.randomBase64UUID())
+    );
 
     /**
      * Test basic properties of the ClusterChangedEvent class:
@@ -80,18 +82,15 @@ public class ClusterChangedEventTests extends ESTestCase {
         try {
             event = new ClusterChangedEvent(null, newState, previousState);
             fail("should not have created a ClusterChangedEvent from a null source: " + event.source());
-        } catch (NullPointerException e) {
-        }
+        } catch (NullPointerException e) {}
         try {
             event = new ClusterChangedEvent("_na_", null, previousState);
             fail("should not have created a ClusterChangedEvent from a null state: " + event.state());
-        } catch (NullPointerException e) {
-        }
+        } catch (NullPointerException e) {}
         try {
             event = new ClusterChangedEvent("_na_", newState, null);
             fail("should not have created a ClusterChangedEvent from a null previousState: " + event.previousState());
-        } catch (NullPointerException e) {
-        }
+        } catch (NullPointerException e) {}
     }
 
     /**
@@ -150,13 +149,17 @@ public class ClusterChangedEventTests extends ESTestCase {
         // make sure the metadata is actually on the cluster state
         assertNotNull("IndexMetaData for " + index + " should exist on the cluster state", originalIndexMeta);
         IndexMetaData newIndexMeta = createIndexMetadata(index, originalIndexMeta.getVersion() + 1);
-        assertTrue("IndexMetaData with different version numbers must be considered changed",
-            ClusterChangedEvent.indexMetaDataChanged(originalIndexMeta, newIndexMeta));
+        assertTrue(
+            "IndexMetaData with different version numbers must be considered changed",
+            ClusterChangedEvent.indexMetaDataChanged(originalIndexMeta, newIndexMeta)
+        );
 
         // test when it doesn't exist
         newIndexMeta = createIndexMetadata(new Index("doesntexist", UUIDs.randomBase64UUID()));
-        assertTrue("IndexMetaData that didn't previously exist should be considered changed",
-            ClusterChangedEvent.indexMetaDataChanged(originalIndexMeta, newIndexMeta));
+        assertTrue(
+            "IndexMetaData that didn't previously exist should be considered changed",
+            ClusterChangedEvent.indexMetaDataChanged(originalIndexMeta, newIndexMeta)
+        );
 
         // test when its the same IndexMetaData
         assertFalse("IndexMetaData should be the same", ClusterChangedEvent.indexMetaDataChanged(originalIndexMeta, originalIndexMeta));
@@ -291,8 +294,7 @@ public class ClusterChangedEventTests extends ESTestCase {
 
         // next state removes two custom metadata type
         nextState = originalState;
-        event = new ClusterChangedEvent("_na_",
-                nextState(originalState, Arrays.asList(customMetaData1, customMetaData2)), nextState);
+        event = new ClusterChangedEvent("_na_", nextState(originalState, Arrays.asList(customMetaData1, customMetaData2)), nextState);
         changedCustomMetaDataTypeSet = event.changedCustomMetaDataSet();
         assertTrue(changedCustomMetaDataTypeSet.size() == 2);
         assertTrue(changedCustomMetaDataTypeSet.contains(customMetaData2.getWriteableName()));
@@ -349,18 +351,18 @@ public class ClusterChangedEventTests extends ESTestCase {
     private static ClusterState createState(final int numNodes, final boolean isLocalMaster, final List<Index> indices) {
         final MetaData metaData = createMetaData(indices);
         return ClusterState.builder(TEST_CLUSTER_NAME)
-                           .nodes(createDiscoveryNodes(numNodes, isLocalMaster))
-                           .metaData(metaData)
-                           .routingTable(createRoutingTable(1, metaData))
-                           .build();
+            .nodes(createDiscoveryNodes(numNodes, isLocalMaster))
+            .metaData(metaData)
+            .routingTable(createRoutingTable(1, metaData))
+            .build();
     }
 
     // Create a non-initialized cluster state
     private static ClusterState createNonInitializedState(final int numNodes, final boolean isLocalMaster) {
         final ClusterState withoutBlock = createState(numNodes, isLocalMaster, Collections.emptyList());
         return ClusterState.builder(withoutBlock)
-                           .blocks(ClusterBlocks.builder().addGlobalBlock(GatewayService.STATE_NOT_RECOVERED_BLOCK).build())
-                           .build();
+            .blocks(ClusterBlocks.builder().addGlobalBlock(GatewayService.STATE_NOT_RECOVERED_BLOCK).build())
+            .build();
     }
 
     private static ClusterState nextState(final ClusterState previousState, List<TestCustomMetaData> customMetaDataList) {
@@ -380,8 +382,13 @@ public class ClusterChangedEventTests extends ESTestCase {
     }
 
     // Create a modified cluster state from another one, but with some number of indices added and deleted.
-    private static ClusterState nextState(final ClusterState previousState, final boolean changeClusterUUID,
-                                          final List<Index> addedIndices, final List<Index> deletedIndices, final int numNodesToRemove) {
+    private static ClusterState nextState(
+        final ClusterState previousState,
+        final boolean changeClusterUUID,
+        final List<Index> addedIndices,
+        final List<Index> deletedIndices,
+        final int numNodesToRemove
+    ) {
         final ClusterState.Builder builder = ClusterState.builder(previousState);
         builder.stateUUID(UUIDs.randomBase64UUID());
         final MetaData.Builder metaBuilder = MetaData.builder(previousState.metaData());
@@ -413,12 +420,12 @@ public class ClusterChangedEventTests extends ESTestCase {
         return builder.build();
     }
 
-    // Create the discovery nodes for a cluster state.  For our testing purposes, we want
+    // Create the discovery nodes for a cluster state. For our testing purposes, we want
     // the first to be master, the second to be master eligible, the third to be a data node,
     // and the remainder can be any kinds of nodes (master eligible, data, or both).
     private static DiscoveryNodes createDiscoveryNodes(final int numNodes, final boolean isLocalMaster) {
-        assert (numNodes >= 3) : "the initial cluster state for event change tests should have a minimum of 3 nodes " +
-                                 "so there are a minimum of 2 master nodes for testing master change events.";
+        assert (numNodes >= 3) : "the initial cluster state for event change tests should have a minimum of 3 nodes "
+            + "so there are a minimum of 2 master nodes for testing master change events.";
         final DiscoveryNodes.Builder builder = DiscoveryNodes.builder();
         final int localNodeIndex = isLocalMaster ? 0 : randomIntBetween(1, numNodes - 1); // randomly assign the local node if not master
         for (int i = 0; i < numNodes; i++) {
@@ -454,8 +461,17 @@ public class ClusterChangedEventTests extends ESTestCase {
 
     // Create a new DiscoveryNode
     private static DiscoveryNode newNode(final String nodeId, Set<DiscoveryNodeRole> roles) {
-        return new DiscoveryNode(nodeId, nodeId, nodeId, "host", "host_address", buildNewFakeTransportAddress(),
-            Collections.emptyMap(), roles, Version.CURRENT);
+        return new DiscoveryNode(
+            nodeId,
+            nodeId,
+            nodeId,
+            "host",
+            "host_address",
+            buildNewFakeTransportAddress(),
+            Collections.emptyMap(),
+            roles,
+            Version.CURRENT
+        );
     }
 
     // Create the metadata for a cluster state.
@@ -475,16 +491,17 @@ public class ClusterChangedEventTests extends ESTestCase {
 
     // Create the index metadata for a given index, with the specified version.
     private static IndexMetaData createIndexMetadata(final Index index, final long version) {
-        final Settings settings = Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-                                                    .put(IndexMetaData.SETTING_INDEX_UUID, index.getUUID())
-                                                    .build();
+        final Settings settings = Settings.builder()
+            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+            .put(IndexMetaData.SETTING_INDEX_UUID, index.getUUID())
+            .build();
         return IndexMetaData.builder(index.getName())
-                            .settings(settings)
-                            .numberOfShards(1)
-                            .numberOfReplicas(0)
-                            .creationDate(System.currentTimeMillis())
-                            .version(version)
-                            .build();
+            .settings(settings)
+            .numberOfShards(1)
+            .numberOfReplicas(0)
+            .creationDate(System.currentTimeMillis())
+            .version(version)
+            .build();
     }
 
     // Create the routing table for a cluster state.
@@ -516,8 +533,10 @@ public class ClusterChangedEventTests extends ESTestCase {
 
     // execute the indices changes test by generating random index additions and deletions and
     // checking the values on the cluster changed event.
-    private static ClusterState executeIndicesChangesTest(final ClusterState previousState,
-                                                          final TombstoneDeletionQuantity deletionQuantity) {
+    private static ClusterState executeIndicesChangesTest(
+        final ClusterState previousState,
+        final TombstoneDeletionQuantity deletionQuantity
+    ) {
         final int numAdd = randomIntBetween(0, 5); // add random # of indices to the next cluster state
         final List<Index> stateIndices = new ArrayList<>();
         for (Iterator<IndexMetaData> iter = previousState.metaData().indices().valuesIt(); iter.hasNext();) {
@@ -537,7 +556,8 @@ public class ClusterChangedEventTests extends ESTestCase {
                 numDel = randomIntBetween(0, Math.max(stateIndices.size() - 1, 0));
                 break;
             }
-            default: throw new AssertionError("Unhandled mode [" + deletionQuantity + "]");
+            default:
+                throw new AssertionError("Unhandled mode [" + deletionQuantity + "]");
         }
         final boolean changeClusterUUID = randomBoolean();
         final List<Index> addedIndices = addIndices(numAdd, randomAlphaOfLengthBetween(5, 10));
@@ -556,7 +576,7 @@ public class ClusterChangedEventTests extends ESTestCase {
         assertThat(event.metaDataChanged(), equalTo(changeClusterUUID || addedIndices.size() > 0 || delIndices.size() > 0));
         final IndexGraveyard newGraveyard = event.state().metaData().indexGraveyard();
         final IndexGraveyard oldGraveyard = event.previousState().metaData().indexGraveyard();
-        assertThat(((IndexGraveyard.IndexGraveyardDiff)newGraveyard.diff(oldGraveyard)).getAdded().size(), equalTo(delIndices.size()));
+        assertThat(((IndexGraveyard.IndexGraveyardDiff) newGraveyard.diff(oldGraveyard)).getAdded().size(), equalTo(delIndices.size()));
         return newState;
     }
 

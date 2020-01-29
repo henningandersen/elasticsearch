@@ -37,16 +37,17 @@ import static org.elasticsearch.rest.RestRequest.Method.GET;
 
 public class RestNodesInfoAction extends BaseRestHandler {
     static final Set<String> ALLOWED_METRICS = Sets.newHashSet(
-            "http",
-            "ingest",
-            "indices",
-            "jvm",
-            "os",
-            "plugins",
-            "process",
-            "settings",
-            "thread_pool",
-            "transport");
+        "http",
+        "ingest",
+        "indices",
+        "jvm",
+        "os",
+        "plugins",
+        "process",
+        "settings",
+        "thread_pool",
+        "transport"
+    );
 
     private final SettingsFilter settingsFilter;
 
@@ -86,7 +87,7 @@ public class RestNodesInfoAction extends BaseRestHandler {
             Set<String> metricsOrNodeIds = Strings.tokenizeByCommaToSet(nodeId);
             boolean isMetricsOnly = ALLOWED_METRICS.containsAll(metricsOrNodeIds);
             if (isMetricsOnly) {
-                nodeIds = new String[]{"_all"};
+                nodeIds = new String[] { "_all" };
                 metrics = metricsOrNodeIds;
             } else {
                 nodeIds = Strings.tokenizeToStringArray(nodeId, ",");

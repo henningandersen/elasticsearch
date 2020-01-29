@@ -267,7 +267,7 @@ public class InternalOrder extends BucketOrder {
             @Override
             public int compare(Bucket b1, Bucket b2) {
                 int result = 0;
-                for (Iterator<BucketOrder> itr = compoundOrder.iterator(); itr.hasNext() && result == 0; ) {
+                for (Iterator<BucketOrder> itr = compoundOrder.iterator(); itr.hasNext() && result == 0;) {
                     result = itr.next().comparator(aggregator).compare(b1, b2);
                 }
                 return result;
@@ -396,10 +396,14 @@ public class InternalOrder extends BucketOrder {
         public static BucketOrder readOrder(StreamInput in) throws IOException {
             byte id = in.readByte();
             switch (id) {
-                case COUNT_DESC_ID: return COUNT_DESC;
-                case COUNT_ASC_ID: return COUNT_ASC;
-                case KEY_DESC_ID: return KEY_DESC;
-                case KEY_ASC_ID: return KEY_ASC;
+                case COUNT_DESC_ID:
+                    return COUNT_DESC;
+                case COUNT_ASC_ID:
+                    return COUNT_ASC;
+                case KEY_DESC_ID:
+                    return KEY_DESC;
+                case KEY_ASC_ID:
+                    return KEY_ASC;
                 case Aggregation.ID:
                     boolean asc = in.readBoolean();
                     String key = in.readString();
@@ -487,17 +491,14 @@ public class InternalOrder extends BucketOrder {
                     } else if ("desc".equalsIgnoreCase(dir)) {
                         orderAsc = false;
                     } else {
-                        throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown order direction [" + dir + "]");
+                        throw new ParsingException(parser.getTokenLocation(), "Unknown order direction [" + dir + "]");
                     }
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                        "Unexpected token [" + token + "] for [order]");
+                    throw new ParsingException(parser.getTokenLocation(), "Unexpected token [" + token + "] for [order]");
                 }
             }
             if (orderKey == null) {
-                throw new ParsingException(parser.getTokenLocation(),
-                    "Must specify at least one field for [order]");
+                throw new ParsingException(parser.getTokenLocation(), "Must specify at least one field for [order]");
             }
             switch (orderKey) {
                 case "_key":
@@ -524,8 +525,6 @@ public class InternalOrder extends BucketOrder {
             return false;
         }
         InternalOrder other = (InternalOrder) obj;
-        return Objects.equals(id, other.id)
-            && Objects.equals(key, other.key)
-            && Objects.equals(asc, other.asc);
+        return Objects.equals(id, other.id) && Objects.equals(key, other.key) && Objects.equals(asc, other.asc);
     }
 }

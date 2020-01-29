@@ -108,7 +108,7 @@ public class RestMultiSearchAction extends BaseRestHandler {
             multiRequest.add(searchRequest);
         });
         List<SearchRequest> requests = multiRequest.requests();
-        preFilterShardSize = Math.max(1, preFilterShardSize / (requests.size()+1));
+        preFilterShardSize = Math.max(1, preFilterShardSize / (requests.size() + 1));
         for (SearchRequest request : requests) {
             // preserve if it's set on the request
             request.setPreFilterShardSize(Math.min(preFilterShardSize, request.getPreFilterShardSize()));
@@ -122,8 +122,12 @@ public class RestMultiSearchAction extends BaseRestHandler {
     /**
      * Parses a multi-line {@link RestRequest} body, instantiating a {@link SearchRequest} for each line and applying the given consumer.
      */
-    public static void parseMultiLineRequest(RestRequest request, IndicesOptions indicesOptions, boolean allowExplicitIndex,
-            CheckedBiConsumer<SearchRequest, XContentParser, IOException> consumer) throws IOException {
+    public static void parseMultiLineRequest(
+        RestRequest request,
+        IndicesOptions indicesOptions,
+        boolean allowExplicitIndex,
+        CheckedBiConsumer<SearchRequest, XContentParser, IOException> consumer
+    ) throws IOException {
 
         String[] indices = Strings.splitStringByCommaToArray(request.param("index"));
         String searchType = request.param("search_type");
@@ -133,8 +137,18 @@ public class RestMultiSearchAction extends BaseRestHandler {
         final Tuple<XContentType, BytesReference> sourceTuple = request.contentOrSourceParam();
         final XContent xContent = sourceTuple.v1().xContent();
         final BytesReference data = sourceTuple.v2();
-        MultiSearchRequest.readMultiLineFormat(data, xContent, consumer, indices, indicesOptions, routing,
-                searchType, ccsMinimizeRoundtrips, request.getXContentRegistry(), allowExplicitIndex);
+        MultiSearchRequest.readMultiLineFormat(
+            data,
+            xContent,
+            consumer,
+            indices,
+            indicesOptions,
+            routing,
+            searchType,
+            ccsMinimizeRoundtrips,
+            request.getXContentRegistry(),
+            allowExplicitIndex
+        );
     }
 
     @Override

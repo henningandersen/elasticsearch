@@ -48,8 +48,15 @@ public class InboundMessageTests extends ESTestCase {
         boolean compress = randomBoolean();
         threadContext.putHeader("header", "header_value");
         Version version = randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion());
-        OutboundMessage.Request request = new OutboundMessage.Request(threadContext, message, version, action, requestId,
-            isHandshake, compress);
+        OutboundMessage.Request request = new OutboundMessage.Request(
+            threadContext,
+            message,
+            version,
+            action,
+            requestId,
+            isHandshake,
+            compress
+        );
         BytesReference reference;
         try (BytesStreamOutput streamOutput = new BytesStreamOutput()) {
             reference = request.serialize(streamOutput);
@@ -85,8 +92,7 @@ public class InboundMessageTests extends ESTestCase {
         boolean compress = randomBoolean();
         threadContext.putHeader("header", "header_value");
         Version version = randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion());
-        OutboundMessage.Response request = new OutboundMessage.Response(threadContext, message, version, requestId, isHandshake,
-            compress);
+        OutboundMessage.Response request = new OutboundMessage.Response(threadContext, message, version, requestId, isHandshake, compress);
         BytesReference reference;
         try (BytesStreamOutput streamOutput = new BytesStreamOutput()) {
             reference = request.serialize(streamOutput);
@@ -120,8 +126,14 @@ public class InboundMessageTests extends ESTestCase {
         boolean compress = randomBoolean();
         threadContext.putHeader("header", "header_value");
         Version version = randomFrom(Version.CURRENT, Version.CURRENT.minimumCompatibilityVersion());
-        OutboundMessage.Response request = new OutboundMessage.Response(threadContext, exception, version, requestId,
-            isHandshake, compress);
+        OutboundMessage.Response request = new OutboundMessage.Response(
+            threadContext,
+            exception,
+            version,
+            requestId,
+            isHandshake,
+            compress
+        );
         BytesReference reference;
         try (BytesStreamOutput streamOutput = new BytesStreamOutput()) {
             reference = request.serialize(streamOutput);
@@ -149,37 +161,61 @@ public class InboundMessageTests extends ESTestCase {
     }
 
     public void testEnsureVersionCompatibility() throws IOException {
-        testVersionIncompatibility(VersionUtils.randomVersionBetween(random(), Version.CURRENT.minimumCompatibilityVersion(),
-            Version.CURRENT), Version.CURRENT, randomBoolean());
+        testVersionIncompatibility(
+            VersionUtils.randomVersionBetween(random(), Version.CURRENT.minimumCompatibilityVersion(), Version.CURRENT),
+            Version.CURRENT,
+            randomBoolean()
+        );
 
         final Version version = Version.fromString("7.0.0");
         testVersionIncompatibility(Version.fromString("6.0.0"), version, true);
-        IllegalStateException ise = expectThrows(IllegalStateException.class, () ->
-            testVersionIncompatibility(Version.fromString("6.0.0"), version, false));
-        assertEquals("Received message from unsupported version: [6.0.0] minimal compatible version is: ["
-            + version.minimumCompatibilityVersion() + "]", ise.getMessage());
+        IllegalStateException ise = expectThrows(
+            IllegalStateException.class,
+            () -> testVersionIncompatibility(Version.fromString("6.0.0"), version, false)
+        );
+        assertEquals(
+            "Received message from unsupported version: [6.0.0] minimal compatible version is: ["
+                + version.minimumCompatibilityVersion()
+                + "]",
+            ise.getMessage()
+        );
 
         // For handshake we are compatible with N-2
         testVersionIncompatibility(Version.fromString("5.6.0"), version, true);
-        ise = expectThrows(IllegalStateException.class, () ->
-            testVersionIncompatibility(Version.fromString("5.6.0"), version, false));
-        assertEquals("Received message from unsupported version: [5.6.0] minimal compatible version is: ["
-            + version.minimumCompatibilityVersion() + "]", ise.getMessage());
+        ise = expectThrows(IllegalStateException.class, () -> testVersionIncompatibility(Version.fromString("5.6.0"), version, false));
+        assertEquals(
+            "Received message from unsupported version: [5.6.0] minimal compatible version is: ["
+                + version.minimumCompatibilityVersion()
+                + "]",
+            ise.getMessage()
+        );
 
-        ise = expectThrows(IllegalStateException.class, () ->
-            testVersionIncompatibility(Version.fromString("2.3.0"), version, true));
-        assertEquals("Received handshake message from unsupported version: [2.3.0] minimal compatible version is: ["
-            + version.minimumCompatibilityVersion() + "]", ise.getMessage());
+        ise = expectThrows(IllegalStateException.class, () -> testVersionIncompatibility(Version.fromString("2.3.0"), version, true));
+        assertEquals(
+            "Received handshake message from unsupported version: [2.3.0] minimal compatible version is: ["
+                + version.minimumCompatibilityVersion()
+                + "]",
+            ise.getMessage()
+        );
 
-        ise = expectThrows(IllegalStateException.class, () ->
-            testVersionIncompatibility(Version.fromString("2.3.0"), version, false));
-        assertEquals("Received message from unsupported version: [2.3.0] minimal compatible version is: ["
-            + version.minimumCompatibilityVersion() + "]", ise.getMessage());
+        ise = expectThrows(IllegalStateException.class, () -> testVersionIncompatibility(Version.fromString("2.3.0"), version, false));
+        assertEquals(
+            "Received message from unsupported version: [2.3.0] minimal compatible version is: ["
+                + version.minimumCompatibilityVersion()
+                + "]",
+            ise.getMessage()
+        );
     }
 
     public void testThrowOnNotCompressed() throws Exception {
         OutboundMessage.Response request = new OutboundMessage.Response(
-            threadContext, new Message(randomAlphaOfLength(10)), Version.CURRENT, randomLong(), false, false);
+            threadContext,
+            new Message(randomAlphaOfLength(10)),
+            Version.CURRENT,
+            randomLong(),
+            false,
+            false
+        );
         BytesReference reference;
         try (BytesStreamOutput streamOutput = new BytesStreamOutput()) {
             reference = request.serialize(streamOutput);
@@ -201,8 +237,15 @@ public class InboundMessageTests extends ESTestCase {
         String action = randomAlphaOfLength(10);
         long requestId = randomLong();
         boolean compress = randomBoolean();
-        OutboundMessage.Request request = new OutboundMessage.Request(threadContext, message, version, action, requestId,
-            isHandshake, compress);
+        OutboundMessage.Request request = new OutboundMessage.Request(
+            threadContext,
+            message,
+            version,
+            action,
+            requestId,
+            isHandshake,
+            compress
+        );
         BytesReference reference;
         try (BytesStreamOutput streamOutput = new BytesStreamOutput()) {
             reference = request.serialize(streamOutput);

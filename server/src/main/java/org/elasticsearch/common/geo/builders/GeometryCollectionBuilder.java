@@ -36,8 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class GeometryCollectionBuilder extends ShapeBuilder<Shape,
-    GeometryCollection<Geometry>, GeometryCollectionBuilder> {
+public class GeometryCollectionBuilder extends ShapeBuilder<Shape, GeometryCollection<Geometry>, GeometryCollectionBuilder> {
 
     public static final GeoShapeType TYPE = GeoShapeType.GEOMETRYCOLLECTION;
 
@@ -49,8 +48,7 @@ public class GeometryCollectionBuilder extends ShapeBuilder<Shape,
     /**
      * Build and empty GeometryCollectionBuilder.
      */
-    public GeometryCollectionBuilder() {
-    }
+    public GeometryCollectionBuilder() {}
 
     /**
      * Read from a stream.
@@ -117,8 +115,9 @@ public class GeometryCollectionBuilder extends ShapeBuilder<Shape,
 
     public ShapeBuilder getShapeAt(int i) {
         if (i >= this.shapes.size() || i < 0) {
-            throw new ElasticsearchException("GeometryCollection contains " + this.shapes.size() + " shapes. + " +
-                    "No shape found at index " + i);
+            throw new ElasticsearchException(
+                "GeometryCollection contains " + this.shapes.size() + " shapes. + " + "No shape found at index " + i
+            );
         }
         return this.shapes.get(i);
     }
@@ -164,8 +163,7 @@ public class GeometryCollectionBuilder extends ShapeBuilder<Shape,
     @Override
     public int numDimensions() {
         if (shapes == null || shapes.isEmpty()) {
-            throw new IllegalStateException("unable to get number of dimensions, " +
-                "GeometryCollection has not yet been initialized");
+            throw new IllegalStateException("unable to get number of dimensions, " + "GeometryCollection has not yet been initialized");
         }
         return shapes.get(0).numDimensions();
     }
@@ -179,11 +177,9 @@ public class GeometryCollectionBuilder extends ShapeBuilder<Shape,
             shapes.add(shape.buildS4J());
         }
 
-        if (shapes.size() == 1)
-            return shapes.get(0);
-        else
-            return new XShapeCollection<>(shapes, SPATIAL_CONTEXT);
-        //note: ShapeCollection is probably faster than a Multi* geom.
+        if (shapes.size() == 1) return shapes.get(0);
+        else return new XShapeCollection<>(shapes, SPATIAL_CONTEXT);
+        // note: ShapeCollection is probably faster than a Multi* geom.
     }
 
     @Override

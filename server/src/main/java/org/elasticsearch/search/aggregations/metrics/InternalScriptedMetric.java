@@ -40,13 +40,23 @@ public class InternalScriptedMetric extends InternalAggregation implements Scrip
     final Script reduceScript;
     private final List<Object> aggregation;
 
-    InternalScriptedMetric(String name, Object aggregation, Script reduceScript, List<PipelineAggregator> pipelineAggregators,
-                                  Map<String, Object> metaData) {
+    InternalScriptedMetric(
+        String name,
+        Object aggregation,
+        Script reduceScript,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         this(name, Collections.singletonList(aggregation), reduceScript, pipelineAggregators, metaData);
     }
 
-    private InternalScriptedMetric(String name, List<Object> aggregation, Script reduceScript, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    private InternalScriptedMetric(
+        String name,
+        List<Object> aggregation,
+        Script reduceScript,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.aggregation = aggregation;
         this.reduceScript = reduceScript;
@@ -99,23 +109,28 @@ public class InternalScriptedMetric extends InternalAggregation implements Scrip
                 params.putAll(firstAggregation.reduceScript.getParams());
             }
 
-            ScriptedMetricAggContexts.ReduceScript.Factory factory = reduceContext.scriptService().compile(
-                firstAggregation.reduceScript, ScriptedMetricAggContexts.ReduceScript.CONTEXT);
+            ScriptedMetricAggContexts.ReduceScript.Factory factory = reduceContext.scriptService()
+                .compile(firstAggregation.reduceScript, ScriptedMetricAggContexts.ReduceScript.CONTEXT);
             ScriptedMetricAggContexts.ReduceScript script = factory.newInstance(params, aggregationObjects);
 
             Object scriptResult = script.execute();
             CollectionUtils.ensureNoSelfReferences(scriptResult, "reduce script");
 
             aggregation = Collections.singletonList(scriptResult);
-        } else if (reduceContext.isFinalReduce())  {
+        } else if (reduceContext.isFinalReduce()) {
             aggregation = Collections.singletonList(aggregationObjects);
         } else {
             // if we are not an final reduce we have to maintain all the aggs from all the incoming one
             // until we hit the final reduce phase.
             aggregation = aggregationObjects;
         }
-        return new InternalScriptedMetric(firstAggregation.getName(), aggregation, firstAggregation.reduceScript, pipelineAggregators(),
-                getMetaData());
+        return new InternalScriptedMetric(
+            firstAggregation.getName(),
+            aggregation,
+            firstAggregation.reduceScript,
+            pipelineAggregators(),
+            getMetaData()
+        );
     }
 
     @Override
@@ -141,8 +156,7 @@ public class InternalScriptedMetric extends InternalAggregation implements Scrip
         if (super.equals(obj) == false) return false;
 
         InternalScriptedMetric other = (InternalScriptedMetric) obj;
-        return Objects.equals(reduceScript, other.reduceScript) &&
-                Objects.equals(aggregation, other.aggregation);
+        return Objects.equals(reduceScript, other.reduceScript) && Objects.equals(aggregation, other.aggregation);
     }
 
     @Override

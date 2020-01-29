@@ -39,8 +39,7 @@ public final class SortedSetDVBytesAtomicFieldData extends AbstractAtomicOrdinal
     private final LeafReader reader;
     private final String field;
 
-    SortedSetDVBytesAtomicFieldData(LeafReader reader, String field, Function<SortedSetDocValues,
-            ScriptDocValues<?>> scriptFunction) {
+    SortedSetDVBytesAtomicFieldData(LeafReader reader, String field, Function<SortedSetDocValues, ScriptDocValues<?>> scriptFunction) {
         super(scriptFunction);
         this.reader = reader;
         this.field = field;
@@ -56,14 +55,13 @@ public final class SortedSetDVBytesAtomicFieldData extends AbstractAtomicOrdinal
     }
 
     @Override
-    public void close() {
-    }
+    public void close() {}
 
     @Override
     public long ramBytesUsed() {
         return 0; // unknown
     }
-    
+
     @Override
     public Collection<Accountable> getChildResources() {
         return Collections.emptyList();

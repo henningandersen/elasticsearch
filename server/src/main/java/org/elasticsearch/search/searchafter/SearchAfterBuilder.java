@@ -51,8 +51,7 @@ public class SearchAfterBuilder implements ToXContentObject, Writeable {
 
     private Object[] sortValues = EMPTY_SORT_VALUES;
 
-    public SearchAfterBuilder() {
-    }
+    public SearchAfterBuilder() {}
 
     /**
      * Read from a stream.
@@ -110,8 +109,8 @@ public class SearchAfterBuilder implements ToXContentObject, Writeable {
         SortField[] sortFields = sort.sort.getSort();
         if (sortFields.length != values.length) {
             throw new IllegalArgumentException(
-                    SEARCH_AFTER.getPreferredName() + " has " + values.length + " value(s) but sort has "
-                            + sort.sort.getSort().length + ".");
+                SEARCH_AFTER.getPreferredName() + " has " + values.length + " value(s) but sort has " + sort.sort.getSort().length + "."
+            );
         }
         Object[] fieldValues = new Object[sortFields.length];
         for (int i = 0; i < sortFields.length; i++) {
@@ -184,8 +183,11 @@ public class SearchAfterBuilder implements ToXContentObject, Writeable {
                     if (value instanceof Number) {
                         return ((Number) value).longValue();
                     }
-                    return format.parseLong(value.toString(), false,
-                        () -> { throw new IllegalStateException("now() is not allowed in [search_after] key"); });
+                    return format.parseLong(
+                        value.toString(),
+                        false,
+                        () -> { throw new IllegalStateException("now() is not allowed in [search_after] key"); }
+                    );
 
                 case FLOAT:
                     if (value instanceof Number) {
@@ -198,12 +200,15 @@ public class SearchAfterBuilder implements ToXContentObject, Writeable {
                     return format.parseBytesRef(value.toString());
 
                 default:
-                    throw new IllegalArgumentException("Comparator type [" + sortType.name() + "] for field [" + fieldName
-                            + "] is not supported.");
+                    throw new IllegalArgumentException(
+                        "Comparator type [" + sortType.name() + "] for field [" + fieldName + "] is not supported."
+                    );
             }
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             throw new IllegalArgumentException(
-                    "Failed to parse " + SEARCH_AFTER.getPreferredName() + " value for field [" + fieldName + "].", e);
+                "Failed to parse " + SEARCH_AFTER.getPreferredName() + " value for field [" + fieldName + "].",
+                e
+            );
         }
     }
 
@@ -222,7 +227,7 @@ public class SearchAfterBuilder implements ToXContentObject, Writeable {
     public static SearchAfterBuilder fromXContent(XContentParser parser) throws IOException {
         SearchAfterBuilder builder = new SearchAfterBuilder();
         XContentParser.Token token = parser.currentToken();
-        List<Object> values = new ArrayList<> ();
+        List<Object> values = new ArrayList<>();
         if (token == XContentParser.Token.START_ARRAY) {
             while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
                 if (token == XContentParser.Token.VALUE_NUMBER) {
@@ -244,8 +249,9 @@ public class SearchAfterBuilder implements ToXContentObject, Writeable {
                             break;
 
                         default:
-                            throw new IllegalArgumentException("[search_after] does not accept numbers of type ["
-                                + parser.numberType() + "], got " + parser.text());
+                            throw new IllegalArgumentException(
+                                "[search_after] does not accept numbers of type [" + parser.numberType() + "], got " + parser.text()
+                            );
                     }
                 } else if (token == XContentParser.Token.VALUE_STRING) {
                     values.add(parser.text());
@@ -254,14 +260,34 @@ public class SearchAfterBuilder implements ToXContentObject, Writeable {
                 } else if (token == XContentParser.Token.VALUE_NULL) {
                     values.add(null);
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(), "Expected [" + XContentParser.Token.VALUE_STRING + "] or ["
-                            + XContentParser.Token.VALUE_NUMBER + "] or [" + XContentParser.Token.VALUE_BOOLEAN + "] or ["
-                            + XContentParser.Token.VALUE_NULL + "] but found [" + token + "] inside search_after.");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Expected ["
+                            + XContentParser.Token.VALUE_STRING
+                            + "] or ["
+                            + XContentParser.Token.VALUE_NUMBER
+                            + "] or ["
+                            + XContentParser.Token.VALUE_BOOLEAN
+                            + "] or ["
+                            + XContentParser.Token.VALUE_NULL
+                            + "] but found ["
+                            + token
+                            + "] inside search_after."
+                    );
                 }
             }
         } else {
-            throw new ParsingException(parser.getTokenLocation(), "Expected [" + XContentParser.Token.START_ARRAY + "] in ["
-                    + SEARCH_AFTER.getPreferredName() + "] but found [" + token + "] inside search_after", parser.getTokenLocation());
+            throw new ParsingException(
+                parser.getTokenLocation(),
+                "Expected ["
+                    + XContentParser.Token.START_ARRAY
+                    + "] in ["
+                    + SEARCH_AFTER.getPreferredName()
+                    + "] but found ["
+                    + token
+                    + "] inside search_after",
+                parser.getTokenLocation()
+            );
         }
         builder.setSortValues(values.toArray());
         return builder;
@@ -269,7 +295,7 @@ public class SearchAfterBuilder implements ToXContentObject, Writeable {
 
     @Override
     public boolean equals(Object other) {
-        if (! (other instanceof SearchAfterBuilder)) {
+        if (!(other instanceof SearchAfterBuilder)) {
             return false;
         }
         return Arrays.equals(sortValues, ((SearchAfterBuilder) other).sortValues);

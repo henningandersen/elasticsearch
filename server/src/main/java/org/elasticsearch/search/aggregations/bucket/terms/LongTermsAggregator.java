@@ -50,12 +50,34 @@ public class LongTermsAggregator extends TermsAggregator {
     private boolean showTermDocCountError;
     private LongFilter longFilter;
 
-    public LongTermsAggregator(String name, AggregatorFactories factories, ValuesSource.Numeric valuesSource, DocValueFormat format,
-            BucketOrder order, BucketCountThresholds bucketCountThresholds, SearchContext aggregationContext, Aggregator parent,
-            SubAggCollectionMode subAggCollectMode, boolean showTermDocCountError, IncludeExclude.LongFilter longFilter,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
-        super(name, factories, aggregationContext, parent, bucketCountThresholds, order, format, subAggCollectMode, pipelineAggregators,
-                metaData);
+    public LongTermsAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource.Numeric valuesSource,
+        DocValueFormat format,
+        BucketOrder order,
+        BucketCountThresholds bucketCountThresholds,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        SubAggCollectionMode subAggCollectMode,
+        boolean showTermDocCountError,
+        IncludeExclude.LongFilter longFilter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
+        super(
+            name,
+            factories,
+            aggregationContext,
+            parent,
+            bucketCountThresholds,
+            order,
+            format,
+            subAggCollectMode,
+            pipelineAggregators,
+            metaData
+        );
         this.valuesSource = valuesSource;
         this.showTermDocCountError = showTermDocCountError;
         this.longFilter = longFilter;
@@ -75,8 +97,7 @@ public class LongTermsAggregator extends TermsAggregator {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         final SortedNumericDocValues values = getValues(valuesSource, ctx);
         return new LeafBucketCollectorBase(sub, values) {
             @Override
@@ -111,8 +132,8 @@ public class LongTermsAggregator extends TermsAggregator {
     public InternalAggregation buildAggregation(long owningBucketOrdinal) throws IOException {
         assert owningBucketOrdinal == 0;
 
-        if (bucketCountThresholds.getMinDocCount() == 0 && (InternalOrder.isCountDesc(order) == false ||
-                bucketOrds.size() < bucketCountThresholds.getRequiredSize())) {
+        if (bucketCountThresholds.getMinDocCount() == 0
+            && (InternalOrder.isCountDesc(order) == false || bucketOrds.size() < bucketCountThresholds.getRequiredSize())) {
             // we need to fill-in the blanks
             for (LeafReaderContext ctx : context.searcher().getTopReaderContext().leaves()) {
                 final SortedNumericDocValues values = getValues(valuesSource, ctx);
@@ -168,15 +189,38 @@ public class LongTermsAggregator extends TermsAggregator {
             list[i].docCountError = 0;
         }
 
-        return new LongTerms(name, order, bucketCountThresholds.getRequiredSize(), bucketCountThresholds.getMinDocCount(),
-                pipelineAggregators(), metaData(), format, bucketCountThresholds.getShardSize(), showTermDocCountError, otherDocCount,
-                Arrays.asList(list), 0);
+        return new LongTerms(
+            name,
+            order,
+            bucketCountThresholds.getRequiredSize(),
+            bucketCountThresholds.getMinDocCount(),
+            pipelineAggregators(),
+            metaData(),
+            format,
+            bucketCountThresholds.getShardSize(),
+            showTermDocCountError,
+            otherDocCount,
+            Arrays.asList(list),
+            0
+        );
     }
 
     @Override
     public InternalAggregation buildEmptyAggregation() {
-        return new LongTerms(name, order, bucketCountThresholds.getRequiredSize(), bucketCountThresholds.getMinDocCount(),
-                pipelineAggregators(), metaData(), format, bucketCountThresholds.getShardSize(), showTermDocCountError, 0, emptyList(), 0);
+        return new LongTerms(
+            name,
+            order,
+            bucketCountThresholds.getRequiredSize(),
+            bucketCountThresholds.getMinDocCount(),
+            pipelineAggregators(),
+            metaData(),
+            format,
+            bucketCountThresholds.getShardSize(),
+            showTermDocCountError,
+            0,
+            emptyList(),
+            0
+        );
     }
 
     @Override

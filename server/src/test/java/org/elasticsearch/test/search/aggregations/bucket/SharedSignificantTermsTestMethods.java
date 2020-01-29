@@ -58,9 +58,10 @@ public class SharedSignificantTermsTestMethods {
     }
 
     private static void checkSignificantTermsAggregationCorrect(ESIntegTestCase testCase) {
-        SearchResponse response = client().prepareSearch(INDEX_NAME).addAggregation(
-                terms("class").field(CLASS_FIELD).subAggregation(significantTerms("sig_terms").field(TEXT_FIELD)))
-                .execute().actionGet();
+        SearchResponse response = client().prepareSearch(INDEX_NAME)
+            .addAggregation(terms("class").field(CLASS_FIELD).subAggregation(significantTerms("sig_terms").field(TEXT_FIELD)))
+            .execute()
+            .actionGet();
         assertSearchResponse(response);
         StringTerms classes = response.getAggregations().get("class");
         Assert.assertThat(classes.getBuckets().size(), equalTo(2));
@@ -81,24 +82,20 @@ public class SharedSignificantTermsTestMethods {
         if (type.equals("text")) {
             textMappings += ",fielddata=true";
         }
-        assertAcked(testCase.prepareCreate(INDEX_NAME).setSettings(settings, XContentType.JSON)
-                .setMapping("text", textMappings, CLASS_FIELD, "type=keyword"));
-        String[] gb = {"0", "1"};
+        assertAcked(
+            testCase.prepareCreate(INDEX_NAME)
+                .setSettings(settings, XContentType.JSON)
+                .setMapping("text", textMappings, CLASS_FIELD, "type=keyword")
+        );
+        String[] gb = { "0", "1" };
         List<IndexRequestBuilder> indexRequestBuilderList = new ArrayList<>();
-        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("1")
-                .setSource(TEXT_FIELD, "1", CLASS_FIELD, "1"));
-        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("2")
-                .setSource(TEXT_FIELD, "1", CLASS_FIELD, "1"));
-        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("3")
-                .setSource(TEXT_FIELD, "0", CLASS_FIELD, "0"));
-        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("4")
-                .setSource(TEXT_FIELD, "0", CLASS_FIELD, "0"));
-        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("5")
-                .setSource(TEXT_FIELD, gb, CLASS_FIELD, "1"));
-        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("6")
-                .setSource(TEXT_FIELD, gb, CLASS_FIELD, "0"));
-        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("7")
-                .setSource(TEXT_FIELD, "0", CLASS_FIELD, "0"));
+        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("1").setSource(TEXT_FIELD, "1", CLASS_FIELD, "1"));
+        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("2").setSource(TEXT_FIELD, "1", CLASS_FIELD, "1"));
+        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("3").setSource(TEXT_FIELD, "0", CLASS_FIELD, "0"));
+        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("4").setSource(TEXT_FIELD, "0", CLASS_FIELD, "0"));
+        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("5").setSource(TEXT_FIELD, gb, CLASS_FIELD, "1"));
+        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("6").setSource(TEXT_FIELD, gb, CLASS_FIELD, "0"));
+        indexRequestBuilderList.add(client().prepareIndex(INDEX_NAME).setId("7").setSource(TEXT_FIELD, "0", CLASS_FIELD, "0"));
         testCase.indexRandom(true, false, indexRequestBuilderList);
     }
 }

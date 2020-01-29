@@ -51,9 +51,16 @@ final class GeoBoundsAggregator extends MetricsAggregator {
     DoubleArray negLefts;
     DoubleArray negRights;
 
-    GeoBoundsAggregator(String name, SearchContext aggregationContext, Aggregator parent,
-            ValuesSource.GeoPoint valuesSource, boolean wrapLongitude, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) throws IOException {
+    GeoBoundsAggregator(
+        String name,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        ValuesSource.GeoPoint valuesSource,
+        boolean wrapLongitude,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, aggregationContext, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.wrapLongitude = wrapLongitude;
@@ -75,8 +82,7 @@ final class GeoBoundsAggregator extends MetricsAggregator {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            LeafBucketCollector sub) {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, LeafBucketCollector sub) {
         if (valuesSource == null) {
             return LeafBucketCollector.NO_OP_COLLECTOR;
         }
@@ -153,15 +159,34 @@ final class GeoBoundsAggregator extends MetricsAggregator {
         double posRight = posRights.get(owningBucketOrdinal);
         double negLeft = negLefts.get(owningBucketOrdinal);
         double negRight = negRights.get(owningBucketOrdinal);
-        return new InternalGeoBounds(name, top, bottom, posLeft, posRight, negLeft, negRight, wrapLongitude,
-            pipelineAggregators(), metaData());
+        return new InternalGeoBounds(
+            name,
+            top,
+            bottom,
+            posLeft,
+            posRight,
+            negLeft,
+            negRight,
+            wrapLongitude,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override
     public InternalAggregation buildEmptyAggregation() {
-        return new InternalGeoBounds(name, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
-            Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, wrapLongitude,
-            pipelineAggregators(), metaData());
+        return new InternalGeoBounds(
+            name,
+            Double.NEGATIVE_INFINITY,
+            Double.POSITIVE_INFINITY,
+            Double.POSITIVE_INFINITY,
+            Double.NEGATIVE_INFINITY,
+            Double.POSITIVE_INFINITY,
+            Double.NEGATIVE_INFINITY,
+            wrapLongitude,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override

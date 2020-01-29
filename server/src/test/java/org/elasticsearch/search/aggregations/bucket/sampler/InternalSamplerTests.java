@@ -29,8 +29,13 @@ import java.util.Map;
 
 public class InternalSamplerTests extends InternalSingleBucketAggregationTestCase<InternalSampler> {
     @Override
-    protected InternalSampler createTestInstance(String name, long docCount, InternalAggregations aggregations,
-                                                 List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    protected InternalSampler createTestInstance(
+        String name,
+        long docCount,
+        InternalAggregations aggregations,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         return new InternalSampler(name, docCount, aggregations, pipelineAggregators, metaData);
     }
 

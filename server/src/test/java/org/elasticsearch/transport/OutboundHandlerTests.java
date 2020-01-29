@@ -80,7 +80,7 @@ public class OutboundHandlerTests extends ESTestCase {
         handler.sendBytes(channel, bytesArray, listener);
 
         BytesReference reference = channel.getMessageCaptor().get();
-        ActionListener<Void> sendListener  = channel.getListenerCaptor().get();
+        ActionListener<Void> sendListener = channel.getListenerCaptor().get();
         if (randomBoolean()) {
             sendListener.onResponse(null);
             assertTrue(isSuccess.get());
@@ -112,8 +112,13 @@ public class OutboundHandlerTests extends ESTestCase {
         AtomicReference<TransportRequest> requestRef = new AtomicReference<>();
         handler.setMessageListener(new TransportMessageListener() {
             @Override
-            public void onRequestSent(DiscoveryNode node, long requestId, String action, TransportRequest request,
-                                      TransportRequestOptions options) {
+            public void onRequestSent(
+                DiscoveryNode node,
+                long requestId,
+                String action,
+                TransportRequest request,
+                TransportRequestOptions options
+            ) {
                 nodeRef.set(node);
                 requestIdRef.set(requestId);
                 actionRef.set(action);
@@ -123,7 +128,7 @@ public class OutboundHandlerTests extends ESTestCase {
         handler.sendRequest(node, channel, requestId, action, request, options, version, compress, isHandshake);
 
         BytesReference reference = channel.getMessageCaptor().get();
-        ActionListener<Void> sendListener  = channel.getListenerCaptor().get();
+        ActionListener<Void> sendListener = channel.getListenerCaptor().get();
         if (randomBoolean()) {
             sendListener.onResponse(null);
         } else {
@@ -189,7 +194,7 @@ public class OutboundHandlerTests extends ESTestCase {
         handler.sendResponse(version, channel, requestId, action, response, compress, isHandshake);
 
         BytesReference reference = channel.getMessageCaptor().get();
-        ActionListener<Void> sendListener  = channel.getListenerCaptor().get();
+        ActionListener<Void> sendListener = channel.getListenerCaptor().get();
         if (randomBoolean()) {
             sendListener.onResponse(null);
         } else {
@@ -253,7 +258,7 @@ public class OutboundHandlerTests extends ESTestCase {
         handler.sendErrorResponse(version, channel, requestId, action, error);
 
         BytesReference reference = channel.getMessageCaptor().get();
-        ActionListener<Void> sendListener  = channel.getListenerCaptor().get();
+        ActionListener<Void> sendListener = channel.getListenerCaptor().get();
         if (randomBoolean()) {
             sendListener.onResponse(null);
         } else {

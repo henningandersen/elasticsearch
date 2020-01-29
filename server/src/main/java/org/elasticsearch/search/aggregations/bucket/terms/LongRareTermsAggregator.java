@@ -47,12 +47,33 @@ public class LongRareTermsAggregator extends AbstractRareTermsAggregator<ValuesS
 
     protected LongHash bucketOrds;
 
-    LongRareTermsAggregator(String name, AggregatorFactories factories, ValuesSource.Numeric valuesSource, DocValueFormat format,
-                                   SearchContext aggregationContext, Aggregator parent, IncludeExclude.LongFilter longFilter,
-                                   int maxDocCount, double precision, List<PipelineAggregator> pipelineAggregators,
-                                   Map<String, Object> metaData) throws IOException {
-        super(name, factories, aggregationContext, parent, pipelineAggregators, metaData, maxDocCount, precision,
-            format, valuesSource, longFilter);
+    LongRareTermsAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource.Numeric valuesSource,
+        DocValueFormat format,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        IncludeExclude.LongFilter longFilter,
+        int maxDocCount,
+        double precision,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
+        super(
+            name,
+            factories,
+            aggregationContext,
+            parent,
+            pipelineAggregators,
+            metaData,
+            maxDocCount,
+            precision,
+            format,
+            valuesSource,
+            longFilter
+        );
         this.bucketOrds = new LongHash(1, aggregationContext.bigArrays());
     }
 
@@ -61,8 +82,7 @@ public class LongRareTermsAggregator extends AbstractRareTermsAggregator<ValuesS
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-                                                final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         final SortedNumericDocValues values = getValues(valuesSource, ctx);
         if (subCollectors == null) {
             subCollectors = sub;

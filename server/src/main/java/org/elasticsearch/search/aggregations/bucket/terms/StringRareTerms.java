@@ -102,9 +102,16 @@ public class StringRareTerms extends InternalMappedRareTerms<StringRareTerms, St
         }
     }
 
-    StringRareTerms(String name, BucketOrder order, List<PipelineAggregator> pipelineAggregators,
-                           Map<String, Object> metaData, DocValueFormat format,
-                           List<StringRareTerms.Bucket> buckets, long maxDocCount, SetBackedScalingCuckooFilter filter) {
+    StringRareTerms(
+        String name,
+        BucketOrder order,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        DocValueFormat format,
+        List<StringRareTerms.Bucket> buckets,
+        long maxDocCount,
+        SetBackedScalingCuckooFilter filter
+    ) {
         super(name, order, pipelineAggregators, metaData, format, buckets, maxDocCount, filter);
     }
 
@@ -131,10 +138,12 @@ public class StringRareTerms extends InternalMappedRareTerms<StringRareTerms, St
     }
 
     @Override
-    protected StringRareTerms createWithFilter(String name, List<StringRareTerms.Bucket> buckets,
-                                               SetBackedScalingCuckooFilter filterFilter) {
-        return new StringRareTerms(name, order, pipelineAggregators(), metaData, format,
-            buckets, maxDocCount, filterFilter);
+    protected StringRareTerms createWithFilter(
+        String name,
+        List<StringRareTerms.Bucket> buckets,
+        SetBackedScalingCuckooFilter filterFilter
+    ) {
+        return new StringRareTerms(name, order, pipelineAggregators(), metaData, format, buckets, maxDocCount, filterFilter);
     }
 
     @Override

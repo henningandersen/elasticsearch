@@ -28,15 +28,27 @@ import java.util.Map;
 
 public abstract class NumericMetricsAggregator extends MetricsAggregator {
 
-    private NumericMetricsAggregator(String name, SearchContext context, Aggregator parent,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    private NumericMetricsAggregator(
+        String name,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, context, parent, pipelineAggregators, metaData);
     }
 
     public abstract static class SingleValue extends NumericMetricsAggregator {
 
-        protected SingleValue(String name, SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-                Map<String, Object> metaData) throws IOException {
+        protected SingleValue(
+            String name,
+            SearchContext context,
+            Aggregator parent,
+            List<PipelineAggregator> pipelineAggregators,
+            Map<String, Object> metaData
+        )
+            throws IOException {
             super(name, context, parent, pipelineAggregators, metaData);
         }
 
@@ -45,8 +57,14 @@ public abstract class NumericMetricsAggregator extends MetricsAggregator {
 
     public abstract static class MultiValue extends NumericMetricsAggregator {
 
-        protected MultiValue(String name, SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-                Map<String, Object> metaData) throws IOException {
+        protected MultiValue(
+            String name,
+            SearchContext context,
+            Aggregator parent,
+            List<PipelineAggregator> pipelineAggregators,
+            Map<String, Object> metaData
+        )
+            throws IOException {
             super(name, context, parent, pipelineAggregators, metaData);
         }
 

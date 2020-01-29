@@ -42,8 +42,10 @@ public class TransportInfo implements Writeable, ToXContentFragment {
     private static final DeprecationLogger deprecationLogger = new DeprecationLogger(LogManager.getLogger(TransportInfo.class));
 
     /** Whether to add hostname to publish host field when serializing. */
-    private static final boolean CNAME_IN_PUBLISH_ADDRESS =
-            parseBoolean(System.getProperty("es.transport.cname_in_publish_address"), false);
+    private static final boolean CNAME_IN_PUBLISH_ADDRESS = parseBoolean(
+        System.getProperty("es.transport.cname_in_publish_address"),
+        false
+    );
 
     private BoundTransportAddress address;
     private Map<String, BoundTransportAddress> profileAddresses;
@@ -53,8 +55,11 @@ public class TransportInfo implements Writeable, ToXContentFragment {
         this(address, profileAddresses, CNAME_IN_PUBLISH_ADDRESS);
     }
 
-    public TransportInfo(BoundTransportAddress address, @Nullable Map<String, BoundTransportAddress> profileAddresses,
-                         boolean cnameInPublishAddressProperty) {
+    public TransportInfo(
+        BoundTransportAddress address,
+        @Nullable Map<String, BoundTransportAddress> profileAddresses,
+        boolean cnameInPublishAddressProperty
+    ) {
         this.address = address;
         this.profileAddresses = profileAddresses;
         this.cnameInPublishAddressProperty = cnameInPublishAddressProperty;
@@ -104,8 +109,9 @@ public class TransportInfo implements Writeable, ToXContentFragment {
             publishAddressString = hostString + '/' + publishAddress.toString();
             if (cnameInPublishAddressProperty) {
                 deprecationLogger.deprecated(
-                        "es.transport.cname_in_publish_address system property is deprecated and no longer affects " + propertyName +
-                                " formatting. Remove this property to get rid of this deprecation warning."
+                    "es.transport.cname_in_publish_address system property is deprecated and no longer affects "
+                        + propertyName
+                        + " formatting. Remove this property to get rid of this deprecation warning."
                 );
             }
         }

@@ -62,24 +62,33 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
 
     public void testClusterStateSerialization() throws Exception {
         MetaData metaData = MetaData.builder()
-                .put(IndexMetaData.builder("test").settings(settings(Version.CURRENT)).numberOfShards(10).numberOfReplicas(1))
-                .build();
+            .put(IndexMetaData.builder("test").settings(settings(Version.CURRENT)).numberOfShards(10).numberOfReplicas(1))
+            .build();
 
-        RoutingTable routingTable = RoutingTable.builder()
-                .addAsNew(metaData.index("test"))
-                .build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metaData.index("test")).build();
 
-        DiscoveryNodes nodes = DiscoveryNodes.builder().add(newNode("node1")).add(newNode("node2"))
-            .add(newNode("node3")).localNodeId("node1").masterNodeId("node2").build();
+        DiscoveryNodes nodes = DiscoveryNodes.builder()
+            .add(newNode("node1"))
+            .add(newNode("node2"))
+            .add(newNode("node3"))
+            .localNodeId("node1")
+            .masterNodeId("node2")
+            .build();
 
         ClusterState clusterState = ClusterState.builder(new ClusterName("clusterName1"))
-            .nodes(nodes).metaData(metaData).routingTable(routingTable).build();
+            .nodes(nodes)
+            .metaData(metaData)
+            .routingTable(routingTable)
+            .build();
 
         AllocationService strategy = createAllocationService();
         clusterState = ClusterState.builder(clusterState).routingTable(strategy.reroute(clusterState, "reroute").routingTable()).build();
 
-        ClusterState serializedClusterState = ClusterState.Builder.fromBytes(ClusterState.Builder.toBytes(clusterState), newNode("node1"),
-            new NamedWriteableRegistry(ClusterModule.getNamedWriteables()));
+        ClusterState serializedClusterState = ClusterState.Builder.fromBytes(
+            ClusterState.Builder.toBytes(clusterState),
+            newNode("node1"),
+            new NamedWriteableRegistry(ClusterModule.getNamedWriteables())
+        );
 
         assertThat(serializedClusterState.getClusterName().value(), equalTo(clusterState.getClusterName().value()));
 
@@ -88,17 +97,18 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
 
     public void testRoutingTableSerialization() throws Exception {
         MetaData metaData = MetaData.builder()
-                .put(IndexMetaData.builder("test").settings(settings(Version.CURRENT)).numberOfShards(10).numberOfReplicas(1))
-                .build();
+            .put(IndexMetaData.builder("test").settings(settings(Version.CURRENT)).numberOfShards(10).numberOfReplicas(1))
+            .build();
 
-        RoutingTable routingTable = RoutingTable.builder()
-                .addAsNew(metaData.index("test"))
-                .build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metaData.index("test")).build();
 
         DiscoveryNodes nodes = DiscoveryNodes.builder().add(newNode("node1")).add(newNode("node2")).add(newNode("node3")).build();
 
-        ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)).nodes(nodes)
-            .metaData(metaData).routingTable(routingTable).build();
+        ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
+            .nodes(nodes)
+            .metaData(metaData)
+            .routingTable(routingTable)
+            .build();
 
         AllocationService strategy = createAllocationService();
         RoutingTable source = strategy.reroute(clusterState, "reroute").routingTable();
@@ -116,17 +126,23 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
         boolean includeRestore = randomBoolean();
 
         ClusterState.Builder builder = ClusterState.builder(ClusterState.EMPTY_STATE)
-            .putCustom(SnapshotDeletionsInProgress.TYPE,
+            .putCustom(
+                SnapshotDeletionsInProgress.TYPE,
                 SnapshotDeletionsInProgress.newInstance(
                     new SnapshotDeletionsInProgress.Entry(
                         new Snapshot("repo1", new SnapshotId("snap1", UUIDs.randomBase64UUID())),
-                        randomNonNegativeLong(), randomNonNegativeLong())
-                ));
+                        randomNonNegativeLong(),
+                        randomNonNegativeLong()
+                    )
+                )
+            );
         if (includeRestore) {
-            builder.putCustom(RestoreInProgress.TYPE,
+            builder.putCustom(
+                RestoreInProgress.TYPE,
                 new RestoreInProgress.Builder().add(
                     new RestoreInProgress.Entry(
-                        UUIDs.randomBase64UUID(), new Snapshot("repo2", new SnapshotId("snap2", UUIDs.randomBase64UUID())),
+                        UUIDs.randomBase64UUID(),
+                        new Snapshot("repo2", new SnapshotId("snap2", UUIDs.randomBase64UUID())),
                         RestoreInProgress.State.STARTED,
                         Collections.singletonList("index_name"),
                         ImmutableOpenMap.of()
@@ -170,55 +186,87 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
         BytesStreamOutput outStream = new BytesStreamOutput();
         outStream.setVersion(Version.CURRENT);
         diff.writeTo(outStream);
-        StreamInput inStream = new NamedWriteableAwareStreamInput(outStream.bytes().streamInput(),
-            new NamedWriteableRegistry(ClusterModule.getNamedWriteables()));
+        StreamInput inStream = new NamedWriteableAwareStreamInput(
+            outStream.bytes().streamInput(),
+            new NamedWriteableRegistry(ClusterModule.getNamedWriteables())
+        );
         diff = ClusterState.readDiffFrom(inStream, newNode("node-name"));
         return diff.apply(original);
     }
 
     public void testObjectReuseWhenApplyingClusterStateDiff() throws Exception {
-        IndexMetaData indexMetaData
-            = IndexMetaData.builder("test").settings(settings(Version.CURRENT)).numberOfShards(10).numberOfReplicas(1).build();
+        IndexMetaData indexMetaData = IndexMetaData.builder("test")
+            .settings(settings(Version.CURRENT))
+            .numberOfShards(10)
+            .numberOfReplicas(1)
+            .build();
         IndexTemplateMetaData indexTemplateMetaData = IndexTemplateMetaData.builder("test-template")
-            .patterns(Arrays.asList(generateRandomStringArray(10, 100, false, false))).build();
+            .patterns(Arrays.asList(generateRandomStringArray(10, 100, false, false)))
+            .build();
         MetaData metaData = MetaData.builder().put(indexMetaData, true).put(indexTemplateMetaData).build();
 
         RoutingTable routingTable = RoutingTable.builder().addAsNew(metaData.index("test")).build();
 
         ClusterState clusterState1 = ClusterState.builder(new ClusterName("clusterName1"))
-            .metaData(metaData).routingTable(routingTable).build();
+            .metaData(metaData)
+            .routingTable(routingTable)
+            .build();
         BytesStreamOutput outStream = new BytesStreamOutput();
         outStream.setVersion(Version.CURRENT);
         clusterState1.writeTo(outStream);
-        StreamInput inStream = new NamedWriteableAwareStreamInput(outStream.bytes().streamInput(),
-            new NamedWriteableRegistry(ClusterModule.getNamedWriteables()));
+        StreamInput inStream = new NamedWriteableAwareStreamInput(
+            outStream.bytes().streamInput(),
+            new NamedWriteableRegistry(ClusterModule.getNamedWriteables())
+        );
         ClusterState serializedClusterState1 = ClusterState.readFrom(inStream, newNode("node4"));
 
         // Create a new, albeit equal, IndexMetadata object
-        ClusterState clusterState2 = ClusterState.builder(clusterState1).incrementVersion()
-            .metaData(MetaData.builder().put(IndexMetaData.builder(indexMetaData).numberOfReplicas(1).build(), true)).build();
-        assertNotSame("Should have created a new, equivalent, IndexMetaData object in clusterState2",
-            clusterState1.metaData().index("test"), clusterState2.metaData().index("test"));
+        ClusterState clusterState2 = ClusterState.builder(clusterState1)
+            .incrementVersion()
+            .metaData(MetaData.builder().put(IndexMetaData.builder(indexMetaData).numberOfReplicas(1).build(), true))
+            .build();
+        assertNotSame(
+            "Should have created a new, equivalent, IndexMetaData object in clusterState2",
+            clusterState1.metaData().index("test"),
+            clusterState2.metaData().index("test")
+        );
 
         ClusterState serializedClusterState2 = updateUsingSerialisedDiff(serializedClusterState1, clusterState2.diff(clusterState1));
-        assertSame("Unchanged metadata should not create new IndexMetaData objects",
-            serializedClusterState1.metaData().index("test"), serializedClusterState2.metaData().index("test"));
-        assertSame("Unchanged routing table should not create new IndexRoutingTable objects",
-            serializedClusterState1.routingTable().index("test"), serializedClusterState2.routingTable().index("test"));
+        assertSame(
+            "Unchanged metadata should not create new IndexMetaData objects",
+            serializedClusterState1.metaData().index("test"),
+            serializedClusterState2.metaData().index("test")
+        );
+        assertSame(
+            "Unchanged routing table should not create new IndexRoutingTable objects",
+            serializedClusterState1.routingTable().index("test"),
+            serializedClusterState2.routingTable().index("test")
+        );
 
         // Create a new and different IndexMetadata object
-        ClusterState clusterState3 = ClusterState.builder(clusterState1).incrementVersion()
-            .metaData(MetaData.builder().put(IndexMetaData.builder(indexMetaData).numberOfReplicas(2).build(), true)).build();
+        ClusterState clusterState3 = ClusterState.builder(clusterState1)
+            .incrementVersion()
+            .metaData(MetaData.builder().put(IndexMetaData.builder(indexMetaData).numberOfReplicas(2).build(), true))
+            .build();
         ClusterState serializedClusterState3 = updateUsingSerialisedDiff(serializedClusterState2, clusterState3.diff(clusterState2));
-        assertNotEquals("Should have a new IndexMetaData object",
-            serializedClusterState2.metaData().index("test"), serializedClusterState3.metaData().index("test"));
-        assertSame("Unchanged routing table should not create new IndexRoutingTable objects",
-            serializedClusterState2.routingTable().index("test"), serializedClusterState3.routingTable().index("test"));
+        assertNotEquals(
+            "Should have a new IndexMetaData object",
+            serializedClusterState2.metaData().index("test"),
+            serializedClusterState3.metaData().index("test")
+        );
+        assertSame(
+            "Unchanged routing table should not create new IndexRoutingTable objects",
+            serializedClusterState2.routingTable().index("test"),
+            serializedClusterState3.routingTable().index("test")
+        );
 
         assertSame("nodes", serializedClusterState2.nodes(), serializedClusterState3.nodes());
         assertSame("blocks", serializedClusterState2.blocks(), serializedClusterState3.blocks());
-        assertSame("template", serializedClusterState2.metaData().templates().get("test-template"),
-            serializedClusterState3.metaData().templates().get("test-template"));
+        assertSame(
+            "template",
+            serializedClusterState2.metaData().templates().get("test-template"),
+            serializedClusterState3.metaData().templates().get("test-template")
+        );
     }
 
     public static class TestCustomOne extends AbstractNamedDiffable<Custom> implements Custom {
@@ -265,7 +313,7 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
 
     }
 
-    public static class TestCustomTwo extends AbstractNamedDiffable<Custom>  implements Custom {
+    public static class TestCustomTwo extends AbstractNamedDiffable<Custom> implements Custom {
 
         public static final String TYPE = "test_custom_two";
         private final Integer intObject;

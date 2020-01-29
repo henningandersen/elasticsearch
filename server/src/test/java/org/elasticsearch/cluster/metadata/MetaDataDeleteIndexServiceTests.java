@@ -44,7 +44,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 public class MetaDataDeleteIndexServiceTests extends ESTestCase {
     private final AllocationService allocationService = mock(AllocationService.class);
     private final MetaDataDeleteIndexService service = new MetaDataDeleteIndexService(Settings.EMPTY, null, allocationService);
@@ -59,17 +58,32 @@ public class MetaDataDeleteIndexServiceTests extends ESTestCase {
     public void testDeleteSnapshotting() {
         String index = randomAlphaOfLength(5);
         Snapshot snapshot = new Snapshot("doesn't matter", new SnapshotId("snapshot name", "snapshot uuid"));
-        SnapshotsInProgress snaps = new SnapshotsInProgress(new SnapshotsInProgress.Entry(snapshot, true, false,
-                SnapshotsInProgress.State.INIT, singletonList(new IndexId(index, "doesn't matter")),
-                System.currentTimeMillis(), (long) randomIntBetween(0, 1000), ImmutableOpenMap.of(),
-                SnapshotInfoTests.randomUserMetadata(), randomBoolean()));
-        ClusterState state = ClusterState.builder(clusterState(index))
-                .putCustom(SnapshotsInProgress.TYPE, snaps)
-                .build();
-        Exception e = expectThrows(SnapshotInProgressException.class,
-                () -> service.deleteIndices(state, singleton(state.metaData().getIndices().get(index).getIndex())));
-        assertEquals("Cannot delete indices that are being snapshotted: [[" + index + "]]. Try again after snapshot finishes "
-                + "or cancel the currently running snapshot.", e.getMessage());
+        SnapshotsInProgress snaps = new SnapshotsInProgress(
+            new SnapshotsInProgress.Entry(
+                snapshot,
+                true,
+                false,
+                SnapshotsInProgress.State.INIT,
+                singletonList(new IndexId(index, "doesn't matter")),
+                System.currentTimeMillis(),
+                (long) randomIntBetween(0, 1000),
+                ImmutableOpenMap.of(),
+                SnapshotInfoTests.randomUserMetadata(),
+                randomBoolean()
+            )
+        );
+        ClusterState state = ClusterState.builder(clusterState(index)).putCustom(SnapshotsInProgress.TYPE, snaps).build();
+        Exception e = expectThrows(
+            SnapshotInProgressException.class,
+            () -> service.deleteIndices(state, singleton(state.metaData().getIndices().get(index).getIndex()))
+        );
+        assertEquals(
+            "Cannot delete indices that are being snapshotted: [["
+                + index
+                + "]]. Try again after snapshot finishes "
+                + "or cancel the currently running snapshot.",
+            e.getMessage()
+        );
     }
 
     public void testDeleteUnassigned() {
@@ -94,14 +108,14 @@ public class MetaDataDeleteIndexServiceTests extends ESTestCase {
 
     private ClusterState clusterState(String index) {
         IndexMetaData indexMetaData = IndexMetaData.builder(index)
-                .settings(Settings.builder().put("index.version.created", VersionUtils.randomVersion(random())))
-                .numberOfShards(1)
-                .numberOfReplicas(1)
-                .build();
+            .settings(Settings.builder().put("index.version.created", VersionUtils.randomVersion(random())))
+            .numberOfShards(1)
+            .numberOfReplicas(1)
+            .build();
         return ClusterState.builder(ClusterName.DEFAULT)
-                .metaData(MetaData.builder().put(indexMetaData, false))
-                .routingTable(RoutingTable.builder().addAsNew(indexMetaData).build())
-                .blocks(ClusterBlocks.builder().addBlocks(indexMetaData))
-                .build();
+            .metaData(MetaData.builder().put(indexMetaData, false))
+            .routingTable(RoutingTable.builder().addAsNew(indexMetaData).build())
+            .blocks(ClusterBlocks.builder().addBlocks(indexMetaData))
+            .build();
     }
 }

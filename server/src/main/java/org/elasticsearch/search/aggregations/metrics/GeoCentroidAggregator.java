@@ -46,9 +46,15 @@ final class GeoCentroidAggregator extends MetricsAggregator {
     private DoubleArray lonSum, lonCompensations, latSum, latCompensations;
     private LongArray counts;
 
-    GeoCentroidAggregator(String name, SearchContext context, Aggregator parent,
-                                    ValuesSource.GeoPoint valuesSource, List<PipelineAggregator> pipelineAggregators,
-                                    Map<String, Object> metaData) throws IOException {
+    GeoCentroidAggregator(
+        String name,
+        SearchContext context,
+        Aggregator parent,
+        ValuesSource.GeoPoint valuesSource,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         if (valuesSource != null) {
@@ -97,9 +103,9 @@ final class GeoCentroidAggregator extends MetricsAggregator {
                     // update the sum
                     for (int i = 0; i < valueCount; ++i) {
                         GeoPoint value = values.nextValue();
-                        //latitude
+                        // latitude
                         compensatedSumLat.add(value.getLat());
-                        //longitude
+                        // longitude
                         compensatedSumLon.add(value.getLon());
                     }
                     lonSum.set(bucket, compensatedSumLon.value());
@@ -118,9 +124,9 @@ final class GeoCentroidAggregator extends MetricsAggregator {
         }
         final long bucketCount = counts.get(bucket);
         final GeoPoint bucketCentroid = (bucketCount > 0)
-                ? new GeoPoint(latSum.get(bucket) / bucketCount, lonSum.get(bucket) / bucketCount)
-                : null;
-        return new InternalGeoCentroid(name, bucketCentroid , bucketCount, pipelineAggregators(), metaData());
+            ? new GeoPoint(latSum.get(bucket) / bucketCount, lonSum.get(bucket) / bucketCount)
+            : null;
+        return new InternalGeoCentroid(name, bucketCentroid, bucketCount, pipelineAggregators(), metaData());
     }
 
     @Override

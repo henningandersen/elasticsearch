@@ -53,7 +53,7 @@ public class WrapperQueryBuilderTests extends AbstractQueryTestCase<WrapperQuery
         BytesReference bytes;
         try {
             bytes = XContentHelper.toXContent(wrappedQuery, XContentType.JSON, false);
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
 
@@ -99,13 +99,7 @@ public class WrapperQueryBuilderTests extends AbstractQueryTestCase<WrapperQuery
     }
 
     public void testFromJson() throws IOException {
-        String json =
-                "{\n" +
-                "  \"wrapper\" : {\n" +
-                "    \"query\" : \"e30=\"\n" +
-                "  }\n" +
-                "}";
-
+        String json = "{\n" + "  \"wrapper\" : {\n" + "    \"query\" : \"e30=\"\n" + "  }\n" + "}";
 
         WrapperQueryBuilder parsed = (WrapperQueryBuilder) parseQuery(json);
         checkGeneratedJson(json, parsed);
@@ -132,8 +126,10 @@ public class WrapperQueryBuilderTests extends AbstractQueryTestCase<WrapperQuery
         QueryShardContext shardContext = createShardContext();
         assertEquals(new MatchAllQueryBuilder().queryName("foobar"), builder.rewrite(shardContext));
         builder = new WrapperQueryBuilder("{ \"match_all\" : {\"_name\" : \"foobar\"}}").queryName("outer");
-        assertEquals(new BoolQueryBuilder().must(new MatchAllQueryBuilder().queryName("foobar")).queryName("outer"),
-            builder.rewrite(shardContext));
+        assertEquals(
+            new BoolQueryBuilder().must(new MatchAllQueryBuilder().queryName("foobar")).queryName("outer"),
+            builder.rewrite(shardContext)
+        );
     }
 
     public void testRewriteWithInnerBoost() throws IOException {
@@ -148,14 +144,10 @@ public class WrapperQueryBuilderTests extends AbstractQueryTestCase<WrapperQuery
     public void testRewriteInnerQueryToo() throws IOException {
         QueryShardContext shardContext = createShardContext();
 
-        QueryBuilder qb = new WrapperQueryBuilder(
-            new WrapperQueryBuilder(new TermQueryBuilder("foo", "bar").toString()).toString()
-        );
+        QueryBuilder qb = new WrapperQueryBuilder(new WrapperQueryBuilder(new TermQueryBuilder("foo", "bar").toString()).toString());
         assertEquals(new TermQuery(new Term("foo", "bar")), qb.rewrite(shardContext).toQuery(shardContext));
         qb = new WrapperQueryBuilder(
-            new WrapperQueryBuilder(
-                new WrapperQueryBuilder(new TermQueryBuilder("foo", "bar").toString()).toString()
-            ).toString()
+            new WrapperQueryBuilder(new WrapperQueryBuilder(new TermQueryBuilder("foo", "bar").toString()).toString()).toString()
         );
         assertEquals(new TermQuery(new Term("foo", "bar")), qb.rewrite(shardContext).toQuery(shardContext));
 

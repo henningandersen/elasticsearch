@@ -194,8 +194,8 @@ public class MultiGetResponse extends ActionResponse implements Iterable<MultiGe
                 case FIELD_NAME:
                     currentFieldName = parser.currentName();
                     if (INDEX.match(currentFieldName, parser.getDeprecationHandler()) == false
-                            && ID.match(currentFieldName, parser.getDeprecationHandler()) == false
-                            && ERROR.match(currentFieldName, parser.getDeprecationHandler()) == false) {
+                        && ID.match(currentFieldName, parser.getDeprecationHandler()) == false
+                        && ERROR.match(currentFieldName, parser.getDeprecationHandler()) == false) {
                         getResult = GetResult.fromXContentEmbedded(parser, index, id);
                     }
                     break;

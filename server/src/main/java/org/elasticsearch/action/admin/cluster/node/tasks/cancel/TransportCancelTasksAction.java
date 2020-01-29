@@ -63,15 +63,31 @@ public class TransportCancelTasksAction extends TransportTasksAction<Cancellable
 
     @Inject
     public TransportCancelTasksAction(ClusterService clusterService, TransportService transportService, ActionFilters actionFilters) {
-        super(CancelTasksAction.NAME, clusterService, transportService, actionFilters,
-            CancelTasksRequest::new, CancelTasksResponse::new, TaskInfo::new, ThreadPool.Names.MANAGEMENT);
-        transportService.registerRequestHandler(BAN_PARENT_ACTION_NAME, ThreadPool.Names.SAME, BanParentTaskRequest::new,
-            new BanParentRequestHandler());
+        super(
+            CancelTasksAction.NAME,
+            clusterService,
+            transportService,
+            actionFilters,
+            CancelTasksRequest::new,
+            CancelTasksResponse::new,
+            TaskInfo::new,
+            ThreadPool.Names.MANAGEMENT
+        );
+        transportService.registerRequestHandler(
+            BAN_PARENT_ACTION_NAME,
+            ThreadPool.Names.SAME,
+            BanParentTaskRequest::new,
+            new BanParentRequestHandler()
+        );
     }
 
     @Override
-    protected CancelTasksResponse newResponse(CancelTasksRequest request, List<TaskInfo> tasks, List<TaskOperationFailure>
-        taskOperationFailures, List<FailedNodeException> failedNodeExceptions) {
+    protected CancelTasksResponse newResponse(
+        CancelTasksRequest request,
+        List<TaskInfo> tasks,
+        List<TaskOperationFailure> taskOperationFailures,
+        List<FailedNodeException> failedNodeExceptions
+    ) {
         return new CancelTasksResponse(tasks, taskOperationFailures, failedNodeExceptions);
     }
 
@@ -103,8 +119,11 @@ public class TransportCancelTasksAction extends TransportTasksAction<Cancellable
     }
 
     @Override
-    protected synchronized void taskOperation(CancelTasksRequest request, CancellableTask cancellableTask,
-            ActionListener<TaskInfo> listener) {
+    protected synchronized void taskOperation(
+        CancelTasksRequest request,
+        CancellableTask cancellableTask,
+        ActionListener<TaskInfo> listener
+    ) {
         String nodeId = clusterService.localNode().getId();
         final boolean canceled;
         if (cancellableTask.shouldCancelChildrenOnCancellation()) {
@@ -134,8 +153,9 @@ public class TransportCancelTasksAction extends TransportTasksAction<Cancellable
                         banLock.onBanSet();
                         if (responses.decrementAndGet() == 0) {
                             if (failures.isEmpty() == false) {
-                                IllegalStateException exception = new IllegalStateException("failed to cancel children of the task [" +
-                                    cancellableTask.getId() + "]");
+                                IllegalStateException exception = new IllegalStateException(
+                                    "failed to cancel children of the task [" + cancellableTask.getId() + "]"
+                                );
                                 failures.forEach(exception::addSuppressed);
                                 listener.onFailure(exception);
                             } else {
@@ -145,9 +165,12 @@ public class TransportCancelTasksAction extends TransportTasksAction<Cancellable
                     }
                 });
             }
-        }  else {
-            canceled = taskManager.cancel(cancellableTask, request.getReason(),
-                () -> listener.onResponse(cancellableTask.taskInfo(nodeId, false)));
+        } else {
+            canceled = taskManager.cancel(
+                cancellableTask,
+                request.getReason(),
+                () -> listener.onResponse(cancellableTask.taskInfo(nodeId, false))
+            );
             if (canceled) {
                 logger.trace("task {} doesn't have any children that should be cancelled", cancellableTask.getId());
             }
@@ -159,21 +182,32 @@ public class TransportCancelTasksAction extends TransportTasksAction<Cancellable
     }
 
     private void setBanOnNodes(String reason, CancellableTask task, DiscoveryNodes nodes, ActionListener<Void> listener) {
-        sendSetBanRequest(nodes,
+        sendSetBanRequest(
+            nodes,
             BanParentTaskRequest.createSetBanParentTaskRequest(new TaskId(clusterService.localNode().getId(), task.getId()), reason),
-            listener);
+            listener
+        );
     }
 
     private void removeBanOnNodes(CancellableTask task, DiscoveryNodes nodes) {
-        sendRemoveBanRequest(nodes,
-            BanParentTaskRequest.createRemoveBanParentTaskRequest(new TaskId(clusterService.localNode().getId(), task.getId())));
+        sendRemoveBanRequest(
+            nodes,
+            BanParentTaskRequest.createRemoveBanParentTaskRequest(new TaskId(clusterService.localNode().getId(), task.getId()))
+        );
     }
 
     private void sendSetBanRequest(DiscoveryNodes nodes, BanParentTaskRequest request, ActionListener<Void> listener) {
         for (ObjectObjectCursor<String, DiscoveryNode> node : nodes.getNodes()) {
-            logger.trace("Sending ban for tasks with the parent [{}] to the node [{}], ban [{}]", request.parentTaskId, node.key,
-                request.ban);
-            transportService.sendRequest(node.value, BAN_PARENT_ACTION_NAME, request,
+            logger.trace(
+                "Sending ban for tasks with the parent [{}] to the node [{}], ban [{}]",
+                request.parentTaskId,
+                node.key,
+                request.ban
+            );
+            transportService.sendRequest(
+                node.value,
+                BAN_PARENT_ACTION_NAME,
+                request,
                 new EmptyTransportResponseHandler(ThreadPool.Names.SAME) {
                     @Override
                     public void handleResponse(TransportResponse.Empty response) {
@@ -185,15 +219,15 @@ public class TransportCancelTasksAction extends TransportTasksAction<Cancellable
                         logger.warn("Cannot send ban for tasks with the parent [{}] to the node [{}]", request.parentTaskId, node.key);
                         listener.onFailure(exp);
                     }
-                });
+                }
+            );
         }
     }
 
     private void sendRemoveBanRequest(DiscoveryNodes nodes, BanParentTaskRequest request) {
         for (ObjectObjectCursor<String, DiscoveryNode> node : nodes.getNodes()) {
             logger.debug("Sending remove ban for tasks with the parent [{}] to the node [{}]", request.parentTaskId, node.key);
-            transportService.sendRequest(node.value, BAN_PARENT_ACTION_NAME, request, EmptyTransportResponseHandler
-                .INSTANCE_SAME);
+            transportService.sendRequest(node.value, BAN_PARENT_ACTION_NAME, request, EmptyTransportResponseHandler.INSTANCE_SAME);
         }
     }
 
@@ -274,12 +308,15 @@ public class TransportCancelTasksAction extends TransportTasksAction<Cancellable
         @Override
         public void messageReceived(final BanParentTaskRequest request, final TransportChannel channel, Task task) throws Exception {
             if (request.ban) {
-                logger.debug("Received ban for the parent [{}] on the node [{}], reason: [{}]", request.parentTaskId,
-                    clusterService.localNode().getId(), request.reason);
+                logger.debug(
+                    "Received ban for the parent [{}] on the node [{}], reason: [{}]",
+                    request.parentTaskId,
+                    clusterService.localNode().getId(),
+                    request.reason
+                );
                 taskManager.setBan(request.parentTaskId, request.reason);
             } else {
-                logger.debug("Removing ban for the parent [{}] on the node [{}]", request.parentTaskId,
-                    clusterService.localNode().getId());
+                logger.debug("Removing ban for the parent [{}] on the node [{}]", request.parentTaskId, clusterService.localNode().getId());
                 taskManager.removeBan(request.parentTaskId);
             }
             channel.sendResponse(TransportResponse.Empty.INSTANCE);

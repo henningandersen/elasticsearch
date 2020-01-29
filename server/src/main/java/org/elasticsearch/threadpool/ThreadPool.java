@@ -100,8 +100,8 @@ public class ThreadPool implements Scheduler {
             this.type = type;
         }
 
-        private static final Map<String, ThreadPoolType> TYPE_MAP =
-            Arrays.stream(ThreadPoolType.values()).collect(Collectors.toUnmodifiableMap(ThreadPoolType::getType, Function.identity()));
+        private static final Map<String, ThreadPoolType> TYPE_MAP = Arrays.stream(ThreadPoolType.values())
+            .collect(Collectors.toUnmodifiableMap(ThreadPoolType::getType, Function.identity()));
 
         public static ThreadPoolType fromType(String type) {
             ThreadPoolType threadPoolType = TYPE_MAP.get(type);
@@ -128,7 +128,8 @@ public class ThreadPool implements Scheduler {
         entry(Names.FORCE_MERGE, ThreadPoolType.FIXED),
         entry(Names.FETCH_SHARD_STARTED, ThreadPoolType.SCALING),
         entry(Names.FETCH_SHARD_STORE, ThreadPoolType.SCALING),
-        entry(Names.SEARCH_THROTTLED, ThreadPoolType.FIXED_AUTO_QUEUE_SIZE));
+        entry(Names.SEARCH_THROTTLED, ThreadPoolType.FIXED_AUTO_QUEUE_SIZE)
+    );
 
     private final Map<String, ExecutorHolder> executors;
 
@@ -150,11 +151,14 @@ public class ThreadPool implements Scheduler {
         return Collections.unmodifiableCollection(builders.values());
     }
 
-    public static Setting<TimeValue> ESTIMATED_TIME_INTERVAL_SETTING =
-        Setting.timeSetting("thread_pool.estimated_time_interval",
-            TimeValue.timeValueMillis(200), TimeValue.ZERO, Setting.Property.NodeScope);
+    public static Setting<TimeValue> ESTIMATED_TIME_INTERVAL_SETTING = Setting.timeSetting(
+        "thread_pool.estimated_time_interval",
+        TimeValue.timeValueMillis(200),
+        TimeValue.ZERO,
+        Setting.Property.NodeScope
+    );
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public ThreadPool(final Settings settings, final ExecutorBuilder<?>... customBuilders) {
         assert Node.NODE_NAME_SETTING.exists(settings);
 
@@ -167,10 +171,14 @@ public class ThreadPool implements Scheduler {
         builders.put(Names.WRITE, new FixedExecutorBuilder(settings, Names.WRITE, availableProcessors, 200));
         builders.put(Names.GET, new FixedExecutorBuilder(settings, Names.GET, availableProcessors, 1000));
         builders.put(Names.ANALYZE, new FixedExecutorBuilder(settings, Names.ANALYZE, 1, 16));
-        builders.put(Names.SEARCH, new AutoQueueAdjustingExecutorBuilder(settings,
-                        Names.SEARCH, searchThreadPoolSize(availableProcessors), 1000, 1000, 1000, 2000));
-        builders.put(Names.SEARCH_THROTTLED, new AutoQueueAdjustingExecutorBuilder(settings,
-            Names.SEARCH_THROTTLED, 1, 100, 100, 100, 200));
+        builders.put(
+            Names.SEARCH,
+            new AutoQueueAdjustingExecutorBuilder(settings, Names.SEARCH, searchThreadPoolSize(availableProcessors), 1000, 1000, 1000, 2000)
+        );
+        builders.put(
+            Names.SEARCH_THROTTLED,
+            new AutoQueueAdjustingExecutorBuilder(settings, Names.SEARCH_THROTTLED, 1, 100, 100, 100, 200)
+        );
         builders.put(Names.MANAGEMENT, new ScalingExecutorBuilder(Names.MANAGEMENT, 1, 5, TimeValue.timeValueMinutes(5)));
         // no queue as this means clients will need to handle rejections on listener queue even if the operation succeeded
         // the assumption here is that the listeners should be very lightweight on the listeners side
@@ -179,11 +187,15 @@ public class ThreadPool implements Scheduler {
         builders.put(Names.REFRESH, new ScalingExecutorBuilder(Names.REFRESH, 1, halfProcMaxAt10, TimeValue.timeValueMinutes(5)));
         builders.put(Names.WARMER, new ScalingExecutorBuilder(Names.WARMER, 1, halfProcMaxAt5, TimeValue.timeValueMinutes(5)));
         builders.put(Names.SNAPSHOT, new ScalingExecutorBuilder(Names.SNAPSHOT, 1, halfProcMaxAt5, TimeValue.timeValueMinutes(5)));
-        builders.put(Names.FETCH_SHARD_STARTED,
-                new ScalingExecutorBuilder(Names.FETCH_SHARD_STARTED, 1, 2 * availableProcessors, TimeValue.timeValueMinutes(5)));
+        builders.put(
+            Names.FETCH_SHARD_STARTED,
+            new ScalingExecutorBuilder(Names.FETCH_SHARD_STARTED, 1, 2 * availableProcessors, TimeValue.timeValueMinutes(5))
+        );
         builders.put(Names.FORCE_MERGE, new FixedExecutorBuilder(settings, Names.FORCE_MERGE, 1, -1));
-        builders.put(Names.FETCH_SHARD_STORE,
-                new ScalingExecutorBuilder(Names.FETCH_SHARD_STORE, 1, 2 * availableProcessors, TimeValue.timeValueMinutes(5)));
+        builders.put(
+            Names.FETCH_SHARD_STORE,
+            new ScalingExecutorBuilder(Names.FETCH_SHARD_STORE, 1, 2 * availableProcessors, TimeValue.timeValueMinutes(5))
+        );
         for (final ExecutorBuilder<?> builder : customBuilders) {
             if (builders.containsKey(builder.name())) {
                 throw new IllegalArgumentException("builder with name [" + builder.name() + "] already exists");
@@ -208,13 +220,11 @@ public class ThreadPool implements Scheduler {
         executors.put(Names.SAME, new ExecutorHolder(DIRECT_EXECUTOR, new Info(Names.SAME, ThreadPoolType.DIRECT)));
         this.executors = unmodifiableMap(executors);
 
-        final List<Info> infos =
-                executors
-                        .values()
-                        .stream()
-                        .filter(holder -> holder.info.getName().equals("same") == false)
-                        .map(holder -> holder.info)
-                        .collect(Collectors.toList());
+        final List<Info> infos = executors.values()
+            .stream()
+            .filter(holder -> holder.info.getName().equals("same") == false)
+            .map(holder -> holder.info)
+            .collect(Collectors.toList());
         this.threadPoolInfo = new ThreadPoolInfo(infos);
         this.scheduler = Scheduler.initScheduler(settings);
         TimeValue estimatedTimeInterval = ESTIMATED_TIME_INTERVAL_SETTING.get(settings);
@@ -355,8 +365,15 @@ public class ThreadPool implements Scheduler {
             schedule(command, delay, executor);
         } catch (EsRejectedExecutionException e) {
             if (e.isExecutorShutdown()) {
-                logger.debug(new ParameterizedMessage("could not schedule execution of [{}] after [{}] on [{}] as executor is shut down",
-                    command, delay, executor), e);
+                logger.debug(
+                    new ParameterizedMessage(
+                        "could not schedule execution of [{}] after [{}] on [{}] as executor is shut down",
+                        command,
+                        delay,
+                        executor
+                    ),
+                    e
+                );
             } else {
                 throw e;
             }
@@ -365,15 +382,16 @@ public class ThreadPool implements Scheduler {
 
     @Override
     public Cancellable scheduleWithFixedDelay(Runnable command, TimeValue interval, String executor) {
-        return new ReschedulingRunnable(command, interval, executor, this,
-                (e) -> {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(() -> new ParameterizedMessage("scheduled task [{}] was rejected on thread pool [{}]",
-                                command, executor), e);
-                    }
-                },
-                (e) -> logger.warn(() -> new ParameterizedMessage("failed to run scheduled task [{}] on thread pool [{}]",
-                        command, executor), e));
+        return new ReschedulingRunnable(command, interval, executor, this, (e) -> {
+            if (logger.isDebugEnabled()) {
+                logger.debug(() -> new ParameterizedMessage("scheduled task [{}] was rejected on thread pool [{}]", command, executor), e);
+            }
+        },
+            (e) -> logger.warn(
+                () -> new ParameterizedMessage("failed to run scheduled task [{}] on thread pool [{}]", command, executor),
+                e
+            )
+        );
     }
 
     @Override
@@ -468,8 +486,14 @@ public class ThreadPool implements Scheduler {
                 executor.execute(runnable);
             } catch (EsRejectedExecutionException e) {
                 if (e.isExecutorShutdown()) {
-                    logger.debug(new ParameterizedMessage("could not schedule execution of [{}] on [{}] as executor is shut down",
-                        runnable, executor), e);
+                    logger.debug(
+                        new ParameterizedMessage(
+                            "could not schedule execution of [{}] on [{}] as executor is shut down",
+                            runnable,
+                            executor
+                        ),
+                        e
+                    );
                 } else {
                     throw e;
                 }
@@ -685,10 +709,7 @@ public class ThreadPool implements Scheduler {
         return false;
     }
 
-    private static boolean awaitTermination(
-            final ExecutorService service,
-            final long timeout,
-            final TimeUnit timeUnit) {
+    private static boolean awaitTermination(final ExecutorService service, final long timeout, final TimeUnit timeUnit) {
         try {
             if (service.awaitTermination(timeout, timeUnit)) {
                 return true;
@@ -717,10 +738,7 @@ public class ThreadPool implements Scheduler {
         return false;
     }
 
-    private static boolean awaitTermination(
-            final ThreadPool threadPool,
-            final long timeout,
-            final TimeUnit timeUnit) {
+    private static boolean awaitTermination(final ThreadPool threadPool, final long timeout, final TimeUnit timeUnit) {
         try {
             if (threadPool.awaitTermination(timeout, timeUnit)) {
                 return true;
@@ -736,8 +754,11 @@ public class ThreadPool implements Scheduler {
     }
 
     public static boolean assertNotScheduleThread(String reason) {
-        assert Thread.currentThread().getName().contains("scheduler") == false :
-            "Expected current thread [" + Thread.currentThread() + "] to not be the scheduler thread. Reason: [" + reason + "]";
+        assert Thread.currentThread().getName().contains("scheduler") == false : "Expected current thread ["
+            + Thread.currentThread()
+            + "] to not be the scheduler thread. Reason: ["
+            + reason
+            + "]";
         return true;
     }
 
@@ -749,8 +770,10 @@ public class ThreadPool implements Scheduler {
         final StackTraceElement testingMethod = stackTraceElements[2];
         for (int i = 3; i < stackTraceElements.length; i++) {
             assert stackTraceElements[i].getClassName().equals(testingMethod.getClassName()) == false
-                || stackTraceElements[i].getMethodName().equals(testingMethod.getMethodName()) == false :
-                testingMethod.getClassName() + "#" + testingMethod.getMethodName() + " is called recursively";
+                || stackTraceElements[i].getMethodName().equals(testingMethod.getMethodName()) == false : testingMethod.getClassName()
+                    + "#"
+                    + testingMethod.getMethodName()
+                    + " is called recursively";
         }
         return true;
     }

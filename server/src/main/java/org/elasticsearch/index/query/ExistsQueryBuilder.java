@@ -103,12 +103,16 @@ public class ExistsQueryBuilder extends AbstractQueryBuilder<ExistsQueryBuilder>
                 } else if (AbstractQueryBuilder.BOOST_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                     boost = parser.floatValue();
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(), "[" + ExistsQueryBuilder.NAME +
-                            "] query does not support [" + currentFieldName + "]");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "[" + ExistsQueryBuilder.NAME + "] query does not support [" + currentFieldName + "]"
+                    );
                 }
             } else {
-                throw new ParsingException(parser.getTokenLocation(), "[" + ExistsQueryBuilder.NAME +
-                        "] unknown token [" + token + "] after [" + currentFieldName + "]");
+                throw new ParsingException(
+                    parser.getTokenLocation(),
+                    "[" + ExistsQueryBuilder.NAME + "] unknown token [" + token + "] after [" + currentFieldName + "]"
+                );
             }
         }
 
@@ -130,7 +134,8 @@ public class ExistsQueryBuilder extends AbstractQueryBuilder<ExistsQueryBuilder>
     public static Query newFilter(QueryShardContext context, String fieldPattern) {
 
         final FieldNamesFieldMapper.FieldNamesFieldType fieldNamesFieldType = (FieldNamesFieldMapper.FieldNamesFieldType) context
-                .getMapperService().fullName(FieldNamesFieldMapper.NAME);
+            .getMapperService()
+            .fullName(FieldNamesFieldMapper.NAME);
         if (fieldNamesFieldType == null) {
             // can only happen when no types exist, so no docs exist either
             return Queries.newMatchNoDocsQuery("Missing types in \"" + NAME + "\" query.");

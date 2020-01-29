@@ -41,9 +41,16 @@ public class AdjacencyMatrixAggregatorFactory extends AggregatorFactory {
     private final Weight[] weights;
     private final String separator;
 
-    public AdjacencyMatrixAggregatorFactory(String name, List<KeyedFilter> filters, String separator,
-                                            QueryShardContext queryShardContext, AggregatorFactory parent,
-                                            AggregatorFactories.Builder subFactories, Map<String, Object> metaData) throws IOException {
+    public AdjacencyMatrixAggregatorFactory(
+        String name,
+        List<KeyedFilter> filters,
+        String separator,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactories,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, queryShardContext, parent, subFactories, metaData);
         IndexSearcher contextSearcher = queryShardContext.searcher();
         this.separator = separator;
@@ -58,13 +65,24 @@ public class AdjacencyMatrixAggregatorFactory extends AggregatorFactory {
     }
 
     @Override
-    public Aggregator createInternal(SearchContext searchContext,
-                                        Aggregator parent,
-                                        boolean collectsFromSingleBucket,
-                                        List<PipelineAggregator> pipelineAggregators,
-                                        Map<String, Object> metaData) throws IOException {
-        return new AdjacencyMatrixAggregator(name, factories, separator, keys, weights, searchContext, parent,
-                pipelineAggregators, metaData);
+    public Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new AdjacencyMatrixAggregator(
+            name,
+            factories,
+            separator,
+            keys,
+            weights,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
 
 }

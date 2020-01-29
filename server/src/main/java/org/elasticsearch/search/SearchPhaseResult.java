@@ -88,7 +88,9 @@ public abstract class SearchPhaseResult extends TransportResponse {
     /**
      * Returns the fetch result iff it's included in this response otherwise <code>null</code>
      */
-    public FetchSearchResult fetchResult() { return null; }
+    public FetchSearchResult fetchResult() {
+        return null;
+    }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {

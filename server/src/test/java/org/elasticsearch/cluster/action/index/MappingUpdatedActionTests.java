@@ -81,9 +81,10 @@ public class MappingUpdatedActionTests extends ESTestCase {
 
     public void testMappingUpdatedActionBlocks() throws Exception {
         List<ActionListener<Void>> inFlightListeners = new CopyOnWriteArrayList<>();
-        final MappingUpdatedAction mua = new MappingUpdatedAction(Settings.builder()
-            .put(MappingUpdatedAction.INDICES_MAX_IN_FLIGHT_UPDATES_SETTING.getKey(), 1).build(),
-            new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS)) {
+        final MappingUpdatedAction mua = new MappingUpdatedAction(
+            Settings.builder().put(MappingUpdatedAction.INDICES_MAX_IN_FLIGHT_UPDATES_SETTING.getKey(), 1).build(),
+            new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS)
+        ) {
 
             @Override
             protected void sendUpdateMapping(Index index, Mapping mappingUpdate, ActionListener<Void> listener) {

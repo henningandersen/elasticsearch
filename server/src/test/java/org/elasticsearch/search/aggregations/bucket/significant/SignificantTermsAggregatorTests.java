@@ -80,9 +80,7 @@ public class SignificantTermsAggregatorTests extends AggregatorTestCase {
      */
     @Override
     protected Map<String, MappedFieldType> getFieldAliases(MappedFieldType... fieldTypes) {
-        return Arrays.stream(fieldTypes).collect(Collectors.toMap(
-            ft -> ft.name() + "-alias",
-            Function.identity()));
+        return Arrays.stream(fieldTypes).collect(Collectors.toMap(ft -> ft.name() + "-alias", Function.identity()));
     }
 
     /**
@@ -105,7 +103,7 @@ public class SignificantTermsAggregatorTests extends AggregatorTestCase {
             sigAgg.executionHint(randomExecutionHint());
             if (randomBoolean()) {
                 // Use a background filter which just happens to be same scope as whole-index.
-                sigAgg.backgroundFilter(QueryBuilders.termsQuery("text",  "common"));
+                sigAgg.backgroundFilter(QueryBuilders.termsQuery("text", "common"));
             }
 
             SignificantTermsAggregationBuilder sigNumAgg = new SignificantTermsAggregationBuilder("sig_number", null).field("long_field");
@@ -140,8 +138,8 @@ public class SignificantTermsAggregatorTests extends AggregatorTestCase {
                 assertNull(terms.getBucketByKey("even"));
 
                 // Search with string-based includeexcludes
-                String oddStrings[] = new String[] {"odd", "weird"};
-                String evenStrings[] = new String[] {"even", "regular"};
+                String oddStrings[] = new String[] { "odd", "weird" };
+                String evenStrings[] = new String[] { "even", "regular" };
 
                 sigAgg.includeExclude(new IncludeExclude(oddStrings, evenStrings));
                 sigAgg.significanceHeuristic(SignificanceHeuristicTests.getRandomSignificanceheuristic());
@@ -280,8 +278,7 @@ public class SignificantTermsAggregatorTests extends AggregatorTestCase {
                 new RangeFieldMapper.Range(rangeType, 1L, 5L, true, true),
                 new RangeFieldMapper.Range(rangeType, -3L, 4L, true, true),
                 new RangeFieldMapper.Range(rangeType, 4L, 13L, true, true),
-                new RangeFieldMapper.Range(rangeType, 42L, 49L, true, true),
-            }) {
+                new RangeFieldMapper.Range(rangeType, 42L, 49L, true, true), }) {
                 Document doc = new Document();
                 BytesRef encodedRange = rangeType.encodeRanges(Collections.singleton(range));
                 doc.add(new BinaryDocValuesField("field", encodedRange));
@@ -330,18 +327,19 @@ public class SignificantTermsAggregatorTests extends AggregatorTestCase {
                 assertEquals("test expects a single segment", 1, reader.leaves().size());
                 IndexSearcher searcher = new IndexSearcher(reader);
 
-                SignificantTerms evenTerms = searchAndReduce(searcher, new TermQuery(new Term("text", "even")),
-                    agg, textFieldType);
-                SignificantTerms aliasEvenTerms = searchAndReduce(searcher, new TermQuery(new Term("text", "even")),
-                    aliasAgg, textFieldType);
+                SignificantTerms evenTerms = searchAndReduce(searcher, new TermQuery(new Term("text", "even")), agg, textFieldType);
+                SignificantTerms aliasEvenTerms = searchAndReduce(
+                    searcher,
+                    new TermQuery(new Term("text", "even")),
+                    aliasAgg,
+                    textFieldType
+                );
 
                 assertFalse(evenTerms.getBuckets().isEmpty());
                 assertEquals(evenTerms, aliasEvenTerms);
 
-                SignificantTerms oddTerms = searchAndReduce(searcher, new TermQuery(new Term("text", "odd")),
-                    agg, textFieldType);
-                SignificantTerms aliasOddTerms = searchAndReduce(searcher, new TermQuery(new Term("text", "odd")),
-                    aliasAgg, textFieldType);
+                SignificantTerms oddTerms = searchAndReduce(searcher, new TermQuery(new Term("text", "odd")), agg, textFieldType);
+                SignificantTerms aliasOddTerms = searchAndReduce(searcher, new TermQuery(new Term("text", "odd")), aliasAgg, textFieldType);
 
                 assertFalse(oddTerms.getBuckets().isEmpty());
                 assertEquals(oddTerms, aliasOddTerms);

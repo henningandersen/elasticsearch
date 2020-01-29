@@ -28,8 +28,12 @@ import java.util.List;
 public class RefreshResponseTests extends AbstractBroadcastResponseTestCase<RefreshResponse> {
 
     @Override
-    protected RefreshResponse createTestInstance(int totalShards, int successfulShards, int failedShards,
-                                                 List<DefaultShardOperationFailedException> failures) {
+    protected RefreshResponse createTestInstance(
+        int totalShards,
+        int successfulShards,
+        int failedShards,
+        List<DefaultShardOperationFailedException> failures
+    ) {
         return new RefreshResponse(totalShards, successfulShards, failedShards, failures);
     }
 

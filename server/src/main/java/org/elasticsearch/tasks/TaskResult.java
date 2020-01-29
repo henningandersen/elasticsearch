@@ -174,15 +174,14 @@ public final class TaskResult implements Writeable, ToXContentObject {
         return builder;
     }
 
-    public static final ConstructingObjectParser<TaskResult, Void> PARSER = new ConstructingObjectParser<>(
-            "stored_task_result", a -> {
-                int i = 0;
-                boolean completed = (boolean) a[i++];
-                TaskInfo task = (TaskInfo) a[i++];
-                BytesReference error = (BytesReference) a[i++];
-                BytesReference response = (BytesReference) a[i++];
-                return new TaskResult(completed, task, error, response);
-            });
+    public static final ConstructingObjectParser<TaskResult, Void> PARSER = new ConstructingObjectParser<>("stored_task_result", a -> {
+        int i = 0;
+        boolean completed = (boolean) a[i++];
+        TaskInfo task = (TaskInfo) a[i++];
+        BytesReference error = (BytesReference) a[i++];
+        BytesReference response = (BytesReference) a[i++];
+        return new TaskResult(completed, task, error, response);
+    });
     static {
         PARSER.declareBoolean(constructorArg(), new ParseField("completed"));
         PARSER.declareObject(constructorArg(), TaskInfo.PARSER, new ParseField("task"));
@@ -208,9 +207,9 @@ public final class TaskResult implements Writeable, ToXContentObject {
          * differences so perfect for testing.
          */
         return Objects.equals(completed, other.completed)
-                && Objects.equals(task, other.task)
-                && Objects.equals(getErrorAsMap(), other.getErrorAsMap())
-                && Objects.equals(getResponseAsMap(), other.getResponseAsMap());
+            && Objects.equals(task, other.task)
+            && Objects.equals(getErrorAsMap(), other.getErrorAsMap())
+            && Objects.equals(getResponseAsMap(), other.getResponseAsMap());
     }
 
     @Override

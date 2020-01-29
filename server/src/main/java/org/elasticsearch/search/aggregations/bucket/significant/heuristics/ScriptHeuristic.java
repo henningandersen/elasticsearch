@@ -17,9 +17,7 @@
  * under the License.
  */
 
-
 package org.elasticsearch.search.aggregations.bucket.significant.heuristics;
-
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -39,8 +37,10 @@ import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constru
 
 public class ScriptHeuristic extends SignificanceHeuristic {
     public static final String NAME = "script_heuristic";
-    public static final ConstructingObjectParser<ScriptHeuristic, Void> PARSER = new ConstructingObjectParser<>(NAME, args ->
-        new ScriptHeuristic((Script) args[0]));
+    public static final ConstructingObjectParser<ScriptHeuristic, Void> PARSER = new ConstructingObjectParser<>(
+        NAME,
+        args -> new ScriptHeuristic((Script) args[0])
+    );
     static {
         Script.declareScript(PARSER, constructorArg());
     }
@@ -78,7 +78,7 @@ public class ScriptHeuristic extends SignificanceHeuristic {
             subsetDfHolder.value = subsetFreq;
             supersetDfHolder.value = supersetFreq;
             return executableScript.execute(params);
-       }
+        }
     }
 
     public ScriptHeuristic(Script script) {
@@ -99,18 +99,19 @@ public class ScriptHeuristic extends SignificanceHeuristic {
 
     @Override
     public SignificanceHeuristic rewrite(InternalAggregation.ReduceContext context) {
-        SignificantTermsHeuristicScoreScript.Factory factory = context.scriptService().compile(script,
-                SignificantTermsHeuristicScoreScript.CONTEXT);
+        SignificantTermsHeuristicScoreScript.Factory factory = context.scriptService()
+            .compile(script, SignificantTermsHeuristicScoreScript.CONTEXT);
         return new ExecutableScriptHeuristic(script, factory.newInstance());
     }
 
     @Override
     public SignificanceHeuristic rewrite(QueryShardContext queryShardContext) {
-        SignificantTermsHeuristicScoreScript.Factory compiledScript = queryShardContext.compile(script,
-                SignificantTermsHeuristicScoreScript.CONTEXT);
+        SignificantTermsHeuristicScoreScript.Factory compiledScript = queryShardContext.compile(
+            script,
+            SignificantTermsHeuristicScoreScript.CONTEXT
+        );
         return new ExecutableScriptHeuristic(script, compiledScript.newInstance());
     }
-
 
     /**
      * Calculates score with a script
@@ -123,8 +124,9 @@ public class ScriptHeuristic extends SignificanceHeuristic {
      */
     @Override
     public double getScore(long subsetFreq, long subsetSize, long supersetFreq, long supersetSize) {
-        throw new UnsupportedOperationException("This scoring heuristic must have 'rewrite' called on it to provide a version ready " +
-                "for use");
+        throw new UnsupportedOperationException(
+            "This scoring heuristic must have 'rewrite' called on it to provide a version ready " + "for use"
+        );
     }
 
     @Override
@@ -160,10 +162,12 @@ public class ScriptHeuristic extends SignificanceHeuristic {
 
     public final class LongAccessor extends Number {
         public long value;
+
         @Override
         public int intValue() {
-            return (int)value;
+            return (int) value;
         }
+
         @Override
         public long longValue() {
             return value;
@@ -185,4 +189,3 @@ public class ScriptHeuristic extends SignificanceHeuristic {
         }
     }
 }
-

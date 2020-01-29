@@ -70,17 +70,15 @@ public class SumIT extends AbstractNumericTestCase {
 
         // Create two indices and add the field 'route_length_miles' as an alias in
         // one, and a concrete field in the other.
-        prepareCreate("old_index")
-            .setMapping(
-                "transit_mode", "type=keyword",
-                "distance", "type=double",
-                "route_length_miles", "type=alias,path=distance")
-            .get();
-        prepareCreate("new_index")
-            .setMapping(
-                "transit_mode", "type=keyword",
-                "route_length_miles", "type=double")
-            .get();
+        prepareCreate("old_index").setMapping(
+            "transit_mode",
+            "type=keyword",
+            "distance",
+            "type=double",
+            "route_length_miles",
+            "type=alias,path=distance"
+        ).get();
+        prepareCreate("new_index").setMapping("transit_mode", "type=keyword", "route_length_miles", "type=double").get();
 
         List<IndexRequestBuilder> builders = new ArrayList<>();
         builders.add(client().prepareIndex("old_index").setSource("transit_mode", "train", "distance", 42.0));
@@ -95,9 +93,9 @@ public class SumIT extends AbstractNumericTestCase {
     public void testEmptyAggregation() throws Exception {
 
         SearchResponse searchResponse = client().prepareSearch("empty_bucket_idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(histogram("histo").field("value").interval(1L).minDocCount(0).subAggregation(sum("sum").field("value")))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(histogram("histo").field("value").interval(1L).minDocCount(0).subAggregation(sum("sum").field("value")))
+            .get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(2L));
         Histogram histo = searchResponse.getAggregations().get("histo");
@@ -114,9 +112,9 @@ public class SumIT extends AbstractNumericTestCase {
     @Override
     public void testUnmapped() throws Exception {
         SearchResponse searchResponse = client().prepareSearch("idx_unmapped")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").field("value"))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(sum("sum").field("value"))
+            .get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(0L));
 
@@ -129,21 +127,23 @@ public class SumIT extends AbstractNumericTestCase {
     @Override
     public void testSingleValuedField() throws Exception {
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").field("value"))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(sum("sum").field("value"))
+            .get();
 
         assertHitCount(searchResponse, 10);
 
         Sum sum = searchResponse.getAggregations().get("sum");
         assertThat(sum, notNullValue());
         assertThat(sum.getName(), equalTo("sum"));
-        assertThat(sum.getValue(), equalTo((double) 1+2+3+4+5+6+7+8+9+10));
+        assertThat(sum.getValue(), equalTo((double) 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10));
     }
 
     public void testSingleValuedFieldWithFormatter() throws Exception {
-        SearchResponse searchResponse = client().prepareSearch("idx").setQuery(matchAllQuery())
-                .addAggregation(sum("sum").format("0000.0").field("value")).get();
+        SearchResponse searchResponse = client().prepareSearch("idx")
+            .setQuery(matchAllQuery())
+            .addAggregation(sum("sum").format("0000.0").field("value"))
+            .get();
 
         assertHitCount(searchResponse, 10);
 
@@ -157,8 +157,10 @@ public class SumIT extends AbstractNumericTestCase {
     @Override
     public void testSingleValuedFieldGetProperty() throws Exception {
 
-        SearchResponse searchResponse = client().prepareSearch("idx").setQuery(matchAllQuery())
-                .addAggregation(global("global").subAggregation(sum("sum").field("value"))).get();
+        SearchResponse searchResponse = client().prepareSearch("idx")
+            .setQuery(matchAllQuery())
+            .addAggregation(global("global").subAggregation(sum("sum").field("value")))
+            .get();
 
         assertHitCount(searchResponse, 10);
 
@@ -174,40 +176,41 @@ public class SumIT extends AbstractNumericTestCase {
         assertThat(sum.getName(), equalTo("sum"));
         double expectedSumValue = (double) 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10;
         assertThat(sum.getValue(), equalTo(expectedSumValue));
-        assertThat((Sum) ((InternalAggregation)global).getProperty("sum"), equalTo(sum));
-        assertThat((double) ((InternalAggregation)global).getProperty("sum.value"), equalTo(expectedSumValue));
-        assertThat((double) ((InternalAggregation)sum).getProperty("value"), equalTo(expectedSumValue));
+        assertThat((Sum) ((InternalAggregation) global).getProperty("sum"), equalTo(sum));
+        assertThat((double) ((InternalAggregation) global).getProperty("sum.value"), equalTo(expectedSumValue));
+        assertThat((double) ((InternalAggregation) sum).getProperty("value"), equalTo(expectedSumValue));
     }
 
     @Override
     public void testSingleValuedFieldPartiallyUnmapped() throws Exception {
         SearchResponse searchResponse = client().prepareSearch("idx", "idx_unmapped")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").field("value"))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(sum("sum").field("value"))
+            .get();
 
         assertHitCount(searchResponse, 10);
 
         Sum sum = searchResponse.getAggregations().get("sum");
         assertThat(sum, notNullValue());
         assertThat(sum.getName(), equalTo("sum"));
-        assertThat(sum.getValue(), equalTo((double) 1+2+3+4+5+6+7+8+9+10));
+        assertThat(sum.getValue(), equalTo((double) 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10));
     }
 
     @Override
     public void testSingleValuedFieldWithValueScript() throws Exception {
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").field("value").script(
-                    new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, Collections.emptyMap())))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                sum("sum").field("value").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, Collections.emptyMap()))
+            )
+            .get();
 
         assertHitCount(searchResponse, 10);
 
         Sum sum = searchResponse.getAggregations().get("sum");
         assertThat(sum, notNullValue());
         assertThat(sum.getName(), equalTo("sum"));
-        assertThat(sum.getValue(), equalTo((double) 1+2+3+4+5+6+7+8+9+10));
+        assertThat(sum.getValue(), equalTo((double) 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10));
     }
 
     @Override
@@ -215,32 +218,35 @@ public class SumIT extends AbstractNumericTestCase {
         Map<String, Object> params = new HashMap<>();
         params.put("increment", 1);
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").field("value").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, params)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(sum("sum").field("value").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, params)))
+            .get();
 
         assertHitCount(searchResponse, 10);
 
         Sum sum = searchResponse.getAggregations().get("sum");
         assertThat(sum, notNullValue());
         assertThat(sum.getName(), equalTo("sum"));
-        assertThat(sum.getValue(), equalTo((double) 1+2+3+4+5+6+7+8+9+10));
+        assertThat(sum.getValue(), equalTo((double) 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10));
     }
 
     @Override
     public void testScriptSingleValued() throws Exception {
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").script(
-                    new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_FIELD_SCRIPT, Collections.singletonMap("field", "value"))))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                sum("sum").script(
+                    new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_FIELD_SCRIPT, Collections.singletonMap("field", "value"))
+                )
+            )
+            .get();
 
         assertHitCount(searchResponse, 10);
 
         Sum sum = searchResponse.getAggregations().get("sum");
         assertThat(sum, notNullValue());
         assertThat(sum.getName(), equalTo("sum"));
-        assertThat(sum.getValue(), equalTo((double) 1+2+3+4+5+6+7+8+9+10));
+        assertThat(sum.getValue(), equalTo((double) 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10));
     }
 
     @Override
@@ -248,32 +254,33 @@ public class SumIT extends AbstractNumericTestCase {
         Map<String, Object> params = new HashMap<>();
         params.put("inc", 1);
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_FIELD_SCRIPT, params)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(sum("sum").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_FIELD_SCRIPT, params)))
+            .get();
 
         assertHitCount(searchResponse, 10);
 
         Sum sum = searchResponse.getAggregations().get("sum");
         assertThat(sum, notNullValue());
         assertThat(sum.getName(), equalTo("sum"));
-        assertThat(sum.getValue(), equalTo((double) 2+3+4+5+6+7+8+9+10+11));
+        assertThat(sum.getValue(), equalTo((double) 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11));
     }
 
     @Override
     public void testScriptMultiValued() throws Exception {
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").script(
-                    new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, SUM_VALUES_FIELD_SCRIPT, Collections.emptyMap())))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                sum("sum").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, SUM_VALUES_FIELD_SCRIPT, Collections.emptyMap()))
+            )
+            .get();
 
         assertHitCount(searchResponse, 10);
 
         Sum sum = searchResponse.getAggregations().get("sum");
         assertThat(sum, notNullValue());
         assertThat(sum.getName(), equalTo("sum"));
-        assertThat(sum.getValue(), equalTo((double) 2+3+3+4+4+5+5+6+6+7+7+8+8+9+9+10+10+11+11+12));
+        assertThat(sum.getValue(), equalTo((double) 2 + 3 + 3 + 4 + 4 + 5 + 5 + 6 + 6 + 7 + 7 + 8 + 8 + 9 + 9 + 10 + 10 + 11 + 11 + 12));
     }
 
     @Override
@@ -281,43 +288,43 @@ public class SumIT extends AbstractNumericTestCase {
         Map<String, Object> params = new HashMap<>();
         params.put("inc", 1);
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(
-                        sum("sum").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, SUM_VALUES_FIELD_SCRIPT, params)))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(sum("sum").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, SUM_VALUES_FIELD_SCRIPT, params)))
+            .get();
 
         assertHitCount(searchResponse, 10);
 
         Sum sum = searchResponse.getAggregations().get("sum");
         assertThat(sum, notNullValue());
         assertThat(sum.getName(), equalTo("sum"));
-        assertThat(sum.getValue(), equalTo((double) 3+4+4+5+5+6+6+7+7+8+8+9+9+10+10+11+11+12+12+13));
+        assertThat(sum.getValue(), equalTo((double) 3 + 4 + 4 + 5 + 5 + 6 + 6 + 7 + 7 + 8 + 8 + 9 + 9 + 10 + 10 + 11 + 11 + 12 + 12 + 13));
     }
 
     @Override
     public void testMultiValuedField() throws Exception {
 
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").field("values"))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(sum("sum").field("values"))
+            .get();
 
         assertHitCount(searchResponse, 10);
 
         Sum sum = searchResponse.getAggregations().get("sum");
         assertThat(sum, notNullValue());
         assertThat(sum.getName(), equalTo("sum"));
-        assertThat(sum.getValue(), equalTo((double) 2+3+3+4+4+5+5+6+6+7+7+8+8+9+9+10+10+11+11+12));
+        assertThat(sum.getValue(), equalTo((double) 2 + 3 + 3 + 4 + 4 + 5 + 5 + 6 + 6 + 7 + 7 + 8 + 8 + 9 + 9 + 10 + 10 + 11 + 11 + 12));
     }
 
     @Override
     public void testMultiValuedFieldWithValueScript() throws Exception {
 
         SearchResponse searchResponse = client().prepareSearch("idx")
-                .setQuery(matchAllQuery())
-                .addAggregation(sum("sum").field("values").script(
-                    new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, Collections.emptyMap())))
-                .get();
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                sum("sum").field("values").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, Collections.emptyMap()))
+            )
+            .get();
 
         assertHitCount(searchResponse, 10);
 
@@ -331,10 +338,10 @@ public class SumIT extends AbstractNumericTestCase {
     public void testMultiValuedFieldWithValueScriptWithParams() throws Exception {
         Map<String, Object> params = new HashMap<>();
         params.put("increment", 1);
-        SearchResponse searchResponse = client().prepareSearch("idx").setQuery(matchAllQuery())
-                .addAggregation(sum("sum").field("values")
-                    .script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, params)))
-                .get();
+        SearchResponse searchResponse = client().prepareSearch("idx")
+            .setQuery(matchAllQuery())
+            .addAggregation(sum("sum").field("values").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, params)))
+            .get();
 
         assertHitCount(searchResponse, 10);
 
@@ -346,10 +353,14 @@ public class SumIT extends AbstractNumericTestCase {
 
     @Override
     public void testOrderByEmptyAggregation() throws Exception {
-        SearchResponse searchResponse = client().prepareSearch("idx").setQuery(matchAllQuery())
-                .addAggregation(terms("terms").field("value").order(BucketOrder.compound(BucketOrder.aggregation("filter>sum", true)))
-                        .subAggregation(filter("filter", termQuery("value", 100)).subAggregation(sum("sum").field("value"))))
-                .get();
+        SearchResponse searchResponse = client().prepareSearch("idx")
+            .setQuery(matchAllQuery())
+            .addAggregation(
+                terms("terms").field("value")
+                    .order(BucketOrder.compound(BucketOrder.aggregation("filter>sum", true)))
+                    .subAggregation(filter("filter", termQuery("value", 100)).subAggregation(sum("sum").field("value")))
+            )
+            .get();
 
         assertHitCount(searchResponse, 10);
 
@@ -379,54 +390,136 @@ public class SumIT extends AbstractNumericTestCase {
      * Ensure requests using nondeterministic scripts do not get cached.
      */
     public void testScriptCaching() throws Exception {
-        assertAcked(prepareCreate("cache_test_idx").setMapping("d", "type=long")
+        assertAcked(
+            prepareCreate("cache_test_idx").setMapping("d", "type=long")
                 .setSettings(Settings.builder().put("requests.cache.enable", true).put("number_of_shards", 1).put("number_of_replicas", 1))
-                .get());
-        indexRandom(true, client().prepareIndex("cache_test_idx").setId("1").setSource("s", 1),
-                client().prepareIndex("cache_test_idx").setId("2").setSource("s", 2));
+                .get()
+        );
+        indexRandom(
+            true,
+            client().prepareIndex("cache_test_idx").setId("1").setSource("s", 1),
+            client().prepareIndex("cache_test_idx").setId("2").setSource("s", 2)
+        );
 
         // Make sure we are starting with a clear cache
-        assertThat(client().admin().indices().prepareStats("cache_test_idx").setRequestCache(true).get().getTotal().getRequestCache()
-                .getHitCount(), equalTo(0L));
-        assertThat(client().admin().indices().prepareStats("cache_test_idx").setRequestCache(true).get().getTotal().getRequestCache()
-                .getMissCount(), equalTo(0L));
+        assertThat(
+            client().admin()
+                .indices()
+                .prepareStats("cache_test_idx")
+                .setRequestCache(true)
+                .get()
+                .getTotal()
+                .getRequestCache()
+                .getHitCount(),
+            equalTo(0L)
+        );
+        assertThat(
+            client().admin()
+                .indices()
+                .prepareStats("cache_test_idx")
+                .setRequestCache(true)
+                .get()
+                .getTotal()
+                .getRequestCache()
+                .getMissCount(),
+            equalTo(0L)
+        );
 
         // Test that a request using a nondeterministic script does not get cached
-        SearchResponse r = client().prepareSearch("cache_test_idx").setSize(0)
-                .addAggregation(sum("foo").field("d").script(
-                    new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, RANDOM_SCRIPT, Collections.emptyMap()))).get();
+        SearchResponse r = client().prepareSearch("cache_test_idx")
+            .setSize(0)
+            .addAggregation(
+                sum("foo").field("d").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, RANDOM_SCRIPT, Collections.emptyMap()))
+            )
+            .get();
         assertSearchResponse(r);
 
-        assertThat(client().admin().indices().prepareStats("cache_test_idx").setRequestCache(true).get().getTotal().getRequestCache()
-                .getHitCount(), equalTo(0L));
-        assertThat(client().admin().indices().prepareStats("cache_test_idx").setRequestCache(true).get().getTotal().getRequestCache()
-                .getMissCount(), equalTo(0L));
+        assertThat(
+            client().admin()
+                .indices()
+                .prepareStats("cache_test_idx")
+                .setRequestCache(true)
+                .get()
+                .getTotal()
+                .getRequestCache()
+                .getHitCount(),
+            equalTo(0L)
+        );
+        assertThat(
+            client().admin()
+                .indices()
+                .prepareStats("cache_test_idx")
+                .setRequestCache(true)
+                .get()
+                .getTotal()
+                .getRequestCache()
+                .getMissCount(),
+            equalTo(0L)
+        );
 
         // Test that a request using a deterministic script gets cached
-        r = client().prepareSearch("cache_test_idx").setSize(0)
-                .addAggregation(sum("foo").field("d").script(
-                    new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, Collections.emptyMap()))).get();
+        r = client().prepareSearch("cache_test_idx")
+            .setSize(0)
+            .addAggregation(
+                sum("foo").field("d").script(new Script(ScriptType.INLINE, METRIC_SCRIPT_ENGINE, VALUE_SCRIPT, Collections.emptyMap()))
+            )
+            .get();
         assertSearchResponse(r);
 
-        assertThat(client().admin().indices().prepareStats("cache_test_idx").setRequestCache(true).get().getTotal().getRequestCache()
-                .getHitCount(), equalTo(0L));
-        assertThat(client().admin().indices().prepareStats("cache_test_idx").setRequestCache(true).get().getTotal().getRequestCache()
-                .getMissCount(), equalTo(1L));
+        assertThat(
+            client().admin()
+                .indices()
+                .prepareStats("cache_test_idx")
+                .setRequestCache(true)
+                .get()
+                .getTotal()
+                .getRequestCache()
+                .getHitCount(),
+            equalTo(0L)
+        );
+        assertThat(
+            client().admin()
+                .indices()
+                .prepareStats("cache_test_idx")
+                .setRequestCache(true)
+                .get()
+                .getTotal()
+                .getRequestCache()
+                .getMissCount(),
+            equalTo(1L)
+        );
 
         // Ensure that non-scripted requests are cached as normal
         r = client().prepareSearch("cache_test_idx").setSize(0).addAggregation(sum("foo").field("d")).get();
         assertSearchResponse(r);
 
-        assertThat(client().admin().indices().prepareStats("cache_test_idx").setRequestCache(true).get().getTotal().getRequestCache()
-                .getHitCount(), equalTo(0L));
-        assertThat(client().admin().indices().prepareStats("cache_test_idx").setRequestCache(true).get().getTotal().getRequestCache()
-                .getMissCount(), equalTo(2L));
+        assertThat(
+            client().admin()
+                .indices()
+                .prepareStats("cache_test_idx")
+                .setRequestCache(true)
+                .get()
+                .getTotal()
+                .getRequestCache()
+                .getHitCount(),
+            equalTo(0L)
+        );
+        assertThat(
+            client().admin()
+                .indices()
+                .prepareStats("cache_test_idx")
+                .setRequestCache(true)
+                .get()
+                .getTotal()
+                .getRequestCache()
+                .getMissCount(),
+            equalTo(2L)
+        );
     }
 
     public void testFieldAlias() {
         SearchResponse response = client().prepareSearch("old_index", "new_index")
-            .addAggregation(sum("sum")
-                .field("route_length_miles"))
+            .addAggregation(sum("sum").field("route_length_miles"))
             .get();
 
         assertSearchResponse(response);
@@ -437,12 +530,9 @@ public class SumIT extends AbstractNumericTestCase {
         assertThat(sum.getValue(), equalTo(192.7));
     }
 
-     public void testFieldAliasInSubAggregation() {
+    public void testFieldAliasInSubAggregation() {
         SearchResponse response = client().prepareSearch("old_index", "new_index")
-            .addAggregation(terms("terms")
-                .field("transit_mode")
-                .subAggregation(sum("sum")
-                    .field("route_length_miles")))
+            .addAggregation(terms("terms").field("transit_mode").subAggregation(sum("sum").field("route_length_miles")))
             .get();
 
         assertSearchResponse(response);

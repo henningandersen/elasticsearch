@@ -52,7 +52,8 @@ public class TrackFailedAllocationNodesTests extends ESAllocationTestCase {
         }
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .nodes(discoNodes)
-            .metaData(metaData).routingTable(RoutingTable.builder().addAsNew(metaData.index("idx")).build())
+            .metaData(metaData)
+            .routingTable(RoutingTable.builder().addAsNew(metaData.index("idx")).build())
             .build();
         clusterState = allocationService.reroute(clusterState, "reroute");
         Set<String> failedNodeIds = new HashSet<>();
@@ -61,9 +62,14 @@ public class TrackFailedAllocationNodesTests extends ESAllocationTestCase {
         for (int i = 0; i < maxRetries; i++) {
             failedNodeIds.add(clusterState.routingTable().index("idx").shard(0).shards().get(0).currentNodeId());
             clusterState = allocationService.applyFailedShard(
-                clusterState, clusterState.routingTable().index("idx").shard(0).shards().get(0), randomBoolean());
-            assertThat(clusterState.routingTable().index("idx").shard(0).shards().get(0).unassignedInfo().getFailedNodeIds(),
-                equalTo(failedNodeIds));
+                clusterState,
+                clusterState.routingTable().index("idx").shard(0).shards().get(0),
+                randomBoolean()
+            );
+            assertThat(
+                clusterState.routingTable().index("idx").shard(0).shards().get(0).unassignedInfo().getFailedNodeIds(),
+                equalTo(failedNodeIds)
+            );
         }
 
         // reroute with retryFailed=true should discard the failedNodes
@@ -75,7 +81,10 @@ public class TrackFailedAllocationNodesTests extends ESAllocationTestCase {
         clusterState = startInitializingShardsAndReroute(allocationService, clusterState);
         assertThat(clusterState.routingTable().index("idx").shard(0).shards().get(0).state(), equalTo(ShardRoutingState.STARTED));
         clusterState = allocationService.applyFailedShard(
-            clusterState, clusterState.routingTable().index("idx").shard(0).shards().get(0), false);
+            clusterState,
+            clusterState.routingTable().index("idx").shard(0).shards().get(0),
+            false
+        );
         assertThat(clusterState.routingTable().index("idx").shard(0).shards().get(0).unassignedInfo().getFailedNodeIds(), empty());
     }
 }

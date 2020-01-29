@@ -235,7 +235,6 @@ public class AliasMetaData extends AbstractDiffable<AliasMetaData> implements To
         @Nullable
         private Boolean writeIndex;
 
-
         public Builder(String alias) {
             this.alias = alias;
         }

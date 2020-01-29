@@ -38,14 +38,13 @@ import java.util.List;
 public class RemoveSettingsCommand extends ElasticsearchNodeCommand {
 
     static final String SETTINGS_REMOVED_MSG = "Settings were successfully removed from the cluster state";
-    static final String CONFIRMATION_MSG =
-        DELIMITER +
-            "\n" +
-            "You should only run this tool if you have incompatible settings in the\n" +
-            "cluster state that prevent the cluster from forming.\n" +
-            "This tool can cause data loss and its use should be your last resort.\n" +
-            "\n" +
-            "Do you want to proceed?\n";
+    static final String CONFIRMATION_MSG = DELIMITER
+        + "\n"
+        + "You should only run this tool if you have incompatible settings in the\n"
+        + "cluster state that prevent the cluster from forming.\n"
+        + "This tool can cause data loss and its use should be your last resort.\n"
+        + "\n"
+        + "Do you want to proceed?\n";
 
     private final OptionSpec<String> arguments;
 
@@ -55,8 +54,8 @@ public class RemoveSettingsCommand extends ElasticsearchNodeCommand {
     }
 
     @Override
-    protected void processNodePaths(Terminal terminal, Path[] dataPaths, OptionSet options, Environment env)
-        throws IOException, UserException {
+    protected void processNodePaths(Terminal terminal, Path[] dataPaths, OptionSet options, Environment env) throws IOException,
+        UserException {
         final List<String> settingsToRemove = arguments.values(options);
         if (settingsToRemove.isEmpty()) {
             throw new UserException(ExitCodes.USAGE, "Must supply at least one setting to remove");
@@ -83,15 +82,19 @@ public class RemoveSettingsCommand extends ElasticsearchNodeCommand {
                 }
             }
             if (matched == false) {
-                throw new UserException(ExitCodes.USAGE,
-                    "No persistent cluster settings matching [" + settingToRemove + "] were found on this node");
+                throw new UserException(
+                    ExitCodes.USAGE,
+                    "No persistent cluster settings matching [" + settingToRemove + "] were found on this node"
+                );
             }
         }
         final ClusterState newClusterState = ClusterState.builder(oldClusterState)
             .metaData(MetaData.builder(oldClusterState.metaData()).persistentSettings(newPersistentSettingsBuilder.build()).build())
             .build();
-        terminal.println(Terminal.Verbosity.VERBOSE,
-            "[old cluster state = " + oldClusterState + ", new cluster state = " + newClusterState + "]");
+        terminal.println(
+            Terminal.Verbosity.VERBOSE,
+            "[old cluster state = " + oldClusterState + ", new cluster state = " + newClusterState + "]"
+        );
 
         confirm(terminal, CONFIRMATION_MSG);
 

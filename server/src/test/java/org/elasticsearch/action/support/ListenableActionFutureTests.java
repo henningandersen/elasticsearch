@@ -78,5 +78,4 @@ public class ListenableActionFutureTests extends ESTestCase {
         }
     }
 
-
 }

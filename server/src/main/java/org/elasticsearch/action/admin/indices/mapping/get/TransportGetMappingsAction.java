@@ -46,11 +46,23 @@ public class TransportGetMappingsAction extends TransportClusterInfoAction<GetMa
     private final IndicesService indicesService;
 
     @Inject
-    public TransportGetMappingsAction(TransportService transportService, ClusterService clusterService,
-                                      ThreadPool threadPool, ActionFilters actionFilters,
-                                      IndexNameExpressionResolver indexNameExpressionResolver, IndicesService indicesService) {
-        super(GetMappingsAction.NAME, transportService, clusterService, threadPool, actionFilters, GetMappingsRequest::new,
-                indexNameExpressionResolver);
+    public TransportGetMappingsAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        IndicesService indicesService
+    ) {
+        super(
+            GetMappingsAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            GetMappingsRequest::new,
+            indexNameExpressionResolver
+        );
         this.indicesService = indicesService;
     }
 
@@ -62,8 +74,8 @@ public class TransportGetMappingsAction extends TransportClusterInfoAction<GetMa
 
     @Override
     protected ClusterBlockException checkBlock(GetMappingsRequest request, ClusterState state) {
-        return state.blocks().indicesBlockedException(ClusterBlockLevel.METADATA_READ,
-                indexNameExpressionResolver.concreteIndexNames(state, request));
+        return state.blocks()
+            .indicesBlockedException(ClusterBlockLevel.METADATA_READ, indexNameExpressionResolver.concreteIndexNames(state, request));
     }
 
     @Override
@@ -72,12 +84,16 @@ public class TransportGetMappingsAction extends TransportClusterInfoAction<GetMa
     }
 
     @Override
-    protected void doMasterOperation(final GetMappingsRequest request, String[] concreteIndices, final ClusterState state,
-                                     final ActionListener<GetMappingsResponse> listener) {
+    protected void doMasterOperation(
+        final GetMappingsRequest request,
+        String[] concreteIndices,
+        final ClusterState state,
+        final ActionListener<GetMappingsResponse> listener
+    ) {
         logger.trace("serving getMapping request based on version {}", state.version());
         try {
-            ImmutableOpenMap<String, MappingMetaData> result =
-                    state.metaData().findMappings(concreteIndices, indicesService.getFieldFilter());
+            ImmutableOpenMap<String, MappingMetaData> result = state.metaData()
+                .findMappings(concreteIndices, indicesService.getFieldFilter());
             listener.onResponse(new GetMappingsResponse(result));
         } catch (IOException e) {
             listener.onFailure(e);

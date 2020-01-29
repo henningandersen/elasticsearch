@@ -111,7 +111,7 @@ abstract class QueryCollectorContext {
     static QueryCollectorContext createFilteredCollectorContext(IndexSearcher searcher, Query query) {
         return new QueryCollectorContext(REASON_SEARCH_POST_FILTER) {
             @Override
-            Collector create(Collector in ) throws IOException {
+            Collector create(Collector in) throws IOException {
                 final Weight filterWeight = searcher.createWeight(searcher.rewrite(query), ScoreMode.COMPLETE_NO_SCORES, 1f);
                 return new FilteredCollector(in, filterWeight);
             }
@@ -125,7 +125,7 @@ abstract class QueryCollectorContext {
         return new QueryCollectorContext(REASON_SEARCH_MULTI) {
             @Override
             Collector create(Collector in) throws IOException {
-                List<Collector> subCollectors = new ArrayList<> ();
+                List<Collector> subCollectors = new ArrayList<>();
                 subCollectors.add(in);
                 subCollectors.addAll(subs);
                 return MultiCollector.wrap(subCollectors);
@@ -133,7 +133,7 @@ abstract class QueryCollectorContext {
 
             @Override
             protected InternalProfileCollector createWithProfiler(InternalProfileCollector in) throws IOException {
-                final List<InternalProfileCollector> subCollectors = new ArrayList<> ();
+                final List<InternalProfileCollector> subCollectors = new ArrayList<>();
                 subCollectors.add(in);
                 if (subs.stream().anyMatch((col) -> col instanceof InternalProfileCollector == false)) {
                     throw new IllegalArgumentException("non-profiling collector");

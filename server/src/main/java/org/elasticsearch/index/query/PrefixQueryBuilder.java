@@ -146,8 +146,10 @@ public class PrefixQueryBuilder extends AbstractQueryBuilder<PrefixQueryBuilder>
                         } else if (REWRITE_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                             rewrite = parser.textOrNull();
                         } else {
-                            throw new ParsingException(parser.getTokenLocation(),
-                                    "[prefix] query does not support [" + currentFieldName + "]");
+                            throw new ParsingException(
+                                parser.getTokenLocation(),
+                                "[prefix] query does not support [" + currentFieldName + "]"
+                            );
                         }
                     }
                 }
@@ -158,29 +160,26 @@ public class PrefixQueryBuilder extends AbstractQueryBuilder<PrefixQueryBuilder>
             }
         }
 
-        return new PrefixQueryBuilder(fieldName, value)
-                .rewrite(rewrite)
-                .boost(boost)
-                .queryName(queryName);
+        return new PrefixQueryBuilder(fieldName, value).rewrite(rewrite).boost(boost).queryName(queryName);
     }
 
     @Override
     public String getWriteableName() {
         return NAME;
     }
-    
+
     @Override
     protected QueryBuilder doRewrite(QueryRewriteContext queryRewriteContext) throws IOException {
         if ("_index".equals(fieldName)) {
-            // Special-case optimisation for canMatch phase:  
+            // Special-case optimisation for canMatch phase:
             // We can skip querying this shard if the index name doesn't match the value of this query on the "_index" field.
             QueryShardContext shardContext = queryRewriteContext.convertToShardContext();
             if (shardContext != null && shardContext.indexMatches(value + "*") == false) {
                 return new MatchNoneQueryBuilder();
-            }            
+            }
         }
         return super.doRewrite(queryRewriteContext);
-    }    
+    }
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
@@ -209,8 +208,6 @@ public class PrefixQueryBuilder extends AbstractQueryBuilder<PrefixQueryBuilder>
 
     @Override
     protected boolean doEquals(PrefixQueryBuilder other) {
-        return Objects.equals(fieldName, other.fieldName) &&
-                Objects.equals(value, other.value) &&
-                Objects.equals(rewrite, other.rewrite);
+        return Objects.equals(fieldName, other.fieldName) && Objects.equals(value, other.value) && Objects.equals(rewrite, other.rewrite);
     }
 }

@@ -39,10 +39,13 @@ public class PathMatchDynamicTemplateTests extends ESSingleNodeTestCase {
         MapperService mapperService = index.mapperService();
 
         byte[] json = copyToBytesFromClasspath("/org/elasticsearch/index/mapper/dynamictemplate/pathmatch/test-data.json");
-        ParsedDocument parsedDoc = mapperService.documentMapper().parse(
-            new SourceToParse("test", "1", new BytesArray(json), XContentType.JSON));
-        client().admin().indices().preparePutMapping("test")
-            .setSource(parsedDoc.dynamicMappingsUpdate().toString(), XContentType.JSON).get();
+        ParsedDocument parsedDoc = mapperService.documentMapper()
+            .parse(new SourceToParse("test", "1", new BytesArray(json), XContentType.JSON));
+        client().admin()
+            .indices()
+            .preparePutMapping("test")
+            .setSource(parsedDoc.dynamicMappingsUpdate().toString(), XContentType.JSON)
+            .get();
         Document doc = parsedDoc.rootDoc();
 
         IndexableField f = doc.getField("name");

@@ -145,7 +145,7 @@ public class IndexNameExpressionResolver {
 
     Index[] concreteIndices(Context context, String... indexExpressions) {
         if (indexExpressions == null || indexExpressions.length == 0) {
-            indexExpressions = new String[]{MetaData.ALL};
+            indexExpressions = new String[] { MetaData.ALL };
         }
         MetaData metaData = context.getState().metaData();
         IndicesOptions options = context.getOptions();
@@ -164,12 +164,12 @@ public class IndexNameExpressionResolver {
                 IndexNotFoundException infe;
                 if (indexExpressions.length == 1) {
                     if (indexExpressions[0].equals(MetaData.ALL)) {
-                        infe = new IndexNotFoundException("no indices exist", (String)null);
+                        infe = new IndexNotFoundException("no indices exist", (String) null);
                     } else {
-                        infe = new IndexNotFoundException((String)null);
+                        infe = new IndexNotFoundException((String) null);
                     }
                 } else {
-                    infe = new IndexNotFoundException((String)null);
+                    infe = new IndexNotFoundException((String) null);
                 }
                 infe.setResources("index_expression", indexExpressions);
                 throw infe;
@@ -181,7 +181,7 @@ public class IndexNameExpressionResolver {
         final Set<Index> concreteIndices = new HashSet<>(expressions.size());
         for (String expression : expressions) {
             AliasOrIndex aliasOrIndex = metaData.getAliasAndIndexLookup().get(expression);
-            if (aliasOrIndex == null ) {
+            if (aliasOrIndex == null) {
                 if (failNoIndices) {
                     IndexNotFoundException infe;
                     if (expression.equals(MetaData.ALL)) {
@@ -206,9 +206,13 @@ public class IndexNameExpressionResolver {
                 AliasOrIndex.Alias alias = (AliasOrIndex.Alias) aliasOrIndex;
                 IndexMetaData writeIndex = alias.getWriteIndex();
                 if (writeIndex == null) {
-                    throw new IllegalArgumentException("no write index is defined for alias [" + alias.getAliasName() + "]." +
-                        " The write index may be explicitly disabled using is_write_index=false or the alias points to multiple" +
-                        " indices without one being designated as a write index");
+                    throw new IllegalArgumentException(
+                        "no write index is defined for alias ["
+                            + alias.getAliasName()
+                            + "]."
+                            + " The write index may be explicitly disabled using is_write_index=false or the alias points to multiple"
+                            + " indices without one being designated as a write index"
+                    );
                 }
                 if (addIndex(writeIndex, context)) {
                     concreteIndices.add(writeIndex.getIndex());
@@ -220,8 +224,13 @@ public class IndexNameExpressionResolver {
                     for (IndexMetaData indexMetaData : aliasOrIndex.getIndices()) {
                         indexNames[i++] = indexMetaData.getIndex().getName();
                     }
-                    throw new IllegalArgumentException("Alias [" + expression + "] has more than one indices associated with it [" +
-                        Arrays.toString(indexNames) + "], can't execute a single index op");
+                    throw new IllegalArgumentException(
+                        "Alias ["
+                            + expression
+                            + "] has more than one indices associated with it ["
+                            + Arrays.toString(indexNames)
+                            + "], can't execute a single index op"
+                    );
                 }
 
                 for (IndexMetaData index : aliasOrIndex.getIndices()) {
@@ -245,7 +254,7 @@ public class IndexNameExpressionResolver {
         }
 
         if (options.allowNoIndices() == false && concreteIndices.isEmpty()) {
-            IndexNotFoundException infe = new IndexNotFoundException((String)null);
+            IndexNotFoundException infe = new IndexNotFoundException((String) null);
             infe.setResources("index_expression", indexExpressions);
             throw infe;
         }
@@ -257,8 +266,9 @@ public class IndexNameExpressionResolver {
     }
 
     private static IllegalArgumentException aliasesNotSupportedException(String expression) {
-        return new IllegalArgumentException("The provided expression [" + expression + "] matches an " +
-                "alias, specify the corresponding concrete indices instead.");
+        return new IllegalArgumentException(
+            "The provided expression [" + expression + "] matches an " + "alias, specify the corresponding concrete indices instead."
+        );
     }
 
     /**
@@ -277,8 +287,9 @@ public class IndexNameExpressionResolver {
         String indexExpression = request.indices() != null && request.indices().length > 0 ? request.indices()[0] : null;
         Index[] indices = concreteIndices(state, request.indicesOptions(), indexExpression);
         if (indices.length != 1) {
-            throw new IllegalArgumentException("unable to return a single index as the index and options" +
-                " provided got resolved to multiple indices");
+            throw new IllegalArgumentException(
+                "unable to return a single index as the index and options" + " provided got resolved to multiple indices"
+            );
         }
         return indices[0];
     }
@@ -316,8 +327,9 @@ public class IndexNameExpressionResolver {
             return null;
         }
         if (indices.length != 1) {
-            throw new IllegalArgumentException("The index expression [" + index +
-                "] and options provided did not point to a single write-index");
+            throw new IllegalArgumentException(
+                "The index expression [" + index + "] and options provided did not point to a single write-index"
+            );
         }
         return indices[0];
     }
@@ -379,8 +391,13 @@ public class IndexNameExpressionResolver {
      * the index itself - null is returned. Returns {@code null} if no filtering is required.
      * <p><b>NOTE</b>: the provided expressions must have been resolved already via {@link #resolveExpressions}.
      */
-    public String[] indexAliases(ClusterState state, String index, Predicate<AliasMetaData> requiredAlias, boolean skipIdentity,
-            Set<String> resolvedExpressions) {
+    public String[] indexAliases(
+        ClusterState state,
+        String index,
+        Predicate<AliasMetaData> requiredAlias,
+        boolean skipIdentity,
+        Set<String> resolvedExpressions
+    ) {
         if (isAllIndices(resolvedExpressions)) {
             return null;
         }
@@ -400,15 +417,12 @@ public class IndexNameExpressionResolver {
         if (iterateIndexAliases(indexAliases.size(), resolvedExpressions.size())) {
             // faster to iterate indexAliases
             aliasCandidates = StreamSupport.stream(Spliterators.spliteratorUnknownSize(indexAliases.values().iterator(), 0), false)
-                    .map(cursor -> cursor.value)
-                    .filter(aliasMetaData -> resolvedExpressions.contains(aliasMetaData.alias()))
-                    .toArray(AliasMetaData[]::new);
+                .map(cursor -> cursor.value)
+                .filter(aliasMetaData -> resolvedExpressions.contains(aliasMetaData.alias()))
+                .toArray(AliasMetaData[]::new);
         } else {
             // faster to iterate resolvedExpressions
-            aliasCandidates = resolvedExpressions.stream()
-                    .map(indexAliases::get)
-                    .filter(Objects::nonNull)
-                    .toArray(AliasMetaData[]::new);
+            aliasCandidates = resolvedExpressions.stream().map(indexAliases::get).filter(Objects::nonNull).toArray(AliasMetaData[]::new);
         }
 
         List<String> aliases = null;
@@ -574,13 +588,13 @@ public class IndexNameExpressionResolver {
         // if we end up matching on all indices, check, if its a wildcard parameter, or a "-something" structure
         if (concreteIndices.length == metaData.getConcreteAllIndices().length && indicesOrAliases.length > 0) {
 
-            //we might have something like /-test1,+test1 that would identify all indices
-            //or something like /-test1 with test1 index missing and IndicesOptions.lenient()
+            // we might have something like /-test1,+test1 that would identify all indices
+            // or something like /-test1 with test1 index missing and IndicesOptions.lenient()
             if (indicesOrAliases[0].charAt(0) == '-') {
                 return true;
             }
 
-            //otherwise we check if there's any simple regex
+            // otherwise we check if there's any simple regex
             for (String indexOrAlias : indicesOrAliases) {
                 if (Regex.isSimpleMatchPattern(indexOrAlias)) {
                     return true;
@@ -607,11 +621,16 @@ public class IndexNameExpressionResolver {
         }
 
         Context(ClusterState state, IndicesOptions options, long startTime) {
-           this(state, options, startTime, false, false);
+            this(state, options, startTime, false, false);
         }
 
-        protected Context(ClusterState state, IndicesOptions options, long startTime,
-                          boolean preserveAliases, boolean resolveToWriteIndex) {
+        protected Context(
+            ClusterState state,
+            IndicesOptions options,
+            long startTime,
+            boolean preserveAliases,
+            boolean resolveToWriteIndex
+        ) {
             this.state = state;
             this.options = options;
             this.startTime = startTime;
@@ -688,7 +707,7 @@ public class IndexNameExpressionResolver {
                 return expressions;
             }
             if (result.isEmpty() && !options.allowNoIndices()) {
-                IndexNotFoundException infe = new IndexNotFoundException((String)null);
+                IndexNotFoundException infe = new IndexNotFoundException((String) null);
                 infe.setResources("index_or_alias", expressions.toArray(new String[0]));
                 throw infe;
             }
@@ -722,7 +741,7 @@ public class IndexNameExpressionResolver {
                     result = new HashSet<>(expressions.subList(0, i));
                 }
                 if (!Regex.isSimpleMatchPattern(expression)) {
-                    //TODO why does wildcard resolver throw exceptions regarding non wildcarded expressions? This should not be done here.
+                    // TODO why does wildcard resolver throw exceptions regarding non wildcarded expressions? This should not be done here.
                     if (options.ignoreUnavailable() == false) {
                         AliasOrIndex aliasOrIndex = metaData.getAliasAndIndexLookup().get(expression);
                         if (aliasOrIndex == null) {
@@ -769,7 +788,7 @@ public class IndexNameExpressionResolver {
 
         private static boolean aliasOrIndexExists(IndicesOptions options, MetaData metaData, String expression) {
             AliasOrIndex aliasOrIndex = metaData.getAliasAndIndexLookup().get(expression);
-            //treat aliases as unavailable indices when ignoreAliases is set to true (e.g. delete index and update aliases api)
+            // treat aliases as unavailable indices when ignoreAliases is set to true (e.g. delete index and update aliases api)
             return aliasOrIndex != null && (options.ignoreAliases() == false || aliasOrIndex.isAlias() == false);
         }
 
@@ -798,9 +817,11 @@ public class IndexNameExpressionResolver {
             if (Regex.isMatchAllPattern(expression)) {
                 // Can only happen if the expressions was initially: '-*'
                 if (context.getOptions().ignoreAliases()) {
-                    return metaData.getAliasAndIndexLookup().entrySet().stream()
-                            .filter(e -> e.getValue().isAlias() == false)
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    return metaData.getAliasAndIndexLookup()
+                        .entrySet()
+                        .stream()
+                        .filter(e -> e.getValue().isAlias() == false)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 } else {
                     return metaData.getAliasAndIndexLookup();
                 }
@@ -817,11 +838,12 @@ public class IndexNameExpressionResolver {
             char[] toPrefixCharArr = fromPrefix.toCharArray();
             toPrefixCharArr[toPrefixCharArr.length - 1]++;
             String toPrefix = new String(toPrefixCharArr);
-            SortedMap<String,AliasOrIndex> subMap = metaData.getAliasAndIndexLookup().subMap(fromPrefix, toPrefix);
+            SortedMap<String, AliasOrIndex> subMap = metaData.getAliasAndIndexLookup().subMap(fromPrefix, toPrefix);
             if (context.getOptions().ignoreAliases()) {
-                 return subMap.entrySet().stream()
-                        .filter(entry -> entry.getValue().isAlias() == false)
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                return subMap.entrySet()
+                    .stream()
+                    .filter(entry -> entry.getValue().isAlias() == false)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             }
             return subMap;
         }
@@ -836,8 +858,13 @@ public class IndexNameExpressionResolver {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
 
-        private static Set<String> expand(Context context, IndexMetaData.State excludeState, Map<String, AliasOrIndex> matches,
-                                          String expression, boolean includeHidden) {
+        private static Set<String> expand(
+            Context context,
+            IndexMetaData.State excludeState,
+            Map<String, AliasOrIndex> matches,
+            String expression,
+            boolean includeHidden
+        ) {
             Set<String> expand = new HashSet<>();
             for (Map.Entry<String, AliasOrIndex> entry : matches.entrySet()) {
                 AliasOrIndex aliasOrIndex = entry.getValue();
@@ -850,10 +877,11 @@ public class IndexNameExpressionResolver {
                                 expand.add(meta.getIndex().getName());
                             } else if (IndexMetaData.INDEX_HIDDEN_SETTING.get(meta.getSettings()) == false) {
                                 expand.add(meta.getIndex().getName());
-                            } else if (meta.getIndex().getName().startsWith(".") &&
-                                expression.startsWith(".") && Regex.isSimpleMatchPattern(expression)) {
-                                expand.add(meta.getIndex().getName());
-                            }
+                            } else if (meta.getIndex().getName().startsWith(".")
+                                && expression.startsWith(".")
+                                && Regex.isSimpleMatchPattern(expression)) {
+                                    expand.add(meta.getIndex().getName());
+                                }
                         }
                     }
                 }
@@ -862,8 +890,8 @@ public class IndexNameExpressionResolver {
         }
 
         private boolean isEmptyOrTrivialWildcard(List<String> expressions) {
-            return expressions.isEmpty() || (expressions.size() == 1 && (MetaData.ALL.equals(expressions.get(0)) ||
-                Regex.isMatchAllPattern(expressions.get(0))));
+            return expressions.isEmpty()
+                || (expressions.size() == 1 && (MetaData.ALL.equals(expressions.get(0)) || Regex.isMatchAllPattern(expressions.get(0))));
         }
 
         private static List<String> resolveEmptyOrTrivialWildcard(IndicesOptions options, MetaData metaData) {
@@ -943,8 +971,11 @@ public class IndexNameExpressionResolver {
                                 inDateFormat = true;
                                 inPlaceHolderSb.append(c);
                             } else {
-                                throw new ElasticsearchParseException("invalid dynamic name expression [{}]." +
-                                    " invalid character in placeholder at position [{}]", new String(text, from, length), i);
+                                throw new ElasticsearchParseException(
+                                    "invalid dynamic name expression [{}]." + " invalid character in placeholder at position [{}]",
+                                    new String(text, from, length),
+                                    i
+                                );
                             }
                             break;
 
@@ -967,16 +998,22 @@ public class IndexNameExpressionResolver {
                                     timeZone = ZoneOffset.UTC;
                                 } else {
                                     if (inPlaceHolderString.lastIndexOf(RIGHT_BOUND) != inPlaceHolderString.length() - 1) {
-                                        throw new ElasticsearchParseException("invalid dynamic name expression [{}]. missing closing `}`" +
-                                            " for date math format", inPlaceHolderString);
+                                        throw new ElasticsearchParseException(
+                                            "invalid dynamic name expression [{}]. missing closing `}`" + " for date math format",
+                                            inPlaceHolderString
+                                        );
                                     }
                                     if (dateTimeFormatLeftBoundIndex == inPlaceHolderString.length() - 2) {
-                                        throw new ElasticsearchParseException("invalid dynamic name expression [{}]. missing date format",
-                                            inPlaceHolderString);
+                                        throw new ElasticsearchParseException(
+                                            "invalid dynamic name expression [{}]. missing date format",
+                                            inPlaceHolderString
+                                        );
                                     }
                                     mathExpression = inPlaceHolderString.substring(0, dateTimeFormatLeftBoundIndex);
-                                    String patternAndTZid =
-                                        inPlaceHolderString.substring(dateTimeFormatLeftBoundIndex + 1, inPlaceHolderString.length() - 1);
+                                    String patternAndTZid = inPlaceHolderString.substring(
+                                        dateTimeFormatLeftBoundIndex + 1,
+                                        inPlaceHolderString.length() - 1
+                                    );
                                     int formatPatternTimeZoneSeparatorIndex = patternAndTZid.indexOf(TIME_ZONE_BOUND);
                                     if (formatPatternTimeZoneSeparatorIndex != -1) {
                                         dateFormatterPattern = patternAndTZid.substring(0, formatPatternTimeZoneSeparatorIndex);
@@ -1014,10 +1051,13 @@ public class IndexNameExpressionResolver {
 
                         case RIGHT_BOUND:
                             if (!escapedChar) {
-                                throw new ElasticsearchParseException("invalid dynamic name expression [{}]." +
-                                    " invalid character at position [{}]. `{` and `}` are reserved characters and" +
-                                    " should be escaped when used as part of the index name using `\\` (e.g. `\\{text\\}`)",
-                                    new String(text, from, length), i);
+                                throw new ElasticsearchParseException(
+                                    "invalid dynamic name expression [{}]."
+                                        + " invalid character at position [{}]. `{` and `}` are reserved characters and"
+                                        + " should be escaped when used as part of the index name using `\\` (e.g. `\\{text\\}`)",
+                                    new String(text, from, length),
+                                    i
+                                );
                             }
                         default:
                             beforePlaceHolderSb.append(c);
@@ -1026,8 +1066,10 @@ public class IndexNameExpressionResolver {
             }
 
             if (inPlaceHolder) {
-                throw new ElasticsearchParseException("invalid dynamic name expression [{}]. date math placeholder is open ended",
-                    new String(text, from, length));
+                throw new ElasticsearchParseException(
+                    "invalid dynamic name expression [{}]. date math placeholder is open ended",
+                    new String(text, from, length)
+                );
             }
             if (beforePlaceHolderSb.length() == 0) {
                 throw new ElasticsearchParseException("nothing captured");

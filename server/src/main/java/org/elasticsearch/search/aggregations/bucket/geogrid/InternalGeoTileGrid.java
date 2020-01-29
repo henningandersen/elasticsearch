@@ -33,8 +33,13 @@ import java.util.Map;
  */
 public class InternalGeoTileGrid extends InternalGeoGrid<InternalGeoTileGridBucket> {
 
-    InternalGeoTileGrid(String name, int requiredSize, List<InternalGeoGridBucket> buckets,
-                        List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    InternalGeoTileGrid(
+        String name,
+        int requiredSize,
+        List<InternalGeoGridBucket> buckets,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, requiredSize, buckets, pipelineAggregators, metaData);
     }
 

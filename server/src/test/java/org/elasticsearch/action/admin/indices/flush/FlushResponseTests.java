@@ -28,8 +28,12 @@ import java.util.List;
 public class FlushResponseTests extends AbstractBroadcastResponseTestCase<FlushResponse> {
 
     @Override
-    protected FlushResponse createTestInstance(int totalShards, int successfulShards, int failedShards,
-                                               List<DefaultShardOperationFailedException> failures) {
+    protected FlushResponse createTestInstance(
+        int totalShards,
+        int successfulShards,
+        int failedShards,
+        List<DefaultShardOperationFailedException> failures
+    ) {
         return new FlushResponse(totalShards, successfulShards, failedShards, failures);
     }
 

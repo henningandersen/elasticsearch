@@ -43,13 +43,18 @@ public class UpdateSettingsRequestSerializationTests extends AbstractWireSeriali
         UpdateSettingsRequest mutation = copyRequest(request);
         List<Runnable> mutators = new ArrayList<>();
         Supplier<TimeValue> timeValueSupplier = () -> TimeValue.parseTimeValue(ESTestCase.randomTimeValue(), "_setting");
-        mutators.add(() -> mutation
-                .masterNodeTimeout(randomValueOtherThan(request.masterNodeTimeout(), timeValueSupplier)));
+        mutators.add(() -> mutation.masterNodeTimeout(randomValueOtherThan(request.masterNodeTimeout(), timeValueSupplier)));
         mutators.add(() -> mutation.timeout(randomValueOtherThan(request.timeout(), timeValueSupplier)));
         mutators.add(() -> mutation.settings(mutateSettings(request.settings())));
         mutators.add(() -> mutation.indices(mutateIndices(request.indices())));
-        mutators.add(() -> mutation.indicesOptions(randomValueOtherThan(request.indicesOptions(),
-                () -> IndicesOptions.fromOptions(randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean()))));
+        mutators.add(
+            () -> mutation.indicesOptions(
+                randomValueOtherThan(
+                    request.indicesOptions(),
+                    () -> IndicesOptions.fromOptions(randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean())
+                )
+            )
+        );
         mutators.add(() -> mutation.setPreserveExisting(!request.isPreserveExisting()));
         randomFrom(mutators).run();
         return mutation;
@@ -67,8 +72,8 @@ public class UpdateSettingsRequestSerializationTests extends AbstractWireSeriali
 
     public static UpdateSettingsRequest createTestItem() {
         UpdateSettingsRequest request = randomBoolean()
-                ? new UpdateSettingsRequest(randomSettings(0, 2))
-                : new UpdateSettingsRequest(randomSettings(0, 2), randomIndicesNames(0, 2));
+            ? new UpdateSettingsRequest(randomSettings(0, 2))
+            : new UpdateSettingsRequest(randomSettings(0, 2), randomIndicesNames(0, 2));
         request.masterNodeTimeout(randomTimeValue());
         request.timeout(randomTimeValue());
         request.indicesOptions(IndicesOptions.fromOptions(randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean()));

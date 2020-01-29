@@ -49,10 +49,11 @@ public class CoreValuesSourceTypeTests extends AbstractWriteableEnumTestCase {
         assertThat(CoreValuesSourceType.fromString("geopoint"), equalTo(CoreValuesSourceType.GEOPOINT));
         assertThat(CoreValuesSourceType.fromString("range"), equalTo(CoreValuesSourceType.RANGE));
         assertThat(CoreValuesSourceType.fromString("histogram"), equalTo(CoreValuesSourceType.HISTOGRAM));
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-            () -> CoreValuesSourceType.fromString("does_not_exist"));
-        assertThat(e.getMessage(),
-            equalTo("No enum constant org.elasticsearch.search.aggregations.support.CoreValuesSourceType.DOES_NOT_EXIST"));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> CoreValuesSourceType.fromString("does_not_exist"));
+        assertThat(
+            e.getMessage(),
+            equalTo("No enum constant org.elasticsearch.search.aggregations.support.CoreValuesSourceType.DOES_NOT_EXIST")
+        );
         expectThrows(NullPointerException.class, () -> CoreValuesSourceType.fromString(null));
     }
 

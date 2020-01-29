@@ -77,9 +77,11 @@ public class TransportBulkActionIndicesThatCannotBeCreatedTests extends ESTestCa
         bulkRequest.add(new IndexRequest("can't"));
         bulkRequest.add(new DeleteRequest("do").version(0).versionType(VersionType.EXTERNAL));
         bulkRequest.add(new UpdateRequest("nothin", randomAlphaOfLength(5)));
-        indicesThatCannotBeCreatedTestCase(new HashSet<>(Arrays.asList("no", "can't", "do", "nothin")), bulkRequest, index -> {
-            throw new IndexNotFoundException("Can't make it because I say so");
-        });
+        indicesThatCannotBeCreatedTestCase(
+            new HashSet<>(Arrays.asList("no", "can't", "do", "nothin")),
+            bulkRequest,
+            index -> { throw new IndexNotFoundException("Can't make it because I say so"); }
+        );
     }
 
     public void testSomeFail() {
@@ -102,9 +104,11 @@ public class TransportBulkActionIndicesThatCannotBeCreatedTests extends ESTestCa
         });
     }
 
-
-    private void indicesThatCannotBeCreatedTestCase(Set<String> expected,
-            BulkRequest bulkRequest, Function<String, Boolean> shouldAutoCreate) {
+    private void indicesThatCannotBeCreatedTestCase(
+        Set<String> expected,
+        BulkRequest bulkRequest,
+        Function<String, Boolean> shouldAutoCreate
+    ) {
         ClusterService clusterService = mock(ClusterService.class);
         ClusterState state = mock(ClusterState.class);
         when(state.getMetaData()).thenReturn(MetaData.EMPTY_META_DATA);
@@ -118,11 +122,25 @@ public class TransportBulkActionIndicesThatCannotBeCreatedTests extends ESTestCa
         final ThreadPool threadPool = mock(ThreadPool.class);
         final ExecutorService direct = EsExecutors.newDirectExecutorService();
         when(threadPool.executor(anyString())).thenReturn(direct);
-        TransportBulkAction action = new TransportBulkAction(threadPool, mock(TransportService.class), clusterService,
-                null, null, mock(ActionFilters.class), null, null) {
+        TransportBulkAction action = new TransportBulkAction(
+            threadPool,
+            mock(TransportService.class),
+            clusterService,
+            null,
+            null,
+            mock(ActionFilters.class),
+            null,
+            null
+        ) {
             @Override
-            void executeBulk(Task task, BulkRequest bulkRequest, long startTimeNanos, ActionListener<BulkResponse> listener,
-                    AtomicArray<BulkItemResponse> responses, Map<String, IndexNotFoundException> indicesThatCannotBeCreated) {
+            void executeBulk(
+                Task task,
+                BulkRequest bulkRequest,
+                long startTimeNanos,
+                ActionListener<BulkResponse> listener,
+                AtomicArray<BulkItemResponse> responses,
+                Map<String, IndexNotFoundException> indicesThatCannotBeCreated
+            ) {
                 assertEquals(expected, indicesThatCannotBeCreated.keySet());
             }
 
@@ -139,7 +157,8 @@ public class TransportBulkActionIndicesThatCannotBeCreatedTests extends ESTestCa
             @Override
             void createIndex(String index, TimeValue timeout, ActionListener<CreateIndexResponse> listener) {
                 // If we try to create an index just immediately assume it worked
-                listener.onResponse(new CreateIndexResponse(true, true, index) {});
+                listener.onResponse(new CreateIndexResponse(true, true, index) {
+                });
             }
         };
         action.doExecute(null, bulkRequest, null);

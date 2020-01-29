@@ -35,26 +35,37 @@ import java.util.Map;
 
 public class MissingAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSource> {
 
-    public MissingAggregatorFactory(String name, ValuesSourceConfig<ValuesSource> config, QueryShardContext queryShardContext,
-            AggregatorFactory parent, AggregatorFactories.Builder subFactoriesBuilder, Map<String, Object> metaData) throws IOException {
+    public MissingAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource> config,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 
     @Override
-    protected MissingAggregator createUnmapped(SearchContext searchContext,
-                                                Aggregator parent,
-                                                List<PipelineAggregator> pipelineAggregators,
-                                                Map<String, Object> metaData) throws IOException {
+    protected MissingAggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return new MissingAggregator(name, factories, null, searchContext, parent, pipelineAggregators, metaData);
     }
 
     @Override
-    protected MissingAggregator doCreateInternal(ValuesSource valuesSource,
-                                                    SearchContext searchContext,
-                                                    Aggregator parent,
-                                                    boolean collectsFromSingleBucket,
-                                                    List<PipelineAggregator> pipelineAggregators,
-                                                    Map<String, Object> metaData) throws IOException {
+    protected MissingAggregator doCreateInternal(
+        ValuesSource valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return new MissingAggregator(name, factories, valuesSource, searchContext, parent, pipelineAggregators, metaData);
     }
 

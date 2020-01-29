@@ -31,8 +31,7 @@ import java.util.Set;
 public class StatsBucketTests extends AbstractBucketMetricsTestCase<StatsBucketPipelineAggregationBuilder> {
 
     @Override
-    protected StatsBucketPipelineAggregationBuilder doCreateTestAggregatorFactory(String name,
-            String bucketsPath) {
+    protected StatsBucketPipelineAggregationBuilder doCreateTestAggregatorFactory(String name, String bucketsPath) {
         return new StatsBucketPipelineAggregationBuilder(name, bucketsPath);
     }
 
@@ -45,17 +44,27 @@ public class StatsBucketTests extends AbstractBucketMetricsTestCase<StatsBucketP
 
         // First try to point to a non-existent agg
         final StatsBucketPipelineAggregationBuilder builder = new StatsBucketPipelineAggregationBuilder("name", "invalid_agg>metric");
-        IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
-                () -> builder.validate(null, aggBuilders, Collections.emptySet()));
-        assertEquals(PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
-                + " aggregation does not exist for aggregation [name]: invalid_agg>metric", ex.getMessage());
+        IllegalArgumentException ex = expectThrows(
+            IllegalArgumentException.class,
+            () -> builder.validate(null, aggBuilders, Collections.emptySet())
+        );
+        assertEquals(
+            PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
+                + " aggregation does not exist for aggregation [name]: invalid_agg>metric",
+            ex.getMessage()
+        );
 
         // Now try to point to a single bucket agg
         StatsBucketPipelineAggregationBuilder builder2 = new StatsBucketPipelineAggregationBuilder("name", "global>metric");
         ex = expectThrows(IllegalArgumentException.class, () -> builder2.validate(null, aggBuilders, Collections.emptySet()));
-        assertEquals("The first aggregation in " + PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
-                + " must be a multi-bucket aggregation for aggregation [name] found :" + GlobalAggregationBuilder.class.getName()
-                + " for buckets path: global>metric", ex.getMessage());
+        assertEquals(
+            "The first aggregation in "
+                + PipelineAggregator.Parser.BUCKETS_PATH.getPreferredName()
+                + " must be a multi-bucket aggregation for aggregation [name] found :"
+                + GlobalAggregationBuilder.class.getName()
+                + " for buckets path: global>metric",
+            ex.getMessage()
+        );
 
         // Now try to point to a valid multi-bucket agg (no exception should be
         // thrown)

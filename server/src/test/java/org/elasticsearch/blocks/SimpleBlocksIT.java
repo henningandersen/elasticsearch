@@ -56,14 +56,13 @@ public class SimpleBlocksIT extends ESIntegTestCase {
         canIndexDocument("test1");
         assertTrue(indexExists("test1"));
 
-
         // newly created an index has no blocks
         canCreateIndex("ro");
         canIndexDocument("ro");
         assertTrue(indexExists("ro"));
 
         // adds index write and metadata block
-        setIndexReadOnly( "ro", "true");
+        setIndexReadOnly("ro", "true");
         canNotIndexDocument("ro");
         assertTrue(indexExists("ro"));
 
@@ -81,13 +80,19 @@ public class SimpleBlocksIT extends ESIntegTestCase {
     public void testIndexReadWriteMetaDataBlocks() {
         canCreateIndex("test1");
         canIndexDocument("test1");
-        client().admin().indices().prepareUpdateSettings("test1")
-                .setSettings(Settings.builder().put(IndexMetaData.SETTING_BLOCKS_WRITE, true))
-                .execute().actionGet();
+        client().admin()
+            .indices()
+            .prepareUpdateSettings("test1")
+            .setSettings(Settings.builder().put(IndexMetaData.SETTING_BLOCKS_WRITE, true))
+            .execute()
+            .actionGet();
         canNotIndexDocument("test1");
-        client().admin().indices().prepareUpdateSettings("test1")
-                .setSettings(Settings.builder().put(IndexMetaData.SETTING_BLOCKS_WRITE, false))
-                .execute().actionGet();
+        client().admin()
+            .indices()
+            .prepareUpdateSettings("test1")
+            .setSettings(Settings.builder().put(IndexMetaData.SETTING_BLOCKS_WRITE, false))
+            .execute()
+            .actionGet();
         canIndexDocument("test1");
     }
 

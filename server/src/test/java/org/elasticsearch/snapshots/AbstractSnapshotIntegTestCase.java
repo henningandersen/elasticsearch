@@ -53,7 +53,8 @@ public abstract class AbstractSnapshotIntegTestCase extends ESIntegTestCase {
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
-        return Settings.builder().put(super.nodeSettings(nodeOrdinal))
+        return Settings.builder()
+            .put(super.nodeSettings(nodeOrdinal))
             // Rebalancing is causing some checks after restore to randomly fail
             // due to https://github.com/elastic/elasticsearch/issues/9421
             .put(EnableAllocationDecider.CLUSTER_ROUTING_REBALANCE_ENABLE_SETTING.getKey(), EnableAllocationDecider.Rebalance.NONE)
@@ -95,16 +96,13 @@ public abstract class AbstractSnapshotIntegTestCase extends ESIntegTestCase {
     protected RepositoryData getRepositoryData(Repository repository) {
         ThreadPool threadPool = internalCluster().getInstance(ThreadPool.class, internalCluster().getMasterName());
         final PlainActionFuture<RepositoryData> repositoryData = PlainActionFuture.newFuture();
-        threadPool.executor(ThreadPool.Names.SNAPSHOT).execute(() -> {
-            repository.getRepositoryData(repositoryData);
-        });
+        threadPool.executor(ThreadPool.Names.SNAPSHOT).execute(() -> { repository.getRepositoryData(repositoryData); });
         return repositoryData.actionGet();
     }
 
     public static long getFailureCount(String repository) {
         long failureCount = 0;
-        for (RepositoriesService repositoriesService :
-            internalCluster().getDataOrMasterNodeInstances(RepositoriesService.class)) {
+        for (RepositoriesService repositoriesService : internalCluster().getDataOrMasterNodeInstances(RepositoriesService.class)) {
             MockRepository mockRepository = (MockRepository) repositoriesService.repository(repository);
             failureCount += mockRepository.getFailureCount();
         }
@@ -155,8 +153,12 @@ public abstract class AbstractSnapshotIntegTestCase extends ESIntegTestCase {
     public SnapshotInfo waitForCompletion(String repository, String snapshotName, TimeValue timeout) throws InterruptedException {
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() - start < timeout.millis()) {
-            List<SnapshotInfo> snapshotInfos = client().admin().cluster().prepareGetSnapshots(repository).setSnapshots(snapshotName)
-                .get().getSnapshots(repository);
+            List<SnapshotInfo> snapshotInfos = client().admin()
+                .cluster()
+                .prepareGetSnapshots(repository)
+                .setSnapshots(snapshotName)
+                .get()
+                .getSnapshots(repository);
             assertThat(snapshotInfos.size(), equalTo(1));
             if (snapshotInfos.get(0).state().completed()) {
                 // Make sure that snapshot clean up operations are finished
@@ -186,22 +188,23 @@ public abstract class AbstractSnapshotIntegTestCase extends ESIntegTestCase {
 
     public static String blockMasterFromFinalizingSnapshotOnIndexFile(final String repositoryName) {
         final String masterName = internalCluster().getMasterName();
-        ((MockRepository)internalCluster().getInstance(RepositoriesService.class, masterName)
-            .repository(repositoryName)).setBlockOnWriteIndexFile(true);
+        ((MockRepository) internalCluster().getInstance(RepositoriesService.class, masterName).repository(repositoryName))
+            .setBlockOnWriteIndexFile(true);
         return masterName;
     }
 
     public static String blockMasterFromFinalizingSnapshotOnSnapFile(final String repositoryName) {
         final String masterName = internalCluster().getMasterName();
-        ((MockRepository)internalCluster().getInstance(RepositoriesService.class, masterName)
-            .repository(repositoryName)).setBlockAndFailOnWriteSnapFiles(true);
+        ((MockRepository) internalCluster().getInstance(RepositoriesService.class, masterName).repository(repositoryName))
+            .setBlockAndFailOnWriteSnapFiles(true);
         return masterName;
     }
 
     public static String blockNodeWithIndex(final String repositoryName, final String indexName) {
-        for(String node : internalCluster().nodesInclude(indexName)) {
-            ((MockRepository)internalCluster().getInstance(RepositoriesService.class, node).repository(repositoryName))
-                .blockOnDataFiles(true);
+        for (String node : internalCluster().nodesInclude(indexName)) {
+            ((MockRepository) internalCluster().getInstance(RepositoriesService.class, node).repository(repositoryName)).blockOnDataFiles(
+                true
+            );
             return node;
         }
         fail("No nodes for the index " + indexName + " found");
@@ -209,14 +212,14 @@ public abstract class AbstractSnapshotIntegTestCase extends ESIntegTestCase {
     }
 
     public static void blockAllDataNodes(String repository) {
-        for(RepositoriesService repositoriesService : internalCluster().getDataNodeInstances(RepositoriesService.class)) {
-            ((MockRepository)repositoriesService.repository(repository)).blockOnDataFiles(true);
+        for (RepositoriesService repositoriesService : internalCluster().getDataNodeInstances(RepositoriesService.class)) {
+            ((MockRepository) repositoriesService.repository(repository)).blockOnDataFiles(true);
         }
     }
 
     public static void unblockAllDataNodes(String repository) {
-        for(RepositoriesService repositoriesService : internalCluster().getDataNodeInstances(RepositoriesService.class)) {
-            ((MockRepository)repositoriesService.repository(repository)).unblock();
+        for (RepositoriesService repositoriesService : internalCluster().getDataNodeInstances(RepositoriesService.class)) {
+            ((MockRepository) repositoriesService.repository(repository)).unblock();
         }
     }
 
@@ -235,6 +238,6 @@ public abstract class AbstractSnapshotIntegTestCase extends ESIntegTestCase {
     }
 
     public static void unblockNode(final String repository, final String node) {
-        ((MockRepository)internalCluster().getInstance(RepositoriesService.class, node).repository(repository)).unblock();
+        ((MockRepository) internalCluster().getInstance(RepositoriesService.class, node).repository(repository)).unblock();
     }
 }

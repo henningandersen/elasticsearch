@@ -129,12 +129,12 @@ public abstract class CompositeValuesSourceBuilder<AB extends CompositeValuesSou
 
         @SuppressWarnings("unchecked")
         AB that = (AB) o;
-        return Objects.equals(field, that.field()) &&
-            Objects.equals(script, that.script()) &&
-            Objects.equals(valueType, that.valueType()) &&
-            Objects.equals(missingBucket, that.missingBucket()) &&
-            Objects.equals(order, that.order()) &&
-            Objects.equals(format, that.format());
+        return Objects.equals(field, that.field())
+            && Objects.equals(script, that.script())
+            && Objects.equals(valueType, that.valueType())
+            && Objects.equals(missingBucket, that.missingBucket())
+            && Objects.equals(order, that.order())
+            && Objects.equals(format, that.format());
     }
 
     public String name() {
@@ -229,7 +229,6 @@ public abstract class CompositeValuesSourceBuilder<AB extends CompositeValuesSou
         return (AB) this;
     }
 
-
     /**
      * Sets the {@link SortOrder} to use to sort values produced this source
      */
@@ -272,12 +271,11 @@ public abstract class CompositeValuesSourceBuilder<AB extends CompositeValuesSou
      *  @param queryShardContext   The shard context for this source.
      * @param config    The {@link ValuesSourceConfig} for this source.
      */
-    protected abstract CompositeValuesSourceConfig innerBuild(QueryShardContext queryShardContext,
-                                                                ValuesSourceConfig<?> config) throws IOException;
+    protected abstract CompositeValuesSourceConfig innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<?> config)
+        throws IOException;
 
     public final CompositeValuesSourceConfig build(QueryShardContext queryShardContext) throws IOException {
-        ValuesSourceConfig<?> config = ValuesSourceConfig.resolve(queryShardContext,
-            valueType, field, script, null, timeZone(), format);
+        ValuesSourceConfig<?> config = ValuesSourceConfig.resolve(queryShardContext, valueType, field, script, null, timeZone(), format);
         return innerBuild(queryShardContext, config);
     }
 

@@ -52,12 +52,12 @@ public class GetIndexResponseTests extends AbstractWireSerializingTestCase<GetIn
         ImmutableOpenMap.Builder<String, Settings> defaultSettings = ImmutableOpenMap.builder();
         IndexScopedSettings indexScopedSettings = IndexScopedSettings.DEFAULT_SCOPED_SETTINGS;
         boolean includeDefaults = randomBoolean();
-        for (String index: indices) {
+        for (String index : indices) {
             mappings.put(index, GetMappingsResponseTests.createMappingsForIndex());
 
             List<AliasMetaData> aliasMetaDataList = new ArrayList<>();
             int aliasesNum = randomIntBetween(0, 3);
-            for (int i=0; i<aliasesNum; i++) {
+            for (int i = 0; i < aliasesNum; i++) {
                 aliasMetaDataList.add(GetAliasesResponseTests.createAliasMetaData());
             }
             CollectionUtil.timSort(aliasMetaDataList, Comparator.comparing(AliasMetaData::alias));
@@ -71,8 +71,6 @@ public class GetIndexResponseTests extends AbstractWireSerializingTestCase<GetIn
                 defaultSettings.put(index, indexScopedSettings.diff(settings.get(index), Settings.EMPTY));
             }
         }
-        return new GetIndexResponse(
-            indices, mappings.build(), aliases.build(), settings.build(), defaultSettings.build()
-        );
+        return new GetIndexResponse(indices, mappings.build(), aliases.build(), settings.build(), defaultSettings.build());
     }
 }

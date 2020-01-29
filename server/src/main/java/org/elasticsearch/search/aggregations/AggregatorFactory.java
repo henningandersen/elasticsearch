@@ -44,8 +44,13 @@ public abstract class AggregatorFactory {
         ObjectArray<Aggregator> aggregators;
         ObjectArray<LeafBucketCollector> collectors;
 
-        MultiBucketAggregatorWrapper(BigArrays bigArrays, SearchContext context,
-                                        Aggregator parent, AggregatorFactory factory, Aggregator first) {
+        MultiBucketAggregatorWrapper(
+            BigArrays bigArrays,
+            SearchContext context,
+            Aggregator parent,
+            AggregatorFactory factory,
+            Aggregator first
+        ) {
             this.bigArrays = bigArrays;
             this.parent = parent;
             this.factory = factory;
@@ -182,8 +187,14 @@ public abstract class AggregatorFactory {
      * @throws IOException
      *             if an error occurs creating the factory
      */
-    public AggregatorFactory(String name, QueryShardContext queryShardContext, AggregatorFactory parent,
-                             AggregatorFactories.Builder subFactoriesBuilder, Map<String, Object> metaData) throws IOException {
+    public AggregatorFactory(
+        String name,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         this.name = name;
         this.queryShardContext = queryShardContext;
         this.parent = parent;
@@ -195,14 +206,15 @@ public abstract class AggregatorFactory {
         return name;
     }
 
-    public void doValidate() {
-    }
+    public void doValidate() {}
 
-    protected abstract Aggregator createInternal(SearchContext searchContext,
-                                                    Aggregator parent,
-                                                    boolean collectsFromSingleBucket,
-                                                    List<PipelineAggregator> pipelineAggregators,
-                                                    Map<String, Object> metaData) throws IOException;
+    protected abstract Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException;
 
     /**
      * Creates the aggregator
@@ -234,8 +246,11 @@ public abstract class AggregatorFactory {
      * {@link Aggregator}s that only know how to collect bucket {@code 0}, this
      * returns an aggregator that can collect any bucket.
      */
-    protected static Aggregator asMultiBucketAggregator(final AggregatorFactory factory, final SearchContext searchContext,
-            final Aggregator parent) throws IOException {
+    protected static Aggregator asMultiBucketAggregator(
+        final AggregatorFactory factory,
+        final SearchContext searchContext,
+        final Aggregator parent
+    ) throws IOException {
         final Aggregator first = factory.create(searchContext, parent, true);
         final BigArrays bigArrays = searchContext.bigArrays();
         return new MultiBucketAggregatorWrapper(bigArrays, searchContext, parent, factory, first);

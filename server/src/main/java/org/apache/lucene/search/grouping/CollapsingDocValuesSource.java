@@ -91,7 +91,7 @@ abstract class CollapsingDocValuesSource<T> extends GroupSelector<T> {
             DocValuesType type = getDocValuesType(reader, field);
             if (type == null || type == DocValuesType.NONE) {
                 values = DocValues.emptyNumeric();
-                return ;
+                return;
             }
             switch (type) {
                 case NUMERIC:
@@ -110,8 +110,9 @@ abstract class CollapsingDocValuesSource<T> extends GroupSelector<T> {
                             public boolean advanceExact(int target) throws IOException {
                                 if (sorted.advanceExact(target)) {
                                     if (sorted.docValueCount() > 1) {
-                                        throw new IllegalStateException("failed to collapse " + target +
-                                                ", the collapse field must be single valued");
+                                        throw new IllegalStateException(
+                                            "failed to collapse " + target + ", the collapse field must be single valued"
+                                        );
                                     }
                                     value = sorted.nextValue();
                                     return true;
@@ -135,8 +136,7 @@ abstract class CollapsingDocValuesSource<T> extends GroupSelector<T> {
                     break;
 
                 default:
-                    throw new IllegalStateException("unexpected doc values type " +
-                        type + "` for field `" + field + "`");
+                    throw new IllegalStateException("unexpected doc values type " + type + "` for field `" + field + "`");
             }
         }
     }
@@ -154,8 +154,7 @@ abstract class CollapsingDocValuesSource<T> extends GroupSelector<T> {
         }
 
         @Override
-        public org.apache.lucene.search.grouping.GroupSelector.State advanceTo(int doc)
-                throws IOException {
+        public org.apache.lucene.search.grouping.GroupSelector.State advanceTo(int doc) throws IOException {
             if (values.advanceExact(doc)) {
                 ord = values.ordValue();
                 return State.ACCEPT;
@@ -194,7 +193,7 @@ abstract class CollapsingDocValuesSource<T> extends GroupSelector<T> {
             DocValuesType type = getDocValuesType(reader, field);
             if (type == null || type == DocValuesType.NONE) {
                 values = DocValues.emptySorted();
-                return ;
+                return;
             }
             switch (type) {
                 case SORTED:
@@ -214,8 +213,9 @@ abstract class CollapsingDocValuesSource<T> extends GroupSelector<T> {
                                 if (sorted.advanceExact(target)) {
                                     ord = (int) sorted.nextOrd();
                                     if (sorted.nextOrd() != SortedSetDocValues.NO_MORE_ORDS) {
-                                        throw new IllegalStateException("failed to collapse " + target +
-                                            ", the collapse field must be single valued");
+                                        throw new IllegalStateException(
+                                            "failed to collapse " + target + ", the collapse field must be single valued"
+                                        );
                                     }
                                     return true;
                                 } else {
@@ -247,8 +247,7 @@ abstract class CollapsingDocValuesSource<T> extends GroupSelector<T> {
                     break;
 
                 default:
-                    throw new IllegalStateException("unexpected doc values type "
-                        + type + "` for field `" + field + "`");
+                    throw new IllegalStateException("unexpected doc values type " + type + "` for field `" + field + "`");
             }
         }
     }

@@ -34,7 +34,6 @@ import java.util.function.Supplier;
 import static org.elasticsearch.rest.RestRequest.Method.POST;
 import static org.elasticsearch.rest.action.admin.cluster.RestListTasksAction.listTasksResponseListener;
 
-
 public class RestCancelTasksAction extends BaseRestHandler {
     private final Supplier<DiscoveryNodes> nodesInCluster;
 
@@ -62,8 +61,9 @@ public class RestCancelTasksAction extends BaseRestHandler {
         cancelTasksRequest.setNodes(nodesIds);
         cancelTasksRequest.setActions(actions);
         cancelTasksRequest.setParentTaskId(parentTaskId);
-        return channel ->
-            client.admin().cluster().cancelTasks(cancelTasksRequest, listTasksResponseListener(nodesInCluster, groupBy, channel));
+        return channel -> client.admin()
+            .cluster()
+            .cancelTasks(cancelTasksRequest, listTasksResponseListener(nodesInCluster, groupBy, channel));
     }
 
     @Override

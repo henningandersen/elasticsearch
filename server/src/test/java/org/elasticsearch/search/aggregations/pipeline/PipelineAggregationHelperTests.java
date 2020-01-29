@@ -19,7 +19,6 @@
 
 package org.elasticsearch.search.aggregations.pipeline;
 
-
 import org.elasticsearch.common.Rounding;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.search.aggregations.AggregatorFactories;
@@ -96,7 +95,7 @@ public class PipelineAggregationHelperTests extends ESTestCase {
         }
 
         if (emptyHisto) {
-            int idx = randomIntBetween(0, values.size()-1);
+            int idx = randomIntBetween(0, values.size() - 1);
             MockBucket bucket = values.get(idx);
             bucket.count = randomIntBetween(1, 50);
             bucket.docValues = new double[bucket.count];
@@ -159,22 +158,51 @@ public class PipelineAggregationHelperTests extends ESTestCase {
         AggregatorFactory factory = null;
         switch (randomIntBetween(0, 2)) {
             case 0:
-                factory = new HistogramAggregatorFactory("name", mock(ValuesSourceConfig.class), 0.0d, 0.0d,
-                    mock(InternalOrder.class), false, 0L, 0.0d, 1.0d, mock(QueryShardContext.class), null,
-                    new AggregatorFactories.Builder(), Collections.emptyMap());
+                factory = new HistogramAggregatorFactory(
+                    "name",
+                    mock(ValuesSourceConfig.class),
+                    0.0d,
+                    0.0d,
+                    mock(InternalOrder.class),
+                    false,
+                    0L,
+                    0.0d,
+                    1.0d,
+                    mock(QueryShardContext.class),
+                    null,
+                    new AggregatorFactories.Builder(),
+                    Collections.emptyMap()
+                );
                 break;
             case 1:
-                factory = new DateHistogramAggregatorFactory("name", mock(ValuesSourceConfig.class),
-                    mock(InternalOrder.class), false, 0L, mock(Rounding.class), mock(Rounding.class),
-                    mock(ExtendedBounds.class), mock(QueryShardContext.class), mock(AggregatorFactory.class),
-                    new AggregatorFactories.Builder(), Collections.emptyMap());
+                factory = new DateHistogramAggregatorFactory(
+                    "name",
+                    mock(ValuesSourceConfig.class),
+                    mock(InternalOrder.class),
+                    false,
+                    0L,
+                    mock(Rounding.class),
+                    mock(Rounding.class),
+                    mock(ExtendedBounds.class),
+                    mock(QueryShardContext.class),
+                    mock(AggregatorFactory.class),
+                    new AggregatorFactories.Builder(),
+                    Collections.emptyMap()
+                );
                 break;
             case 2:
             default:
                 AutoDateHistogramAggregationBuilder.RoundingInfo[] roundings = new AutoDateHistogramAggregationBuilder.RoundingInfo[1];
-                factory = new AutoDateHistogramAggregatorFactory("name", mock(ValuesSourceConfig.class),
-                    1, roundings,
-                    mock(QueryShardContext.class), null, new AggregatorFactories.Builder(), Collections.emptyMap());
+                factory = new AutoDateHistogramAggregatorFactory(
+                    "name",
+                    mock(ValuesSourceConfig.class),
+                    1,
+                    roundings,
+                    mock(QueryShardContext.class),
+                    null,
+                    new AggregatorFactories.Builder(),
+                    Collections.emptyMap()
+                );
         }
 
         return factory;

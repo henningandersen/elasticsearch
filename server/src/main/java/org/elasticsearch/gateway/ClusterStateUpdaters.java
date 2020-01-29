@@ -41,24 +41,27 @@ public class ClusterStateUpdaters {
 
     static ClusterState setLocalNode(final ClusterState clusterState, DiscoveryNode localNode) {
         return ClusterState.builder(clusterState)
-                .nodes(DiscoveryNodes.builder().add(localNode).localNodeId(localNode.getId()).build())
-                .build();
+            .nodes(DiscoveryNodes.builder().add(localNode).localNodeId(localNode.getId()).build())
+            .build();
     }
 
-    static ClusterState upgradeAndArchiveUnknownOrInvalidSettings(final ClusterState clusterState,
-                                                                  final ClusterSettings clusterSettings) {
+    static ClusterState upgradeAndArchiveUnknownOrInvalidSettings(final ClusterState clusterState, final ClusterSettings clusterSettings) {
         final MetaData.Builder metaDataBuilder = MetaData.builder(clusterState.metaData());
 
         metaDataBuilder.persistentSettings(
-                clusterSettings.archiveUnknownOrInvalidSettings(
-                        clusterSettings.upgradeSettings(metaDataBuilder.persistentSettings()),
-                        e -> logUnknownSetting("persistent", e),
-                        (e, ex) -> logInvalidSetting("persistent", e, ex)));
+            clusterSettings.archiveUnknownOrInvalidSettings(
+                clusterSettings.upgradeSettings(metaDataBuilder.persistentSettings()),
+                e -> logUnknownSetting("persistent", e),
+                (e, ex) -> logInvalidSetting("persistent", e, ex)
+            )
+        );
         metaDataBuilder.transientSettings(
-                clusterSettings.archiveUnknownOrInvalidSettings(
-                        clusterSettings.upgradeSettings(metaDataBuilder.transientSettings()),
-                        e -> logUnknownSetting("transient", e),
-                        (e, ex) -> logInvalidSetting("transient", e, ex)));
+            clusterSettings.archiveUnknownOrInvalidSettings(
+                clusterSettings.upgradeSettings(metaDataBuilder.transientSettings()),
+                e -> logUnknownSetting("transient", e),
+                (e, ex) -> logInvalidSetting("transient", e, ex)
+            )
+        );
         return ClusterState.builder(clusterState).metaData(metaDataBuilder).build();
     }
 
@@ -66,10 +69,16 @@ public class ClusterStateUpdaters {
         logger.warn("ignoring unknown {} setting: [{}] with value [{}]; archiving", settingType, e.getKey(), e.getValue());
     }
 
-    private static void logInvalidSetting(final String settingType, final Map.Entry<String, String> e,
-                                          final IllegalArgumentException ex) {
-        logger.warn(() -> new ParameterizedMessage("ignoring invalid {} setting: [{}] with value [{}]; archiving",
-                settingType, e.getKey(), e.getValue()), ex);
+    private static void logInvalidSetting(final String settingType, final Map.Entry<String, String> e, final IllegalArgumentException ex) {
+        logger.warn(
+            () -> new ParameterizedMessage(
+                "ignoring invalid {} setting: [{}] with value [{}]; archiving",
+                settingType,
+                e.getKey(),
+                e.getValue()
+            ),
+            ex
+        );
     }
 
     static ClusterState recoverClusterBlocks(final ClusterState state) {
@@ -103,24 +112,20 @@ public class ClusterStateUpdaters {
 
     static ClusterState removeStateNotRecoveredBlock(final ClusterState state) {
         return ClusterState.builder(state)
-                .blocks(ClusterBlocks.builder()
-                        .blocks(state.blocks()).removeGlobalBlock(GatewayService.STATE_NOT_RECOVERED_BLOCK).build())
-                .build();
+            .blocks(ClusterBlocks.builder().blocks(state.blocks()).removeGlobalBlock(GatewayService.STATE_NOT_RECOVERED_BLOCK).build())
+            .build();
     }
 
     public static ClusterState addStateNotRecoveredBlock(ClusterState state) {
         return ClusterState.builder(state)
-                .blocks(ClusterBlocks.builder()
-                        .blocks(state.blocks()).addGlobalBlock(GatewayService.STATE_NOT_RECOVERED_BLOCK).build())
-                .build();
+            .blocks(ClusterBlocks.builder().blocks(state.blocks()).addGlobalBlock(GatewayService.STATE_NOT_RECOVERED_BLOCK).build())
+            .build();
     }
 
     static ClusterState mixCurrentStateAndRecoveredState(final ClusterState currentState, final ClusterState recoveredState) {
         assert currentState.metaData().indices().isEmpty();
 
-        final ClusterBlocks.Builder blocks = ClusterBlocks.builder()
-                .blocks(currentState.blocks())
-                .blocks(recoveredState.blocks());
+        final ClusterBlocks.Builder blocks = ClusterBlocks.builder().blocks(currentState.blocks()).blocks(recoveredState.blocks());
 
         final MetaData.Builder metaDataBuilder = MetaData.builder(recoveredState.metaData());
         // automatically generate a UID for the metadata if we need to
@@ -130,10 +135,7 @@ public class ClusterStateUpdaters {
             metaDataBuilder.put(indexMetaData, false);
         }
 
-        return ClusterState.builder(currentState)
-                .blocks(blocks)
-                .metaData(metaDataBuilder)
-                .build();
+        return ClusterState.builder(currentState).blocks(blocks).metaData(metaDataBuilder).build();
     }
 
     public static ClusterState hideStateIfNotRecovered(ClusterState state) {
@@ -141,18 +143,15 @@ public class ClusterStateUpdaters {
             final ClusterBlocks.Builder blocks = ClusterBlocks.builder().blocks(state.blocks());
             blocks.removeGlobalBlock(MetaData.CLUSTER_READ_ONLY_BLOCK);
             blocks.removeGlobalBlock(MetaData.CLUSTER_READ_ONLY_ALLOW_DELETE_BLOCK);
-            for (IndexMetaData indexMetaData: state.metaData()) {
+            for (IndexMetaData indexMetaData : state.metaData()) {
                 blocks.removeIndexBlocks(indexMetaData.getIndex().getName());
             }
             final MetaData metaData = MetaData.builder()
-                    .clusterUUID(state.metaData().clusterUUID())
-                    .coordinationMetaData(state.metaData().coordinationMetaData())
-                    .build();
+                .clusterUUID(state.metaData().clusterUUID())
+                .coordinationMetaData(state.metaData().coordinationMetaData())
+                .build();
 
-            return ClusterState.builder(state)
-                    .metaData(metaData)
-                    .blocks(blocks.build())
-                    .build();
+            return ClusterState.builder(state).metaData(metaData).blocks(blocks.build()).build();
         }
         return state;
     }

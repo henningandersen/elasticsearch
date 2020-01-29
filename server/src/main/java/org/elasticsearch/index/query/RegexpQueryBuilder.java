@@ -214,8 +214,10 @@ public class RegexpQueryBuilder extends AbstractQueryBuilder<RegexpQueryBuilder>
                         } else if (AbstractQueryBuilder.NAME_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                             queryName = parser.text();
                         } else {
-                            throw new ParsingException(parser.getTokenLocation(),
-                                    "[regexp] query does not support [" + currentFieldName + "]");
+                            throw new ParsingException(
+                                parser.getTokenLocation(),
+                                "[regexp] query does not support [" + currentFieldName + "]"
+                            );
                         }
                     }
                 }
@@ -226,12 +228,11 @@ public class RegexpQueryBuilder extends AbstractQueryBuilder<RegexpQueryBuilder>
             }
         }
 
-        return new RegexpQueryBuilder(fieldName, value)
-                .flags(flagsValue)
-                .maxDeterminizedStates(maxDeterminizedStates)
-                .rewrite(rewrite)
-                .boost(boost)
-                .queryName(queryName);
+        return new RegexpQueryBuilder(fieldName, value).flags(flagsValue)
+            .maxDeterminizedStates(maxDeterminizedStates)
+            .rewrite(rewrite)
+            .boost(boost)
+            .queryName(queryName);
     }
 
     @Override
@@ -244,10 +245,16 @@ public class RegexpQueryBuilder extends AbstractQueryBuilder<RegexpQueryBuilder>
         final int maxAllowedRegexLength = context.getIndexSettings().getMaxRegexLength();
         if (value.length() > maxAllowedRegexLength) {
             throw new IllegalArgumentException(
-                "The length of regex ["  + value.length() +  "] used in the Regexp Query request has exceeded " +
-                    "the allowed maximum of [" + maxAllowedRegexLength + "]. " +
-                    "This maximum can be set by changing the [" +
-                    IndexSettings.MAX_REGEX_LENGTH_SETTING.getKey() + "] index level setting.");
+                "The length of regex ["
+                    + value.length()
+                    + "] used in the Regexp Query request has exceeded "
+                    + "the allowed maximum of ["
+                    + maxAllowedRegexLength
+                    + "]. "
+                    + "This maximum can be set by changing the ["
+                    + IndexSettings.MAX_REGEX_LENGTH_SETTING.getKey()
+                    + "] index level setting."
+            );
         }
         MultiTermQuery.RewriteMethod method = QueryParsers.parseRewriteMethod(rewrite, null, LoggingDeprecationHandler.INSTANCE);
 
@@ -273,10 +280,10 @@ public class RegexpQueryBuilder extends AbstractQueryBuilder<RegexpQueryBuilder>
 
     @Override
     protected boolean doEquals(RegexpQueryBuilder other) {
-        return Objects.equals(fieldName, other.fieldName) &&
-                Objects.equals(value, other.value) &&
-                Objects.equals(flagsValue, other.flagsValue) &&
-                Objects.equals(maxDeterminizedStates, other.maxDeterminizedStates) &&
-                Objects.equals(rewrite, other.rewrite);
+        return Objects.equals(fieldName, other.fieldName)
+            && Objects.equals(value, other.value)
+            && Objects.equals(flagsValue, other.flagsValue)
+            && Objects.equals(maxDeterminizedStates, other.maxDeterminizedStates)
+            && Objects.equals(rewrite, other.rewrite);
     }
 }

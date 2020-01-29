@@ -45,10 +45,7 @@ import static org.hamcrest.Matchers.nullValue;
 public class MultiFieldsIntegrationIT extends ESIntegTestCase {
     @SuppressWarnings("unchecked")
     public void testMultiFields() throws Exception {
-        assertAcked(
-            client().admin().indices().prepareCreate("my-index")
-                .setMapping(createTypeSource())
-        );
+        assertAcked(client().admin().indices().prepareCreate("my-index").setMapping(createTypeSource()));
 
         GetMappingsResponse getMappingsResponse = client().admin().indices().prepareGetMappings("my-index").get();
         MappingMetaData mappingMetaData = getMappingsResponse.mappings().get("my-index");
@@ -59,24 +56,14 @@ public class MultiFieldsIntegrationIT extends ESIntegTestCase {
         assertThat(titleFields.get("not_analyzed"), notNullValue());
         assertThat(((Map<String, Object>) titleFields.get("not_analyzed")).get("type").toString(), equalTo("keyword"));
 
-        client().prepareIndex("my-index").setId("1")
-                .setSource("title", "Multi fields")
-                .setRefreshPolicy(IMMEDIATE)
-                .get();
+        client().prepareIndex("my-index").setId("1").setSource("title", "Multi fields").setRefreshPolicy(IMMEDIATE).get();
 
-        SearchResponse searchResponse = client().prepareSearch("my-index")
-                .setQuery(matchQuery("title", "multi"))
-                .get();
+        SearchResponse searchResponse = client().prepareSearch("my-index").setQuery(matchQuery("title", "multi")).get();
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
-        searchResponse = client().prepareSearch("my-index")
-                .setQuery(matchQuery("title.not_analyzed", "Multi fields"))
-                .get();
+        searchResponse = client().prepareSearch("my-index").setQuery(matchQuery("title.not_analyzed", "Multi fields")).get();
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
 
-        assertAcked(
-                client().admin().indices().preparePutMapping("my-index")
-                        .setSource(createPutMappingSource())
-        );
+        assertAcked(client().admin().indices().preparePutMapping("my-index").setSource(createPutMappingSource()));
 
         getMappingsResponse = client().admin().indices().prepareGetMappings("my-index").get();
         mappingMetaData = getMappingsResponse.mappings().get("my-index");
@@ -90,23 +77,15 @@ public class MultiFieldsIntegrationIT extends ESIntegTestCase {
         assertThat(titleFields.get("uncased"), notNullValue());
         assertThat(((Map<String, Object>) titleFields.get("uncased")).get("analyzer").toString(), equalTo("whitespace"));
 
-        client().prepareIndex("my-index").setId("1")
-                .setSource("title", "Multi fields")
-                .setRefreshPolicy(IMMEDIATE)
-                .get();
+        client().prepareIndex("my-index").setId("1").setSource("title", "Multi fields").setRefreshPolicy(IMMEDIATE).get();
 
-        searchResponse = client().prepareSearch("my-index")
-                .setQuery(matchQuery("title.uncased", "Multi"))
-                .get();
+        searchResponse = client().prepareSearch("my-index").setQuery(matchQuery("title.uncased", "Multi")).get();
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
     }
 
     @SuppressWarnings("unchecked")
     public void testGeoPointMultiField() throws Exception {
-        assertAcked(
-                client().admin().indices().prepareCreate("my-index")
-                        .setMapping(createMappingSource("geo_point"))
-        );
+        assertAcked(client().admin().indices().prepareCreate("my-index").setMapping(createMappingSource("geo_point")));
 
         GetMappingsResponse getMappingsResponse = client().admin().indices().prepareGetMappings("my-index").get();
         MappingMetaData mappingMetaData = getMappingsResponse.mappings().get("my-index");
@@ -124,9 +103,10 @@ public class MultiFieldsIntegrationIT extends ESIntegTestCase {
 
         GeoPoint point = new GeoPoint(51, 19);
         client().prepareIndex("my-index").setId("1").setSource("a", point.toString()).setRefreshPolicy(IMMEDIATE).get();
-        SearchResponse countResponse = client().prepareSearch("my-index").setSize(0)
-                .setQuery(constantScoreQuery(geoDistanceQuery("a").point(51, 19).distance(50, DistanceUnit.KILOMETERS)))
-                .get();
+        SearchResponse countResponse = client().prepareSearch("my-index")
+            .setSize(0)
+            .setQuery(constantScoreQuery(geoDistanceQuery("a").point(51, 19).distance(50, DistanceUnit.KILOMETERS)))
+            .get();
         assertThat(countResponse.getHits().getTotalHits().value, equalTo(1L));
         countResponse = client().prepareSearch("my-index").setSize(0).setQuery(matchQuery("a.b", point.geohash())).get();
         assertThat(countResponse.getHits().getTotalHits().value, equalTo(1L));
@@ -134,10 +114,7 @@ public class MultiFieldsIntegrationIT extends ESIntegTestCase {
 
     @SuppressWarnings("unchecked")
     public void testCompletionMultiField() throws Exception {
-        assertAcked(
-                client().admin().indices().prepareCreate("my-index")
-                        .setMapping(createMappingSource("completion"))
-        );
+        assertAcked(client().admin().indices().prepareCreate("my-index").setMapping(createMappingSource("completion")));
 
         GetMappingsResponse getMappingsResponse = client().admin().indices().prepareGetMappings("my-index").get();
         MappingMetaData mappingMetaData = getMappingsResponse.mappings().get("my-index");
@@ -159,10 +136,7 @@ public class MultiFieldsIntegrationIT extends ESIntegTestCase {
 
     @SuppressWarnings("unchecked")
     public void testIpMultiField() throws Exception {
-        assertAcked(
-                client().admin().indices().prepareCreate("my-index")
-                        .setMapping(createMappingSource("ip"))
-        );
+        assertAcked(client().admin().indices().prepareCreate("my-index").setMapping(createMappingSource("ip")));
 
         GetMappingsResponse getMappingsResponse = client().admin().indices().prepareGetMappings("my-index").get();
         MappingMetaData mappingMetaData = getMappingsResponse.mappings().get("my-index");
@@ -183,49 +157,56 @@ public class MultiFieldsIntegrationIT extends ESIntegTestCase {
     }
 
     private XContentBuilder createMappingSource(String fieldType) throws IOException {
-        return XContentFactory.jsonBuilder().startObject().startObject("_doc")
-                .startObject("properties")
-                .startObject("a")
-                .field("type", fieldType)
-                .startObject("fields")
-                .startObject("b")
-                .field("type", "keyword")
-                .endObject()
-                .endObject()
-                .endObject()
-                .endObject()
-                .endObject().endObject();
+        return XContentFactory.jsonBuilder()
+            .startObject()
+            .startObject("_doc")
+            .startObject("properties")
+            .startObject("a")
+            .field("type", fieldType)
+            .startObject("fields")
+            .startObject("b")
+            .field("type", "keyword")
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject();
     }
 
     private XContentBuilder createTypeSource() throws IOException {
-        return XContentFactory.jsonBuilder().startObject().startObject("_doc")
-                .startObject("properties")
-                .startObject("title")
-                .field("type", "text")
-                .startObject("fields")
-                .startObject("not_analyzed")
-                .field("type", "keyword")
-                .endObject()
-                .endObject()
-                .endObject()
-                .endObject()
-                .endObject().endObject();
+        return XContentFactory.jsonBuilder()
+            .startObject()
+            .startObject("_doc")
+            .startObject("properties")
+            .startObject("title")
+            .field("type", "text")
+            .startObject("fields")
+            .startObject("not_analyzed")
+            .field("type", "keyword")
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject();
     }
 
     private XContentBuilder createPutMappingSource() throws IOException {
-        return XContentFactory.jsonBuilder().startObject()
-                .startObject("properties")
-                .startObject("title")
-                .field("type", "text")
-                .startObject("fields")
-                .startObject("uncased")
-                .field("type", "text")
-                .field("analyzer", "whitespace")
-                .endObject()
-                .endObject()
-                .endObject()
-                .endObject()
-                .endObject();
+        return XContentFactory.jsonBuilder()
+            .startObject()
+            .startObject("properties")
+            .startObject("title")
+            .field("type", "text")
+            .startObject("fields")
+            .startObject("uncased")
+            .field("type", "text")
+            .field("analyzer", "whitespace")
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject()
+            .endObject();
     }
 
 }

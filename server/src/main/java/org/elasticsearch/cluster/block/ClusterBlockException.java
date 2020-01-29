@@ -51,7 +51,7 @@ public class ClusterBlockException extends ElasticsearchException {
         super(in);
         int totalBlocks = in.readVInt();
         Set<ClusterBlock> blocks = new HashSet<>(totalBlocks);
-        for (int i = 0; i < totalBlocks;i++) {
+        for (int i = 0; i < totalBlocks; i++) {
             blocks.add(new ClusterBlock(in));
         }
         this.blocks = unmodifiableSet(blocks);

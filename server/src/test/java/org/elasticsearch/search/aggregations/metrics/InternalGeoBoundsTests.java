@@ -35,14 +35,25 @@ public class InternalGeoBoundsTests extends InternalAggregationTestCase<Internal
     static final double GEOHASH_TOLERANCE = 1E-5D;
 
     @Override
-    protected InternalGeoBounds createTestInstance(String name, List<PipelineAggregator> pipelineAggregators,
-                                                   Map<String, Object> metaData) {
+    protected InternalGeoBounds createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         // we occasionally want to test top = Double.NEGATIVE_INFINITY since this triggers empty xContent object
         double top = frequently() ? randomDouble() : Double.NEGATIVE_INFINITY;
-        InternalGeoBounds geo = new InternalGeoBounds(name,
-            top, randomDouble(), randomDouble(), randomDouble(),
-            randomDouble(), randomDouble(), randomBoolean(),
-            pipelineAggregators, Collections.emptyMap());
+        InternalGeoBounds geo = new InternalGeoBounds(
+            name,
+            top,
+            randomDouble(),
+            randomDouble(),
+            randomDouble(),
+            randomDouble(),
+            randomDouble(),
+            randomBoolean(),
+            pipelineAggregators,
+            Collections.emptyMap()
+        );
         return geo;
     }
 
@@ -117,44 +128,44 @@ public class InternalGeoBoundsTests extends InternalAggregationTestCase<Internal
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 8)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            if (Double.isFinite(top)) {
-                top += between(1, 20);
-            } else {
-                top = randomDouble();
-            }
-            break;
-        case 2:
-            bottom += between(1, 20);
-            break;
-        case 3:
-            posLeft += between(1, 20);
-            break;
-        case 4:
-            posRight += between(1, 20);
-            break;
-        case 5:
-            negLeft += between(1, 20);
-            break;
-        case 6:
-            negRight += between(1, 20);
-            break;
-        case 7:
-            wrapLongitude = wrapLongitude == false;
-            break;
-        case 8:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
-        default:
-            throw new AssertionError("Illegal randomisation branch");
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                if (Double.isFinite(top)) {
+                    top += between(1, 20);
+                } else {
+                    top = randomDouble();
+                }
+                break;
+            case 2:
+                bottom += between(1, 20);
+                break;
+            case 3:
+                posLeft += between(1, 20);
+                break;
+            case 4:
+                posRight += between(1, 20);
+                break;
+            case 5:
+                negLeft += between(1, 20);
+                break;
+            case 6:
+                negRight += between(1, 20);
+                break;
+            case 7:
+                wrapLongitude = wrapLongitude == false;
+                break;
+            case 8:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
+            default:
+                throw new AssertionError("Illegal randomisation branch");
         }
         return new InternalGeoBounds(name, top, bottom, posLeft, posRight, negLeft, negRight, wrapLongitude, pipelineAggregators, metaData);
     }

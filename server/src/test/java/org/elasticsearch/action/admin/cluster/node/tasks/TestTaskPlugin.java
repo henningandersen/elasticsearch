@@ -83,8 +83,10 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
 
     @Override
     public List<ActionHandler<? extends ActionRequest, ? extends ActionResponse>> getActions() {
-        return Arrays.asList(new ActionHandler<>(TestTaskAction.INSTANCE, TransportTestTaskAction.class),
-                new ActionHandler<>(UnblockTestTasksAction.INSTANCE, TransportUnblockTestTasksAction.class));
+        return Arrays.asList(
+            new ActionHandler<>(TestTaskAction.INSTANCE, TransportTestTaskAction.class),
+            new ActionHandler<>(UnblockTestTasksAction.INSTANCE, TransportUnblockTestTasksAction.class)
+        );
     }
 
     @Override
@@ -99,7 +101,7 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
      */
     @Override
     public List<TransportInterceptor> getTransportInterceptors(NamedWriteableRegistry namedWriteableRegistry, ThreadContext threadContext) {
-       return Collections.singletonList(new OriginAssertingInterceptor(threadContext));
+        return Collections.singletonList(new OriginAssertingInterceptor(threadContext));
     }
 
     static class TestTask extends CancellableTask {
@@ -272,8 +274,17 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
 
         @Inject
         public TransportTestTaskAction(ThreadPool threadPool, ClusterService clusterService, TransportService transportService) {
-            super(TestTaskAction.NAME, threadPool, clusterService, transportService, new ActionFilters(new HashSet<>()),
-                NodesRequest::new, NodeRequest::new, ThreadPool.Names.GENERIC, NodeResponse.class);
+            super(
+                TestTaskAction.NAME,
+                threadPool,
+                clusterService,
+                transportService,
+                new ActionFilters(new HashSet<>()),
+                NodesRequest::new,
+                NodeRequest::new,
+                ThreadPool.Names.GENERIC,
+                NodeResponse.class
+            );
         }
 
         @Override
@@ -335,14 +346,11 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
 
         }
 
-        UnblockTestTaskResponse(StreamInput in) {
-        }
+        UnblockTestTaskResponse(StreamInput in) {}
 
         @Override
-        public void writeTo(StreamOutput out) throws IOException {
-        }
+        public void writeTo(StreamOutput out) throws IOException {}
     }
-
 
     public static class UnblockTestTasksRequest extends BaseTasksRequest<UnblockTestTasksRequest> {
 
@@ -362,8 +370,11 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
 
         private List<UnblockTestTaskResponse> tasks;
 
-        UnblockTestTasksResponse(List<UnblockTestTaskResponse> tasks, List<TaskOperationFailure> taskFailures, List<? extends
-            FailedNodeException> nodeFailures) {
+        UnblockTestTasksResponse(
+            List<UnblockTestTaskResponse> tasks,
+            List<TaskOperationFailure> taskFailures,
+            List<? extends FailedNodeException> nodeFailures
+        ) {
             super(taskFailures, nodeFailures);
             this.tasks = tasks == null ? Collections.emptyList() : List.copyOf(tasks);
         }
@@ -391,19 +402,33 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
     /**
      * Test class for testing task operations
      */
-    public static class TransportUnblockTestTasksAction extends TransportTasksAction<Task, UnblockTestTasksRequest,
-        UnblockTestTasksResponse, UnblockTestTaskResponse> {
+    public static class TransportUnblockTestTasksAction extends TransportTasksAction<
+        Task,
+        UnblockTestTasksRequest,
+        UnblockTestTasksResponse,
+        UnblockTestTaskResponse> {
 
         @Inject
         public TransportUnblockTestTasksAction(ClusterService clusterService, TransportService transportService) {
-            super(UnblockTestTasksAction.NAME, clusterService, transportService, new ActionFilters(new HashSet<>()),
-                  UnblockTestTasksRequest::new, UnblockTestTasksResponse::new, UnblockTestTaskResponse::new, ThreadPool.Names.MANAGEMENT);
+            super(
+                UnblockTestTasksAction.NAME,
+                clusterService,
+                transportService,
+                new ActionFilters(new HashSet<>()),
+                UnblockTestTasksRequest::new,
+                UnblockTestTasksResponse::new,
+                UnblockTestTaskResponse::new,
+                ThreadPool.Names.MANAGEMENT
+            );
         }
 
         @Override
-        protected UnblockTestTasksResponse newResponse(UnblockTestTasksRequest request, List<UnblockTestTaskResponse> tasks,
-                                                       List<TaskOperationFailure> taskOperationFailures, List<FailedNodeException>
-                                                                   failedNodeExceptions) {
+        protected UnblockTestTasksResponse newResponse(
+            UnblockTestTasksRequest request,
+            List<UnblockTestTaskResponse> tasks,
+            List<TaskOperationFailure> taskOperationFailures,
+            List<FailedNodeException> failedNodeExceptions
+        ) {
             return new UnblockTestTasksResponse(tasks, taskOperationFailures, failedNodeExceptions);
         }
 
@@ -427,8 +452,7 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
 
     public static class UnblockTestTasksRequestBuilder extends ActionRequestBuilder<UnblockTestTasksRequest, UnblockTestTasksResponse> {
 
-        protected UnblockTestTasksRequestBuilder(ElasticsearchClient client,
-                                                 ActionType<UnblockTestTasksResponse> action) {
+        protected UnblockTestTasksRequestBuilder(ElasticsearchClient client, ActionType<UnblockTestTasksResponse> action) {
             super(client, action, new UnblockTestTasksRequest());
         }
     }
@@ -445,8 +469,12 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
             return new AsyncSender() {
                 @Override
                 public <T extends TransportResponse> void sendRequest(
-                        Transport.Connection connection, String action, TransportRequest request,
-                        TransportRequestOptions options, TransportResponseHandler<T> handler) {
+                    Transport.Connection connection,
+                    String action,
+                    TransportRequest request,
+                    TransportRequestOptions options,
+                    TransportResponseHandler<T> handler
+                ) {
                     if (action.startsWith("indices:data/write/bulk[s]")) {
                         /*
                          * We can't reason about these requests because
@@ -466,9 +494,19 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
                         sender.sendRequest(connection, action, request, options, handler);
                         return;
                     }
-                    handler.handleException(new TransportException("should have origin of ["
-                            + expectedOrigin + "] but was [" + actualOrigin + "] action was ["
-                            + action + "][" + request + "]"));
+                    handler.handleException(
+                        new TransportException(
+                            "should have origin of ["
+                                + expectedOrigin
+                                + "] but was ["
+                                + actualOrigin
+                                + "] action was ["
+                                + action
+                                + "]["
+                                + request
+                                + "]"
+                        )
+                    );
                 }
             };
         }
@@ -480,8 +518,7 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
                  */
                 return false;
             }
-            if (       action.startsWith("indices:admin/refresh")
-                    || action.startsWith("indices:data/read/search")) {
+            if (action.startsWith("indices:admin/refresh") || action.startsWith("indices:data/read/search")) {
                 /*
                  * The test refreshes and searches to count the number of tasks
                  * in the index and the Tasks API never does either.
@@ -496,7 +533,7 @@ public class TestTaskPlugin extends Plugin implements ActionPlugin, NetworkPlugi
              * When the API Tasks API makes an indices request it only every
              * targets the .tasks index. Other requests come from the tests.
              */
-            return Arrays.equals(new String[] {".tasks"}, ir.indices());
+            return Arrays.equals(new String[] { ".tasks" }, ir.indices());
         }
     }
 }

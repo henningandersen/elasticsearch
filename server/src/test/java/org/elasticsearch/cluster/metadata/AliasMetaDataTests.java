@@ -34,15 +34,13 @@ import static org.hamcrest.Matchers.equalTo;
 public class AliasMetaDataTests extends AbstractXContentTestCase<AliasMetaData> {
 
     public void testSerialization() throws IOException {
-        final AliasMetaData before =
-                AliasMetaData
-                        .builder("alias")
-                        .filter("{ \"term\": \"foo\"}")
-                        .indexRouting("indexRouting")
-                        .routing("routing")
-                        .searchRouting("trim,tw , ltw , lw")
-                        .writeIndex(randomBoolean() ? null : randomBoolean())
-                        .build();
+        final AliasMetaData before = AliasMetaData.builder("alias")
+            .filter("{ \"term\": \"foo\"}")
+            .indexRouting("indexRouting")
+            .routing("routing")
+            .searchRouting("trim,tw , ltw , lw")
+            .writeIndex(randomBoolean() ? null : randomBoolean())
+            .build();
 
         assertThat(before.searchRoutingValues(), equalTo(Sets.newHashSet("trim", "tw ", " ltw ", " lw")));
 
@@ -78,7 +76,7 @@ public class AliasMetaDataTests extends AbstractXContentTestCase<AliasMetaData> 
     @Override
     protected Predicate<String> getRandomFieldsExcludeFilter() {
         return p -> p.equals("") // do not add elements at the top-level as any element at this level is parsed as a new alias
-                || p.contains(".filter"); // do not insert random data into AliasMetaData#filter
+            || p.contains(".filter"); // do not insert random data into AliasMetaData#filter
     }
 
     @Override

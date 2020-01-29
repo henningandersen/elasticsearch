@@ -44,8 +44,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
  * Requests that are run on a particular replica, first on the primary and then on the replicas like {@link IndexRequest} or
  * {@link TransportShardRefreshAction}.
  */
-public abstract class ReplicationRequest<Request extends ReplicationRequest<Request>> extends ActionRequest
-        implements IndicesRequest {
+public abstract class ReplicationRequest<Request extends ReplicationRequest<Request>> extends ActionRequest implements IndicesRequest {
 
     public static final TimeValue DEFAULT_TIMEOUT = new TimeValue(1, TimeUnit.MINUTES);
 
@@ -120,7 +119,7 @@ public abstract class ReplicationRequest<Request extends ReplicationRequest<Requ
 
     @Override
     public String[] indices() {
-        return new String[]{index};
+        return new String[] { index };
     }
 
     @Override

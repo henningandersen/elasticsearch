@@ -90,8 +90,12 @@ public class ShardStateActionTests extends ESTestCase {
     private ClusterService clusterService;
 
     private static class TestShardStateAction extends ShardStateAction {
-        TestShardStateAction(ClusterService clusterService, TransportService transportService,
-                             AllocationService allocationService, RerouteService rerouteService) {
+        TestShardStateAction(
+            ClusterService clusterService,
+            TransportService transportService,
+            AllocationService allocationService,
+            RerouteService rerouteService
+        ) {
             super(clusterService, transportService, allocationService, rerouteService, THREAD_POOL);
         }
 
@@ -108,8 +112,13 @@ public class ShardStateActionTests extends ESTestCase {
         }
 
         @Override
-        protected void waitForNewMasterAndRetry(String actionName, ClusterStateObserver observer, TransportRequest request,
-                                                ActionListener<Void> listener, Predicate<ClusterState> changePredicate) {
+        protected void waitForNewMasterAndRetry(
+            String actionName,
+            ClusterStateObserver observer,
+            TransportRequest request,
+            ActionListener<Void> listener,
+            Predicate<ClusterState> changePredicate
+        ) {
             onBeforeWaitForNewMasterAndRetry.run();
             super.waitForNewMasterAndRetry(actionName, observer, request, listener, changePredicate);
             onAfterWaitForNewMasterAndRetry.run();
@@ -127,15 +136,19 @@ public class ShardStateActionTests extends ESTestCase {
         super.setUp();
         this.transport = new CapturingTransport();
         clusterService = createClusterService(THREAD_POOL);
-        transportService = transport.createTransportService(clusterService.getSettings(), THREAD_POOL,
-            TransportService.NOOP_TRANSPORT_INTERCEPTOR, x -> clusterService.localNode(), null, Collections.emptySet());
+        transportService = transport.createTransportService(
+            clusterService.getSettings(),
+            THREAD_POOL,
+            TransportService.NOOP_TRANSPORT_INTERCEPTOR,
+            x -> clusterService.localNode(),
+            null,
+            Collections.emptySet()
+        );
         transportService.start();
         transportService.acceptIncomingRequests();
         shardStateAction = new TestShardStateAction(clusterService, transportService, null, null);
-        shardStateAction.setOnBeforeWaitForNewMasterAndRetry(() -> {
-        });
-        shardStateAction.setOnAfterWaitForNewMasterAndRetry(() -> {
-        });
+        shardStateAction.setOnBeforeWaitForNewMasterAndRetry(() -> {});
+        shardStateAction.setOnAfterWaitForNewMasterAndRetry(() -> {});
     }
 
     @Override
@@ -192,8 +205,7 @@ public class ShardStateActionTests extends ESTestCase {
         AtomicInteger retries = new AtomicInteger();
         AtomicBoolean success = new AtomicBoolean();
 
-        setUpMasterRetryVerification(1, retries, latch, requestId -> {
-        });
+        setUpMasterRetryVerification(1, retries, latch, requestId -> {});
 
         ShardRouting failedShard = getRandomShardRouting(index);
         shardStateAction.localShardFailed(failedShard, "test", getSimulatedFailure(), new ActionListener<Void>() {
@@ -230,8 +242,9 @@ public class ShardStateActionTests extends ESTestCase {
         LongConsumer retryLoop = requestId -> {
             if (randomBoolean()) {
                 transport.handleRemoteError(
-                        requestId,
-                        randomFrom(new NotMasterException("simulated"), new FailedToCommitClusterStateException("simulated")));
+                    requestId,
+                    randomFrom(new NotMasterException("simulated"), new FailedToCommitClusterStateException("simulated"))
+                );
             } else {
                 if (randomBoolean()) {
                     transport.handleLocalError(requestId, new NodeNotConnectedException(null, "simulated"));
@@ -316,11 +329,20 @@ public class ShardStateActionTests extends ESTestCase {
         final TestListener listener = new TestListener();
         long primaryTerm = clusterService.state().metaData().index(index).primaryTerm(failedShard.id());
         assertThat(primaryTerm, greaterThanOrEqualTo(1L));
-        shardStateAction.remoteShardFailed(failedShard.shardId(), failedShard.allocationId().getId(),
-            primaryTerm + 1, randomBoolean(), "test", getSimulatedFailure(), listener);
+        shardStateAction.remoteShardFailed(
+            failedShard.shardId(),
+            failedShard.allocationId().getId(),
+            primaryTerm + 1,
+            randomBoolean(),
+            "test",
+            getSimulatedFailure(),
+            listener
+        );
 
-        ShardStateAction.NoLongerPrimaryShardException catastrophicError =
-                new ShardStateAction.NoLongerPrimaryShardException(failedShard.shardId(), "dummy failure");
+        ShardStateAction.NoLongerPrimaryShardException catastrophicError = new ShardStateAction.NoLongerPrimaryShardException(
+            failedShard.shardId(),
+            "dummy failure"
+        );
         CapturingTransport.CapturedRequest[] capturedRequests = transport.getCapturedRequestsAndClear();
         transport.handleRemoteError(capturedRequests[0].requestId, catastrophicError);
 
@@ -341,17 +363,25 @@ public class ShardStateActionTests extends ESTestCase {
         CountDownLatch latch = new CountDownLatch(numListeners);
         long primaryTerm = randomLongBetween(1, Long.MAX_VALUE);
         for (int i = 0; i < numListeners; i++) {
-            shardStateAction.remoteShardFailed(failedShard.shardId(), failedShard.allocationId().getId(),
-                primaryTerm, markAsStale, "test", getSimulatedFailure(), new ActionListener<Void>() {
+            shardStateAction.remoteShardFailed(
+                failedShard.shardId(),
+                failedShard.allocationId().getId(),
+                primaryTerm,
+                markAsStale,
+                "test",
+                getSimulatedFailure(),
+                new ActionListener<Void>() {
                     @Override
                     public void onResponse(Void aVoid) {
                         latch.countDown();
                     }
+
                     @Override
                     public void onFailure(Exception e) {
                         latch.countDown();
                     }
-                });
+                }
+            );
         }
         CapturingTransport.CapturedRequest[] capturedRequests = transport.getCapturedRequestsAndClear();
         assertThat(capturedRequests, arrayWithSize(1));
@@ -391,18 +421,25 @@ public class ShardStateActionTests extends ESTestCase {
                 barrier.arriveAndAwaitAdvance();
                 for (int i = 0; i < iterationsPerThread; i++) {
                     ShardRouting failedShard = randomFrom(failedShards);
-                    shardStateAction.remoteShardFailed(failedShard.shardId(), failedShard.allocationId().getId(),
-                        randomLongBetween(1, Long.MAX_VALUE), randomBoolean(), "test", getSimulatedFailure(),
+                    shardStateAction.remoteShardFailed(
+                        failedShard.shardId(),
+                        failedShard.allocationId().getId(),
+                        randomLongBetween(1, Long.MAX_VALUE),
+                        randomBoolean(),
+                        "test",
+                        getSimulatedFailure(),
                         new ActionListener<Void>() {
                             @Override
                             public void onResponse(Void aVoid) {
                                 notifiedResponses.incrementAndGet();
                             }
+
                             @Override
                             public void onFailure(Exception e) {
                                 notifiedResponses.incrementAndGet();
                             }
-                        });
+                        }
+                    );
                 }
             });
             clientThreads[t].start();

@@ -81,6 +81,5 @@ public interface FetchSubPhase {
      */
     default void hitExecute(SearchContext context, HitContext hitContext) throws IOException {}
 
-
     default void hitsExecute(SearchContext context, SearchHit[] hits) throws IOException {}
 }

@@ -73,10 +73,9 @@ import java.util.function.Predicate;
  * Context object used to create lucene queries on the shard level.
  */
 public class QueryShardContext extends QueryRewriteContext {
-    private static final DeprecationLogger deprecationLogger = new DeprecationLogger(
-        LogManager.getLogger(QueryShardContext.class));
-    public static final String TYPES_DEPRECATION_MESSAGE = "[types removal] Using the _type field " +
-        "in queries and aggregations is deprecated, prefer to use a field instead.";
+    private static final DeprecationLogger deprecationLogger = new DeprecationLogger(LogManager.getLogger(QueryShardContext.class));
+    public static final String TYPES_DEPRECATION_MESSAGE = "[types removal] Using the _type field "
+        + "in queries and aggregations is deprecated, prefer to use a field instead.";
 
     private final ScriptService scriptService;
     private final IndexSettings indexSettings;
@@ -98,49 +97,82 @@ public class QueryShardContext extends QueryRewriteContext {
     private boolean mapUnmappedFieldAsString;
     private NestedScope nestedScope;
 
-    public QueryShardContext(int shardId,
-                             IndexSettings indexSettings,
-                             BigArrays bigArrays,
-                             BitsetFilterCache bitsetFilterCache,
-                             BiFunction<MappedFieldType, String, IndexFieldData<?>> indexFieldDataLookup,
-                             MapperService mapperService,
-                             SimilarityService similarityService,
-                             ScriptService scriptService,
-                             NamedXContentRegistry xContentRegistry,
-                             NamedWriteableRegistry namedWriteableRegistry,
-                             Client client,
-                             IndexSearcher searcher,
-                             LongSupplier nowInMillis,
-                             String clusterAlias,
-                             Predicate<String> indexNameMatcher) {
-        this(shardId, indexSettings, bigArrays, bitsetFilterCache, indexFieldDataLookup, mapperService, similarityService,
-            scriptService, xContentRegistry, namedWriteableRegistry, client, searcher, nowInMillis, indexNameMatcher,
-            new Index(RemoteClusterAware.buildRemoteIndexName(clusterAlias, indexSettings.getIndex().getName()),
-                indexSettings.getIndex().getUUID()));
+    public QueryShardContext(
+        int shardId,
+        IndexSettings indexSettings,
+        BigArrays bigArrays,
+        BitsetFilterCache bitsetFilterCache,
+        BiFunction<MappedFieldType, String, IndexFieldData<?>> indexFieldDataLookup,
+        MapperService mapperService,
+        SimilarityService similarityService,
+        ScriptService scriptService,
+        NamedXContentRegistry xContentRegistry,
+        NamedWriteableRegistry namedWriteableRegistry,
+        Client client,
+        IndexSearcher searcher,
+        LongSupplier nowInMillis,
+        String clusterAlias,
+        Predicate<String> indexNameMatcher
+    ) {
+        this(
+            shardId,
+            indexSettings,
+            bigArrays,
+            bitsetFilterCache,
+            indexFieldDataLookup,
+            mapperService,
+            similarityService,
+            scriptService,
+            xContentRegistry,
+            namedWriteableRegistry,
+            client,
+            searcher,
+            nowInMillis,
+            indexNameMatcher,
+            new Index(
+                RemoteClusterAware.buildRemoteIndexName(clusterAlias, indexSettings.getIndex().getName()),
+                indexSettings.getIndex().getUUID()
+            )
+        );
     }
 
     public QueryShardContext(QueryShardContext source) {
-        this(source.shardId, source.indexSettings, source.bigArrays, source.bitsetFilterCache, source.indexFieldDataService,
-            source.mapperService, source.similarityService, source.scriptService, source.getXContentRegistry(),
-            source.getWriteableRegistry(), source.client, source.searcher, source.nowInMillis, source.indexNameMatcher,
-            source.fullyQualifiedIndex);
+        this(
+            source.shardId,
+            source.indexSettings,
+            source.bigArrays,
+            source.bitsetFilterCache,
+            source.indexFieldDataService,
+            source.mapperService,
+            source.similarityService,
+            source.scriptService,
+            source.getXContentRegistry(),
+            source.getWriteableRegistry(),
+            source.client,
+            source.searcher,
+            source.nowInMillis,
+            source.indexNameMatcher,
+            source.fullyQualifiedIndex
+        );
     }
 
-    private QueryShardContext(int shardId,
-                              IndexSettings indexSettings,
-                              BigArrays bigArrays,
-                              BitsetFilterCache bitsetFilterCache,
-                              BiFunction<MappedFieldType, String, IndexFieldData<?>> indexFieldDataLookup,
-                              MapperService mapperService,
-                              SimilarityService similarityService,
-                              ScriptService scriptService,
-                              NamedXContentRegistry xContentRegistry,
-                              NamedWriteableRegistry namedWriteableRegistry,
-                              Client client,
-                              IndexSearcher searcher,
-                              LongSupplier nowInMillis,
-                              Predicate<String> indexNameMatcher,
-                              Index fullyQualifiedIndex) {
+    private QueryShardContext(
+        int shardId,
+        IndexSettings indexSettings,
+        BigArrays bigArrays,
+        BitsetFilterCache bitsetFilterCache,
+        BiFunction<MappedFieldType, String, IndexFieldData<?>> indexFieldDataLookup,
+        MapperService mapperService,
+        SimilarityService similarityService,
+        ScriptService scriptService,
+        NamedXContentRegistry xContentRegistry,
+        NamedWriteableRegistry namedWriteableRegistry,
+        Client client,
+        IndexSearcher searcher,
+        LongSupplier nowInMillis,
+        Predicate<String> indexNameMatcher,
+        Index fullyQualifiedIndex
+    ) {
         super(xContentRegistry, namedWriteableRegistry, client, nowInMillis);
         this.shardId = shardId;
         this.similarityService = similarityService;
@@ -272,8 +304,10 @@ public class QueryShardContext extends QueryRewriteContext {
 
     public SearchLookup lookup() {
         if (lookup == null) {
-            lookup = new SearchLookup(getMapperService(),
-                    mappedFieldType -> indexFieldDataService.apply(mappedFieldType, fullyQualifiedIndex.getName()));
+            lookup = new SearchLookup(
+                getMapperService(),
+                mappedFieldType -> indexFieldDataService.apply(mappedFieldType, fullyQualifiedIndex.getName())
+            );
         }
         return lookup;
     }
@@ -309,9 +343,9 @@ public class QueryShardContext extends QueryRewriteContext {
         try {
             QueryBuilder rewriteQuery = Rewriteable.rewrite(queryBuilder, this, true);
             return new ParsedQuery(filterOrQuery.apply(rewriteQuery), copyNamedQueries());
-        } catch(QueryShardException | ParsingException e ) {
+        } catch (QueryShardException | ParsingException e) {
             throw e;
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new QueryShardException(this, "failed to create query: {}", e, queryBuilder);
         } finally {
             reset();

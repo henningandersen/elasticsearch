@@ -59,14 +59,21 @@ public class NestedAggregator extends BucketsAggregator implements SingleBucketA
 
     private BufferingNestedLeafBucketCollector bufferingNestedLeafBucketCollector;
 
-    NestedAggregator(String name, AggregatorFactories factories, ObjectMapper parentObjectMapper, ObjectMapper childObjectMapper,
-                     SearchContext context, Aggregator parentAggregator,
-                     List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData,
-                     boolean collectsFromSingleBucket) throws IOException {
+    NestedAggregator(
+        String name,
+        AggregatorFactories factories,
+        ObjectMapper parentObjectMapper,
+        ObjectMapper childObjectMapper,
+        SearchContext context,
+        Aggregator parentAggregator,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        boolean collectsFromSingleBucket
+    )
+        throws IOException {
         super(name, factories, context, parentAggregator, pipelineAggregators, metaData);
 
-        Query parentFilter = parentObjectMapper != null ? parentObjectMapper.nestedTypeFilter()
-            : Queries.newNonNestedFilter();
+        Query parentFilter = parentObjectMapper != null ? parentObjectMapper.nestedTypeFilter() : Queries.newNonNestedFilter();
         this.parentFilter = context.bitsetFilterCache().getBitSetProducer(parentFilter);
         this.childFilter = childObjectMapper.nestedTypeFilter();
         this.collectsFromSingleBucket = collectsFromSingleBucket;
@@ -126,11 +133,16 @@ public class NestedAggregator extends BucketsAggregator implements SingleBucketA
 
     @Override
     public InternalAggregation buildAggregation(long owningBucketOrdinal) throws IOException {
-        return new InternalNested(name, bucketDocCount(owningBucketOrdinal), bucketAggregations(owningBucketOrdinal),
-                pipelineAggregators(), metaData());
+        return new InternalNested(
+            name,
+            bucketDocCount(owningBucketOrdinal),
+            bucketAggregations(owningBucketOrdinal),
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
-        @Override
+    @Override
     public InternalAggregation buildEmptyAggregation() {
         return new InternalNested(name, 0, buildEmptySubAggregations(), pipelineAggregators(), metaData());
     }
@@ -184,7 +196,6 @@ public class NestedAggregator extends BucketsAggregator implements SingleBucketA
                 return;
             }
 
-
             final int prevParentDoc = parentDocs.prevSetBit(currentParentDoc - 1);
             int childDocId = childDocs.docID();
             if (childDocId <= prevParentDoc) {
@@ -208,7 +219,9 @@ public class NestedAggregator extends BucketsAggregator implements SingleBucketA
         float score;
 
         @Override
-        public final float score() { return score; }
+        public final float score() {
+            return score;
+        }
 
         @Override
         public int docID() {

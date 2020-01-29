@@ -158,7 +158,8 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
             } else if (Names.POINTS_ONLY.match(fieldName, LoggingDeprecationHandler.INSTANCE)) {
                 checkPrefixTreeSupport(fieldName);
                 deprecatedParameters.setPointsOnly(
-                    XContentMapValues.nodeBooleanValue(fieldNode, name + "." + DeprecatedParameters.Names.POINTS_ONLY));
+                    XContentMapValues.nodeBooleanValue(fieldNode, name + "." + DeprecatedParameters.Names.POINTS_ONLY)
+                );
             } else {
                 return false;
             }
@@ -167,18 +168,17 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
 
         private static void checkPrefixTreeSupport(String fieldName) {
             if (ShapesAvailability.JTS_AVAILABLE == false || ShapesAvailability.SPATIAL4J_AVAILABLE == false) {
-                throw new ElasticsearchParseException("Field parameter [{}] is not supported for [{}] field type",
-                    fieldName, CONTENT_TYPE);
+                throw new ElasticsearchParseException("Field parameter [{}] is not supported for [{}] field type", fieldName, CONTENT_TYPE);
             }
-            DEPRECATION_LOGGER.deprecated("Field parameter [{}] is deprecated and will be removed in a future version.",
-                fieldName);
+            DEPRECATION_LOGGER.deprecated("Field parameter [{}] is deprecated and will be removed in a future version.", fieldName);
         }
     }
 
     private static final Logger logger = LogManager.getLogger(LegacyGeoShapeFieldMapper.class);
     private static final DeprecationLogger DEPRECATION_LOGGER = new DeprecationLogger(logger);
 
-    public static class Builder extends AbstractGeometryFieldMapper.Builder<AbstractGeometryFieldMapper.Builder,
+    public static class Builder extends AbstractGeometryFieldMapper.Builder<
+        AbstractGeometryFieldMapper.Builder,
         LegacyGeoShapeFieldMapper> {
 
         DeprecatedParameters deprecatedParameters;
@@ -194,7 +194,7 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
 
         @Override
         public GeoShapeFieldType fieldType() {
-            return (GeoShapeFieldType)fieldType;
+            return (GeoShapeFieldType) fieldType;
         }
 
         private void setupFieldTypeDeprecatedParameters(BuilderContext context) {
@@ -210,8 +210,7 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
             }
             if (deprecatedParameters.precision != null) {
                 // precision is only set iff: a. treeLevel is not explicitly set, b. its explicitly set
-                ft.setPrecisionInMeters(DistanceUnit.parse(deprecatedParameters.precision,
-                    DistanceUnit.DEFAULT, DistanceUnit.DEFAULT));
+                ft.setPrecisionInMeters(DistanceUnit.parse(deprecatedParameters.precision, DistanceUnit.DEFAULT, DistanceUnit.DEFAULT));
             }
             if (deprecatedParameters.distanceErrorPct != null) {
                 ft.setDistanceErrorPct(deprecatedParameters.distanceErrorPct);
@@ -220,7 +219,7 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
                 ft.setPointsOnly(deprecatedParameters.pointsOnly);
             }
 
-            GeoShapeFieldType geoShapeFieldType = (GeoShapeFieldType)fieldType;
+            GeoShapeFieldType geoShapeFieldType = (GeoShapeFieldType) fieldType;
 
             if (geoShapeFieldType.treeLevels() == 0 && geoShapeFieldType.precisionInMeters() < 0) {
                 geoShapeFieldType.setDefaultDistanceErrorPct(DeprecatedParameters.Defaults.DISTANCE_ERROR_PCT);
@@ -231,14 +230,20 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
             GeoShapeFieldType ft = fieldType();
             SpatialPrefixTree prefixTree;
             if (ft.tree().equals(DeprecatedParameters.PrefixTrees.GEOHASH)) {
-                prefixTree = new GeohashPrefixTree(ShapeBuilder.SPATIAL_CONTEXT,
-                    getLevels(ft.treeLevels(), ft.precisionInMeters(), DeprecatedParameters.Defaults.GEOHASH_TREE_LEVELS, true));
+                prefixTree = new GeohashPrefixTree(
+                    ShapeBuilder.SPATIAL_CONTEXT,
+                    getLevels(ft.treeLevels(), ft.precisionInMeters(), DeprecatedParameters.Defaults.GEOHASH_TREE_LEVELS, true)
+                );
             } else if (ft.tree().equals(DeprecatedParameters.PrefixTrees.LEGACY_QUADTREE)) {
-                prefixTree = new QuadPrefixTree(ShapeBuilder.SPATIAL_CONTEXT,
-                    getLevels(ft.treeLevels(), ft.precisionInMeters(), DeprecatedParameters.Defaults.QUADTREE_LEVELS, false));
+                prefixTree = new QuadPrefixTree(
+                    ShapeBuilder.SPATIAL_CONTEXT,
+                    getLevels(ft.treeLevels(), ft.precisionInMeters(), DeprecatedParameters.Defaults.QUADTREE_LEVELS, false)
+                );
             } else if (ft.tree().equals(DeprecatedParameters.PrefixTrees.QUADTREE)) {
-                prefixTree = new PackedQuadPrefixTree(ShapeBuilder.SPATIAL_CONTEXT,
-                    getLevels(ft.treeLevels(), ft.precisionInMeters(), DeprecatedParameters.Defaults.QUADTREE_LEVELS, false));
+                prefixTree = new PackedQuadPrefixTree(
+                    ShapeBuilder.SPATIAL_CONTEXT,
+                    getLevels(ft.treeLevels(), ft.precisionInMeters(), DeprecatedParameters.Defaults.QUADTREE_LEVELS, false)
+                );
             } else {
                 throw new IllegalArgumentException("Unknown prefix tree type [" + ft.tree() + "]");
             }
@@ -281,8 +286,14 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
 
         private static int getLevels(int treeLevels, double precisionInMeters, int defaultLevels, boolean geoHash) {
             if (treeLevels > 0 || precisionInMeters >= 0) {
-                return Math.max(treeLevels, precisionInMeters >= 0 ? (geoHash ? GeoUtils.geoHashLevelsForPrecision(precisionInMeters)
-                    : GeoUtils.quadTreeLevelsForPrecision(precisionInMeters)) : 0);
+                return Math.max(
+                    treeLevels,
+                    precisionInMeters >= 0
+                        ? (geoHash
+                            ? GeoUtils.geoHashLevelsForPrecision(precisionInMeters)
+                            : GeoUtils.quadTreeLevelsForPrecision(precisionInMeters))
+                        : 0
+                );
             }
             return defaultLevels;
         }
@@ -291,9 +302,18 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
         public LegacyGeoShapeFieldMapper build(BuilderContext context) {
             setupFieldType(context);
 
-            return new LegacyGeoShapeFieldMapper(name, fieldType, defaultFieldType, ignoreMalformed(context),
-                coerce(context), orientation(), ignoreZValue(), context.indexSettings(),
-                multiFieldsBuilder.build(this, context), copyTo);
+            return new LegacyGeoShapeFieldMapper(
+                name,
+                fieldType,
+                defaultFieldType,
+                ignoreMalformed(context),
+                coerce(context),
+                orientation(),
+                ignoreZValue(),
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                copyTo
+            );
         }
     }
 
@@ -340,19 +360,27 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
         public boolean equals(Object o) {
             if (!super.equals(o)) return false;
             GeoShapeFieldType that = (GeoShapeFieldType) o;
-            return treeLevels == that.treeLevels &&
-                precisionInMeters == that.precisionInMeters &&
-                defaultDistanceErrorPct == that.defaultDistanceErrorPct &&
-                Objects.equals(tree, that.tree) &&
-                Objects.equals(strategy, that.strategy) &&
-                pointsOnly == that.pointsOnly &&
-                Objects.equals(distanceErrorPct, that.distanceErrorPct);
+            return treeLevels == that.treeLevels
+                && precisionInMeters == that.precisionInMeters
+                && defaultDistanceErrorPct == that.defaultDistanceErrorPct
+                && Objects.equals(tree, that.tree)
+                && Objects.equals(strategy, that.strategy)
+                && pointsOnly == that.pointsOnly
+                && Objects.equals(distanceErrorPct, that.distanceErrorPct);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(super.hashCode(), tree, strategy, pointsOnly, treeLevels, precisionInMeters, distanceErrorPct,
-                    defaultDistanceErrorPct);
+            return Objects.hash(
+                super.hashCode(),
+                tree,
+                strategy,
+                pointsOnly,
+                treeLevels,
+                precisionInMeters,
+                distanceErrorPct,
+                defaultDistanceErrorPct
+            );
         }
 
         @Override
@@ -363,7 +391,7 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
         @Override
         public void checkCompatibility(MappedFieldType fieldType, List<String> conflicts) {
             super.checkCompatibility(fieldType, conflicts);
-            GeoShapeFieldType other = (GeoShapeFieldType)fieldType;
+            GeoShapeFieldType other = (GeoShapeFieldType) fieldType;
             // prevent user from changing strategies
             if (strategy() != other.strategy()) {
                 conflicts.add("mapper [" + name() + "] has different [strategy]");
@@ -417,6 +445,7 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
             checkIfFrozen();
             this.pointsOnly = pointsOnly;
         }
+
         public int treeLevels() {
             return treeLevels;
         }
@@ -468,12 +497,19 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
         }
     }
 
-    public LegacyGeoShapeFieldMapper(String simpleName, MappedFieldType fieldType, MappedFieldType defaultFieldType,
-                               Explicit<Boolean> ignoreMalformed, Explicit<Boolean> coerce, Explicit<Orientation> orientation,
-                               Explicit<Boolean> ignoreZValue, Settings indexSettings,
-                               MultiFields multiFields, CopyTo copyTo) {
-        super(simpleName, fieldType, defaultFieldType, ignoreMalformed, coerce, ignoreZValue, indexSettings,
-            multiFields, copyTo);
+    public LegacyGeoShapeFieldMapper(
+        String simpleName,
+        MappedFieldType fieldType,
+        MappedFieldType defaultFieldType,
+        Explicit<Boolean> ignoreMalformed,
+        Explicit<Boolean> coerce,
+        Explicit<Orientation> orientation,
+        Explicit<Boolean> ignoreZValue,
+        Settings indexSettings,
+        MultiFields multiFields,
+        CopyTo copyTo
+    ) {
+        super(simpleName, fieldType, defaultFieldType, ignoreMalformed, coerce, ignoreZValue, indexSettings, multiFields, copyTo);
     }
 
     @Override
@@ -485,33 +521,30 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
     public void doXContentBody(XContentBuilder builder, boolean includeDefaults, Params params) throws IOException {
         super.doXContentBody(builder, includeDefaults, params);
 
-        if (includeDefaults
-            || (fieldType().tree().equals(DeprecatedParameters.Defaults.TREE)) == false) {
+        if (includeDefaults || (fieldType().tree().equals(DeprecatedParameters.Defaults.TREE)) == false) {
             builder.field(DeprecatedParameters.Names.TREE.getPreferredName(), fieldType().tree());
         }
 
         if (fieldType().treeLevels() != 0) {
             builder.field(DeprecatedParameters.Names.TREE_LEVELS.getPreferredName(), fieldType().treeLevels());
-        } else if(includeDefaults && fieldType().precisionInMeters() == -1) { // defaults only make sense if precision is not specified
+        } else if (includeDefaults && fieldType().precisionInMeters() == -1) { // defaults only make sense if precision is not specified
             if (DeprecatedParameters.PrefixTrees.GEOHASH.equals(fieldType().tree())) {
-                builder.field(DeprecatedParameters.Names.TREE_LEVELS.getPreferredName(),
-                    DeprecatedParameters.Defaults.GEOHASH_TREE_LEVELS);
+                builder.field(DeprecatedParameters.Names.TREE_LEVELS.getPreferredName(), DeprecatedParameters.Defaults.GEOHASH_TREE_LEVELS);
             } else if (DeprecatedParameters.PrefixTrees.LEGACY_QUADTREE.equals(fieldType().tree())) {
-                builder.field(DeprecatedParameters.Names.TREE_LEVELS.getPreferredName(),
-                    DeprecatedParameters.Defaults.QUADTREE_LEVELS);
+                builder.field(DeprecatedParameters.Names.TREE_LEVELS.getPreferredName(), DeprecatedParameters.Defaults.QUADTREE_LEVELS);
             } else if (DeprecatedParameters.PrefixTrees.QUADTREE.equals(fieldType().tree())) {
-                builder.field(DeprecatedParameters.Names.TREE_LEVELS.getPreferredName(),
-                    DeprecatedParameters.Defaults.QUADTREE_LEVELS);
+                builder.field(DeprecatedParameters.Names.TREE_LEVELS.getPreferredName(), DeprecatedParameters.Defaults.QUADTREE_LEVELS);
             } else {
                 throw new IllegalArgumentException("Unknown prefix tree type [" + fieldType().tree() + "]");
             }
         }
         if (fieldType().precisionInMeters() != -1) {
-            builder.field(DeprecatedParameters.Names.PRECISION.getPreferredName(),
-                DistanceUnit.METERS.toString(fieldType().precisionInMeters()));
+            builder.field(
+                DeprecatedParameters.Names.PRECISION.getPreferredName(),
+                DistanceUnit.METERS.toString(fieldType().precisionInMeters())
+            );
         } else if (includeDefaults && fieldType().treeLevels() == 0) { // defaults only make sense if tree levels are not specified
-            builder.field(DeprecatedParameters.Names.PRECISION.getPreferredName(),
-                DistanceUnit.METERS.toString(50));
+            builder.field(DeprecatedParameters.Names.PRECISION.getPreferredName(), DistanceUnit.METERS.toString(50));
         }
 
         if (indexCreatedVersion.onOrAfter(Version.V_7_0_0)) {
@@ -537,9 +570,19 @@ public class LegacyGeoShapeFieldMapper extends AbstractGeometryFieldMapper<Shape
     protected void doMerge(Mapper mergeWith) {
         if (mergeWith instanceof GeoShapeFieldMapper) {
             GeoShapeFieldMapper fieldMapper = (GeoShapeFieldMapper) mergeWith;
-            throw new IllegalArgumentException("[" + fieldType().name() + "] with field mapper [" + fieldType().typeName() + "] " +
-                "using [" + fieldType().strategy() + "] strategy cannot be merged with " + "[" + fieldMapper.typeName() +
-                "] with [BKD] strategy");
+            throw new IllegalArgumentException(
+                "["
+                    + fieldType().name()
+                    + "] with field mapper ["
+                    + fieldType().typeName()
+                    + "] "
+                    + "using ["
+                    + fieldType().strategy()
+                    + "] strategy cannot be merged with "
+                    + "["
+                    + fieldMapper.typeName()
+                    + "] with [BKD] strategy"
+            );
         }
         super.doMerge(mergeWith);
     }

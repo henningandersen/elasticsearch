@@ -25,12 +25,10 @@ import org.elasticsearch.action.support.master.AcknowledgedRequestBuilder;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.common.settings.Settings;
 
-public class ResizeRequestBuilder extends AcknowledgedRequestBuilder<ResizeRequest, ResizeResponse,
-    ResizeRequestBuilder> {
+public class ResizeRequestBuilder extends AcknowledgedRequestBuilder<ResizeRequest, ResizeResponse, ResizeRequestBuilder> {
     public ResizeRequestBuilder(ElasticsearchClient client, ActionType<ResizeResponse> action) {
         super(client, action, new ResizeRequest());
     }
-
 
     public ResizeRequestBuilder setTargetIndex(CreateIndexRequest request) {
         this.request.setTargetIndex(request);

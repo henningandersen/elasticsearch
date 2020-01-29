@@ -101,8 +101,8 @@ public class JoinTaskExecutor implements ClusterStateTaskExecutor<JoinTaskExecut
         if (joiningNodes.size() == 1 && joiningNodes.get(0).isFinishElectionTask()) {
             return results.successes(joiningNodes).build(currentState);
         } else if (currentNodes.getMasterNode() == null && joiningNodes.stream().anyMatch(Task::isBecomeMasterTask)) {
-            assert joiningNodes.stream().anyMatch(Task::isFinishElectionTask)
-                : "becoming a master but election is not finished " + joiningNodes;
+            assert joiningNodes.stream().anyMatch(Task::isFinishElectionTask) : "becoming a master but election is not finished "
+                + joiningNodes;
             // use these joins to try and become the master.
             // Note that we don't have to do any validation of the amount of joining nodes - the commit
             // during the cluster state publishing guarantees that we have enough
@@ -151,9 +151,11 @@ public class JoinTaskExecutor implements ClusterStateTaskExecutor<JoinTaskExecut
             results.success(joinTask);
         }
         if (nodesChanged) {
-            rerouteService.reroute("post-join reroute", Priority.HIGH, ActionListener.wrap(
-                r -> logger.trace("post-join reroute completed"),
-                e -> logger.debug("post-join reroute failed", e)));
+            rerouteService.reroute(
+                "post-join reroute",
+                Priority.HIGH,
+                ActionListener.wrap(r -> logger.trace("post-join reroute completed"), e -> logger.debug("post-join reroute failed", e))
+            );
 
             return results.build(allocationService.adaptAutoExpandReplicas(newState.nodes(nodesBuilder).build()));
         } else {
@@ -181,19 +183,21 @@ public class JoinTaskExecutor implements ClusterStateTaskExecutor<JoinTaskExecut
                 }
                 final DiscoveryNode nodeWithSameAddress = currentNodes.findByAddress(joiningNode.getAddress());
                 if (nodeWithSameAddress != null && nodeWithSameAddress.equals(joiningNode) == false) {
-                    logger.debug("removing existing node [{}], which conflicts with incoming join from [{}]", nodeWithSameAddress,
-                        joiningNode);
+                    logger.debug(
+                        "removing existing node [{}], which conflicts with incoming join from [{}]",
+                        nodeWithSameAddress,
+                        joiningNode
+                    );
                     nodesBuilder.remove(nodeWithSameAddress.getId());
                 }
             }
         }
 
-
         // now trim any left over dead nodes - either left there when the previous master stepped down
         // or removed by us above
-        ClusterState tmpState = ClusterState.builder(currentState).nodes(nodesBuilder).blocks(ClusterBlocks.builder()
-            .blocks(currentState.blocks())
-            .removeGlobalBlock(NoMasterBlockService.NO_MASTER_BLOCK_ID))
+        ClusterState tmpState = ClusterState.builder(currentState)
+            .nodes(nodesBuilder)
+            .blocks(ClusterBlocks.builder().blocks(currentState.blocks()).removeGlobalBlock(NoMasterBlockService.NO_MASTER_BLOCK_ID))
             .build();
         logger.trace("becomeMasterAndTrimConflictingNodes: {}", tmpState.nodes());
         allocationService.cleanCaches();
@@ -232,12 +236,24 @@ public class JoinTaskExecutor implements ClusterStateTaskExecutor<JoinTaskExecut
         // closed or not we can't read mappings of these indices so we need to reject the join...
         for (IndexMetaData idxMetaData : metaData) {
             if (idxMetaData.getCreationVersion().after(nodeVersion)) {
-                throw new IllegalStateException("index " + idxMetaData.getIndex() + " version not supported: "
-                    + idxMetaData.getCreationVersion() + " the node version is: " + nodeVersion);
+                throw new IllegalStateException(
+                    "index "
+                        + idxMetaData.getIndex()
+                        + " version not supported: "
+                        + idxMetaData.getCreationVersion()
+                        + " the node version is: "
+                        + nodeVersion
+                );
             }
             if (idxMetaData.getCreationVersion().before(supportedIndexVersion)) {
-                throw new IllegalStateException("index " + idxMetaData.getIndex() + " version not supported: "
-                    + idxMetaData.getCreationVersion() + " minimum compatible index version is: " + supportedIndexVersion);
+                throw new IllegalStateException(
+                    "index "
+                        + idxMetaData.getIndex()
+                        + " version not supported: "
+                        + idxMetaData.getCreationVersion()
+                        + " minimum compatible index version is: "
+                        + supportedIndexVersion
+                );
             }
         }
     }
@@ -253,12 +269,24 @@ public class JoinTaskExecutor implements ClusterStateTaskExecutor<JoinTaskExecut
     public static void ensureNodesCompatibility(Version joiningNodeVersion, Version minClusterNodeVersion, Version maxClusterNodeVersion) {
         assert minClusterNodeVersion.onOrBefore(maxClusterNodeVersion) : minClusterNodeVersion + " > " + maxClusterNodeVersion;
         if (joiningNodeVersion.isCompatible(maxClusterNodeVersion) == false) {
-            throw new IllegalStateException("node version [" + joiningNodeVersion + "] is not supported. " +
-                "The cluster contains nodes with version [" + maxClusterNodeVersion + "], which is incompatible.");
+            throw new IllegalStateException(
+                "node version ["
+                    + joiningNodeVersion
+                    + "] is not supported. "
+                    + "The cluster contains nodes with version ["
+                    + maxClusterNodeVersion
+                    + "], which is incompatible."
+            );
         }
         if (joiningNodeVersion.isCompatible(minClusterNodeVersion) == false) {
-            throw new IllegalStateException("node version [" + joiningNodeVersion + "] is not supported." +
-                "The cluster contains nodes with version [" + minClusterNodeVersion + "], which is incompatible.");
+            throw new IllegalStateException(
+                "node version ["
+                    + joiningNodeVersion
+                    + "] is not supported."
+                    + "The cluster contains nodes with version ["
+                    + minClusterNodeVersion
+                    + "], which is incompatible."
+            );
         }
     }
 
@@ -270,13 +298,20 @@ public class JoinTaskExecutor implements ClusterStateTaskExecutor<JoinTaskExecut
     public static void ensureMajorVersionBarrier(Version joiningNodeVersion, Version minClusterNodeVersion) {
         final byte clusterMajor = minClusterNodeVersion.major;
         if (joiningNodeVersion.major < clusterMajor) {
-            throw new IllegalStateException("node version [" + joiningNodeVersion + "] is not supported. " +
-                "All nodes in the cluster are of a higher major [" + clusterMajor + "].");
+            throw new IllegalStateException(
+                "node version ["
+                    + joiningNodeVersion
+                    + "] is not supported. "
+                    + "All nodes in the cluster are of a higher major ["
+                    + clusterMajor
+                    + "]."
+            );
         }
     }
 
-    public static Collection<BiConsumer<DiscoveryNode,ClusterState>> addBuiltInJoinValidators(
-        Collection<BiConsumer<DiscoveryNode, ClusterState>> onJoinValidators) {
+    public static Collection<BiConsumer<DiscoveryNode, ClusterState>> addBuiltInJoinValidators(
+        Collection<BiConsumer<DiscoveryNode, ClusterState>> onJoinValidators
+    ) {
         final Collection<BiConsumer<DiscoveryNode, ClusterState>> validators = new ArrayList<>();
         validators.add((node, state) -> {
             ensureNodesCompatibility(node.getVersion(), state.getNodes());

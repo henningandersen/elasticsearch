@@ -77,8 +77,12 @@ public class PluginsService {
     private final List<Tuple<PluginInfo, Plugin>> plugins;
     private final PluginsAndModules info;
 
-    public static final Setting<List<String>> MANDATORY_SETTING =
-        Setting.listSetting("plugin.mandatory", Collections.emptyList(), Function.identity(), Property.NodeScope);
+    public static final Setting<List<String>> MANDATORY_SETTING = Setting.listSetting(
+        "plugin.mandatory",
+        Collections.emptyList(),
+        Function.identity(),
+        Property.NodeScope
+    );
 
     public List<Setting<?>> getPluginSettings() {
         return plugins.stream().flatMap(p -> p.v2().getSettings().stream()).collect(Collectors.toList());
@@ -112,8 +116,16 @@ public class PluginsService {
         // first we load plugins that are on the classpath. this is for tests
         for (Class<? extends Plugin> pluginClass : classpathPlugins) {
             Plugin plugin = loadPlugin(pluginClass, settings, configPath);
-            PluginInfo pluginInfo = new PluginInfo(pluginClass.getName(), "classpath plugin", "NA", Version.CURRENT, "1.8",
-                                                   pluginClass.getName(), Collections.emptyList(), false);
+            PluginInfo pluginInfo = new PluginInfo(
+                pluginClass.getName(),
+                "classpath plugin",
+                "NA",
+                Version.CURRENT,
+                "1.8",
+                pluginClass.getName(),
+                Collections.emptyList(),
+                false
+            );
             if (logger.isTraceEnabled()) {
                 logger.trace("plugin loaded from classpath [{}]", pluginInfo);
             }
@@ -172,10 +184,11 @@ public class PluginsService {
             }
             if (!missingPlugins.isEmpty()) {
                 final String message = String.format(
-                        Locale.ROOT,
-                        "missing mandatory plugins [%s], found plugins [%s]",
-                        Strings.collectionToDelimitedString(missingPlugins, ", "),
-                        Strings.collectionToDelimitedString(pluginsNames, ", "));
+                    Locale.ROOT,
+                    "missing mandatory plugins [%s], found plugins [%s]",
+                    Strings.collectionToDelimitedString(missingPlugins, ", "),
+                    Strings.collectionToDelimitedString(pluginsNames, ", ")
+                );
                 throw new IllegalStateException(message);
             }
         }
@@ -205,8 +218,16 @@ public class PluginsService {
             for (String setting : settings.keySet()) {
                 String oldPlugin = foundSettings.put(setting, plugin.v1().getName());
                 if (oldPlugin != null) {
-                    throw new IllegalArgumentException("Cannot have additional setting [" + setting + "] " +
-                        "in plugin [" + plugin.v1().getName() + "], already added in plugin [" + oldPlugin + "]");
+                    throw new IllegalArgumentException(
+                        "Cannot have additional setting ["
+                            + setting
+                            + "] "
+                            + "in plugin ["
+                            + plugin.v1().getName()
+                            + "], already added in plugin ["
+                            + oldPlugin
+                            + "]"
+                    );
                 }
             }
             builder.put(settings);
@@ -283,8 +304,7 @@ public class PluginsService {
         if (Files.exists(rootPath)) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(rootPath)) {
                 for (Path plugin : stream) {
-                    if (FileSystemUtils.isDesktopServicesStore(plugin) ||
-                        plugin.getFileName().toString().startsWith(".removing-")) {
+                    if (FileSystemUtils.isDesktopServicesStore(plugin) || plugin.getFileName().toString().startsWith(".removing-")) {
                         continue;
                     }
                     if (seen.add(plugin.getFileName().toString()) == false) {
@@ -302,8 +322,15 @@ public class PluginsService {
      */
     static void verifyCompatibility(PluginInfo info) {
         if (info.getElasticsearchVersion().equals(Version.CURRENT) == false) {
-            throw new IllegalArgumentException("Plugin [" + info.getName() + "] was built for Elasticsearch version "
-                + info.getElasticsearchVersion() + " but version " + Version.CURRENT + " is running");
+            throw new IllegalArgumentException(
+                "Plugin ["
+                    + info.getName()
+                    + "] was built for Elasticsearch version "
+                    + info.getElasticsearchVersion()
+                    + " but version "
+                    + Version.CURRENT
+                    + " is running"
+            );
         }
         JarHell.checkJavaVersion(info.getName(), info.getJavaVersion());
     }
@@ -320,10 +347,11 @@ public class PluginsService {
                 final String fileName = removing.getFileName().toString();
                 final String name = fileName.substring(1 + fileName.indexOf("-"));
                 final String message = String.format(
-                        Locale.ROOT,
-                        "found file [%s] from a failed attempt to remove the plugin [%s]; execute [elasticsearch-plugin remove %2$s]",
-                        removing,
-                        name);
+                    Locale.ROOT,
+                    "found file [%s] from a failed attempt to remove the plugin [%s]; execute [elasticsearch-plugin remove %2$s]",
+                    removing,
+                    name
+                );
                 throw new IllegalStateException(message);
             }
         }
@@ -357,8 +385,10 @@ public class PluginsService {
         try {
             info = PluginInfo.readFromProperties(plugin);
         } catch (final IOException e) {
-            throw new IllegalStateException("Could not load plugin descriptor for " + type +
-                                            " directory [" + plugin.getFileName() + "]", e);
+            throw new IllegalStateException(
+                "Could not load plugin descriptor for " + type + " directory [" + plugin.getFileName() + "]",
+                e
+            );
         }
         final Bundle bundle = new Bundle(info, plugin);
         if (bundles.add(bundle) == false) {
@@ -387,8 +417,12 @@ public class PluginsService {
     }
 
     // add the given bundle to the sorted bundles, first adding dependencies
-    private static void addSortedBundle(Bundle bundle, Map<String, Bundle> bundles, LinkedHashSet<Bundle> sortedBundles,
-                                        LinkedHashSet<String> dependencyStack) {
+    private static void addSortedBundle(
+        Bundle bundle,
+        Map<String, Bundle> bundles,
+        LinkedHashSet<Bundle> sortedBundles,
+        LinkedHashSet<String> dependencyStack
+    ) {
 
         String name = bundle.plugin.getName();
         if (dependencyStack.contains(name)) {
@@ -419,7 +453,7 @@ public class PluginsService {
         sortedBundles.add(bundle);
     }
 
-    private List<Tuple<PluginInfo,Plugin>> loadBundles(Set<Bundle> bundles) {
+    private List<Tuple<PluginInfo, Plugin>> loadBundles(Set<Bundle> bundles) {
         List<Tuple<PluginInfo, Plugin>> plugins = new ArrayList<>();
         Map<String, Plugin> loaded = new HashMap<>();
         Map<String, Set<URL>> transitiveUrls = new HashMap<>();
@@ -451,15 +485,17 @@ public class PluginsService {
                 Set<URL> intersection = new HashSet<>(urls);
                 intersection.retainAll(pluginUrls);
                 if (intersection.isEmpty() == false) {
-                    throw new IllegalStateException("jar hell! extended plugins " + exts +
-                                                    " have duplicate codebases with each other: " + intersection);
+                    throw new IllegalStateException(
+                        "jar hell! extended plugins " + exts + " have duplicate codebases with each other: " + intersection
+                    );
                 }
 
                 intersection = new HashSet<>(bundle.urls);
                 intersection.retainAll(pluginUrls);
                 if (intersection.isEmpty() == false) {
-                    throw new IllegalStateException("jar hell! duplicate codebases with extended plugin [" +
-                                                    extendedPlugin + "]: " + intersection);
+                    throw new IllegalStateException(
+                        "jar hell! duplicate codebases with extended plugin [" + extendedPlugin + "]: " + intersection
+                    );
                 }
 
                 urls.addAll(pluginUrls);
@@ -562,11 +598,11 @@ public class PluginsService {
         final Class<?>[] parameterTypes = constructor.getParameterTypes();
         try {
             if (constructor.getParameterCount() == 2 && parameterTypes[0] == Settings.class && parameterTypes[1] == Path.class) {
-                return (Plugin)constructor.newInstance(settings, configPath);
+                return (Plugin) constructor.newInstance(settings, configPath);
             } else if (constructor.getParameterCount() == 1 && parameterTypes[0] == Settings.class) {
-                return (Plugin)constructor.newInstance(settings);
+                return (Plugin) constructor.newInstance(settings);
             } else if (constructor.getParameterCount() == 0) {
-                return (Plugin)constructor.newInstance();
+                return (Plugin) constructor.newInstance();
             } else {
                 throw new IllegalStateException(signatureMessage(pluginClass));
             }
@@ -577,17 +613,17 @@ public class PluginsService {
 
     private String signatureMessage(final Class<? extends Plugin> clazz) {
         return String.format(
-                Locale.ROOT,
-                "no public constructor of correct signature for [%s]; must be [%s], [%s], or [%s]",
-                clazz.getName(),
-                "(org.elasticsearch.common.settings.Settings,java.nio.file.Path)",
-                "(org.elasticsearch.common.settings.Settings)",
-                "()");
+            Locale.ROOT,
+            "no public constructor of correct signature for [%s]; must be [%s], [%s], or [%s]",
+            clazz.getName(),
+            "(org.elasticsearch.common.settings.Settings,java.nio.file.Path)",
+            "(org.elasticsearch.common.settings.Settings)",
+            "()"
+        );
     }
 
     @SuppressWarnings("unchecked")
     public <T> List<T> filterPlugins(Class<T> type) {
-        return plugins.stream().filter(x -> type.isAssignableFrom(x.v2().getClass()))
-            .map(p -> ((T)p.v2())).collect(Collectors.toList());
+        return plugins.stream().filter(x -> type.isAssignableFrom(x.v2().getClass())).map(p -> ((T) p.v2())).collect(Collectors.toList());
     }
 }

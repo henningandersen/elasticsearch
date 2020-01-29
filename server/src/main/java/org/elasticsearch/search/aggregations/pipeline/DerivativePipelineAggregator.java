@@ -44,8 +44,14 @@ public class DerivativePipelineAggregator extends PipelineAggregator {
     private final GapPolicy gapPolicy;
     private final Double xAxisUnits;
 
-    DerivativePipelineAggregator(String name, String[] bucketsPaths, DocValueFormat formatter, GapPolicy gapPolicy, Long xAxisUnits,
-                                 Map<String, Object> metadata) {
+    DerivativePipelineAggregator(
+        String name,
+        String[] bucketsPaths,
+        DocValueFormat formatter,
+        GapPolicy gapPolicy,
+        Long xAxisUnits,
+        Map<String, Object> metadata
+    ) {
         super(name, bucketsPaths, metadata);
         this.formatter = formatter;
         this.gapPolicy = gapPolicy;
@@ -76,9 +82,11 @@ public class DerivativePipelineAggregator extends PipelineAggregator {
 
     @Override
     public InternalAggregation reduce(InternalAggregation aggregation, ReduceContext reduceContext) {
-        InternalMultiBucketAggregation<? extends InternalMultiBucketAggregation, ? extends InternalMultiBucketAggregation.InternalBucket>
-                histo = (InternalMultiBucketAggregation<? extends InternalMultiBucketAggregation, ? extends
-                InternalMultiBucketAggregation.InternalBucket>) aggregation;
+        InternalMultiBucketAggregation<
+            ? extends InternalMultiBucketAggregation,
+            ? extends InternalMultiBucketAggregation.InternalBucket> histo = (InternalMultiBucketAggregation<
+                ? extends InternalMultiBucketAggregation,
+                ? extends InternalMultiBucketAggregation.InternalBucket>) aggregation;
         List<? extends InternalMultiBucketAggregation.InternalBucket> buckets = histo.getBuckets();
         HistogramFactory factory = (HistogramFactory) histo;
 
@@ -94,9 +102,9 @@ public class DerivativePipelineAggregator extends PipelineAggregator {
                 if (xAxisUnits != null) {
                     xDiff = (thisBucketKey.doubleValue() - lastBucketKey.doubleValue()) / xAxisUnits;
                 }
-                final List<InternalAggregation> aggs = StreamSupport.stream(bucket.getAggregations().spliterator(), false).map((p) -> {
-                    return (InternalAggregation) p;
-                }).collect(Collectors.toList());
+                final List<InternalAggregation> aggs = StreamSupport.stream(bucket.getAggregations().spliterator(), false)
+                    .map((p) -> { return (InternalAggregation) p; })
+                    .collect(Collectors.toList());
                 aggs.add(new InternalDerivative(name(), gradient, xDiff, formatter, new ArrayList<PipelineAggregator>(), metaData()));
                 Bucket newBucket = factory.createBucket(factory.getKey(bucket), bucket.getDocCount(), new InternalAggregations(aggs));
                 newBuckets.add(newBucket);

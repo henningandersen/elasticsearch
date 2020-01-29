@@ -38,29 +38,63 @@ final class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<Se
     private final SearchPhaseController searchPhaseController;
     private final SearchProgressListener progressListener;
 
-    SearchQueryThenFetchAsyncAction(final Logger logger, final SearchTransportService searchTransportService,
-            final BiFunction<String, String, Transport.Connection> nodeIdToConnection, final Map<String, AliasFilter> aliasFilter,
-            final Map<String, Float> concreteIndexBoosts, final Map<String, Set<String>> indexRoutings,
-            final SearchPhaseController searchPhaseController, final Executor executor,
-            final SearchRequest request, final ActionListener<SearchResponse> listener,
-            final GroupShardsIterator<SearchShardIterator> shardsIts, final TransportSearchAction.SearchTimeProvider timeProvider,
-            long clusterStateVersion, SearchTask task, SearchResponse.Clusters clusters) {
-        super("query", logger, searchTransportService, nodeIdToConnection, aliasFilter, concreteIndexBoosts, indexRoutings,
-                executor, request, listener, shardsIts, timeProvider, clusterStateVersion, task,
-                searchPhaseController.newSearchPhaseResults(task.getProgressListener(), request, shardsIts.size()),
-                request.getMaxConcurrentShardRequests(), clusters);
+    SearchQueryThenFetchAsyncAction(
+        final Logger logger,
+        final SearchTransportService searchTransportService,
+        final BiFunction<String, String, Transport.Connection> nodeIdToConnection,
+        final Map<String, AliasFilter> aliasFilter,
+        final Map<String, Float> concreteIndexBoosts,
+        final Map<String, Set<String>> indexRoutings,
+        final SearchPhaseController searchPhaseController,
+        final Executor executor,
+        final SearchRequest request,
+        final ActionListener<SearchResponse> listener,
+        final GroupShardsIterator<SearchShardIterator> shardsIts,
+        final TransportSearchAction.SearchTimeProvider timeProvider,
+        long clusterStateVersion,
+        SearchTask task,
+        SearchResponse.Clusters clusters
+    ) {
+        super(
+            "query",
+            logger,
+            searchTransportService,
+            nodeIdToConnection,
+            aliasFilter,
+            concreteIndexBoosts,
+            indexRoutings,
+            executor,
+            request,
+            listener,
+            shardsIts,
+            timeProvider,
+            clusterStateVersion,
+            task,
+            searchPhaseController.newSearchPhaseResults(task.getProgressListener(), request, shardsIts.size()),
+            request.getMaxConcurrentShardRequests(),
+            clusters
+        );
         this.searchPhaseController = searchPhaseController;
         this.progressListener = task.getProgressListener();
         final SearchProgressListener progressListener = task.getProgressListener();
         final SearchSourceBuilder sourceBuilder = request.source();
-        progressListener.notifyListShards(progressListener.searchShards(this.shardsIts),
-            sourceBuilder == null || sourceBuilder.size() != 0);
+        progressListener.notifyListShards(
+            progressListener.searchShards(this.shardsIts),
+            sourceBuilder == null || sourceBuilder.size() != 0
+        );
     }
 
-    protected void executePhaseOnShard(final SearchShardIterator shardIt, final ShardRouting shard,
-                                       final SearchActionListener<SearchPhaseResult> listener) {
-        getSearchTransport().sendExecuteQuery(getConnection(shardIt.getClusterAlias(), shard.currentNodeId()),
-            buildShardSearchRequest(shardIt), getTask(), listener);
+    protected void executePhaseOnShard(
+        final SearchShardIterator shardIt,
+        final ShardRouting shard,
+        final SearchActionListener<SearchPhaseResult> listener
+    ) {
+        getSearchTransport().sendExecuteQuery(
+            getConnection(shardIt.getClusterAlias(), shard.currentNodeId()),
+            buildShardSearchRequest(shardIt),
+            getTask(),
+            listener
+        );
     }
 
     @Override

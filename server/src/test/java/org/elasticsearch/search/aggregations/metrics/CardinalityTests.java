@@ -20,7 +20,6 @@
 package org.elasticsearch.search.aggregations.metrics;
 
 import org.elasticsearch.search.aggregations.BaseAggregationTestCase;
-import org.elasticsearch.search.aggregations.metrics.CardinalityAggregationBuilder;
 
 public class CardinalityTests extends BaseAggregationTestCase<CardinalityAggregationBuilder> {
 

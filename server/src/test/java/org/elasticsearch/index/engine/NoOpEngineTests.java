@@ -73,8 +73,15 @@ public class NoOpEngineTests extends EngineTestCase {
     public void testNoopAfterRegularEngine() throws IOException {
         int docs = randomIntBetween(1, 10);
         ReplicationTracker tracker = (ReplicationTracker) engine.config().getGlobalCheckpointSupplier();
-        ShardRouting routing = TestShardRouting.newShardRouting("test", shardId.id(), "node",
-            null, true, ShardRoutingState.STARTED, allocationId);
+        ShardRouting routing = TestShardRouting.newShardRouting(
+            "test",
+            shardId.id(),
+            "node",
+            null,
+            true,
+            ShardRoutingState.STARTED,
+            allocationId
+        );
         IndexShardRoutingTable table = new IndexShardRoutingTable.Builder(shardId).addShard(routing).build();
         tracker.updateFromMaster(1L, Collections.singleton(allocationId.getId()), table);
         tracker.activatePrimaryMode(SequenceNumbers.NO_OPS_PERFORMED);
@@ -148,8 +155,10 @@ public class NoOpEngineTests extends EngineTestCase {
                 assertEquals(expectedDocStats.getAverageSizeInBytes(), noOpEngine.docStats().getAverageSizeInBytes());
                 assertEquals(expectedSegmentStats.getCount(), noOpEngine.segmentsStats(includeFileSize, true).getCount());
                 // don't compare memory in bytes since we load the index with term-dict off-heap
-                assertEquals(expectedSegmentStats.getFileSizes().size(),
-                    noOpEngine.segmentsStats(includeFileSize, true).getFileSizes().size());
+                assertEquals(
+                    expectedSegmentStats.getFileSizes().size(),
+                    noOpEngine.segmentsStats(includeFileSize, true).getFileSizes().size()
+                );
 
                 assertEquals(0, noOpEngine.segmentsStats(includeFileSize, false).getFileSizes().size());
                 assertEquals(0, noOpEngine.segmentsStats(includeFileSize, false).getMemoryInBytes());
@@ -162,8 +171,15 @@ public class NoOpEngineTests extends EngineTestCase {
 
     public void testTrimUnreferencedTranslogFiles() throws Exception {
         final ReplicationTracker tracker = (ReplicationTracker) engine.config().getGlobalCheckpointSupplier();
-        ShardRouting routing = TestShardRouting.newShardRouting("test", shardId.id(), "node",
-            null, true, ShardRoutingState.STARTED, allocationId);
+        ShardRouting routing = TestShardRouting.newShardRouting(
+            "test",
+            shardId.id(),
+            "node",
+            null,
+            true,
+            ShardRoutingState.STARTED,
+            allocationId
+        );
         IndexShardRoutingTable table = new IndexShardRoutingTable.Builder(shardId).addShard(routing).build();
         tracker.updateFromMaster(1L, Collections.singleton(allocationId.getId()), table);
         tracker.activatePrimaryMode(SequenceNumbers.NO_OPS_PERFORMED);

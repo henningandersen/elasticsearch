@@ -139,9 +139,7 @@ public class FieldTypeLookupTests extends ESTestCase {
         FieldAliasMapper alias2 = new FieldAliasMapper("barometer", "barometer", "bar");
 
         FieldTypeLookup lookup = new FieldTypeLookup();
-        lookup = lookup.copyAndAddAll("type",
-            newList(field1, field2),
-            newList(alias1, alias2));
+        lookup = lookup.copyAndAddAll("type", newList(field1, field2), newList(alias1, alias2));
 
         Collection<String> names = lookup.simpleMatchToFullName("b*");
 
@@ -189,8 +187,7 @@ public class FieldTypeLookupTests extends ESTestCase {
     }
 
     static class OtherFakeFieldType extends TermBasedFieldType {
-        OtherFakeFieldType() {
-        }
+        OtherFakeFieldType() {}
 
         protected OtherFakeFieldType(OtherFakeFieldType ref) {
             super(ref);

@@ -58,12 +58,16 @@ class MaxAggregator extends NumericMetricsAggregator.SingleValue {
 
     DoubleArray maxes;
 
-    MaxAggregator(String name,
-                    ValuesSourceConfig<ValuesSource.Numeric> config,
-                    ValuesSource.Numeric valuesSource,
-                    SearchContext context,
-                    Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-                    Map<String, Object> metaData) throws IOException {
+    MaxAggregator(
+        String name,
+        ValuesSourceConfig<ValuesSource.Numeric> config,
+        ValuesSource.Numeric valuesSource,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         if (valuesSource != null) {
@@ -85,8 +89,7 @@ class MaxAggregator extends NumericMetricsAggregator.SingleValue {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         if (valuesSource == null) {
             if (parent != null) {
                 return LeafBucketCollector.NO_OP_COLLECTOR;
@@ -146,7 +149,7 @@ class MaxAggregator extends NumericMetricsAggregator.SingleValue {
         if (valuesSource == null || bucket >= maxes.size()) {
             return buildEmptyAggregation();
         }
-        return new InternalMax(name, maxes.get(bucket), formatter, pipelineAggregators(),  metaData());
+        return new InternalMax(name, maxes.get(bucket), formatter, pipelineAggregators(), metaData());
     }
 
     @Override

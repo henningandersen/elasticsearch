@@ -50,17 +50,15 @@ public abstract class ShardLock implements Closeable {
     @Override
     public final void close() {
         if (this.closed.compareAndSet(false, true)) {
-           closeInternal();
+            closeInternal();
         }
     }
 
-    protected  abstract void closeInternal();
+    protected abstract void closeInternal();
 
     @Override
     public String toString() {
-        return "ShardLock{" +
-                "shardId=" + shardId +
-                '}';
+        return "ShardLock{" + "shardId=" + shardId + '}';
     }
 
 }

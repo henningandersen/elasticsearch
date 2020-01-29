@@ -71,8 +71,12 @@ public class DanglingIndicesState implements ClusterStateListener {
     private final Map<Index, IndexMetaData> danglingIndices = ConcurrentCollections.newConcurrentMap();
 
     @Inject
-    public DanglingIndicesState(NodeEnvironment nodeEnv, MetaStateService metaStateService,
-                                LocalAllocateDangledIndices allocateDangledIndices, ClusterService clusterService) {
+    public DanglingIndicesState(
+        NodeEnvironment nodeEnv,
+        MetaStateService metaStateService,
+        LocalAllocateDangledIndices allocateDangledIndices,
+        ClusterService clusterService
+    ) {
         this.nodeEnv = nodeEnv;
         this.metaStateService = metaStateService;
         this.allocateDangledIndices = allocateDangledIndices;
@@ -119,8 +123,11 @@ public class DanglingIndicesState implements ClusterStateListener {
             final IndexMetaData indexMetaData = metaData.index(index);
             if (indexMetaData != null && indexMetaData.getIndex().getName().equals(index.getName())) {
                 if (indexMetaData.getIndex().getUUID().equals(index.getUUID()) == false) {
-                    logger.warn("[{}] can not be imported as a dangling index, as there is already another index " +
-                        "with the same name but a different uuid. local index will be ignored (but not deleted)", index);
+                    logger.warn(
+                        "[{}] can not be imported as a dangling index, as there is already another index "
+                            + "with the same name but a different uuid. local index will be ignored (but not deleted)",
+                        index
+                    );
                 } else {
                     logger.debug("[{}] no longer dangling (created), removing from dangling list", index);
                 }
@@ -154,15 +161,22 @@ public class DanglingIndicesState implements ClusterStateListener {
             final IndexGraveyard graveyard = metaData.indexGraveyard();
             for (IndexMetaData indexMetaData : indexMetaDataList) {
                 if (metaData.hasIndex(indexMetaData.getIndex().getName())) {
-                    logger.warn("[{}] can not be imported as a dangling index, as index with same name already exists in cluster metadata",
-                        indexMetaData.getIndex());
+                    logger.warn(
+                        "[{}] can not be imported as a dangling index, as index with same name already exists in cluster metadata",
+                        indexMetaData.getIndex()
+                    );
                 } else if (graveyard.containsIndex(indexMetaData.getIndex())) {
-                    logger.warn("[{}] can not be imported as a dangling index, as an index with the same name and UUID exist in the " +
-                                "index tombstones.  This situation is likely caused by copying over the data directory for an index " +
-                                "that was previously deleted.", indexMetaData.getIndex());
+                    logger.warn(
+                        "[{}] can not be imported as a dangling index, as an index with the same name and UUID exist in the "
+                            + "index tombstones.  This situation is likely caused by copying over the data directory for an index "
+                            + "that was previously deleted.",
+                        indexMetaData.getIndex()
+                    );
                 } else {
-                    logger.info("[{}] dangling index exists on local file system, but not in cluster metadata, " +
-                                "auto import to cluster state", indexMetaData.getIndex());
+                    logger.info(
+                        "[{}] dangling index exists on local file system, but not in cluster metadata, " + "auto import to cluster state",
+                        indexMetaData.getIndex()
+                    );
                     newIndices.put(indexMetaData.getIndex(), stripAliases(indexMetaData));
                 }
             }
@@ -181,8 +195,11 @@ public class DanglingIndicesState implements ClusterStateListener {
         if (indexMetaData.getAliases().isEmpty()) {
             return indexMetaData;
         } else {
-            logger.info("[{}] stripping aliases: {} from index before importing",
-                indexMetaData.getIndex(), indexMetaData.getAliases().keys());
+            logger.info(
+                "[{}] stripping aliases: {} from index before importing",
+                indexMetaData.getIndex(),
+                indexMetaData.getAliases().keys()
+            );
             return IndexMetaData.builder(indexMetaData).removeAllAliases().build();
         }
     }
@@ -196,7 +213,8 @@ public class DanglingIndicesState implements ClusterStateListener {
             return;
         }
         try {
-            allocateDangledIndices.allocateDangled(Collections.unmodifiableCollection(new ArrayList<>(danglingIndices.values())),
+            allocateDangledIndices.allocateDangled(
+                Collections.unmodifiableCollection(new ArrayList<>(danglingIndices.values())),
                 new ActionListener<>() {
                     @Override
                     public void onResponse(LocalAllocateDangledIndices.AllocateDangledResponse response) {

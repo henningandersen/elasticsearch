@@ -57,13 +57,14 @@ public class ShardSplittingQueryTests extends ESTestCase {
         Directory dir = newFSDirectory(createTempDir());
         final int numDocs = randomIntBetween(50, 100);
         RandomIndexWriter writer = new RandomIndexWriter(random(), dir);
-        int numShards =  randomIntBetween(2, 10);
+        int numShards = randomIntBetween(2, 10);
         IndexMetaData metaData = IndexMetaData.builder("test")
             .settings(Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT))
             .numberOfShards(numShards)
             .setRoutingNumShards(numShards * 1000000)
-            .numberOfReplicas(0).build();
-        int targetShardId = randomIntBetween(0, numShards-1);
+            .numberOfReplicas(0)
+            .build();
+        int targetShardId = randomIntBetween(0, numShards - 1);
         boolean hasNested = randomBoolean();
         for (int j = 0; j < numDocs; j++) {
             int shardId = OperationRouting.generateShardId(metaData, Integer.toString(j), null);
@@ -71,29 +72,34 @@ public class ShardSplittingQueryTests extends ESTestCase {
                 List<Iterable<IndexableField>> docs = new ArrayList<>();
                 int numNested = randomIntBetween(0, 10);
                 for (int i = 0; i < numNested; i++) {
-                    docs.add(Arrays.asList(
-                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                        new StringField(NestedPathFieldMapper.NAME, "__nested", Field.Store.YES),
-                        new SortedNumericDocValuesField("shard_id", shardId)
-                    ));
+                    docs.add(
+                        Arrays.asList(
+                            new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                            new StringField(NestedPathFieldMapper.NAME, "__nested", Field.Store.YES),
+                            new SortedNumericDocValuesField("shard_id", shardId)
+                        )
+                    );
                 }
-                docs.add(Arrays.asList(
-                    new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                    new SortedNumericDocValuesField("shard_id", shardId),
-                    sequenceIDFields.primaryTerm
-                ));
+                docs.add(
+                    Arrays.asList(
+                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                        new SortedNumericDocValuesField("shard_id", shardId),
+                        sequenceIDFields.primaryTerm
+                    )
+                );
                 writer.addDocuments(docs);
             } else {
-                writer.addDocument(Arrays.asList(
-                    new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                    new SortedNumericDocValuesField("shard_id", shardId),
-                    sequenceIDFields.primaryTerm
-                ));
+                writer.addDocument(
+                    Arrays.asList(
+                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                        new SortedNumericDocValuesField("shard_id", shardId),
+                        sequenceIDFields.primaryTerm
+                    )
+                );
             }
         }
         writer.commit();
         writer.close();
-
 
         assertSplit(dir, metaData, targetShardId, hasNested);
         dir.close();
@@ -104,14 +110,15 @@ public class ShardSplittingQueryTests extends ESTestCase {
         Directory dir = newFSDirectory(createTempDir());
         final int numDocs = randomIntBetween(50, 100);
         RandomIndexWriter writer = new RandomIndexWriter(random(), dir);
-        int numShards =  randomIntBetween(2, 10);
+        int numShards = randomIntBetween(2, 10);
         IndexMetaData metaData = IndexMetaData.builder("test")
             .settings(Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT))
             .numberOfShards(numShards)
             .setRoutingNumShards(numShards * 1000000)
-            .numberOfReplicas(0).build();
+            .numberOfReplicas(0)
+            .build();
         boolean hasNested = randomBoolean();
-        int targetShardId = randomIntBetween(0, numShards-1);
+        int targetShardId = randomIntBetween(0, numShards - 1);
         for (int j = 0; j < numDocs; j++) {
             String routing = randomRealisticUnicodeOfCodepointLengthBetween(1, 5);
             final int shardId = OperationRouting.generateShardId(metaData, null, routing);
@@ -119,26 +126,32 @@ public class ShardSplittingQueryTests extends ESTestCase {
                 List<Iterable<IndexableField>> docs = new ArrayList<>();
                 int numNested = randomIntBetween(0, 10);
                 for (int i = 0; i < numNested; i++) {
-                    docs.add(Arrays.asList(
-                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                        new StringField(NestedPathFieldMapper.NAME, "__nested", Field.Store.YES),
-                        new SortedNumericDocValuesField("shard_id", shardId)
-                    ));
+                    docs.add(
+                        Arrays.asList(
+                            new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                            new StringField(NestedPathFieldMapper.NAME, "__nested", Field.Store.YES),
+                            new SortedNumericDocValuesField("shard_id", shardId)
+                        )
+                    );
                 }
-                docs.add(Arrays.asList(
-                    new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                    new StringField(RoutingFieldMapper.NAME, routing, Field.Store.YES),
-                    new SortedNumericDocValuesField("shard_id", shardId),
-                    sequenceIDFields.primaryTerm
-                ));
+                docs.add(
+                    Arrays.asList(
+                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                        new StringField(RoutingFieldMapper.NAME, routing, Field.Store.YES),
+                        new SortedNumericDocValuesField("shard_id", shardId),
+                        sequenceIDFields.primaryTerm
+                    )
+                );
                 writer.addDocuments(docs);
             } else {
-                writer.addDocument(Arrays.asList(
-                    new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                    new StringField(RoutingFieldMapper.NAME, routing, Field.Store.YES),
-                    new SortedNumericDocValuesField("shard_id", shardId),
-                    sequenceIDFields.primaryTerm
-                ));
+                writer.addDocument(
+                    Arrays.asList(
+                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                        new StringField(RoutingFieldMapper.NAME, routing, Field.Store.YES),
+                        new SortedNumericDocValuesField("shard_id", shardId),
+                        sequenceIDFields.primaryTerm
+                    )
+                );
             }
         }
         writer.commit();
@@ -157,9 +170,10 @@ public class ShardSplittingQueryTests extends ESTestCase {
             .settings(Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT))
             .numberOfShards(numShards)
             .setRoutingNumShards(numShards * 1000000)
-            .numberOfReplicas(0).build();
+            .numberOfReplicas(0)
+            .build();
         boolean hasNested = randomBoolean();
-        int targetShardId = randomIntBetween(0, numShards-1);
+        int targetShardId = randomIntBetween(0, numShards - 1);
         for (int j = 0; j < numDocs; j++) {
             Iterable<IndexableField> rootDoc;
             final int shardId;
@@ -185,11 +199,13 @@ public class ShardSplittingQueryTests extends ESTestCase {
                 List<Iterable<IndexableField>> docs = new ArrayList<>();
                 int numNested = randomIntBetween(0, 10);
                 for (int i = 0; i < numNested; i++) {
-                    docs.add(Arrays.asList(
-                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                        new StringField(NestedPathFieldMapper.NAME, "__nested", Field.Store.YES),
-                        new SortedNumericDocValuesField("shard_id", shardId)
-                    ));
+                    docs.add(
+                        Arrays.asList(
+                            new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                            new StringField(NestedPathFieldMapper.NAME, "__nested", Field.Store.YES),
+                            new SortedNumericDocValuesField("shard_id", shardId)
+                        )
+                    );
                 }
                 docs.add(rootDoc);
                 writer.addDocuments(docs);
@@ -203,21 +219,21 @@ public class ShardSplittingQueryTests extends ESTestCase {
         dir.close();
     }
 
-
     public void testSplitOnRoutingPartitioned() throws IOException {
         SeqNoFieldMapper.SequenceIDFields sequenceIDFields = SeqNoFieldMapper.SequenceIDFields.emptySeqID();
         Directory dir = newFSDirectory(createTempDir());
         final int numDocs = randomIntBetween(50, 100);
         RandomIndexWriter writer = new RandomIndexWriter(random(), dir);
-        int numShards =  randomIntBetween(2, 10);
+        int numShards = randomIntBetween(2, 10);
         IndexMetaData metaData = IndexMetaData.builder("test")
             .settings(Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT))
             .numberOfShards(numShards)
             .setRoutingNumShards(numShards * 1000000)
             .routingPartitionSize(randomIntBetween(1, 10))
-            .numberOfReplicas(0).build();
+            .numberOfReplicas(0)
+            .build();
         boolean hasNested = randomBoolean();
-        int targetShardId = randomIntBetween(0, numShards-1);
+        int targetShardId = randomIntBetween(0, numShards - 1);
         for (int j = 0; j < numDocs; j++) {
             String routing = randomRealisticUnicodeOfCodepointLengthBetween(1, 5);
             final int shardId = OperationRouting.generateShardId(metaData, Integer.toString(j), routing);
@@ -226,26 +242,32 @@ public class ShardSplittingQueryTests extends ESTestCase {
                 List<Iterable<IndexableField>> docs = new ArrayList<>();
                 int numNested = randomIntBetween(0, 10);
                 for (int i = 0; i < numNested; i++) {
-                    docs.add(Arrays.asList(
-                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                        new StringField(NestedPathFieldMapper.NAME, "__nested", Field.Store.YES),
-                        new SortedNumericDocValuesField("shard_id", shardId)
-                    ));
+                    docs.add(
+                        Arrays.asList(
+                            new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                            new StringField(NestedPathFieldMapper.NAME, "__nested", Field.Store.YES),
+                            new SortedNumericDocValuesField("shard_id", shardId)
+                        )
+                    );
                 }
-                docs.add(Arrays.asList(
-                    new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                    new StringField(RoutingFieldMapper.NAME, routing, Field.Store.YES),
-                    new SortedNumericDocValuesField("shard_id", shardId),
-                    sequenceIDFields.primaryTerm
-                ));
+                docs.add(
+                    Arrays.asList(
+                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                        new StringField(RoutingFieldMapper.NAME, routing, Field.Store.YES),
+                        new SortedNumericDocValuesField("shard_id", shardId),
+                        sequenceIDFields.primaryTerm
+                    )
+                );
                 writer.addDocuments(docs);
             } else {
-                writer.addDocument(Arrays.asList(
-                    new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
-                    new StringField(RoutingFieldMapper.NAME, routing, Field.Store.YES),
-                    new SortedNumericDocValuesField("shard_id", shardId),
-                    sequenceIDFields.primaryTerm
-                ));
+                writer.addDocument(
+                    Arrays.asList(
+                        new StringField(IdFieldMapper.NAME, Uid.encodeId(Integer.toString(j)), Field.Store.YES),
+                        new StringField(RoutingFieldMapper.NAME, routing, Field.Store.YES),
+                        new SortedNumericDocValuesField("shard_id", shardId),
+                        sequenceIDFields.primaryTerm
+                    )
+                );
             }
         }
         writer.commit();
@@ -254,15 +276,15 @@ public class ShardSplittingQueryTests extends ESTestCase {
         dir.close();
     }
 
-
-
-
     void assertSplit(Directory dir, IndexMetaData metaData, int targetShardId, boolean hasNested) throws IOException {
         try (IndexReader reader = DirectoryReader.open(dir)) {
             IndexSearcher searcher = new IndexSearcher(reader);
             searcher.setQueryCache(null);
-            final Weight splitWeight = searcher.createWeight(searcher.rewrite(new ShardSplittingQuery(metaData, targetShardId, hasNested)),
-                ScoreMode.COMPLETE_NO_SCORES, 1f);
+            final Weight splitWeight = searcher.createWeight(
+                searcher.rewrite(new ShardSplittingQuery(metaData, targetShardId, hasNested)),
+                ScoreMode.COMPLETE_NO_SCORES,
+                1f
+            );
             final List<LeafReaderContext> leaves = reader.leaves();
             for (final LeafReaderContext ctx : leaves) {
                 Scorer scorer = splitWeight.scorer(ctx);

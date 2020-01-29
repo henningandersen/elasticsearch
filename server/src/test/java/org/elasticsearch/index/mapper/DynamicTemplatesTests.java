@@ -39,10 +39,20 @@ import static org.hamcrest.Matchers.notNullValue;
 public class DynamicTemplatesTests extends ESSingleNodeTestCase {
     public void testMatchTypeOnly() throws Exception {
         XContentBuilder builder = JsonXContent.contentBuilder();
-        builder.startObject().startObject("_doc").startArray("dynamic_templates").startObject().startObject("test")
-                .field("match_mapping_type", "string")
-                .startObject("mapping").field("index", false).endObject()
-                .endObject().endObject().endArray().endObject().endObject();
+        builder.startObject()
+            .startObject("_doc")
+            .startArray("dynamic_templates")
+            .startObject()
+            .startObject("test")
+            .field("match_mapping_type", "string")
+            .startObject("mapping")
+            .field("index", false)
+            .endObject()
+            .endObject()
+            .endObject()
+            .endArray()
+            .endObject()
+            .endObject();
         IndexService index = createIndex("test");
         client().admin().indices().preparePutMapping("test").setSource(builder).get();
 
@@ -50,10 +60,12 @@ public class DynamicTemplatesTests extends ESSingleNodeTestCase {
         DocumentMapper docMapper = mapperService.documentMapper();
         builder = JsonXContent.contentBuilder();
         builder.startObject().field("s", "hello").field("l", 1).endObject();
-        ParsedDocument parsedDoc = docMapper.parse(new SourceToParse("test", "1", BytesReference.bytes(builder),
-                XContentType.JSON));
-        client().admin().indices().preparePutMapping("test")
-            .setSource(parsedDoc.dynamicMappingsUpdate().toString(), XContentType.JSON).get();
+        ParsedDocument parsedDoc = docMapper.parse(new SourceToParse("test", "1", BytesReference.bytes(builder), XContentType.JSON));
+        client().admin()
+            .indices()
+            .preparePutMapping("test")
+            .setSource(parsedDoc.dynamicMappingsUpdate().toString(), XContentType.JSON)
+            .get();
 
         assertThat(mapperService.fullName("s"), notNullValue());
         assertEquals(IndexOptions.NONE, mapperService.fullName("s").indexOptions());
@@ -68,10 +80,12 @@ public class DynamicTemplatesTests extends ESSingleNodeTestCase {
         client().admin().indices().preparePutMapping("test").setSource(mapping, XContentType.JSON).get();
         DocumentMapper docMapper = index.mapperService().documentMapper();
         byte[] json = copyToBytesFromClasspath("/org/elasticsearch/index/mapper/dynamictemplate/simple/test-data.json");
-        ParsedDocument parsedDoc = docMapper.parse(new SourceToParse("test", "1", new BytesArray(json),
-                XContentType.JSON));
-        client().admin().indices().preparePutMapping("test")
-            .setSource(parsedDoc.dynamicMappingsUpdate().toString(), XContentType.JSON).get();
+        ParsedDocument parsedDoc = docMapper.parse(new SourceToParse("test", "1", new BytesArray(json), XContentType.JSON));
+        client().admin()
+            .indices()
+            .preparePutMapping("test")
+            .setSource(parsedDoc.dynamicMappingsUpdate().toString(), XContentType.JSON)
+            .get();
         docMapper = index.mapperService().documentMapper();
         Document doc = parsedDoc.rootDoc();
 
@@ -127,10 +141,12 @@ public class DynamicTemplatesTests extends ESSingleNodeTestCase {
         client().admin().indices().preparePutMapping("test").setSource(mapping, XContentType.JSON).get();
         DocumentMapper docMapper = index.mapperService().documentMapper();
         byte[] json = copyToBytesFromClasspath("/org/elasticsearch/index/mapper/dynamictemplate/simple/test-data.json");
-        ParsedDocument parsedDoc = docMapper.parse(new SourceToParse("test", "1", new BytesArray(json),
-                XContentType.JSON));
-        client().admin().indices().preparePutMapping("test")
-            .setSource(parsedDoc.dynamicMappingsUpdate().toString(), XContentType.JSON).get();
+        ParsedDocument parsedDoc = docMapper.parse(new SourceToParse("test", "1", new BytesArray(json), XContentType.JSON));
+        client().admin()
+            .indices()
+            .preparePutMapping("test")
+            .setSource(parsedDoc.dynamicMappingsUpdate().toString(), XContentType.JSON)
+            .get();
         docMapper = index.mapperService().documentMapper();
         Document doc = parsedDoc.rootDoc();
 

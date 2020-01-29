@@ -92,8 +92,8 @@ public class IdFieldMapper extends MetadataFieldMapper {
 
     public static class TypeParser implements MetadataFieldMapper.TypeParser {
         @Override
-        public MetadataFieldMapper.Builder<?,?> parse(String name, Map<String, Object> node,
-                                                 ParserContext parserContext) throws MapperParsingException {
+        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             throw new MapperParsingException(NAME + " is not configurable");
         }
 
@@ -106,8 +106,7 @@ public class IdFieldMapper extends MetadataFieldMapper {
 
     static final class IdFieldType extends TermBasedFieldType {
 
-        IdFieldType() {
-        }
+        IdFieldType() {}
 
         protected IdFieldType(IdFieldType ref) {
             super(ref);
@@ -159,21 +158,34 @@ public class IdFieldMapper extends MetadataFieldMapper {
                 throw new IllegalArgumentException("Fielddata access on the _id field is disallowed");
             }
             final IndexFieldData.Builder fieldDataBuilder = new PagedBytesIndexFieldData.Builder(
-                    TextFieldMapper.Defaults.FIELDDATA_MIN_FREQUENCY,
-                    TextFieldMapper.Defaults.FIELDDATA_MAX_FREQUENCY,
-                    TextFieldMapper.Defaults.FIELDDATA_MIN_SEGMENT_SIZE);
+                TextFieldMapper.Defaults.FIELDDATA_MIN_FREQUENCY,
+                TextFieldMapper.Defaults.FIELDDATA_MAX_FREQUENCY,
+                TextFieldMapper.Defaults.FIELDDATA_MIN_SEGMENT_SIZE
+            );
             return new IndexFieldData.Builder() {
                 @Override
-                public IndexFieldData<?> build(IndexSettings indexSettings, MappedFieldType fieldType, IndexFieldDataCache cache,
-                        CircuitBreakerService breakerService, MapperService mapperService) {
+                public IndexFieldData<?> build(
+                    IndexSettings indexSettings,
+                    MappedFieldType fieldType,
+                    IndexFieldDataCache cache,
+                    CircuitBreakerService breakerService,
+                    MapperService mapperService
+                ) {
                     if (mapperService.isIdFieldDataEnabled() == false) {
-                        throw new IllegalArgumentException("Fielddata access on the _id field is disallowed, "
-                            + "you can re-enable it by updating the dynamic cluster setting: "
-                            + IndicesService.INDICES_ID_FIELD_DATA_ENABLED_SETTING.getKey());
+                        throw new IllegalArgumentException(
+                            "Fielddata access on the _id field is disallowed, "
+                                + "you can re-enable it by updating the dynamic cluster setting: "
+                                + IndicesService.INDICES_ID_FIELD_DATA_ENABLED_SETTING.getKey()
+                        );
                     }
                     deprecationLogger.deprecatedAndMaybeLog("id_field_data", ID_FIELD_DATA_DEPRECATION_MESSAGE);
-                    final IndexFieldData<?> fieldData = fieldDataBuilder.build(indexSettings, fieldType, cache,
-                        breakerService, mapperService);
+                    final IndexFieldData<?> fieldData = fieldDataBuilder.build(
+                        indexSettings,
+                        fieldType,
+                        cache,
+                        breakerService,
+                        mapperService
+                    );
                     return new IndexFieldData<AtomicFieldData>() {
 
                         @Override
@@ -198,8 +210,7 @@ public class IdFieldMapper extends MetadataFieldMapper {
 
                         @Override
                         public SortField sortField(Object missingValue, MultiValueMode sortMode, Nested nested, boolean reverse) {
-                            XFieldComparatorSource source = new BytesRefFieldComparatorSource(this, missingValue,
-                                sortMode, nested);
+                            XFieldComparatorSource source = new BytesRefFieldComparatorSource(this, missingValue, sortMode, nested);
                             return new SortField(getFieldName(), source, reverse);
                         }
 
@@ -240,8 +251,9 @@ public class IdFieldMapper extends MetadataFieldMapper {
                     @Override
                     public BytesRef nextValue() throws IOException {
                         BytesRef encoded = inValues.nextValue();
-                        return new BytesRef(Uid.decodeId(
-                                Arrays.copyOfRange(encoded.bytes, encoded.offset, encoded.offset + encoded.length)));
+                        return new BytesRef(
+                            Uid.decodeId(Arrays.copyOfRange(encoded.bytes, encoded.offset, encoded.offset + encoded.length))
+                        );
                     }
 
                     @Override

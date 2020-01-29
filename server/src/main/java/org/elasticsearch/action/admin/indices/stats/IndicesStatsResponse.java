@@ -48,8 +48,13 @@ public class IndicesStatsResponse extends BroadcastResponse {
         shards = in.readArray(ShardStats::new, (size) -> new ShardStats[size]);
     }
 
-    IndicesStatsResponse(ShardStats[] shards, int totalShards, int successfulShards, int failedShards,
-                         List<DefaultShardOperationFailedException> shardFailures) {
+    IndicesStatsResponse(
+        ShardStats[] shards,
+        int totalShards,
+        int successfulShards,
+        int failedShards,
+        List<DefaultShardOperationFailedException> shardFailures
+    ) {
         super(totalShards, successfulShards, failedShards, shardFailures);
         this.shards = shards;
     }
@@ -87,13 +92,16 @@ public class IndicesStatsResponse extends BroadcastResponse {
         final Map<String, IndexStatsBuilder> indexToIndexStatsBuilder = new HashMap<>();
         for (ShardStats shard : shards) {
             Index index = shard.getShardRouting().index();
-            IndexStatsBuilder indexStatsBuilder = indexToIndexStatsBuilder.computeIfAbsent(index.getName(),
-                    k -> new IndexStatsBuilder(k, index.getUUID()));
+            IndexStatsBuilder indexStatsBuilder = indexToIndexStatsBuilder.computeIfAbsent(
+                index.getName(),
+                k -> new IndexStatsBuilder(k, index.getUUID())
+            );
             indexStatsBuilder.add(shard);
         }
 
-        indicesStats = indexToIndexStatsBuilder.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().build()));
+        indicesStats = indexToIndexStatsBuilder.entrySet()
+            .stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().build()));
         return indicesStats;
     }
 
@@ -136,8 +144,9 @@ public class IndicesStatsResponse extends BroadcastResponse {
     @Override
     protected void addCustomXContentFields(XContentBuilder builder, Params params) throws IOException {
         final String level = params.param("level", "indices");
-        final boolean isLevelValid =
-            "cluster".equalsIgnoreCase(level) || "indices".equalsIgnoreCase(level) || "shards".equalsIgnoreCase(level);
+        final boolean isLevelValid = "cluster".equalsIgnoreCase(level)
+            || "indices".equalsIgnoreCase(level)
+            || "shards".equalsIgnoreCase(level);
         if (!isLevelValid) {
             throw new IllegalArgumentException("level parameter must be one of [cluster] or [indices] or [shards] but was [" + level + "]");
         }

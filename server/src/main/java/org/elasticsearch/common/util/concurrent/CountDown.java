@@ -19,13 +19,12 @@
 
 package org.elasticsearch.common.util.concurrent;
 
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A simple thread safe count-down class that in contrast to a {@link CountDownLatch}
- * never blocks. This class is useful if a certain action has to wait for N concurrent 
+ * never blocks. This class is useful if a certain action has to wait for N concurrent
  * tasks to return or a timeout to occur in order to proceed.
  */
 public final class CountDown {
@@ -69,7 +68,7 @@ public final class CountDown {
         assert countDown.get() >= 0;
         return countDown.getAndSet(0) > 0;
     }
-    
+
     /**
      * Returns <code>true</code> iff the count-down has reached zero. Otherwise <code>false</code>
      */

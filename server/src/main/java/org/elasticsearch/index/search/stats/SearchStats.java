@@ -59,10 +59,18 @@ public class SearchStats implements Writeable, ToXContentFragment {
         }
 
         public Stats(
-                long queryCount, long queryTimeInMillis, long queryCurrent,
-                long fetchCount, long fetchTimeInMillis, long fetchCurrent,
-                long scrollCount, long scrollTimeInMillis, long scrollCurrent,
-                long suggestCount, long suggestTimeInMillis, long suggestCurrent
+            long queryCount,
+            long queryTimeInMillis,
+            long queryCurrent,
+            long fetchCount,
+            long fetchTimeInMillis,
+            long fetchCurrent,
+            long scrollCount,
+            long scrollTimeInMillis,
+            long scrollCurrent,
+            long suggestCount,
+            long suggestTimeInMillis,
+            long suggestCurrent
         ) {
             this.queryCount = queryCount;
             this.queryTimeInMillis = queryTimeInMillis;

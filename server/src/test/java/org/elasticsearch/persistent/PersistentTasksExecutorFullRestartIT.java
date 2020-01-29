@@ -64,16 +64,28 @@ public class PersistentTasksExecutorFullRestartIT extends ESIntegTestCase {
             assertThat(futures.get(i).get().getId(), equalTo(taskIds[i]));
         }
 
-        PersistentTasksCustomMetaData tasksInProgress = internalCluster().clusterService().state().getMetaData()
-                .custom(PersistentTasksCustomMetaData.TYPE);
+        PersistentTasksCustomMetaData tasksInProgress = internalCluster().clusterService()
+            .state()
+            .getMetaData()
+            .custom(PersistentTasksCustomMetaData.TYPE);
         assertThat(tasksInProgress.tasks().size(), equalTo(numberOfTasks));
 
         // Make sure that at least one of the tasks is running
-        assertBusy(() -> {
-            // Wait for the task to start
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get()
-                    .getTasks().size(), greaterThan(0));
-        });
+        assertBusy(
+            () -> {
+                // Wait for the task to start
+                assertThat(
+                    client().admin()
+                        .cluster()
+                        .prepareListTasks()
+                        .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+                        .get()
+                        .getTasks()
+                        .size(),
+                    greaterThan(0)
+                );
+            }
+        );
 
         // Restart cluster
         internalCluster().fullRestart();
@@ -88,22 +100,41 @@ public class PersistentTasksExecutorFullRestartIT extends ESIntegTestCase {
         }
 
         logger.info("Waiting for {} tasks to start", numberOfTasks);
-        assertBusy(() -> {
-            // Wait for all tasks to start
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get()
-                            .getTasks().size(), equalTo(numberOfTasks));
-        });
+        assertBusy(
+            () -> {
+                // Wait for all tasks to start
+                assertThat(
+                    client().admin()
+                        .cluster()
+                        .prepareListTasks()
+                        .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+                        .get()
+                        .getTasks()
+                        .size(),
+                    equalTo(numberOfTasks)
+                );
+            }
+        );
 
         logger.info("Complete all tasks");
         // Complete the running task and make sure it finishes properly
-        assertThat(new TestPersistentTasksPlugin.TestTasksRequestBuilder(client()).setOperation("finish").get().getTasks().size(),
-                equalTo(numberOfTasks));
+        assertThat(
+            new TestPersistentTasksPlugin.TestTasksRequestBuilder(client()).setOperation("finish").get().getTasks().size(),
+            equalTo(numberOfTasks)
+        );
 
-        assertBusy(() -> {
-            // Make sure the task is removed from the cluster state
-            assertThat(((PersistentTasksCustomMetaData) internalCluster().clusterService().state().getMetaData()
-                    .custom(PersistentTasksCustomMetaData.TYPE)).tasks(), empty());
-        });
+        assertBusy(
+            () -> {
+                // Make sure the task is removed from the cluster state
+                assertThat(
+                    ((PersistentTasksCustomMetaData) internalCluster().clusterService()
+                        .state()
+                        .getMetaData()
+                        .custom(PersistentTasksCustomMetaData.TYPE)).tasks(),
+                    empty()
+                );
+            }
+        );
 
     }
 }

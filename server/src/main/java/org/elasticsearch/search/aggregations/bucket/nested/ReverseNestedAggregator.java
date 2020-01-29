@@ -49,9 +49,16 @@ public class ReverseNestedAggregator extends BucketsAggregator implements Single
     private final Query parentFilter;
     private final BitSetProducer parentBitsetProducer;
 
-    public ReverseNestedAggregator(String name, AggregatorFactories factories, ObjectMapper objectMapper,
-            SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData)
-            throws IOException {
+    public ReverseNestedAggregator(
+        String name,
+        AggregatorFactories factories,
+        ObjectMapper objectMapper,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, factories, context, parent, pipelineAggregators, metaData);
         if (objectMapper == null) {
             parentFilter = Queries.newNonNestedFilter();
@@ -94,8 +101,13 @@ public class ReverseNestedAggregator extends BucketsAggregator implements Single
 
     @Override
     public InternalAggregation buildAggregation(long owningBucketOrdinal) throws IOException {
-        return new InternalReverseNested(name, bucketDocCount(owningBucketOrdinal), bucketAggregations(owningBucketOrdinal),
-                pipelineAggregators(), metaData());
+        return new InternalReverseNested(
+            name,
+            bucketDocCount(owningBucketOrdinal),
+            bucketAggregations(owningBucketOrdinal),
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override

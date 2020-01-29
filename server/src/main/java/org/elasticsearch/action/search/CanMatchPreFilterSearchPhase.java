@@ -60,39 +60,67 @@ final class CanMatchPreFilterSearchPhase extends AbstractSearchAsyncAction<CanMa
     private final Function<GroupShardsIterator<SearchShardIterator>, SearchPhase> phaseFactory;
     private final GroupShardsIterator<SearchShardIterator> shardsIts;
 
-    CanMatchPreFilterSearchPhase(Logger logger, SearchTransportService searchTransportService,
-                                        BiFunction<String, String, Transport.Connection> nodeIdToConnection,
-                                        Map<String, AliasFilter> aliasFilter, Map<String, Float> concreteIndexBoosts,
-                                        Map<String, Set<String>> indexRoutings,
-                                        Executor executor, SearchRequest request,
-                                        ActionListener<SearchResponse> listener, GroupShardsIterator<SearchShardIterator> shardsIts,
-                                        TransportSearchAction.SearchTimeProvider timeProvider, long clusterStateVersion,
-                                        SearchTask task, Function<GroupShardsIterator<SearchShardIterator>, SearchPhase> phaseFactory,
-                                        SearchResponse.Clusters clusters) {
-        //We set max concurrent shard requests to the number of shards so no throttling happens for can_match requests
-        super("can_match", logger, searchTransportService, nodeIdToConnection, aliasFilter, concreteIndexBoosts, indexRoutings,
-                executor, request, listener, shardsIts, timeProvider, clusterStateVersion, task,
-                new CanMatchSearchPhaseResults(shardsIts.size()), shardsIts.size(), clusters);
+    CanMatchPreFilterSearchPhase(
+        Logger logger,
+        SearchTransportService searchTransportService,
+        BiFunction<String, String, Transport.Connection> nodeIdToConnection,
+        Map<String, AliasFilter> aliasFilter,
+        Map<String, Float> concreteIndexBoosts,
+        Map<String, Set<String>> indexRoutings,
+        Executor executor,
+        SearchRequest request,
+        ActionListener<SearchResponse> listener,
+        GroupShardsIterator<SearchShardIterator> shardsIts,
+        TransportSearchAction.SearchTimeProvider timeProvider,
+        long clusterStateVersion,
+        SearchTask task,
+        Function<GroupShardsIterator<SearchShardIterator>, SearchPhase> phaseFactory,
+        SearchResponse.Clusters clusters
+    ) {
+        // We set max concurrent shard requests to the number of shards so no throttling happens for can_match requests
+        super(
+            "can_match",
+            logger,
+            searchTransportService,
+            nodeIdToConnection,
+            aliasFilter,
+            concreteIndexBoosts,
+            indexRoutings,
+            executor,
+            request,
+            listener,
+            shardsIts,
+            timeProvider,
+            clusterStateVersion,
+            task,
+            new CanMatchSearchPhaseResults(shardsIts.size()),
+            shardsIts.size(),
+            clusters
+        );
         this.phaseFactory = phaseFactory;
         this.shardsIts = shardsIts;
     }
 
     @Override
-    protected void executePhaseOnShard(SearchShardIterator shardIt, ShardRouting shard,
-                                       SearchActionListener<CanMatchResponse> listener) {
-        getSearchTransport().sendCanMatch(getConnection(shardIt.getClusterAlias(), shard.currentNodeId()),
-            buildShardSearchRequest(shardIt), getTask(), listener);
+    protected void executePhaseOnShard(SearchShardIterator shardIt, ShardRouting shard, SearchActionListener<CanMatchResponse> listener) {
+        getSearchTransport().sendCanMatch(
+            getConnection(shardIt.getClusterAlias(), shard.currentNodeId()),
+            buildShardSearchRequest(shardIt),
+            getTask(),
+            listener
+        );
     }
 
     @Override
-    protected SearchPhase getNextPhase(SearchPhaseResults<CanMatchResponse> results,
-                                       SearchPhaseContext context) {
+    protected SearchPhase getNextPhase(SearchPhaseResults<CanMatchResponse> results, SearchPhaseContext context) {
 
         return phaseFactory.apply(getIterator((CanMatchSearchPhaseResults) results, shardsIts));
     }
 
-    private GroupShardsIterator<SearchShardIterator> getIterator(CanMatchSearchPhaseResults results,
-                                                                 GroupShardsIterator<SearchShardIterator> shardsIts) {
+    private GroupShardsIterator<SearchShardIterator> getIterator(
+        CanMatchSearchPhaseResults results,
+        GroupShardsIterator<SearchShardIterator> shardsIts
+    ) {
         int cardinality = results.getNumPossibleMatches();
         FixedBitSet possibleMatches = results.getPossibleMatches();
         if (cardinality == 0) {
@@ -116,12 +144,14 @@ final class CanMatchPreFilterSearchPhase extends AbstractSearchAsyncAction<CanMa
         return new GroupShardsIterator<>(sortShards(shardsIts, results.minAndMaxes, fieldSort.order()), false);
     }
 
-    private static List<SearchShardIterator> sortShards(GroupShardsIterator<SearchShardIterator> shardsIts,
-                                                        MinAndMax<?>[] minAndMaxes,
-                                                        SortOrder order) {
+    private static List<SearchShardIterator> sortShards(
+        GroupShardsIterator<SearchShardIterator> shardsIts,
+        MinAndMax<?>[] minAndMaxes,
+        SortOrder order
+    ) {
         return IntStream.range(0, shardsIts.size())
             .boxed()
-            .sorted(shardComparator(shardsIts, minAndMaxes,  order))
+            .sorted(shardComparator(shardsIts, minAndMaxes, order))
             .map(ord -> shardsIts.get(ord))
             .collect(Collectors.toList());
     }
@@ -130,10 +160,12 @@ final class CanMatchPreFilterSearchPhase extends AbstractSearchAsyncAction<CanMa
         return Arrays.stream(minAndMaxes).anyMatch(Objects::nonNull);
     }
 
-    private static Comparator<Integer> shardComparator(GroupShardsIterator<SearchShardIterator> shardsIts,
-                                                       MinAndMax<?>[] minAndMaxes,
-                                                       SortOrder order) {
-        final Comparator<Integer> comparator = Comparator.comparing(index -> minAndMaxes[index],  MinAndMax.getComparator(order));
+    private static Comparator<Integer> shardComparator(
+        GroupShardsIterator<SearchShardIterator> shardsIts,
+        MinAndMax<?>[] minAndMaxes,
+        SortOrder order
+    ) {
+        final Comparator<Integer> comparator = Comparator.comparing(index -> minAndMaxes[index], MinAndMax.getComparator(order));
         return comparator.thenComparing(index -> shardsIts.get(index).shardId());
     }
 

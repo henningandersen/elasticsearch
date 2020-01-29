@@ -84,11 +84,12 @@ public enum CoreValuesSourceType implements Writeable, ValuesSourceType {
 
             if ((fieldContext.indexFieldData() instanceof IndexNumericFieldData) == false) {
                 // TODO: Is this the correct exception type here?
-                throw new IllegalArgumentException("Expected numeric type on field [" + fieldContext.field() +
-                    "], but got [" + fieldContext.fieldType().typeName() + "]");
+                throw new IllegalArgumentException(
+                    "Expected numeric type on field [" + fieldContext.field() + "], but got [" + fieldContext.fieldType().typeName() + "]"
+                );
             }
 
-            ValuesSource.Numeric dataSource = new ValuesSource.Numeric.FieldData((IndexNumericFieldData)fieldContext.indexFieldData());
+            ValuesSource.Numeric dataSource = new ValuesSource.Numeric.FieldData((IndexNumericFieldData) fieldContext.indexFieldData());
             if (script != null) {
                 // Value script case
                 dataSource = new ValuesSource.Numeric.WithScript(dataSource, script);
@@ -154,8 +155,9 @@ public enum CoreValuesSourceType implements Writeable, ValuesSourceType {
         public ValuesSource getField(FieldContext fieldContext, AggregationScript.LeafFactory script) {
             if (!(fieldContext.indexFieldData() instanceof IndexGeoPointFieldData)) {
                 // TODO: Is this the correct exception type here?
-                throw new IllegalArgumentException("Expected geo_point type on field [" + fieldContext.field() +
-                    "], but got [" + fieldContext.fieldType().typeName() + "]");
+                throw new IllegalArgumentException(
+                    "Expected geo_point type on field [" + fieldContext.field() + "], but got [" + fieldContext.fieldType().typeName() + "]"
+                );
             }
 
             return new ValuesSource.GeoPoint.Fielddata((IndexGeoPointFieldData) fieldContext.indexFieldData());
@@ -188,7 +190,7 @@ public enum CoreValuesSourceType implements Writeable, ValuesSourceType {
                 // TODO: Is this the correct exception type here?
                 throw new IllegalStateException("Asked for range ValuesSource, but field is of type " + fieldType.name());
             }
-            RangeFieldMapper.RangeFieldType rangeFieldType = (RangeFieldMapper.RangeFieldType)fieldType;
+            RangeFieldMapper.RangeFieldType rangeFieldType = (RangeFieldMapper.RangeFieldType) fieldType;
             return new ValuesSource.Range(fieldContext.indexFieldData(), rangeFieldType.rangeType());
         }
 
@@ -214,8 +216,9 @@ public enum CoreValuesSourceType implements Writeable, ValuesSourceType {
             final IndexFieldData<?> indexFieldData = fieldContext.indexFieldData();
 
             if (!(indexFieldData instanceof IndexHistogramFieldData)) {
-                throw new IllegalArgumentException("Expected histogram type on field [" + fieldContext.field() +
-                    "], but got [" + fieldContext.fieldType().typeName() + "]");
+                throw new IllegalArgumentException(
+                    "Expected histogram type on field [" + fieldContext.field() + "], but got [" + fieldContext.fieldType().typeName() + "]"
+                );
             }
             return new ValuesSource.Histogram.Fielddata((IndexHistogramFieldData) indexFieldData);
         }

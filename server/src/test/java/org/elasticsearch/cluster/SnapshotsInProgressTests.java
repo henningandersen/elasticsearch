@@ -52,8 +52,11 @@ public class SnapshotsInProgressTests extends ESTestCase {
         final String idx1UUID = randomAlphaOfLength(5);
         final String idx2UUID = randomAlphaOfLength(5);
         final String idx3UUID = randomAlphaOfLength(5);
-        final List<IndexId> indices = Arrays.asList(new IndexId(idx1Name, randomAlphaOfLength(5)),
-            new IndexId(idx2Name, randomAlphaOfLength(5)), new IndexId(idx3Name, randomAlphaOfLength(5)));
+        final List<IndexId> indices = Arrays.asList(
+            new IndexId(idx1Name, randomAlphaOfLength(5)),
+            new IndexId(idx2Name, randomAlphaOfLength(5)),
+            new IndexId(idx3Name, randomAlphaOfLength(5))
+        );
         ImmutableOpenMap.Builder<ShardId, ShardSnapshotStatus> shards = ImmutableOpenMap.builder();
 
         // test more than one waiting shard in an index
@@ -65,8 +68,18 @@ public class SnapshotsInProgressTests extends ESTestCase {
         shards.put(new ShardId(idx2Name, idx2UUID, 1), new ShardSnapshotStatus(randomAlphaOfLength(2), randomNonWaitingState(), "", "1"));
         // test no waiting shards in an index
         shards.put(new ShardId(idx3Name, idx3UUID, 0), new ShardSnapshotStatus(randomAlphaOfLength(2), randomNonWaitingState(), "", "1"));
-        Entry entry = new Entry(snapshot, randomBoolean(), randomBoolean(), State.INIT,
-            indices, System.currentTimeMillis(), randomLong(), shards.build(), SnapshotInfoTests.randomUserMetadata(), randomBoolean());
+        Entry entry = new Entry(
+            snapshot,
+            randomBoolean(),
+            randomBoolean(),
+            State.INIT,
+            indices,
+            System.currentTimeMillis(),
+            randomLong(),
+            shards.build(),
+            SnapshotInfoTests.randomUserMetadata(),
+            randomBoolean()
+        );
 
         ImmutableOpenMap<String, List<ShardId>> waitingIndices = entry.waitingIndices();
         assertEquals(2, waitingIndices.get(idx1Name).size());

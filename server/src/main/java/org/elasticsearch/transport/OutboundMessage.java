@@ -102,8 +102,15 @@ abstract class OutboundMessage extends NetworkMessage {
 
         private final String action;
 
-        Request(ThreadContext threadContext, Writeable message, Version version, String action, long requestId,
-                boolean isHandshake, boolean compress) {
+        Request(
+            ThreadContext threadContext,
+            Writeable message,
+            Version version,
+            String action,
+            long requestId,
+            boolean isHandshake,
+            boolean compress
+        ) {
             super(threadContext, version, setStatus(compress, isHandshake, message), requestId, message);
             this.action = action;
         }

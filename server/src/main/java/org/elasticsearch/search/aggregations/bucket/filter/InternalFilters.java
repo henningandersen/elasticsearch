@@ -110,9 +110,9 @@ public class InternalFilters extends InternalMultiBucketAggregation<InternalFilt
             }
             InternalBucket that = (InternalBucket) other;
             return Objects.equals(key, that.key)
-                    && Objects.equals(keyed,  that.keyed)
-                    && Objects.equals(docCount, that.docCount)
-                    && Objects.equals(aggregations, that.aggregations);
+                && Objects.equals(keyed, that.keyed)
+                && Objects.equals(docCount, that.docCount)
+                && Objects.equals(aggregations, that.aggregations);
         }
 
         @Override
@@ -126,8 +126,13 @@ public class InternalFilters extends InternalMultiBucketAggregation<InternalFilt
     // bucketMap gets lazily initialized from buckets in getBucketByKey()
     private transient Map<String, InternalBucket> bucketMap;
 
-    public InternalFilters(String name, List<InternalBucket> buckets, boolean keyed, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    public InternalFilters(
+        String name,
+        List<InternalBucket> buckets,
+        boolean keyed,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.buckets = buckets;
         this.keyed = keyed;
@@ -209,8 +214,13 @@ public class InternalFilters extends InternalMultiBucketAggregation<InternalFilt
         }
 
         reduceContext.consumeBucketsAndMaybeBreak(bucketsList.size());
-        InternalFilters reduced = new InternalFilters(name, new ArrayList<>(bucketsList.size()), keyed, pipelineAggregators(),
-                getMetaData());
+        InternalFilters reduced = new InternalFilters(
+            name,
+            new ArrayList<>(bucketsList.size()),
+            keyed,
+            pipelineAggregators(),
+            getMetaData()
+        );
         for (List<InternalBucket> sameRangeList : bucketsList) {
             reduced.buckets.add(reduceBucket(sameRangeList, reduceContext));
         }
@@ -264,8 +274,7 @@ public class InternalFilters extends InternalMultiBucketAggregation<InternalFilt
         if (super.equals(obj) == false) return false;
 
         InternalFilters that = (InternalFilters) obj;
-        return Objects.equals(buckets, that.buckets)
-                && Objects.equals(keyed, that.keyed);
+        return Objects.equals(buckets, that.buckets) && Objects.equals(keyed, that.keyed);
     }
 
 }

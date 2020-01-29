@@ -29,8 +29,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class DocumentMapperParserTests extends ESSingleNodeTestCase {
     public void testTypeLevel() throws Exception {
-        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject().startObject("type")
-                .endObject().endObject());
+        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject().startObject("type").endObject().endObject());
 
         DocumentMapperParser parser = createIndex("test").mapperService().documentMapperParser();
         DocumentMapper mapper = parser.parse("type", new CompressedXContent(mapping));
@@ -40,10 +39,21 @@ public class DocumentMapperParserTests extends ESSingleNodeTestCase {
     public void testFieldNameWithDots() throws Exception {
         IndexService indexService = createIndex("test");
         DocumentMapperParser mapperParser = indexService.mapperService().documentMapperParser();
-        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject().startObject("type").startObject("properties")
-            .startObject("foo.bar").field("type", "text").endObject()
-            .startObject("foo.baz").field("type", "keyword").endObject()
-            .endObject().endObject().endObject());
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("type")
+                .startObject("properties")
+                .startObject("foo.bar")
+                .field("type", "text")
+                .endObject()
+                .startObject("foo.baz")
+                .field("type", "keyword")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+        );
         DocumentMapper docMapper = mapperParser.parse("type", new CompressedXContent(mapping));
         assertNotNull(docMapper.mappers().getMapper("foo.bar"));
         assertNotNull(docMapper.mappers().getMapper("foo.baz"));
@@ -53,11 +63,25 @@ public class DocumentMapperParserTests extends ESSingleNodeTestCase {
     public void testFieldNameWithDeepDots() throws Exception {
         IndexService indexService = createIndex("test");
         DocumentMapperParser mapperParser = indexService.mapperService().documentMapperParser();
-        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject().startObject("type").startObject("properties")
-            .startObject("foo.bar").field("type", "text").endObject()
-            .startObject("foo.baz").startObject("properties")
-            .startObject("deep.field").field("type", "keyword").endObject().endObject()
-            .endObject().endObject().endObject().endObject());
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("type")
+                .startObject("properties")
+                .startObject("foo.bar")
+                .field("type", "text")
+                .endObject()
+                .startObject("foo.baz")
+                .startObject("properties")
+                .startObject("deep.field")
+                .field("type", "keyword")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+        );
         DocumentMapper docMapper = mapperParser.parse("type", new CompressedXContent(mapping));
         assertNotNull(docMapper.mappers().getMapper("foo.bar"));
         assertNotNull(docMapper.mappers().getMapper("foo.baz.deep.field"));
@@ -67,36 +91,56 @@ public class DocumentMapperParserTests extends ESSingleNodeTestCase {
     public void testFieldNameWithDotsConflict() throws Exception {
         IndexService indexService = createIndex("test");
         DocumentMapperParser mapperParser = indexService.mapperService().documentMapperParser();
-        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject().startObject("type").startObject("properties")
-            .startObject("foo").field("type", "text").endObject()
-            .startObject("foo.baz").field("type", "keyword").endObject()
-            .endObject().endObject().endObject());
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            mapperParser.parse("type", new CompressedXContent(mapping)));
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("type")
+                .startObject("properties")
+                .startObject("foo")
+                .field("type", "text")
+                .endObject()
+                .startObject("foo.baz")
+                .field("type", "keyword")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject()
+        );
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> mapperParser.parse("type", new CompressedXContent(mapping))
+        );
         assertTrue(e.getMessage(), e.getMessage().contains("mapper [foo] of different type"));
     }
 
     public void testMultiFieldsWithFieldAlias() throws Exception {
         IndexService indexService = createIndex("test");
         DocumentMapperParser mapperParser = indexService.mapperService().documentMapperParser();
-        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject().startObject("type")
-            .startObject("properties")
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("type")
+                .startObject("properties")
                 .startObject("field")
-                    .field("type", "text")
-                    .startObject("fields")
-                        .startObject("alias")
-                            .field("type", "alias")
-                            .field("path", "other-field")
-                        .endObject()
-                    .endObject()
+                .field("type", "text")
+                .startObject("fields")
+                .startObject("alias")
+                .field("type", "alias")
+                .field("path", "other-field")
+                .endObject()
+                .endObject()
                 .endObject()
                 .startObject("other-field")
-                    .field("type", "keyword")
+                .field("type", "keyword")
                 .endObject()
-            .endObject()
-        .endObject().endObject());
-        MapperParsingException e = expectThrows(MapperParsingException.class, () ->
-            mapperParser.parse("type", new CompressedXContent(mapping)));
+                .endObject()
+                .endObject()
+                .endObject()
+        );
+        MapperParsingException e = expectThrows(
+            MapperParsingException.class,
+            () -> mapperParser.parse("type", new CompressedXContent(mapping))
+        );
         assertEquals("Type [alias] cannot be used in multi field", e.getMessage());
     }
 }

@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 
-
 public final class UTF8StreamWriter extends Writer {
 
     /**
@@ -72,8 +71,7 @@ public final class UTF8StreamWriter extends Writer {
      *                               it has not been {@link #close closed} or {@link #reset reset}.
      */
     public UTF8StreamWriter setOutput(OutputStream out) {
-        if (_outputStream != null)
-            throw new IllegalStateException("Writer not closed or reset");
+        if (_outputStream != null) throw new IllegalStateException("Writer not closed or reset");
         _outputStream = out;
         return this;
     }
@@ -92,8 +90,7 @@ public final class UTF8StreamWriter extends Writer {
         } else if (c < 0xdc00) { // High surrogate.
             _highSurrogate = c;
         } else { // Low surrogate.
-            int code = ((_highSurrogate - 0xd800) << 10) + (c - 0xdc00)
-                    + 0x10000;
+            int code = ((_highSurrogate - 0xd800) << 10) + (c - 0xdc00) + 0x10000;
             write(code);
         }
     }
@@ -205,8 +202,7 @@ public final class UTF8StreamWriter extends Writer {
                 flushBuffer();
             }
         } else {
-            throw new CharConversionException("Illegal character U+"
-                    + Integer.toHexString(c));
+            throw new CharConversionException("Illegal character U+" + Integer.toHexString(c));
         }
     }
 
@@ -221,7 +217,7 @@ public final class UTF8StreamWriter extends Writer {
     @Override
     public void write(char cbuf[], int off, int len) throws IOException {
         final int off_plus_len = off + len;
-        for (int i = off; i < off_plus_len; ) {
+        for (int i = off; i < off_plus_len;) {
             char c = cbuf[i++];
             if (c < 0x80) {
                 _bytes[_index] = (byte) c;
@@ -245,7 +241,7 @@ public final class UTF8StreamWriter extends Writer {
     @Override
     public void write(String str, int off, int len) throws IOException {
         final int off_plus_len = off + len;
-        for (int i = off; i < off_plus_len; ) {
+        for (int i = off; i < off_plus_len;) {
             char c = str.charAt(i++);
             if (c < 0x80) {
                 _bytes[_index] = (byte) c;
@@ -266,7 +262,7 @@ public final class UTF8StreamWriter extends Writer {
      */
     public void write(CharSequence csq) throws IOException {
         final int length = csq.length();
-        for (int i = 0; i < length; ) {
+        for (int i = 0; i < length;) {
             char c = csq.charAt(i++);
             if (c < 0x80) {
                 _bytes[_index] = (byte) c;
@@ -314,8 +310,7 @@ public final class UTF8StreamWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     private void flushBuffer() throws IOException {
-        if (_outputStream == null)
-            throw new IOException("Stream closed");
+        if (_outputStream == null) throw new IOException("Stream closed");
         _outputStream.write(_bytes, 0, _index);
         _index = 0;
     }

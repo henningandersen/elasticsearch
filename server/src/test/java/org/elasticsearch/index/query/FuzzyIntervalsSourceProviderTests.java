@@ -74,14 +74,7 @@ public class FuzzyIntervalsSourceProviderTests extends AbstractSerializingTestCa
             default:
                 throw new AssertionError("Illegal randomisation branch");
         }
-        return new Fuzzy(
-            term,
-            prefixLength,
-            isTranspositions,
-            fuzziness,
-            analyzer,
-            useField
-        );
+        return new Fuzzy(term, prefixLength, isTranspositions, fuzziness, analyzer, useField);
     }
 
     @Override

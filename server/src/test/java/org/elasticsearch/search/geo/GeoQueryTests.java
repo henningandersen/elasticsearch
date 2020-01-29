@@ -45,8 +45,7 @@ public abstract class GeoQueryTests extends ESSingleNodeTestCase {
         client().admin().indices().prepareCreate("test").setMapping(mapping).get();
         ensureGreen();
 
-        client().prepareIndex("test").setId("aNullshape").setSource("{\"geo\": null}", XContentType.JSON)
-            .setRefreshPolicy(IMMEDIATE).get();
+        client().prepareIndex("test").setId("aNullshape").setSource("{\"geo\": null}", XContentType.JSON).setRefreshPolicy(IMMEDIATE).get();
         GetResponse result = client().prepareGet("test", "aNullshape").get();
         assertThat(result.getField("location"), nullValue());
     };
@@ -55,36 +54,50 @@ public abstract class GeoQueryTests extends ESSingleNodeTestCase {
         client().admin().indices().prepareCreate("test").setMapping(mapping).get();
         ensureGreen();
 
-        client().prepareIndex("test").setId("1").setSource(jsonBuilder().startObject()
-            .field("name", "Document 1")
-            .startObject("geo")
-            .field("type", "point")
-            .startArray("coordinates").value(-30).value(-30).endArray()
-            .endObject()
-            .endObject()).setRefreshPolicy(IMMEDIATE).get();
+        client().prepareIndex("test")
+            .setId("1")
+            .setSource(
+                jsonBuilder().startObject()
+                    .field("name", "Document 1")
+                    .startObject("geo")
+                    .field("type", "point")
+                    .startArray("coordinates")
+                    .value(-30)
+                    .value(-30)
+                    .endArray()
+                    .endObject()
+                    .endObject()
+            )
+            .setRefreshPolicy(IMMEDIATE)
+            .get();
 
-        client().prepareIndex("test").setId("2").setSource(jsonBuilder().startObject()
-            .field("name", "Document 2")
-            .startObject("geo")
-            .field("type", "point")
-            .startArray("coordinates").value(-45).value(-50).endArray()
-            .endObject()
-            .endObject()).setRefreshPolicy(IMMEDIATE).get();
+        client().prepareIndex("test")
+            .setId("2")
+            .setSource(
+                jsonBuilder().startObject()
+                    .field("name", "Document 2")
+                    .startObject("geo")
+                    .field("type", "point")
+                    .startArray("coordinates")
+                    .value(-45)
+                    .value(-50)
+                    .endArray()
+                    .endObject()
+                    .endObject()
+            )
+            .setRefreshPolicy(IMMEDIATE)
+            .get();
 
         EnvelopeBuilder shape = new EnvelopeBuilder(new Coordinate(-45, 45), new Coordinate(45, -45));
 
-        SearchResponse searchResponse = client().prepareSearch("test")
-            .setQuery(geoIntersectionQuery("geo", shape))
-            .get();
+        SearchResponse searchResponse = client().prepareSearch("test").setQuery(geoIntersectionQuery("geo", shape)).get();
 
         assertSearchResponse(searchResponse);
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getId(), equalTo("1"));
 
-        searchResponse = client().prepareSearch("test")
-            .setQuery(geoShapeQuery("geo", shape))
-            .get();
+        searchResponse = client().prepareSearch("test").setQuery(geoShapeQuery("geo", shape)).get();
 
         assertSearchResponse(searchResponse);
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));

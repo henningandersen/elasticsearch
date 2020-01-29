@@ -146,8 +146,7 @@ public abstract class InboundMessage extends NetworkMessage implements Closeable
 
         private final String actionName;
 
-        Request(ThreadContext threadContext, Version version, byte status, long requestId, String actionName,
-                StreamInput streamInput) {
+        Request(ThreadContext threadContext, Version version, byte status, long requestId, String actionName, StreamInput streamInput) {
             super(threadContext, version, status, requestId, streamInput);
             this.actionName = actionName;
         }

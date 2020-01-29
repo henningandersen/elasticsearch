@@ -32,8 +32,13 @@ import java.util.Map;
 
 public class InternalReverseNestedTests extends InternalSingleBucketAggregationTestCase<InternalReverseNested> {
     @Override
-    protected InternalReverseNested createTestInstance(String name, long docCount, InternalAggregations aggregations,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    protected InternalReverseNested createTestInstance(
+        String name,
+        long docCount,
+        InternalAggregations aggregations,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         return new InternalReverseNested(name, docCount, aggregations, pipelineAggregators, metaData);
     }
 

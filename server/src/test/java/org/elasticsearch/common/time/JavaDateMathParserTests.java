@@ -38,7 +38,7 @@ public class JavaDateMathParserTests extends ESTestCase {
     private final DateMathParser parser = formatter.toDateMathParser();
 
     public void testOverridingLocaleOrZoneAndCompositeRoundUpParser() {
-        //the pattern has to be composite and the match should not be on the first one
+        // the pattern has to be composite and the match should not be on the first one
         DateFormatter formatter = DateFormatter.forPattern("date||epoch_millis").withLocale(randomLocale(random()));
         DateMathParser parser = formatter.toDateMathParser();
         long gotMillis = parser.parse("297276785531", () -> 0, true, (ZoneId) null).toEpochMilli();
@@ -197,7 +197,8 @@ public class JavaDateMathParserTests extends ESTestCase {
         DateMathParser parser = formatter.toDateMathParser();
         Instant time = parser.parse("2011-10-09+01:00", () -> 0, false, (ZoneId) null);
         assertEquals(this.parser.parse("2011-10-09T00:00:00.000+01:00", () -> 0), time);
-        time = DateFormatter.forPattern("strict_date_optional_time_nanos").toDateMathParser()
+        time = DateFormatter.forPattern("strict_date_optional_time_nanos")
+            .toDateMathParser()
             .parse("2011-10-09T23:59:59.999+01:00", () -> 0, false, (ZoneId) null);
         assertEquals(this.parser.parse("2011-10-09T23:59:59.999+01:00", () -> 0), time);
     }
@@ -319,8 +320,14 @@ public class JavaDateMathParserTests extends ESTestCase {
         assertDateMathEquals(parser, toTest, expected, now, roundUp, timeZone);
     }
 
-    private void assertDateMathEquals(DateMathParser parser, String toTest, String expected, final long now,
-                                      boolean roundUp, ZoneId timeZone) {
+    private void assertDateMathEquals(
+        DateMathParser parser,
+        String toTest,
+        String expected,
+        final long now,
+        boolean roundUp,
+        ZoneId timeZone
+    ) {
         long gotMillis = parser.parse(toTest, () -> now, roundUp, timeZone).toEpochMilli();
         assertDateEquals(gotMillis, toTest, expected);
     }
@@ -329,12 +336,24 @@ public class JavaDateMathParserTests extends ESTestCase {
         long expectedMillis = parser.parse(expected, () -> 0).toEpochMilli();
         if (gotMillis != expectedMillis) {
             ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(gotMillis), ZoneOffset.UTC);
-            fail("Date math not equal\n" +
-                "Original              : " + original + "\n" +
-                "Parsed                : " + formatter.format(zonedDateTime) + "\n" +
-                "Expected              : " + expected + "\n" +
-                "Expected milliseconds : " + expectedMillis + "\n" +
-                "Actual milliseconds   : " + gotMillis + "\n");
+            fail(
+                "Date math not equal\n"
+                    + "Original              : "
+                    + original
+                    + "\n"
+                    + "Parsed                : "
+                    + formatter.format(zonedDateTime)
+                    + "\n"
+                    + "Expected              : "
+                    + expected
+                    + "\n"
+                    + "Expected milliseconds : "
+                    + expectedMillis
+                    + "\n"
+                    + "Actual milliseconds   : "
+                    + gotMillis
+                    + "\n"
+            );
         }
     }
 }

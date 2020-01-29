@@ -83,8 +83,18 @@ public final class MockSearchPhaseContext implements SearchPhaseContext {
 
     @Override
     public void sendSearchResponse(InternalSearchResponse internalSearchResponse, String scrollId) {
-        searchResponse.set(new SearchResponse(internalSearchResponse, scrollId, numShards, numSuccess.get(), 0, 0,
-            failures.toArray(ShardSearchFailure.EMPTY_ARRAY), SearchResponse.Clusters.EMPTY));
+        searchResponse.set(
+            new SearchResponse(
+                internalSearchResponse,
+                scrollId,
+                numShards,
+                numSuccess.get(),
+                0,
+                0,
+                failures.toArray(ShardSearchFailure.EMPTY_ARRAY),
+                SearchResponse.Clusters.EMPTY
+            )
+        );
     }
 
     @Override
@@ -120,7 +130,7 @@ public final class MockSearchPhaseContext implements SearchPhaseContext {
         try {
             nextPhase.run();
         } catch (Exception e) {
-           onPhaseFailure(nextPhase, "phase failed", e);
+            onPhaseFailure(nextPhase, "phase failed", e);
         }
     }
 

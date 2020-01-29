@@ -35,14 +35,16 @@ public class HighlighterContext {
     public final FetchSubPhase.HitContext hitContext;
     public final Query query;
 
-    public HighlighterContext(String fieldName,
-                              SearchContextHighlight.Field field,
-                              MappedFieldType fieldType,
-                              SearchShardTarget shardTarget,
-                              QueryShardContext context,
-                              SearchContextHighlight highlight,
-                              FetchSubPhase.HitContext hitContext,
-                              Query query) {
+    public HighlighterContext(
+        String fieldName,
+        SearchContextHighlight.Field field,
+        MappedFieldType fieldType,
+        SearchShardTarget shardTarget,
+        QueryShardContext context,
+        SearchContextHighlight highlight,
+        FetchSubPhase.HitContext hitContext,
+        Query query
+    ) {
         this.fieldName = fieldName;
         this.field = field;
         this.fieldType = fieldType;

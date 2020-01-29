@@ -36,10 +36,11 @@ public abstract class FieldScript {
     public static final String[] PARAMETERS = {};
 
     private static final Map<String, String> DEPRECATIONS = Map.of(
-            "doc",
-            "Accessing variable [doc] via [params.doc] from within a field script is deprecated in favor of directly accessing [doc].",
-            "_doc",
-            "Accessing variable [doc] via [params._doc] from within a field script is deprecated in favor of directly accessing [doc].");
+        "doc",
+        "Accessing variable [doc] via [params.doc] from within a field script is deprecated in favor of directly accessing [doc].",
+        "_doc",
+        "Accessing variable [doc] via [params._doc] from within a field script is deprecated in favor of directly accessing [doc]."
+    );
 
     /** The generic runtime parameters for the script. */
     private final Map<String, Object> params;

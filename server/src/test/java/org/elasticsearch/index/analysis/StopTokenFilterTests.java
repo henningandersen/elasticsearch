@@ -37,11 +37,11 @@ import java.io.StringReader;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 
-
 public class StopTokenFilterTests extends ESTokenStreamTestCase {
     public void testPositionIncrementSetting() throws IOException {
-        Builder builder = Settings.builder().put("index.analysis.filter.my_stop.type", "stop")
-                .put("index.analysis.filter.my_stop.enable_position_increments", false);
+        Builder builder = Settings.builder()
+            .put("index.analysis.filter.my_stop.type", "stop")
+            .put("index.analysis.filter.my_stop.enable_position_increments", false);
         if (random().nextBoolean()) {
             builder.put("index.analysis.filter.my_stop.version", "5.0");
         }
@@ -74,10 +74,10 @@ public class StopTokenFilterTests extends ESTokenStreamTestCase {
 
     public void testThatSuggestStopFilterWorks() throws Exception {
         Settings settings = Settings.builder()
-                .put("index.analysis.filter.my_stop.type", "stop")
-                .put("index.analysis.filter.my_stop.remove_trailing", false)
-                .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
-                .build();
+            .put("index.analysis.filter.my_stop.type", "stop")
+            .put("index.analysis.filter.my_stop.remove_trailing", false)
+            .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
+            .build();
         ESTestCase.TestAnalysis analysis = AnalysisTestsHelper.createTestAnalysisFromSettings(settings);
         TokenFilterFactory tokenFilter = analysis.tokenFilter.get("my_stop");
         assertThat(tokenFilter, instanceOf(StopTokenFilterFactory.class));

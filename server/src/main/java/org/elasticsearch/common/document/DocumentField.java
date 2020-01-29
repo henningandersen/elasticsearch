@@ -154,9 +154,6 @@ public class DocumentField implements Writeable, ToXContentFragment, Iterable<Ob
 
     @Override
     public String toString() {
-        return "DocumentField{" +
-                "name='" + name + '\'' +
-                ", values=" + values +
-                '}';
+        return "DocumentField{" + "name='" + name + '\'' + ", values=" + values + '}';
     }
 }

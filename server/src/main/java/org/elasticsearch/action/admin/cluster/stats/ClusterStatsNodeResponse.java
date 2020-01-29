@@ -53,8 +53,13 @@ public class ClusterStatsNodeResponse extends BaseNodeResponse {
         }
     }
 
-    public ClusterStatsNodeResponse(DiscoveryNode node, @Nullable ClusterHealthStatus clusterStatus,
-                                    NodeInfo nodeInfo, NodeStats nodeStats, ShardStats[] shardsStats) {
+    public ClusterStatsNodeResponse(
+        DiscoveryNode node,
+        @Nullable ClusterHealthStatus clusterStatus,
+        NodeInfo nodeInfo,
+        NodeStats nodeStats,
+        ShardStats[] shardsStats
+    ) {
         super(node);
         this.nodeInfo = nodeInfo;
         this.nodeStats = nodeStats;

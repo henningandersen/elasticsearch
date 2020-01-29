@@ -19,7 +19,10 @@
 package org.elasticsearch.index.mapper;
 
 public enum EnabledAttributeMapper {
-    ENABLED(true), UNSET_ENABLED(true), DISABLED(false), UNSET_DISABLED(false);
+    ENABLED(true),
+    UNSET_ENABLED(true),
+    DISABLED(false),
+    UNSET_DISABLED(false);
 
     public final boolean enabled;
 

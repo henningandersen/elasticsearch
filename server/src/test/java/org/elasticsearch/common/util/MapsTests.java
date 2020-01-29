@@ -53,8 +53,9 @@ public class MapsTests extends ESTestCase {
         final String value = randomAlphaOfLength(16);
         final Map<String, String> concatenation = Maps.copyMapWithAddedEntry(map, key, value);
         assertMapEntriesAndImmutability(
-                concatenation,
-                Stream.concat(entries.stream(), Stream.of(entry(key, value))).collect(Collectors.toUnmodifiableList()));
+            concatenation,
+            Stream.concat(entries.stream(), Stream.of(entry(key, value))).collect(Collectors.toUnmodifiableList())
+        );
     }
 
     public void testAddEntryInImmutableMap() {
@@ -71,8 +72,9 @@ public class MapsTests extends ESTestCase {
         final String value = randomAlphaOfLength(16);
         final Map<String, String> add = Maps.copyMayWithAddedOrReplacedEntry(map, key, value);
         assertMapEntriesAndImmutability(
-                add,
-                Stream.concat(entries.stream(), Stream.of(entry(key, value))).collect(Collectors.toUnmodifiableList()));
+            add,
+            Stream.concat(entries.stream(), Stream.of(entry(key, value))).collect(Collectors.toUnmodifiableList())
+        );
     }
 
     public void testReplaceEntryInImmutableMap() {
@@ -89,10 +91,10 @@ public class MapsTests extends ESTestCase {
         final String value = randomAlphaOfLength(16);
         final Map<String, String> replaced = Maps.copyMayWithAddedOrReplacedEntry(map, key, value);
         assertMapEntriesAndImmutability(
-                replaced,
-                Stream.concat(
-                        entries.stream().filter(e -> key.equals(e.getKey()) == false),
-                        Stream.of(entry(key, value))).collect(Collectors.toUnmodifiableList()));
+            replaced,
+            Stream.concat(entries.stream().filter(e -> key.equals(e.getKey()) == false), Stream.of(entry(key, value)))
+                .collect(Collectors.toUnmodifiableList())
+        );
     }
 
     public void testOfEntries() {
@@ -112,8 +114,9 @@ public class MapsTests extends ESTestCase {
         final Supplier<String> keyGenerator = () -> randomAlphaOfLengthBetween(1, 5);
         final Supplier<int[]> arrayValueGenerator = () -> random().ints(randomInt(5)).toArray();
         final Map<String, int[]> map = randomMap(randomInt(5), keyGenerator, arrayValueGenerator);
-        final Map<String, int[]> mapCopy = map.entrySet().stream()
-                .collect(toMap(Map.Entry::getKey, e -> Arrays.copyOf(e.getValue(), e.getValue().length)));
+        final Map<String, int[]> mapCopy = map.entrySet()
+            .stream()
+            .collect(toMap(Map.Entry::getKey, e -> Arrays.copyOf(e.getValue(), e.getValue().length)));
 
         assertTrue(Maps.deepEquals(map, mapCopy));
 
@@ -137,9 +140,10 @@ public class MapsTests extends ESTestCase {
         for (var entry : entries) {
             assertThat("map [" + map + "] does not contain key [" + entry.getKey() + "]", map.keySet(), hasItem(entry.getKey()));
             assertThat(
-                    "key [" + entry.getKey() + "] should be mapped to value [" + entry.getValue() + "]",
-                    map.get(entry.getKey()),
-                    equalTo(entry.getValue()));
+                "key [" + entry.getKey() + "] should be mapped to value [" + entry.getValue() + "]",
+                map.get(entry.getKey()),
+                equalTo(entry.getValue())
+            );
         }
     }
 
@@ -149,10 +153,12 @@ public class MapsTests extends ESTestCase {
         assertUnsupported("putting map entries should be unsupported", () -> map.putAll(Map.of(nonPresentKey, randomAlphaOfLength(16))));
         assertUnsupported(
             "computing a new map association should be unsupported",
-            () -> map.compute(nonPresentKey, (k, v) -> randomAlphaOfLength(16)));
+            () -> map.compute(nonPresentKey, (k, v) -> randomAlphaOfLength(16))
+        );
         assertUnsupported(
             "computing a new map association should be unsupported",
-            () -> map.computeIfAbsent(nonPresentKey, k -> randomAlphaOfLength(16)));
+            () -> map.computeIfAbsent(nonPresentKey, k -> randomAlphaOfLength(16))
+        );
         assertUnsupported("map merge should be unsupported", () -> map.merge(nonPresentKey, randomAlphaOfLength(16), (k, v) -> v));
         if (map.isEmpty()) {
             return;
@@ -163,29 +169,31 @@ public class MapsTests extends ESTestCase {
         assertUnsupported("clearing map should be unsupported", map::clear);
         assertUnsupported("replacing a map entry should be unsupported", () -> map.replace(presentKey, valueNotAssociatedWithPresentKey));
         assertUnsupported(
-                "replacing a map entry should be unsupported",
-                () -> map.replace(presentKey, map.get(presentKey), valueNotAssociatedWithPresentKey));
+            "replacing a map entry should be unsupported",
+            () -> map.replace(presentKey, map.get(presentKey), valueNotAssociatedWithPresentKey)
+        );
         assertUnsupported("replacing map entries should be unsupported", () -> map.replaceAll((k, v) -> v + v));
         assertUnsupported("removing a map entry should be unsupported", () -> map.remove(presentKey));
         assertUnsupported("removing a map entry should be unsupported", () -> map.remove(presentKey, map.get(presentKey)));
         assertUnsupported(
-                "computing a new map association should be unsupported",
-                () -> map.compute(presentKey, (k, v) -> randomBoolean() ? null : v + v));
+            "computing a new map association should be unsupported",
+            () -> map.compute(presentKey, (k, v) -> randomBoolean() ? null : v + v)
+        );
         assertUnsupported(
-                "computing a new map association should be unsupported",
-                () -> map.computeIfPresent(presentKey, (k, v) -> randomBoolean() ? null : v + v));
+            "computing a new map association should be unsupported",
+            () -> map.computeIfPresent(presentKey, (k, v) -> randomBoolean() ? null : v + v)
+        );
         assertUnsupported(
-                "map merge should be unsupported",
-                () -> map.merge(presentKey, map.get(presentKey), (k, v) -> randomBoolean() ? null : v + v));
+            "map merge should be unsupported",
+            () -> map.merge(presentKey, map.get(presentKey), (k, v) -> randomBoolean() ? null : v + v)
+        );
     }
 
     private void assertUnsupported(final String message, final ThrowingRunnable runnable) {
         expectThrows(UnsupportedOperationException.class, message, runnable);
     }
 
-    private void assertMapEntriesAndImmutability(
-            final Map<String, String> map,
-            final Collection<Map.Entry<String, String>> entries) {
+    private void assertMapEntriesAndImmutability(final Map<String, String> map, final Collection<Map.Entry<String, String>> entries) {
         assertMapEntries(map, entries);
         assertMapImmutability(map);
     }

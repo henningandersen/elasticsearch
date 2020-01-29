@@ -18,7 +18,6 @@
  */
 package org.elasticsearch.search.aggregations;
 
-
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.NamedWriteable;
@@ -34,8 +33,7 @@ import java.util.Map;
 /**
  * A factory that knows how to create an {@link Aggregator} of a specific type.
  */
-public abstract class AggregationBuilder
-        implements NamedWriteable, ToXContentFragment, BaseAggregationBuilder {
+public abstract class AggregationBuilder implements NamedWriteable, ToXContentFragment, BaseAggregationBuilder {
 
     protected final String name;
     protected AggregatorFactories.Builder factoriesBuilder = AggregatorFactories.builder();
@@ -137,8 +135,8 @@ public abstract class AggregationBuilder
      */
     static AggregationBuilder rewriteAggregation(AggregationBuilder original, QueryRewriteContext context) throws IOException {
         AggregationBuilder builder = original;
-        for (AggregationBuilder rewrittenBuilder = builder.rewrite(context); rewrittenBuilder != builder;
-             rewrittenBuilder = builder.rewrite(context)) {
+        for (AggregationBuilder rewrittenBuilder = builder.rewrite(context); rewrittenBuilder != builder; rewrittenBuilder = builder
+            .rewrite(context)) {
             builder = rewrittenBuilder;
         }
         return builder;

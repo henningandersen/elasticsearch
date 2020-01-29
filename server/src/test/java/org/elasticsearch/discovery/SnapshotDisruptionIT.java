@@ -63,9 +63,7 @@ public class SnapshotDisruptionIT extends ESIntegTestCase {
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
-        return Settings.builder().put(super.nodeSettings(nodeOrdinal))
-            .put(AbstractDisruptionTestCase.DEFAULT_SETTINGS)
-            .build();
+        return Settings.builder().put(super.nodeSettings(nodeOrdinal)).put(AbstractDisruptionTestCase.DEFAULT_SETTINGS).build();
     }
 
     public void testDisruptionOnSnapshotInitialization() throws Exception {
@@ -77,18 +75,35 @@ public class SnapshotDisruptionIT extends ESIntegTestCase {
         createRandomIndex(idxName);
 
         logger.info("-->  creating repository");
-        assertAcked(client().admin().cluster().preparePutRepository("test-repo")
-            .setType("fs").setSettings(Settings.builder()
-                .put("location", randomRepoPath())
-                .put("compress", randomBoolean())
-                .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)));
+        assertAcked(
+            client().admin()
+                .cluster()
+                .preparePutRepository("test-repo")
+                .setType("fs")
+                .setSettings(
+                    Settings.builder()
+                        .put("location", randomRepoPath())
+                        .put("compress", randomBoolean())
+                        .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)
+                )
+        );
 
         // Writing incompatible snapshot can cause this test to fail due to a race condition in repo initialization
         // by the current master and the former master. It is not causing any issues in real life scenario, but
         // might make this test to fail. We are going to complete initialization of the snapshot to prevent this failures.
         logger.info("-->  initializing the repository");
-        assertEquals(SnapshotState.SUCCESS, client().admin().cluster().prepareCreateSnapshot("test-repo", "test-snap-1")
-            .setWaitForCompletion(true).setIncludeGlobalState(true).setIndices().get().getSnapshotInfo().state());
+        assertEquals(
+            SnapshotState.SUCCESS,
+            client().admin()
+                .cluster()
+                .prepareCreateSnapshot("test-repo", "test-snap-1")
+                .setWaitForCompletion(true)
+                .setIncludeGlobalState(true)
+                .setIndices()
+                .get()
+                .getSnapshotInfo()
+                .state()
+        );
 
         final String masterNode1 = internalCluster().getMasterName();
         Set<String> otherNodes = new HashSet<>();
@@ -96,9 +111,10 @@ public class SnapshotDisruptionIT extends ESIntegTestCase {
         otherNodes.remove(masterNode1);
         otherNodes.add(dataNode);
 
-        NetworkDisruption networkDisruption =
-            new NetworkDisruption(new NetworkDisruption.TwoPartitions(Collections.singleton(masterNode1), otherNodes),
-                new NetworkDisruption.NetworkUnresponsive());
+        NetworkDisruption networkDisruption = new NetworkDisruption(
+            new NetworkDisruption.TwoPartitions(Collections.singleton(masterNode1), otherNodes),
+            new NetworkDisruption.NetworkUnresponsive()
+        );
         internalCluster().setDisruptionScheme(networkDisruption);
 
         ClusterService clusterService = internalCluster().clusterService(masterNode1);
@@ -120,8 +136,12 @@ public class SnapshotDisruptionIT extends ESIntegTestCase {
         });
 
         logger.info("--> starting snapshot");
-        ActionFuture<CreateSnapshotResponse> future = client(masterNode1).admin().cluster()
-            .prepareCreateSnapshot("test-repo", "test-snap-2").setWaitForCompletion(false).setIndices(idxName).execute();
+        ActionFuture<CreateSnapshotResponse> future = client(masterNode1).admin()
+            .cluster()
+            .prepareCreateSnapshot("test-repo", "test-snap-2")
+            .setWaitForCompletion(false)
+            .setIndices(idxName)
+            .execute();
 
         logger.info("--> waiting for disruption to start");
         assertTrue(disruptionStarted.await(1, TimeUnit.MINUTES));
@@ -175,8 +195,11 @@ public class SnapshotDisruptionIT extends ESIntegTestCase {
     }
 
     private void assertSnapshotExists(String repository, String snapshot) {
-        GetSnapshotsResponse snapshotsStatusResponse = dataNodeClient().admin().cluster().prepareGetSnapshots(repository)
-                .setSnapshots(snapshot).get();
+        GetSnapshotsResponse snapshotsStatusResponse = dataNodeClient().admin()
+            .cluster()
+            .prepareGetSnapshots(repository)
+            .setSnapshots(snapshot)
+            .get();
         SnapshotInfo snapshotInfo = snapshotsStatusResponse.getSnapshots(repository).get(0);
         assertEquals(SnapshotState.SUCCESS, snapshotInfo.state());
         assertEquals(snapshotInfo.totalShards(), snapshotInfo.successfulShards());
@@ -185,8 +208,7 @@ public class SnapshotDisruptionIT extends ESIntegTestCase {
     }
 
     private void createRandomIndex(String idxName) throws InterruptedException {
-        assertAcked(prepareCreate(idxName, 0, Settings.builder().put("number_of_shards", between(1, 20))
-            .put("number_of_replicas", 0)));
+        assertAcked(prepareCreate(idxName, 0, Settings.builder().put("number_of_shards", between(1, 20)).put("number_of_replicas", 0)));
         logger.info("--> indexing some data");
         final int numdocs = randomIntBetween(10, 100);
         IndexRequestBuilder[] builders = new IndexRequestBuilder[numdocs];

@@ -39,7 +39,6 @@ import static org.elasticsearch.ElasticsearchException.REST_EXCEPTION_SKIP_STACK
 import static org.elasticsearch.ElasticsearchException.REST_EXCEPTION_SKIP_STACK_TRACE_DEFAULT;
 import static org.elasticsearch.common.xcontent.XContentParserUtils.ensureExpectedToken;
 
-
 public class BytesRestResponse extends RestResponse {
 
     public static final String TEXT_CONTENT_TYPE = "text/plain; charset=UTF-8";
@@ -122,10 +121,13 @@ public class BytesRestResponse extends RestResponse {
     private static XContentBuilder build(RestChannel channel, RestStatus status, Exception e) throws IOException {
         ToXContent.Params params = channel.request();
         if (params.paramAsBoolean("error_trace", !REST_EXCEPTION_SKIP_STACK_TRACE_DEFAULT)) {
-            params =  new ToXContent.DelegatingMapParams(singletonMap(REST_EXCEPTION_SKIP_STACK_TRACE, "false"), params);
+            params = new ToXContent.DelegatingMapParams(singletonMap(REST_EXCEPTION_SKIP_STACK_TRACE, "false"), params);
         } else if (e != null) {
-            Supplier<?> messageSupplier = () -> new ParameterizedMessage("path: {}, params: {}",
-                    channel.request().rawPath(), channel.request().params());
+            Supplier<?> messageSupplier = () -> new ParameterizedMessage(
+                "path: {}, params: {}",
+                channel.request().rawPath(),
+                channel.request().params()
+            );
 
             if (status.getStatus() < 500) {
                 SUPPRESSED_ERROR_LOGGER.debug(messageSupplier, e);
@@ -142,10 +144,10 @@ public class BytesRestResponse extends RestResponse {
     }
 
     static BytesRestResponse createSimpleErrorResponse(RestChannel channel, RestStatus status, String errorMessage) throws IOException {
-        return new BytesRestResponse(status, channel.newErrorBuilder().startObject()
-            .field("error", errorMessage)
-            .field("status", status.getStatus())
-            .endObject());
+        return new BytesRestResponse(
+            status,
+            channel.newErrorBuilder().startObject().field("error", errorMessage).field("status", status.getStatus()).endObject()
+        );
     }
 
     public static ElasticsearchStatusException errorFromXContent(XContentParser parser) throws IOException {

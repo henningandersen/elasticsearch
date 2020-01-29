@@ -68,7 +68,7 @@ public class BinaryDVAtomicFieldData implements AtomicFieldData {
     public long ramBytesUsed() {
         return 0; // unknown
     }
-    
+
     @Override
     public Collection<Accountable> getChildResources() {
         return Collections.emptyList();

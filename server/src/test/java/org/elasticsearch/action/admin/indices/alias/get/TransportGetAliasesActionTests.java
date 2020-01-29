@@ -34,8 +34,11 @@ public class TransportGetAliasesActionTests extends ESTestCase {
         ImmutableOpenMap<String, List<AliasMetaData>> aliases = ImmutableOpenMap.<String, List<AliasMetaData>>builder()
             .fPut("b", Collections.singletonList(new AliasMetaData.Builder("y").build()))
             .build();
-        ImmutableOpenMap<String, List<AliasMetaData>> result =
-            TransportGetAliasesAction.postProcess(request, new String[]{"a", "b", "c"}, aliases);
+        ImmutableOpenMap<String, List<AliasMetaData>> result = TransportGetAliasesAction.postProcess(
+            request,
+            new String[] { "a", "b", "c" },
+            aliases
+        );
         assertThat(result.size(), equalTo(3));
         assertThat(result.get("a").size(), equalTo(0));
         assertThat(result.get("b").size(), equalTo(1));
@@ -46,7 +49,7 @@ public class TransportGetAliasesActionTests extends ESTestCase {
         aliases = ImmutableOpenMap.<String, List<AliasMetaData>>builder()
             .fPut("b", Collections.singletonList(new AliasMetaData.Builder("y").build()))
             .build();
-        result = TransportGetAliasesAction.postProcess(request, new String[]{"a", "b", "c"}, aliases);
+        result = TransportGetAliasesAction.postProcess(request, new String[] { "a", "b", "c" }, aliases);
         assertThat(result.size(), equalTo(3));
         assertThat(result.get("a").size(), equalTo(0));
         assertThat(result.get("b").size(), equalTo(1));
@@ -56,7 +59,7 @@ public class TransportGetAliasesActionTests extends ESTestCase {
         aliases = ImmutableOpenMap.<String, List<AliasMetaData>>builder()
             .fPut("b", Collections.singletonList(new AliasMetaData.Builder("y").build()))
             .build();
-        result = TransportGetAliasesAction.postProcess(request, new String[]{"a", "b", "c"}, aliases);
+        result = TransportGetAliasesAction.postProcess(request, new String[] { "a", "b", "c" }, aliases);
         assertThat(result.size(), equalTo(1));
         assertThat(result.get("b").size(), equalTo(1));
     }

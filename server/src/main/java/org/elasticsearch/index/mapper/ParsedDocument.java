@@ -45,14 +45,16 @@ public class ParsedDocument {
 
     private Mapping dynamicMappingsUpdate;
 
-    public ParsedDocument(Field version,
-                          SeqNoFieldMapper.SequenceIDFields seqID,
-                          String id,
-                          String routing,
-                          List<Document> documents,
-                          BytesReference source,
-                          XContentType xContentType,
-                          Mapping dynamicMappingsUpdate) {
+    public ParsedDocument(
+        Field version,
+        SeqNoFieldMapper.SequenceIDFields seqID,
+        String id,
+        String routing,
+        List<Document> documents,
+        BytesReference source,
+        XContentType xContentType,
+        Mapping dynamicMappingsUpdate
+    ) {
         this.version = version;
         this.seqID = seqID;
         this.id = id;

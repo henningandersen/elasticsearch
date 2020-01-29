@@ -34,10 +34,6 @@ import org.elasticsearch.common.CheckedConsumer;
 import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.index.mapper.NumberFieldMapper;
 import org.elasticsearch.search.aggregations.AggregatorTestCase;
-import org.elasticsearch.search.aggregations.metrics.InternalTDigestPercentiles;
-import org.elasticsearch.search.aggregations.metrics.PercentilesAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.PercentilesMethod;
-import org.elasticsearch.search.aggregations.metrics.TDigestPercentilesAggregator;
 import org.elasticsearch.search.aggregations.support.AggregationInspectionHelper;
 
 import java.io.IOException;
@@ -142,8 +138,11 @@ public class TDigestPercentilesAggregatorTests extends AggregatorTestCase {
         });
     }
 
-    private void testCase(Query query, CheckedConsumer<RandomIndexWriter, IOException> buildIndex,
-                          Consumer<InternalTDigestPercentiles> verify) throws IOException {
+    private void testCase(
+        Query query,
+        CheckedConsumer<RandomIndexWriter, IOException> buildIndex,
+        Consumer<InternalTDigestPercentiles> verify
+    ) throws IOException {
         try (Directory directory = newDirectory()) {
             try (RandomIndexWriter indexWriter = new RandomIndexWriter(random(), directory)) {
                 buildIndex.accept(indexWriter);
@@ -152,8 +151,8 @@ public class TDigestPercentilesAggregatorTests extends AggregatorTestCase {
             try (IndexReader indexReader = DirectoryReader.open(directory)) {
                 IndexSearcher indexSearcher = newSearcher(indexReader, true, true);
 
-                PercentilesAggregationBuilder builder =
-                        new PercentilesAggregationBuilder("test").field("number").method(PercentilesMethod.TDIGEST);
+                PercentilesAggregationBuilder builder = new PercentilesAggregationBuilder("test").field("number")
+                    .method(PercentilesMethod.TDIGEST);
 
                 MappedFieldType fieldType = new NumberFieldMapper.NumberFieldType(NumberFieldMapper.NumberType.LONG);
                 fieldType.setName("number");

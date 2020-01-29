@@ -50,8 +50,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class SignificantTextAggregatorFactory extends AggregatorFactory
-        implements Releasable {
+public class SignificantTextAggregatorFactory extends AggregatorFactory implements Releasable {
 
     private final IncludeExclude includeExclude;
     private String indexedFieldName;
@@ -66,39 +65,36 @@ public class SignificantTextAggregatorFactory extends AggregatorFactory
     private final DocValueFormat format = DocValueFormat.RAW;
     private final boolean filterDuplicateText;
 
-    public SignificantTextAggregatorFactory(String name,
-                                                IncludeExclude includeExclude,
-                                                QueryBuilder filterBuilder,
-                                                TermsAggregator.BucketCountThresholds bucketCountThresholds,
-                                                SignificanceHeuristic significanceHeuristic,
-                                                QueryShardContext queryShardContext,
-                                                AggregatorFactory parent,
-                                                AggregatorFactories.Builder subFactoriesBuilder,
-                                                String fieldName,
-                                                String [] sourceFieldNames,
-                                                boolean filterDuplicateText,
-                                                Map<String, Object> metaData) throws IOException {
+    public SignificantTextAggregatorFactory(
+        String name,
+        IncludeExclude includeExclude,
+        QueryBuilder filterBuilder,
+        TermsAggregator.BucketCountThresholds bucketCountThresholds,
+        SignificanceHeuristic significanceHeuristic,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        String fieldName,
+        String[] sourceFieldNames,
+        boolean filterDuplicateText,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, queryShardContext, parent, subFactoriesBuilder, metaData);
 
         // Note that if the field is unmapped (its field type is null), we don't fail,
         // and just use the given field name as a placeholder.
         this.fieldType = queryShardContext.fieldMapper(fieldName);
         this.indexedFieldName = fieldType != null ? fieldType.name() : fieldName;
-        this.sourceFieldNames = sourceFieldNames == null
-            ? new String[] { indexedFieldName }
-            : sourceFieldNames;
+        this.sourceFieldNames = sourceFieldNames == null ? new String[] { indexedFieldName } : sourceFieldNames;
 
         this.includeExclude = includeExclude;
-        this.filter = filterBuilder == null
-                ? null
-                : filterBuilder.toQuery(queryShardContext);
+        this.filter = filterBuilder == null ? null : filterBuilder.toQuery(queryShardContext);
         this.filterDuplicateText = filterDuplicateText;
         IndexSearcher searcher = queryShardContext.searcher();
         // Important - need to use the doc count that includes deleted docs
         // or we have this issue: https://github.com/elastic/elasticsearch/issues/7951
-        this.supersetNumDocs = filter == null
-                ? searcher.getIndexReader().maxDoc()
-                : searcher.count(filter);
+        this.supersetNumDocs = filter == null ? searcher.getIndexReader().maxDoc() : searcher.count(filter);
         this.bucketCountThresholds = bucketCountThresholds;
         this.significanceHeuristic = significanceHeuristic;
     }
@@ -138,10 +134,7 @@ public class SignificantTextAggregatorFactory extends AggregatorFactory
         }
         // otherwise do it the naive way
         if (filter != null) {
-            query = new BooleanQuery.Builder()
-                    .add(query, Occur.FILTER)
-                    .add(filter, Occur.FILTER)
-                    .build();
+            query = new BooleanQuery.Builder().add(query, Occur.FILTER).add(filter, Occur.FILTER).build();
         }
         return queryShardContext.searcher().count(query);
     }
@@ -150,7 +143,6 @@ public class SignificantTextAggregatorFactory extends AggregatorFactory
         String value = format.format(termBytes).toString();
         return getBackgroundFrequency(value);
     }
-
 
     @Override
     public void close() {
@@ -164,9 +156,13 @@ public class SignificantTextAggregatorFactory extends AggregatorFactory
     }
 
     @Override
-    protected Aggregator createInternal(SearchContext searchContext, Aggregator parent, boolean collectsFromSingleBucket,
-                                        List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData)
-            throws IOException {
+    protected Aggregator createInternal(
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         if (collectsFromSingleBucket == false) {
             return asMultiBucketAggregator(this, searchContext, parent);
         }
@@ -186,13 +182,25 @@ public class SignificantTextAggregatorFactory extends AggregatorFactory
             bucketCountThresholds.setShardSize(2 * BucketUtils.suggestShardSideQueueSize(bucketCountThresholds.getRequiredSize()));
         }
 
-//        TODO - need to check with mapping that this is indeed a text field....
+        // TODO - need to check with mapping that this is indeed a text field....
 
-        IncludeExclude.StringFilter incExcFilter = includeExclude == null ? null:
-            includeExclude.convertToStringFilter(DocValueFormat.RAW);
+        IncludeExclude.StringFilter incExcFilter = includeExclude == null ? null : includeExclude.convertToStringFilter(DocValueFormat.RAW);
 
-        return new SignificantTextAggregator(name, factories, searchContext, parent, pipelineAggregators, bucketCountThresholds,
-                incExcFilter, significanceHeuristic, this, indexedFieldName, sourceFieldNames, filterDuplicateText, metaData);
+        return new SignificantTextAggregator(
+            name,
+            factories,
+            searchContext,
+            parent,
+            pipelineAggregators,
+            bucketCountThresholds,
+            incExcFilter,
+            significanceHeuristic,
+            this,
+            indexedFieldName,
+            sourceFieldNames,
+            filterDuplicateText,
+            metaData
+        );
 
     }
 }

@@ -160,7 +160,7 @@ public class ClusterChangedEvent {
             for (ObjectObjectCursor<String, MetaData.Custom> currentCustomMetaData : currentCustoms) {
                 // new custom md added or existing custom md changed
                 if (previousCustoms.containsKey(currentCustomMetaData.key) == false
-                        || currentCustomMetaData.value.equals(previousCustoms.get(currentCustomMetaData.key)) == false) {
+                    || currentCustomMetaData.value.equals(previousCustoms.get(currentCustomMetaData.key)) == false) {
                     result.add(currentCustomMetaData.key);
                 }
             }
@@ -248,7 +248,7 @@ public class ClusterChangedEvent {
     private List<Index> indicesDeletedFromClusterState() {
         // If the new cluster state has a new cluster UUID, the likely scenario is that a node was elected
         // master that has had its data directory wiped out, in which case we don't want to delete the indices and lose data;
-        // rather we want to import them as dangling indices instead.  So we check here if the cluster UUID differs from the previous
+        // rather we want to import them as dangling indices instead. So we check here if the cluster UUID differs from the previous
         // cluster UUID, in which case, we don't want to delete indices that the master erroneously believes shouldn't exist.
         // See test DiscoveryWithServiceDisruptionsIT.testIndicesDeleted()
         // See discussion on https://github.com/elastic/elasticsearch/pull/9952 and
@@ -271,10 +271,10 @@ public class ClusterChangedEvent {
     }
 
     private List<Index> indicesDeletedFromTombstones() {
-        // We look at the full tombstones list to see which indices need to be deleted.  In the case of
+        // We look at the full tombstones list to see which indices need to be deleted. In the case of
         // a valid previous cluster state, indicesDeletedFromClusterState() will be used to get the deleted
-        // list, so a diff doesn't make sense here.  When a node (re)joins the cluster, its possible for it
-        // to re-process the same deletes or process deletes about indices it never knew about.  This is not
+        // list, so a diff doesn't make sense here. When a node (re)joins the cluster, its possible for it
+        // to re-process the same deletes or process deletes about indices it never knew about. This is not
         // an issue because there are safeguards in place in the delete store operation in case the index
         // folder doesn't exist on the file system.
         List<IndexGraveyard.Tombstone> tombstones = state.metaData().indexGraveyard().getTombstones();

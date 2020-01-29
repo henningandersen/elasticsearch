@@ -40,8 +40,10 @@ import java.util.stream.Collectors;
 
 public class ConditionalProcessor extends AbstractProcessor implements WrappingProcessor {
 
-    private static final Map<String, String> DEPRECATIONS =
-            Map.of("_type", "[types removal] Looking up doc types [_type] in scripts is deprecated.");
+    private static final Map<String, String> DEPRECATIONS = Map.of(
+        "_type",
+        "[types removal] Looking up doc types [_type] in scripts is deprecated."
+    );
 
     static final String TYPE = "conditional";
 
@@ -92,10 +94,11 @@ public class ConditionalProcessor extends AbstractProcessor implements WrappingP
     }
 
     boolean evaluate(IngestDocument ingestDocument) {
-        IngestConditionalScript script =
-            scriptService.compile(condition, IngestConditionalScript.CONTEXT).newInstance(condition.getParams());
-        return script.execute(new UnmodifiableIngestData(
-                new DeprecationMap(ingestDocument.getSourceAndMetadata(), DEPRECATIONS, "conditional-processor")));
+        IngestConditionalScript script = scriptService.compile(condition, IngestConditionalScript.CONTEXT)
+            .newInstance(condition.getParams());
+        return script.execute(
+            new UnmodifiableIngestData(new DeprecationMap(ingestDocument.getSourceAndMetadata(), DEPRECATIONS, "conditional-processor"))
+        );
     }
 
     public Processor getInnerProcessor() {
@@ -193,33 +196,32 @@ public class ConditionalProcessor extends AbstractProcessor implements WrappingP
 
         @Override
         public Set<Entry<String, Object>> entrySet() {
-            return data.entrySet().stream().map(entry ->
-                new Entry<String, Object>() {
-                    @Override
-                    public String getKey() {
-                        return entry.getKey();
-                    }
+            return data.entrySet().stream().map(entry -> new Entry<String, Object>() {
+                @Override
+                public String getKey() {
+                    return entry.getKey();
+                }
 
-                    @Override
-                    public Object getValue() {
-                        return wrapUnmodifiable(entry.getValue());
-                    }
+                @Override
+                public Object getValue() {
+                    return wrapUnmodifiable(entry.getValue());
+                }
 
-                    @Override
-                    public Object setValue(final Object value) {
-                        throw unmodifiableException();
-                    }
+                @Override
+                public Object setValue(final Object value) {
+                    throw unmodifiableException();
+                }
 
-                    @Override
-                    public boolean equals(final Object o) {
-                        return entry.equals(o);
-                    }
+                @Override
+                public boolean equals(final Object o) {
+                    return entry.equals(o);
+                }
 
-                    @Override
-                    public int hashCode() {
-                        return entry.hashCode();
-                    }
-                }).collect(Collectors.toSet());
+                @Override
+                public int hashCode() {
+                    return entry.hashCode();
+                }
+            }).collect(Collectors.toSet());
         }
     }
 

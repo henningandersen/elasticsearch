@@ -80,8 +80,13 @@ public final class XIntervals {
         MultiTermIntervalsSource(CompiledAutomaton automaton, int maxExpansions, String pattern) {
             this.automaton = automaton;
             if (maxExpansions > BooleanQuery.getMaxClauseCount()) {
-                throw new IllegalArgumentException("maxExpansions [" + maxExpansions
-                    + "] cannot be greater than BooleanQuery.getMaxClauseCount [" + BooleanQuery.getMaxClauseCount() + "]");
+                throw new IllegalArgumentException(
+                    "maxExpansions ["
+                        + maxExpansions
+                        + "] cannot be greater than BooleanQuery.getMaxClauseCount ["
+                        + BooleanQuery.getMaxClauseCount()
+                        + "]"
+                );
             }
             this.maxExpansions = maxExpansions;
             this.pattern = pattern;
@@ -100,8 +105,9 @@ public final class XIntervals {
             while ((term = te.next()) != null) {
                 subSources.add(TermIntervalsSource.intervals(term, te));
                 if (++count > maxExpansions) {
-                    throw new IllegalStateException("Automaton [" + this.pattern + "] expanded to too many terms (limit "
-                        + maxExpansions + ")");
+                    throw new IllegalStateException(
+                        "Automaton [" + this.pattern + "] expanded to too many terms (limit " + maxExpansions + ")"
+                    );
                 }
             }
             if (subSources.size() == 0) {
@@ -152,9 +158,9 @@ public final class XIntervals {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             MultiTermIntervalsSource that = (MultiTermIntervalsSource) o;
-            return maxExpansions == that.maxExpansions &&
-                Objects.equals(automaton, that.automaton) &&
-                Objects.equals(pattern, that.pattern);
+            return maxExpansions == that.maxExpansions
+                && Objects.equals(automaton, that.automaton)
+                && Objects.equals(pattern, that.pattern);
         }
 
         @Override
@@ -243,8 +249,7 @@ public final class XIntervals {
             return w1;
         }
 
-        private DisiWrapper topList(DisiWrapper list, DisiWrapper[] heap,
-                                    int size, int i) {
+        private DisiWrapper topList(DisiWrapper list, DisiWrapper[] heap, int size, int i) {
             final DisiWrapper w = heap[i];
             if (w.doc == list.doc) {
                 list = prepend(w, list);
@@ -593,11 +598,11 @@ public final class XIntervals {
         @Override
         public IntervalIterator intervals(String field, LeafReaderContext ctx) throws IOException {
             Terms terms = ctx.reader().terms(field);
-            if (terms == null)
-                return null;
+            if (terms == null) return null;
             if (terms.hasPositions() == false) {
-                throw new IllegalArgumentException("Cannot create an IntervalIterator over field " + field
-                    + " because it has no indexed positions");
+                throw new IllegalArgumentException(
+                    "Cannot create an IntervalIterator over field " + field + " because it has no indexed positions"
+                );
             }
             TermsEnum te = terms.iterator();
             if (te.seekExact(term) == false) {
@@ -654,8 +659,7 @@ public final class XIntervals {
 
                 @Override
                 public int nextInterval() throws IOException {
-                    if (upto <= 0)
-                        return pos = NO_MORE_INTERVALS;
+                    if (upto <= 0) return pos = NO_MORE_INTERVALS;
                     upto--;
                     return pos = pe.nextPosition();
                 }
@@ -669,8 +673,7 @@ public final class XIntervals {
                     if (pe.docID() == NO_MORE_DOCS) {
                         upto = -1;
                         pos = NO_MORE_INTERVALS;
-                    }
-                    else {
+                    } else {
                         upto = pe.freq();
                         pos = -1;
                     }
@@ -686,11 +689,11 @@ public final class XIntervals {
         @Override
         public MatchesIterator matches(String field, LeafReaderContext ctx, int doc) throws IOException {
             Terms terms = ctx.reader().terms(field);
-            if (terms == null)
-                return null;
+            if (terms == null) return null;
             if (terms.hasPositions() == false) {
-                throw new IllegalArgumentException("Cannot create an IntervalIterator over field " + field
-                    + " because it has no indexed positions");
+                throw new IllegalArgumentException(
+                    "Cannot create an IntervalIterator over field " + field + " because it has no indexed positions"
+                );
             }
             TermsEnum te = terms.iterator();
             if (te.seekExact(term) == false) {

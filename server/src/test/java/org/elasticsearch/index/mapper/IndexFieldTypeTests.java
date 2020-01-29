@@ -63,8 +63,10 @@ public class IndexFieldTypeTests extends FieldTypeTestCase {
         ft.setName("field");
         ft.setIndexOptions(IndexOptions.DOCS);
 
-        QueryShardException e = expectThrows(QueryShardException.class, () ->
-            assertEquals(new MatchAllDocsQuery(), ft.regexpQuery("ind.x", 0, 10, null, createContext())));
+        QueryShardException e = expectThrows(
+            QueryShardException.class,
+            () -> assertEquals(new MatchAllDocsQuery(), ft.regexpQuery("ind.x", 0, 10, null, createContext()))
+        );
         assertThat(e.getMessage(), containsString("Can only use regexp queries on keyword and text fields"));
     }
 
@@ -77,7 +79,22 @@ public class IndexFieldTypeTests extends FieldTypeTestCase {
         IndexSettings indexSettings = new IndexSettings(indexMetaData, Settings.EMPTY);
 
         Predicate<String> indexNameMatcher = pattern -> Regex.simpleMatch(pattern, "index");
-        return new QueryShardContext(0, indexSettings, null, null, null, null, null, null, xContentRegistry(), writableRegistry(),
-            null, null, System::currentTimeMillis, null, indexNameMatcher);
+        return new QueryShardContext(
+            0,
+            indexSettings,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            xContentRegistry(),
+            writableRegistry(),
+            null,
+            null,
+            System::currentTimeMillis,
+            null,
+            indexNameMatcher
+        );
     }
 }

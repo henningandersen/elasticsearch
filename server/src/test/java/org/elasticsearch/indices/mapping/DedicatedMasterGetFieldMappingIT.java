@@ -31,9 +31,7 @@ public class DedicatedMasterGetFieldMappingIT extends SimpleGetFieldMappingsIT {
 
     @Before
     public void before1() throws Exception {
-        Settings settings = Settings.builder()
-                .put(Node.NODE_DATA_SETTING.getKey(), false)
-                .build();
+        Settings settings = Settings.builder().put(Node.NODE_DATA_SETTING.getKey(), false).build();
         internalCluster().startNodes(settings, Settings.EMPTY);
     }
 

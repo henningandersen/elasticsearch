@@ -43,19 +43,30 @@ import org.elasticsearch.transport.TransportService;
 
 import java.io.IOException;
 
-
 public class TransportGetSettingsAction extends TransportMasterNodeReadAction<GetSettingsRequest, GetSettingsResponse> {
 
     private final SettingsFilter settingsFilter;
     private final IndexScopedSettings indexScopedSettings;
 
-
     @Inject
-    public TransportGetSettingsAction(TransportService transportService, ClusterService clusterService,
-                                      ThreadPool threadPool, SettingsFilter settingsFilter, ActionFilters actionFilters,
-                                      IndexNameExpressionResolver indexNameExpressionResolver, IndexScopedSettings indexedScopedSettings) {
-        super(GetSettingsAction.NAME, transportService, clusterService, threadPool, actionFilters, GetSettingsRequest::new,
-            indexNameExpressionResolver);
+    public TransportGetSettingsAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        SettingsFilter settingsFilter,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        IndexScopedSettings indexedScopedSettings
+    ) {
+        super(
+            GetSettingsAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            GetSettingsRequest::new,
+            indexNameExpressionResolver
+        );
         this.settingsFilter = settingsFilter;
         this.indexScopedSettings = indexedScopedSettings;
     }
@@ -68,10 +79,9 @@ public class TransportGetSettingsAction extends TransportMasterNodeReadAction<Ge
 
     @Override
     protected ClusterBlockException checkBlock(GetSettingsRequest request, ClusterState state) {
-        return state.blocks().indicesBlockedException(ClusterBlockLevel.METADATA_READ,
-            indexNameExpressionResolver.concreteIndexNames(state, request));
+        return state.blocks()
+            .indicesBlockedException(ClusterBlockLevel.METADATA_READ, indexNameExpressionResolver.concreteIndexNames(state, request));
     }
-
 
     @Override
     protected GetSettingsResponse read(StreamInput in) throws IOException {
@@ -83,8 +93,12 @@ public class TransportGetSettingsAction extends TransportMasterNodeReadAction<Ge
     }
 
     @Override
-    protected void masterOperation(Task task, GetSettingsRequest request, ClusterState state,
-                                   ActionListener<GetSettingsResponse> listener) {
+    protected void masterOperation(
+        Task task,
+        GetSettingsRequest request,
+        ClusterState state,
+        ActionListener<GetSettingsResponse> listener
+    ) {
         Index[] concreteIndices = indexNameExpressionResolver.concreteIndices(state, request);
         ImmutableOpenMap.Builder<String, Settings> indexToSettingsBuilder = ImmutableOpenMap.builder();
         ImmutableOpenMap.Builder<String, Settings> indexToDefaultSettingsBuilder = ImmutableOpenMap.builder();

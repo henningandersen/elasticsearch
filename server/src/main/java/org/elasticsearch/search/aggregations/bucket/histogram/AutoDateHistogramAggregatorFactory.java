@@ -35,52 +35,70 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public final class AutoDateHistogramAggregatorFactory
-        extends ValuesSourceAggregatorFactory<ValuesSource.Numeric> {
+public final class AutoDateHistogramAggregatorFactory extends ValuesSourceAggregatorFactory<ValuesSource.Numeric> {
 
     private final int numBuckets;
     private RoundingInfo[] roundingInfos;
 
-    public AutoDateHistogramAggregatorFactory(String name,
-                                              ValuesSourceConfig<Numeric> config,
-                                              int numBuckets,
-                                              RoundingInfo[] roundingInfos,
-                                              QueryShardContext queryShardContext,
-                                              AggregatorFactory parent,
-                                              AggregatorFactories.Builder subFactoriesBuilder,
-                                              Map<String, Object> metaData) throws IOException {
+    public AutoDateHistogramAggregatorFactory(
+        String name,
+        ValuesSourceConfig<Numeric> config,
+        int numBuckets,
+        RoundingInfo[] roundingInfos,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.numBuckets = numBuckets;
         this.roundingInfos = roundingInfos;
     }
 
     @Override
-    protected Aggregator doCreateInternal(Numeric valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator doCreateInternal(
+        Numeric valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         if (collectsFromSingleBucket == false) {
             return asMultiBucketAggregator(this, searchContext, parent);
         }
         return createAggregator(valuesSource, searchContext, parent, pipelineAggregators, metaData);
     }
 
-    private Aggregator createAggregator(ValuesSource.Numeric valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
-        return new AutoDateHistogramAggregator(name, factories, numBuckets, roundingInfos,
-            valuesSource, config.format(), searchContext, parent, pipelineAggregators, metaData);
+    private Aggregator createAggregator(
+        ValuesSource.Numeric valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
+        return new AutoDateHistogramAggregator(
+            name,
+            factories,
+            numBuckets,
+            roundingInfos,
+            valuesSource,
+            config.format(),
+            searchContext,
+            parent,
+            pipelineAggregators,
+            metaData
+        );
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         return createAggregator(null, searchContext, parent, pipelineAggregators, metaData);
     }
 }

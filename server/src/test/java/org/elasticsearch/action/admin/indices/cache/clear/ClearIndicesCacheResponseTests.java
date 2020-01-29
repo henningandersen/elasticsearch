@@ -28,8 +28,12 @@ import java.util.List;
 public class ClearIndicesCacheResponseTests extends AbstractBroadcastResponseTestCase<ClearIndicesCacheResponse> {
 
     @Override
-    protected ClearIndicesCacheResponse createTestInstance(int totalShards, int successfulShards, int failedShards,
-                                                           List<DefaultShardOperationFailedException> failures) {
+    protected ClearIndicesCacheResponse createTestInstance(
+        int totalShards,
+        int successfulShards,
+        int failedShards,
+        List<DefaultShardOperationFailedException> failures
+    ) {
         return new ClearIndicesCacheResponse(totalShards, successfulShards, failedShards, failures);
     }
 

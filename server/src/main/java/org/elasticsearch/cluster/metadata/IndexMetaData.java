@@ -81,21 +81,51 @@ import static org.elasticsearch.common.settings.Settings.writeSettingsToStream;
 
 public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragment {
 
-    public static final ClusterBlock INDEX_READ_ONLY_BLOCK =
-        new ClusterBlock(5, "index read-only (api)", false, false, false,
-            RestStatus.FORBIDDEN, EnumSet.of(ClusterBlockLevel.WRITE, ClusterBlockLevel.METADATA_WRITE));
-    public static final ClusterBlock INDEX_READ_BLOCK =
-        new ClusterBlock(7, "index read (api)", false, false, false,
-            RestStatus.FORBIDDEN, EnumSet.of(ClusterBlockLevel.READ));
-    public static final ClusterBlock INDEX_WRITE_BLOCK =
-        new ClusterBlock(8, "index write (api)", false, false, false,
-            RestStatus.FORBIDDEN, EnumSet.of(ClusterBlockLevel.WRITE));
-    public static final ClusterBlock INDEX_METADATA_BLOCK =
-        new ClusterBlock(9, "index metadata (api)", false, false, false,
-            RestStatus.FORBIDDEN, EnumSet.of(ClusterBlockLevel.METADATA_WRITE, ClusterBlockLevel.METADATA_READ));
-    public static final ClusterBlock INDEX_READ_ONLY_ALLOW_DELETE_BLOCK =
-        new ClusterBlock(12, "index read-only / allow delete (api)", false, false,
-            true, RestStatus.FORBIDDEN, EnumSet.of(ClusterBlockLevel.METADATA_WRITE, ClusterBlockLevel.WRITE));
+    public static final ClusterBlock INDEX_READ_ONLY_BLOCK = new ClusterBlock(
+        5,
+        "index read-only (api)",
+        false,
+        false,
+        false,
+        RestStatus.FORBIDDEN,
+        EnumSet.of(ClusterBlockLevel.WRITE, ClusterBlockLevel.METADATA_WRITE)
+    );
+    public static final ClusterBlock INDEX_READ_BLOCK = new ClusterBlock(
+        7,
+        "index read (api)",
+        false,
+        false,
+        false,
+        RestStatus.FORBIDDEN,
+        EnumSet.of(ClusterBlockLevel.READ)
+    );
+    public static final ClusterBlock INDEX_WRITE_BLOCK = new ClusterBlock(
+        8,
+        "index write (api)",
+        false,
+        false,
+        false,
+        RestStatus.FORBIDDEN,
+        EnumSet.of(ClusterBlockLevel.WRITE)
+    );
+    public static final ClusterBlock INDEX_METADATA_BLOCK = new ClusterBlock(
+        9,
+        "index metadata (api)",
+        false,
+        false,
+        false,
+        RestStatus.FORBIDDEN,
+        EnumSet.of(ClusterBlockLevel.METADATA_WRITE, ClusterBlockLevel.METADATA_READ)
+    );
+    public static final ClusterBlock INDEX_READ_ONLY_ALLOW_DELETE_BLOCK = new ClusterBlock(
+        12,
+        "index read-only / allow delete (api)",
+        false,
+        false,
+        true,
+        RestStatus.FORBIDDEN,
+        EnumSet.of(ClusterBlockLevel.METADATA_WRITE, ClusterBlockLevel.WRITE)
+    );
 
     public enum State {
         OPEN((byte) 0),
@@ -147,12 +177,21 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
     public static final String SETTING_NUMBER_OF_SHARDS = "index.number_of_shards";
     public static final Setting<Integer> INDEX_NUMBER_OF_SHARDS_SETTING = buildNumberOfShardsSetting();
     public static final String SETTING_NUMBER_OF_REPLICAS = "index.number_of_replicas";
-    public static final Setting<Integer> INDEX_NUMBER_OF_REPLICAS_SETTING =
-        Setting.intSetting(SETTING_NUMBER_OF_REPLICAS, 1, 0, Property.Dynamic, Property.IndexScope);
+    public static final Setting<Integer> INDEX_NUMBER_OF_REPLICAS_SETTING = Setting.intSetting(
+        SETTING_NUMBER_OF_REPLICAS,
+        1,
+        0,
+        Property.Dynamic,
+        Property.IndexScope
+    );
 
     public static final String SETTING_ROUTING_PARTITION_SIZE = "index.routing_partition_size";
-    public static final Setting<Integer> INDEX_ROUTING_PARTITION_SIZE_SETTING =
-            Setting.intSetting(SETTING_ROUTING_PARTITION_SIZE, 1, 1, Property.IndexScope);
+    public static final Setting<Integer> INDEX_ROUTING_PARTITION_SIZE_SETTING = Setting.intSetting(
+        SETTING_ROUTING_PARTITION_SIZE,
+        1,
+        1,
+        Property.IndexScope
+    );
 
     public static final Setting<Integer> INDEX_NUMBER_OF_ROUTING_SHARDS_SETTING = Setting.intSetting(
         "index.number_of_routing_shards",
@@ -169,8 +208,9 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
             public void validate(final Integer numRoutingShards, final Map<Setting<?>, Object> settings) {
                 int numShards = (int) settings.get(INDEX_NUMBER_OF_SHARDS_SETTING);
                 if (numRoutingShards < numShards) {
-                    throw new IllegalArgumentException("index.number_of_routing_shards [" + numRoutingShards
-                        + "] must be >= index.number_of_shards [" + numShards + "]");
+                    throw new IllegalArgumentException(
+                        "index.number_of_routing_shards [" + numRoutingShards + "] must be >= index.number_of_shards [" + numShards + "]"
+                    );
                 }
                 getRoutingFactor(numShards, numRoutingShards);
             }
@@ -182,34 +222,59 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
             }
 
         },
-        Property.IndexScope);
+        Property.IndexScope
+    );
 
     public static final String SETTING_AUTO_EXPAND_REPLICAS = "index.auto_expand_replicas";
     public static final Setting<AutoExpandReplicas> INDEX_AUTO_EXPAND_REPLICAS_SETTING = AutoExpandReplicas.SETTING;
     public static final String SETTING_READ_ONLY = "index.blocks.read_only";
-    public static final Setting<Boolean> INDEX_READ_ONLY_SETTING =
-        Setting.boolSetting(SETTING_READ_ONLY, false, Property.Dynamic, Property.IndexScope);
+    public static final Setting<Boolean> INDEX_READ_ONLY_SETTING = Setting.boolSetting(
+        SETTING_READ_ONLY,
+        false,
+        Property.Dynamic,
+        Property.IndexScope
+    );
 
     public static final String SETTING_BLOCKS_READ = "index.blocks.read";
-    public static final Setting<Boolean> INDEX_BLOCKS_READ_SETTING =
-        Setting.boolSetting(SETTING_BLOCKS_READ, false, Property.Dynamic, Property.IndexScope);
+    public static final Setting<Boolean> INDEX_BLOCKS_READ_SETTING = Setting.boolSetting(
+        SETTING_BLOCKS_READ,
+        false,
+        Property.Dynamic,
+        Property.IndexScope
+    );
 
     public static final String SETTING_BLOCKS_WRITE = "index.blocks.write";
-    public static final Setting<Boolean> INDEX_BLOCKS_WRITE_SETTING =
-        Setting.boolSetting(SETTING_BLOCKS_WRITE, false, Property.Dynamic, Property.IndexScope);
+    public static final Setting<Boolean> INDEX_BLOCKS_WRITE_SETTING = Setting.boolSetting(
+        SETTING_BLOCKS_WRITE,
+        false,
+        Property.Dynamic,
+        Property.IndexScope
+    );
 
     public static final String SETTING_BLOCKS_METADATA = "index.blocks.metadata";
-    public static final Setting<Boolean> INDEX_BLOCKS_METADATA_SETTING =
-        Setting.boolSetting(SETTING_BLOCKS_METADATA, false, Property.Dynamic, Property.IndexScope);
+    public static final Setting<Boolean> INDEX_BLOCKS_METADATA_SETTING = Setting.boolSetting(
+        SETTING_BLOCKS_METADATA,
+        false,
+        Property.Dynamic,
+        Property.IndexScope
+    );
 
     public static final String SETTING_READ_ONLY_ALLOW_DELETE = "index.blocks.read_only_allow_delete";
-    public static final Setting<Boolean> INDEX_BLOCKS_READ_ONLY_ALLOW_DELETE_SETTING =
-        Setting.boolSetting(SETTING_READ_ONLY_ALLOW_DELETE, false, Property.Dynamic, Property.IndexScope);
+    public static final Setting<Boolean> INDEX_BLOCKS_READ_ONLY_ALLOW_DELETE_SETTING = Setting.boolSetting(
+        SETTING_READ_ONLY_ALLOW_DELETE,
+        false,
+        Property.Dynamic,
+        Property.IndexScope
+    );
 
     public static final String SETTING_VERSION_CREATED = "index.version.created";
 
-    public static final Setting<Version> SETTING_INDEX_VERSION_CREATED =
-            Setting.versionSetting(SETTING_VERSION_CREATED, Version.V_EMPTY, Property.IndexScope, Property.PrivateIndex);
+    public static final Setting<Version> SETTING_INDEX_VERSION_CREATED = Setting.versionSetting(
+        SETTING_VERSION_CREATED,
+        Version.V_EMPTY,
+        Property.IndexScope,
+        Property.PrivateIndex
+    );
 
     public static final String SETTING_VERSION_CREATED_STRING = "index.version.created_string";
     public static final String SETTING_VERSION_UPGRADED = "index.version.upgraded";
@@ -221,54 +286,77 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
      */
     public static final String SETTING_INDEX_PROVIDED_NAME = "index.provided_name";
     public static final String SETTING_PRIORITY = "index.priority";
-    public static final Setting<Integer> INDEX_PRIORITY_SETTING =
-        Setting.intSetting("index.priority", 1, 0, Property.Dynamic, Property.IndexScope);
+    public static final Setting<Integer> INDEX_PRIORITY_SETTING = Setting.intSetting(
+        "index.priority",
+        1,
+        0,
+        Property.Dynamic,
+        Property.IndexScope
+    );
     public static final String SETTING_CREATION_DATE_STRING = "index.creation_date_string";
     public static final String SETTING_INDEX_UUID = "index.uuid";
     public static final String SETTING_DATA_PATH = "index.data_path";
-    public static final Setting<String> INDEX_DATA_PATH_SETTING =
-        new Setting<>(SETTING_DATA_PATH, "", Function.identity(), Property.IndexScope);
+    public static final Setting<String> INDEX_DATA_PATH_SETTING = new Setting<>(
+        SETTING_DATA_PATH,
+        "",
+        Function.identity(),
+        Property.IndexScope
+    );
     public static final String INDEX_UUID_NA_VALUE = "_na_";
 
     public static final String INDEX_ROUTING_REQUIRE_GROUP_PREFIX = "index.routing.allocation.require";
     public static final String INDEX_ROUTING_INCLUDE_GROUP_PREFIX = "index.routing.allocation.include";
     public static final String INDEX_ROUTING_EXCLUDE_GROUP_PREFIX = "index.routing.allocation.exclude";
-    public static final Setting.AffixSetting<String> INDEX_ROUTING_REQUIRE_GROUP_SETTING =
-        Setting.prefixKeySetting(INDEX_ROUTING_REQUIRE_GROUP_PREFIX + ".", key ->
-            Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.IndexScope));
-    public static final Setting.AffixSetting<String> INDEX_ROUTING_INCLUDE_GROUP_SETTING =
-        Setting.prefixKeySetting(INDEX_ROUTING_INCLUDE_GROUP_PREFIX + ".", key ->
-            Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.IndexScope));
-    public static final Setting.AffixSetting<String> INDEX_ROUTING_EXCLUDE_GROUP_SETTING =
-        Setting.prefixKeySetting(INDEX_ROUTING_EXCLUDE_GROUP_PREFIX + ".", key ->
-            Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.IndexScope));
-    public static final Setting.AffixSetting<String> INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING =
-        Setting.prefixKeySetting("index.routing.allocation.initial_recovery.", key -> Setting.simpleString(key));
-        // this is only setable internally not a registered setting!!
+    public static final Setting.AffixSetting<String> INDEX_ROUTING_REQUIRE_GROUP_SETTING = Setting.prefixKeySetting(
+        INDEX_ROUTING_REQUIRE_GROUP_PREFIX + ".",
+        key -> Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.IndexScope)
+    );
+    public static final Setting.AffixSetting<String> INDEX_ROUTING_INCLUDE_GROUP_SETTING = Setting.prefixKeySetting(
+        INDEX_ROUTING_INCLUDE_GROUP_PREFIX + ".",
+        key -> Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.IndexScope)
+    );
+    public static final Setting.AffixSetting<String> INDEX_ROUTING_EXCLUDE_GROUP_SETTING = Setting.prefixKeySetting(
+        INDEX_ROUTING_EXCLUDE_GROUP_PREFIX + ".",
+        key -> Setting.simpleString(key, value -> IP_VALIDATOR.accept(key, value), Property.Dynamic, Property.IndexScope)
+    );
+    public static final Setting.AffixSetting<String> INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING = Setting.prefixKeySetting(
+        "index.routing.allocation.initial_recovery.",
+        key -> Setting.simpleString(key)
+    );
+    // this is only setable internally not a registered setting!!
 
     /**
      * The number of active shard copies to check for before proceeding with a write operation.
      */
-    public static final Setting<ActiveShardCount> SETTING_WAIT_FOR_ACTIVE_SHARDS =
-        new Setting<>("index.write.wait_for_active_shards",
-                      "1",
-                      ActiveShardCount::parseString,
-                      Setting.Property.Dynamic,
-                      Setting.Property.IndexScope);
+    public static final Setting<ActiveShardCount> SETTING_WAIT_FOR_ACTIVE_SHARDS = new Setting<>(
+        "index.write.wait_for_active_shards",
+        "1",
+        ActiveShardCount::parseString,
+        Setting.Property.Dynamic,
+        Setting.Property.IndexScope
+    );
 
     /**
      * Whether the index is considered hidden or not. A hidden index will not be resolved in
      * normal wildcard searches unless explicitly allowed
      */
-    public static final Setting<Boolean> INDEX_HIDDEN_SETTING =
-        Setting.boolSetting("index.hidden", false, Property.IndexScope, Property.Final);
+    public static final Setting<Boolean> INDEX_HIDDEN_SETTING = Setting.boolSetting(
+        "index.hidden",
+        false,
+        Property.IndexScope,
+        Property.Final
+    );
 
     /**
      * an internal index format description, allowing us to find out if this index is upgraded or needs upgrading
      */
     private static final String INDEX_FORMAT = "index.format";
-    public static final Setting<Integer> INDEX_FORMAT_SETTING =
-            Setting.intSetting(INDEX_FORMAT, 0, Setting.Property.IndexScope, Setting.Property.Final);
+    public static final Setting<Integer> INDEX_FORMAT_SETTING = Setting.intSetting(
+        INDEX_FORMAT,
+        0,
+        Setting.Property.IndexScope,
+        Setting.Property.Final
+    );
 
     public static final String KEY_IN_SYNC_ALLOCATIONS = "in_sync_allocations";
     static final String KEY_VERSION = "version";
@@ -328,30 +416,31 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
     private final ImmutableOpenMap<String, RolloverInfo> rolloverInfos;
 
     private IndexMetaData(
-            final Index index,
-            final long version,
-            final long mappingVersion,
-            final long settingsVersion,
-            final long aliasesVersion,
-            final long[] primaryTerms,
-            final State state,
-            final int numberOfShards,
-            final int numberOfReplicas,
-            final Settings settings,
-            final ImmutableOpenMap<String, MappingMetaData> mappings,
-            final ImmutableOpenMap<String, AliasMetaData> aliases,
-            final ImmutableOpenMap<String, DiffableStringMap> customData,
-            final ImmutableOpenIntMap<Set<String>> inSyncAllocationIds,
-            final DiscoveryNodeFilters requireFilters,
-            final DiscoveryNodeFilters initialRecoveryFilters,
-            final DiscoveryNodeFilters includeFilters,
-            final DiscoveryNodeFilters excludeFilters,
-            final Version indexCreatedVersion,
-            final Version indexUpgradedVersion,
-            final int routingNumShards,
-            final int routingPartitionSize,
-            final ActiveShardCount waitForActiveShards,
-            final ImmutableOpenMap<String, RolloverInfo> rolloverInfos) {
+        final Index index,
+        final long version,
+        final long mappingVersion,
+        final long settingsVersion,
+        final long aliasesVersion,
+        final long[] primaryTerms,
+        final State state,
+        final int numberOfShards,
+        final int numberOfReplicas,
+        final Settings settings,
+        final ImmutableOpenMap<String, MappingMetaData> mappings,
+        final ImmutableOpenMap<String, AliasMetaData> aliases,
+        final ImmutableOpenMap<String, DiffableStringMap> customData,
+        final ImmutableOpenIntMap<Set<String>> inSyncAllocationIds,
+        final DiscoveryNodeFilters requireFilters,
+        final DiscoveryNodeFilters initialRecoveryFilters,
+        final DiscoveryNodeFilters includeFilters,
+        final DiscoveryNodeFilters excludeFilters,
+        final Version indexCreatedVersion,
+        final Version indexUpgradedVersion,
+        final int routingNumShards,
+        final int routingPartitionSize,
+        final ActiveShardCount waitForActiveShards,
+        final ImmutableOpenMap<String, RolloverInfo> rolloverInfos
+    ) {
 
         this.index = index;
         this.version = version;
@@ -383,7 +472,7 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
         this.routingPartitionSize = routingPartitionSize;
         this.waitForActiveShards = waitForActiveShards;
         this.rolloverInfos = rolloverInfos;
-        assert numberOfShards * routingFactor == routingNumShards :  routingNumShards + " must be a multiple of " + numberOfShards;
+        assert numberOfShards * routingFactor == routingNumShards : routingNumShards + " must be a multiple of " + numberOfShards;
     }
 
     public Index getIndex() {
@@ -510,8 +599,9 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
     public static final Setting<String> INDEX_RESIZE_SOURCE_NAME = Setting.simpleString(INDEX_RESIZE_SOURCE_NAME_KEY);
 
     public Index getResizeSourceIndex() {
-        return INDEX_RESIZE_SOURCE_UUID.exists(settings) ? new Index(INDEX_RESIZE_SOURCE_NAME.get(settings),
-            INDEX_RESIZE_SOURCE_UUID.get(settings)) : null;
+        return INDEX_RESIZE_SOURCE_UUID.exists(settings)
+            ? new Index(INDEX_RESIZE_SOURCE_NAME.get(settings), INDEX_RESIZE_SOURCE_UUID.get(settings))
+            : null;
     }
 
     ImmutableOpenMap<String, DiffableStringMap> getCustomData() {
@@ -623,7 +713,6 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
         return result;
     }
 
-
     @Override
     public Diff<IndexMetaData> diff(IndexMetaData previousState) {
         return new IndexMetaDataDiff(previousState, this);
@@ -673,8 +762,12 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
             mappings = DiffableUtils.diff(before.mappings, after.mappings, DiffableUtils.getStringKeySerializer());
             aliases = DiffableUtils.diff(before.aliases, after.aliases, DiffableUtils.getStringKeySerializer());
             customData = DiffableUtils.diff(before.customData, after.customData, DiffableUtils.getStringKeySerializer());
-            inSyncAllocationIds = DiffableUtils.diff(before.inSyncAllocationIds, after.inSyncAllocationIds,
-                DiffableUtils.getVIntKeySerializer(), DiffableUtils.StringSetValueSerializer.getInstance());
+            inSyncAllocationIds = DiffableUtils.diff(
+                before.inSyncAllocationIds,
+                after.inSyncAllocationIds,
+                DiffableUtils.getVIntKeySerializer(),
+                DiffableUtils.StringSetValueSerializer.getInstance()
+            );
             rolloverInfos = DiffableUtils.diff(before.rolloverInfos, after.rolloverInfos, DiffableUtils.getStringKeySerializer());
         }
 
@@ -692,16 +785,35 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
             state = State.fromId(in.readByte());
             settings = Settings.readSettingsFromStream(in);
             primaryTerms = in.readVLongArray();
-            mappings = DiffableUtils.readImmutableOpenMapDiff(in, DiffableUtils.getStringKeySerializer(), MappingMetaData::new,
-                MappingMetaData::readDiffFrom);
-            aliases = DiffableUtils.readImmutableOpenMapDiff(in, DiffableUtils.getStringKeySerializer(), AliasMetaData::new,
-                AliasMetaData::readDiffFrom);
-            customData = DiffableUtils.readImmutableOpenMapDiff(in, DiffableUtils.getStringKeySerializer(), DiffableStringMap::new,
-                DiffableStringMap::readDiffFrom);
-            inSyncAllocationIds = DiffableUtils.readImmutableOpenIntMapDiff(in, DiffableUtils.getVIntKeySerializer(),
-                DiffableUtils.StringSetValueSerializer.getInstance());
-            rolloverInfos = DiffableUtils.readImmutableOpenMapDiff(in, DiffableUtils.getStringKeySerializer(), RolloverInfo::new,
-                RolloverInfo::readDiffFrom);
+            mappings = DiffableUtils.readImmutableOpenMapDiff(
+                in,
+                DiffableUtils.getStringKeySerializer(),
+                MappingMetaData::new,
+                MappingMetaData::readDiffFrom
+            );
+            aliases = DiffableUtils.readImmutableOpenMapDiff(
+                in,
+                DiffableUtils.getStringKeySerializer(),
+                AliasMetaData::new,
+                AliasMetaData::readDiffFrom
+            );
+            customData = DiffableUtils.readImmutableOpenMapDiff(
+                in,
+                DiffableUtils.getStringKeySerializer(),
+                DiffableStringMap::new,
+                DiffableStringMap::readDiffFrom
+            );
+            inSyncAllocationIds = DiffableUtils.readImmutableOpenIntMapDiff(
+                in,
+                DiffableUtils.getVIntKeySerializer(),
+                DiffableUtils.StringSetValueSerializer.getInstance()
+            );
+            rolloverInfos = DiffableUtils.readImmutableOpenMapDiff(
+                in,
+                DiffableUtils.getStringKeySerializer(),
+                RolloverInfo::new,
+                RolloverInfo::readDiffFrom
+            );
         }
 
         @Override
@@ -941,8 +1053,12 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
         }
 
         public Builder putMapping(String source) {
-            putMapping(new MappingMetaData(MapperService.SINGLE_MAPPING_NAME,
-                XContentHelper.convertToMap(XContentFactory.xContent(source), source, true)));
+            putMapping(
+                new MappingMetaData(
+                    MapperService.SINGLE_MAPPING_NAME,
+                    XContentHelper.convertToMap(XContentFactory.xContent(source), source, true)
+                )
+            );
             return this;
         }
 
@@ -1074,7 +1190,6 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
             Arrays.fill(primaryTerms, SequenceNumbers.UNASSIGNED_PRIMARY_TERM);
         }
 
-
         public IndexMetaData build() {
             ImmutableOpenMap.Builder<String, AliasMetaData> tmpAliases = aliases;
             Settings tmpSettings = settings;
@@ -1099,8 +1214,16 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
 
             int routingPartitionSize = INDEX_ROUTING_PARTITION_SIZE_SETTING.get(settings);
             if (routingPartitionSize != 1 && routingPartitionSize >= getRoutingNumShards()) {
-                throw new IllegalArgumentException("routing partition size [" + routingPartitionSize + "] should be a positive number"
-                        + " less than the number of shards [" + getRoutingNumShards() + "] for [" + index + "]");
+                throw new IllegalArgumentException(
+                    "routing partition size ["
+                        + routingPartitionSize
+                        + "] should be a positive number"
+                        + " less than the number of shards ["
+                        + getRoutingNumShards()
+                        + "] for ["
+                        + index
+                        + "]"
+                );
             }
             // fill missing slots in inSyncAllocationIds with empty set if needed and make all entries immutable
             ImmutableOpenIntMap.Builder<Set<String>> filledInSyncAllocationIds = ImmutableOpenIntMap.builder();
@@ -1145,44 +1268,57 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
             if (primaryTerms == null) {
                 initializePrimaryTerms();
             } else if (primaryTerms.length != numberOfShards) {
-                throw new IllegalStateException("primaryTerms length is [" + primaryTerms.length
-                    + "] but should be equal to number of shards [" + numberOfShards() + "]");
+                throw new IllegalStateException(
+                    "primaryTerms length is ["
+                        + primaryTerms.length
+                        + "] but should be equal to number of shards ["
+                        + numberOfShards()
+                        + "]"
+                );
             }
 
             final ActiveShardCount waitForActiveShards = SETTING_WAIT_FOR_ACTIVE_SHARDS.get(settings);
             if (waitForActiveShards.validate(numberOfReplicas) == false) {
-                throw new IllegalArgumentException("invalid " + SETTING_WAIT_FOR_ACTIVE_SHARDS.getKey() +
-                                                   "[" + waitForActiveShards + "]: cannot be greater than " +
-                                                   "number of shard copies [" + (numberOfReplicas + 1) + "]");
+                throw new IllegalArgumentException(
+                    "invalid "
+                        + SETTING_WAIT_FOR_ACTIVE_SHARDS.getKey()
+                        + "["
+                        + waitForActiveShards
+                        + "]: cannot be greater than "
+                        + "number of shard copies ["
+                        + (numberOfReplicas + 1)
+                        + "]"
+                );
             }
 
             final String uuid = settings.get(SETTING_INDEX_UUID, INDEX_UUID_NA_VALUE);
 
             return new IndexMetaData(
-                    new Index(index, uuid),
-                    version,
-                    mappingVersion,
-                    settingsVersion,
-                    aliasesVersion,
-                    primaryTerms,
-                    state,
-                    numberOfShards,
-                    numberOfReplicas,
-                    tmpSettings,
-                    mappings.build(),
-                    tmpAliases.build(),
-                    customMetaData.build(),
-                    filledInSyncAllocationIds.build(),
-                    requireFilters,
-                    initialRecoveryFilters,
-                    includeFilters,
-                    excludeFilters,
-                    indexCreatedVersion,
-                    indexUpgradedVersion,
-                    getRoutingNumShards(),
-                    routingPartitionSize,
-                    waitForActiveShards,
-                    rolloverInfos.build());
+                new Index(index, uuid),
+                version,
+                mappingVersion,
+                settingsVersion,
+                aliasesVersion,
+                primaryTerms,
+                state,
+                numberOfShards,
+                numberOfReplicas,
+                tmpSettings,
+                mappings.build(),
+                tmpAliases.build(),
+                customMetaData.build(),
+                filledInSyncAllocationIds.build(),
+                requireFilters,
+                initialRecoveryFilters,
+                includeFilters,
+                excludeFilters,
+                indexCreatedVersion,
+                indexUpgradedVersion,
+                getRoutingNumShards(),
+                routingPartitionSize,
+                waitForActiveShards,
+                rolloverInfos.build()
+            );
         }
 
         public static void toXContent(IndexMetaData indexMetaData, XContentBuilder builder, ToXContent.Params params) throws IOException {
@@ -1280,8 +1416,9 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
                                 currentFieldName = parser.currentName();
                             } else if (token == XContentParser.Token.START_OBJECT) {
                                 String mappingType = currentFieldName;
-                                Map<String, Object> mappingSource =
-                                    MapBuilder.<String, Object>newMapBuilder().put(mappingType, parser.mapOrdered()).map();
+                                Map<String, Object> mappingSource = MapBuilder.<String, Object>newMapBuilder()
+                                    .put(mappingType, parser.mapOrdered())
+                                    .map();
                                 builder.putMapping(new MappingMetaData(mappingType, mappingSource));
                             } else {
                                 throw new IllegalArgumentException("Unexpected token: " + token);
@@ -1460,12 +1597,13 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
     public static ShardId selectSplitShard(int shardId, IndexMetaData sourceIndexMetadata, int numTargetShards) {
         int numSourceShards = sourceIndexMetadata.getNumberOfShards();
         if (shardId >= numTargetShards) {
-            throw new IllegalArgumentException("the number of target shards (" + numTargetShards + ") must be greater than the shard id: "
-                + shardId);
+            throw new IllegalArgumentException(
+                "the number of target shards (" + numTargetShards + ") must be greater than the shard id: " + shardId
+            );
         }
         final int routingFactor = getRoutingFactor(numSourceShards, numTargetShards);
         assertSplitMetadata(numSourceShards, numTargetShards, sourceIndexMetadata);
-        return new ShardId(sourceIndexMetadata.getIndex(), shardId/routingFactor);
+        return new ShardId(sourceIndexMetadata.getIndex(), shardId / routingFactor);
     }
 
     /**
@@ -1478,16 +1616,27 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
     public static ShardId selectCloneShard(int shardId, IndexMetaData sourceIndexMetadata, int numTargetShards) {
         int numSourceShards = sourceIndexMetadata.getNumberOfShards();
         if (numSourceShards != numTargetShards) {
-            throw new IllegalArgumentException("the number of target shards (" + numTargetShards + ") must be the same as the number of "
-                + " source shards ( " + numSourceShards + ")");
+            throw new IllegalArgumentException(
+                "the number of target shards ("
+                    + numTargetShards
+                    + ") must be the same as the number of "
+                    + " source shards ( "
+                    + numSourceShards
+                    + ")"
+            );
         }
         return new ShardId(sourceIndexMetadata.getIndex(), shardId);
     }
 
     private static void assertSplitMetadata(int numSourceShards, int numTargetShards, IndexMetaData sourceIndexMetadata) {
         if (numSourceShards > numTargetShards) {
-            throw new IllegalArgumentException("the number of source shards [" + numSourceShards
-                + "] must be less that the number of target shards [" + numTargetShards + "]");
+            throw new IllegalArgumentException(
+                "the number of source shards ["
+                    + numSourceShards
+                    + "] must be less that the number of target shards ["
+                    + numTargetShards
+                    + "]"
+            );
         }
         // now we verify that the numRoutingShards is valid in the source index
         // note: if the number of shards is 1 in the source index we can just assume it's correct since from 1 we can split into anything
@@ -1495,8 +1644,9 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
         // 1 to N but we never modify the sourceIndexMetadata to accommodate for that
         int routingNumShards = numSourceShards == 1 ? numTargetShards : sourceIndexMetadata.getRoutingNumShards();
         if (routingNumShards % numTargetShards != 0) {
-            throw new IllegalStateException("the number of routing shards ["
-                + routingNumShards + "] must be a multiple of the target shards [" + numTargetShards + "]");
+            throw new IllegalStateException(
+                "the number of routing shards [" + routingNumShards + "] must be a multiple of the target shards [" + numTargetShards + "]"
+            );
         }
         // this is just an additional assertion that ensures we are a factor of the routing num shards.
         assert sourceIndexMetadata.getNumberOfShards() == 1 // special case - we can split into anything from 1 shard
@@ -1528,16 +1678,22 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
      */
     public static Set<ShardId> selectShrinkShards(int shardId, IndexMetaData sourceIndexMetadata, int numTargetShards) {
         if (shardId >= numTargetShards) {
-            throw new IllegalArgumentException("the number of target shards (" + numTargetShards + ") must be greater than the shard id: "
-                + shardId);
+            throw new IllegalArgumentException(
+                "the number of target shards (" + numTargetShards + ") must be greater than the shard id: " + shardId
+            );
         }
         if (sourceIndexMetadata.getNumberOfShards() < numTargetShards) {
-            throw new IllegalArgumentException("the number of target shards [" + numTargetShards
-                +"] must be less that the number of source shards [" + sourceIndexMetadata.getNumberOfShards() + "]");
+            throw new IllegalArgumentException(
+                "the number of target shards ["
+                    + numTargetShards
+                    + "] must be less that the number of source shards ["
+                    + sourceIndexMetadata.getNumberOfShards()
+                    + "]"
+            );
         }
         int routingFactor = getRoutingFactor(sourceIndexMetadata.getNumberOfShards(), numTargetShards);
         Set<ShardId> shards = new HashSet<>(routingFactor);
-        for (int i = shardId * routingFactor; i < routingFactor*shardId + routingFactor; i++) {
+        for (int i = shardId * routingFactor; i < routingFactor * shardId + routingFactor; i++) {
             shards.add(new ShardId(sourceIndexMetadata.getIndex(), i));
         }
         return shards;
@@ -1560,16 +1716,16 @@ public class IndexMetaData implements Diffable<IndexMetaData>, ToXContentFragmen
         if (sourceNumberOfShards < targetNumberOfShards) { // split
             factor = targetNumberOfShards / sourceNumberOfShards;
             if (factor * sourceNumberOfShards != targetNumberOfShards || factor <= 1) {
-                throw new IllegalArgumentException("the number of source shards [" + sourceNumberOfShards + "] must be a " +
-                    "factor of ["
-                    + targetNumberOfShards + "]");
+                throw new IllegalArgumentException(
+                    "the number of source shards [" + sourceNumberOfShards + "] must be a " + "factor of [" + targetNumberOfShards + "]"
+                );
             }
         } else if (sourceNumberOfShards > targetNumberOfShards) { // shrink
             factor = sourceNumberOfShards / targetNumberOfShards;
             if (factor * targetNumberOfShards != sourceNumberOfShards || factor <= 1) {
-                throw new IllegalArgumentException("the number of source shards [" + sourceNumberOfShards + "] must be a " +
-                    "multiple of ["
-                    + targetNumberOfShards + "]");
+                throw new IllegalArgumentException(
+                    "the number of source shards [" + sourceNumberOfShards + "] must be a " + "multiple of [" + targetNumberOfShards + "]"
+                );
             }
         } else {
             factor = 1;

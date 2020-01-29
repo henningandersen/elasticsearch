@@ -43,13 +43,21 @@ import java.util.concurrent.Semaphore;
  */
 public class MappingUpdatedAction {
 
-    public static final Setting<TimeValue> INDICES_MAPPING_DYNAMIC_TIMEOUT_SETTING =
-        Setting.positiveTimeSetting("indices.mapping.dynamic_timeout", TimeValue.timeValueSeconds(30),
-            Property.Dynamic, Property.NodeScope);
+    public static final Setting<TimeValue> INDICES_MAPPING_DYNAMIC_TIMEOUT_SETTING = Setting.positiveTimeSetting(
+        "indices.mapping.dynamic_timeout",
+        TimeValue.timeValueSeconds(30),
+        Property.Dynamic,
+        Property.NodeScope
+    );
 
-    public static final Setting<Integer> INDICES_MAX_IN_FLIGHT_UPDATES_SETTING =
-        Setting.intSetting("indices.mapping.max_in_flight_updates", 10, 1, 1000,
-            Property.Dynamic, Property.NodeScope);
+    public static final Setting<Integer> INDICES_MAX_IN_FLIGHT_UPDATES_SETTING = Setting.intSetting(
+        "indices.mapping.max_in_flight_updates",
+        10,
+        1,
+        1000,
+        Property.Dynamic,
+        Property.NodeScope
+    );
 
     private IndicesAdminClient client;
     private volatile TimeValue dynamicMappingUpdateTimeout;
@@ -108,8 +116,11 @@ public class MappingUpdatedAction {
 
     // can be overridden by tests
     protected void sendUpdateMapping(Index index, Mapping mappingUpdate, ActionListener<Void> listener) {
-        client.preparePutMapping().setConcreteIndex(index).setSource(mappingUpdate.toString(), XContentType.JSON)
-            .setMasterNodeTimeout(dynamicMappingUpdateTimeout).setTimeout(TimeValue.ZERO)
+        client.preparePutMapping()
+            .setConcreteIndex(index)
+            .setSource(mappingUpdate.toString(), XContentType.JSON)
+            .setMasterNodeTimeout(dynamicMappingUpdateTimeout)
+            .setTimeout(TimeValue.ZERO)
             .execute(new ActionListener<>() {
                 @Override
                 public void onResponse(AcknowledgedResponse acknowledgedResponse) {

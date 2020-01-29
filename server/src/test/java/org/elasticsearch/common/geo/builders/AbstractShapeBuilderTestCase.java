@@ -37,7 +37,7 @@ import java.io.IOException;
 
 import static org.elasticsearch.test.EqualsHashCodeTestUtils.checkEqualsAndHashCode;
 
-public abstract class AbstractShapeBuilderTestCase<SB extends ShapeBuilder<?,?,?>> extends ESTestCase {
+public abstract class AbstractShapeBuilderTestCase<SB extends ShapeBuilder<?, ?, ?>> extends ESTestCase {
 
     private static final int NUMBER_OF_TESTBUILDERS = 20;
     private static NamedWriteableRegistry namedWriteableRegistry;

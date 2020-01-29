@@ -81,9 +81,10 @@ public class QueryShardContextTests extends ESTestCase {
         IndexFieldMapper mapper = new IndexFieldMapper.Builder(null).build(ctx);
 
         IndexFieldData<?> forField = context.getForField(mapper.fieldType());
-        String expected = clusterAlias == null ? context.getIndexSettings().getIndexMetaData().getIndex().getName()
+        String expected = clusterAlias == null
+            ? context.getIndexSettings().getIndexMetaData().getIndex().getName()
             : clusterAlias + ":" + context.getIndexSettings().getIndex().getName();
-        assertEquals(expected, ((AbstractAtomicOrdinalsFieldData)forField.load(null)).getOrdinalsValues().lookupOrd(0).utf8ToString());
+        assertEquals(expected, ((AbstractAtomicOrdinalsFieldData) forField.load(null)).getOrdinalsValues().lookupOrd(0).utf8ToString());
     }
 
     public void testGetFullyQualifiedIndex() {
@@ -96,10 +97,12 @@ public class QueryShardContextTests extends ESTestCase {
 
     public static QueryShardContext createQueryShardContext(String indexUuid, String clusterAlias) {
         IndexMetaData.Builder indexMetadataBuilder = new IndexMetaData.Builder("index");
-        indexMetadataBuilder.settings(Settings.builder().put("index.version.created", Version.CURRENT)
-            .put("index.number_of_shards", 1)
-            .put("index.number_of_replicas", 1)
-            .put(IndexMetaData.SETTING_INDEX_UUID, indexUuid)
+        indexMetadataBuilder.settings(
+            Settings.builder()
+                .put("index.version.created", Version.CURRENT)
+                .put("index.number_of_shards", 1)
+                .put("index.number_of_replicas", 1)
+                .put(IndexMetaData.SETTING_INDEX_UUID, indexUuid)
         );
         IndexMetaData indexMetaData = indexMetadataBuilder.build();
         IndexSettings indexSettings = new IndexSettings(indexMetaData, Settings.EMPTY);
@@ -109,10 +112,21 @@ public class QueryShardContextTests extends ESTestCase {
         final long nowInMillis = randomNonNegativeLong();
 
         return new QueryShardContext(
-            0, indexSettings, BigArrays.NON_RECYCLING_INSTANCE, null,
-                (mappedFieldType, idxName) ->
-                    mappedFieldType.fielddataBuilder(idxName).build(indexSettings, mappedFieldType, null, null, null),
-                mapperService, null, null, NamedXContentRegistry.EMPTY, new NamedWriteableRegistry(Collections.emptyList()),
-            null, null, () -> nowInMillis, clusterAlias, null);
+            0,
+            indexSettings,
+            BigArrays.NON_RECYCLING_INSTANCE,
+            null,
+            (mappedFieldType, idxName) -> mappedFieldType.fielddataBuilder(idxName).build(indexSettings, mappedFieldType, null, null, null),
+            mapperService,
+            null,
+            null,
+            NamedXContentRegistry.EMPTY,
+            new NamedWriteableRegistry(Collections.emptyList()),
+            null,
+            null,
+            () -> nowInMillis,
+            clusterAlias,
+            null
+        );
     }
 }

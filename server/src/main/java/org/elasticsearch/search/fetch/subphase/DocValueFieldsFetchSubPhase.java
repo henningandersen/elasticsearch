@@ -59,7 +59,8 @@ public final class DocValueFieldsFetchSubPhase implements FetchSubPhase {
 
     private static final String USE_DEFAULT_FORMAT = "use_field_mapping";
     private static final DeprecationLogger DEPRECATION_LOGGER = new DeprecationLogger(
-            LogManager.getLogger(DocValueFieldsFetchSubPhase.class));
+        LogManager.getLogger(DocValueFieldsFetchSubPhase.class)
+    );
 
     @Override
     public void hitsExecute(SearchContext context, SearchHit[] hits) throws IOException {
@@ -68,8 +69,7 @@ public final class DocValueFieldsFetchSubPhase implements FetchSubPhase {
             // retrieve the `doc_value` associated with the collapse field
             String name = context.collapse().getFieldName();
             if (context.docValueFieldsContext() == null) {
-                context.docValueFieldsContext(new DocValueFieldsContext(
-                        Collections.singletonList(new FieldAndFormat(name, null))));
+                context.docValueFieldsContext(new DocValueFieldsContext(Collections.singletonList(new FieldAndFormat(name, null))));
             } else if (context.docValueFieldsContext().fields().stream().map(ff -> ff.field).anyMatch(name::equals) == false) {
                 context.docValueFieldsContext().fields().add(new FieldAndFormat(name, null));
             }
@@ -82,13 +82,13 @@ public final class DocValueFieldsFetchSubPhase implements FetchSubPhase {
         hits = hits.clone(); // don't modify the incoming hits
         Arrays.sort(hits, Comparator.comparingInt(SearchHit::docId));
 
-        if (context.docValueFieldsContext().fields().stream()
-                .map(f -> f.format)
-                .filter(USE_DEFAULT_FORMAT::equals)
-                .findAny()
-                .isPresent()) {
-            DEPRECATION_LOGGER.deprecated("[" + USE_DEFAULT_FORMAT + "] is a special format that was only used to " +
-                    "ease the transition to 7.x. It has become the default and shouldn't be set explicitly anymore.");
+        if (context.docValueFieldsContext().fields().stream().map(f -> f.format).filter(USE_DEFAULT_FORMAT::equals).findAny().isPresent()) {
+            DEPRECATION_LOGGER.deprecated(
+                "["
+                    + USE_DEFAULT_FORMAT
+                    + "] is a special format that was only used to "
+                    + "ease the transition to 7.x. It has become the default and shouldn't be set explicitly anymore."
+            );
         }
 
         for (FieldAndFormat fieldAndFormat : context.docValueFieldsContext().fields()) {

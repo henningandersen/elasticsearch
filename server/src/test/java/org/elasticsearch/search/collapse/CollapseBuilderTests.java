@@ -104,24 +104,24 @@ public class CollapseBuilderTests extends AbstractSerializingTestCase<CollapseBu
     protected CollapseBuilder mutateInstance(CollapseBuilder instance) throws IOException {
         CollapseBuilder newBuilder;
         switch (between(0, 2)) {
-        case 0:
-            newBuilder = new CollapseBuilder(instance.getField() + randomAlphaOfLength(10));
-            newBuilder.setMaxConcurrentGroupRequests(instance.getMaxConcurrentGroupRequests());
-            newBuilder.setInnerHits(instance.getInnerHits());
-            break;
-        case 1:
-            newBuilder = copyInstance(instance);
-            newBuilder.setMaxConcurrentGroupRequests(instance.getMaxConcurrentGroupRequests() + between(1, 20));
-            break;
-        case 2:
-        default:
-            newBuilder = copyInstance(instance);
-            List<InnerHitBuilder> innerHits = new ArrayList<>(newBuilder.getInnerHits());
-            for (int i = 0; i < between(1, 5); i++) {
-                innerHits.add(InnerHitBuilderTests.randomInnerHits());
-            }
-            newBuilder.setInnerHits(innerHits);
-            break;
+            case 0:
+                newBuilder = new CollapseBuilder(instance.getField() + randomAlphaOfLength(10));
+                newBuilder.setMaxConcurrentGroupRequests(instance.getMaxConcurrentGroupRequests());
+                newBuilder.setInnerHits(instance.getInnerHits());
+                break;
+            case 1:
+                newBuilder = copyInstance(instance);
+                newBuilder.setMaxConcurrentGroupRequests(instance.getMaxConcurrentGroupRequests() + between(1, 20));
+                break;
+            case 2:
+            default:
+                newBuilder = copyInstance(instance);
+                List<InnerHitBuilder> innerHits = new ArrayList<>(newBuilder.getInnerHits());
+                for (int i = 0; i < between(1, 5); i++) {
+                    innerHits.add(InnerHitBuilderTests.randomInnerHits());
+                }
+                newBuilder.setInnerHits(innerHits);
+                break;
         }
         return newBuilder;
     }
@@ -144,11 +144,9 @@ public class CollapseBuilderTests extends AbstractSerializingTestCase<CollapseBu
         QueryShardContext shardContext = mock(QueryShardContext.class);
         try (IndexReader reader = DirectoryReader.open(dir)) {
             when(shardContext.getIndexReader()).thenReturn(reader);
-            MappedFieldType numberFieldType =
-                new NumberFieldMapper.NumberFieldType(NumberFieldMapper.NumberType.LONG);
-            MappedFieldType keywordFieldType =
-                new KeywordFieldMapper.KeywordFieldType();
-            for (MappedFieldType fieldType : new MappedFieldType[] {numberFieldType, keywordFieldType}) {
+            MappedFieldType numberFieldType = new NumberFieldMapper.NumberFieldType(NumberFieldMapper.NumberType.LONG);
+            MappedFieldType keywordFieldType = new KeywordFieldMapper.KeywordFieldType();
+            for (MappedFieldType fieldType : new MappedFieldType[] { numberFieldType, keywordFieldType }) {
                 fieldType.setName("field");
                 fieldType.setHasDocValues(true);
                 when(shardContext.fieldMapper("field")).thenReturn(fieldType);
@@ -167,9 +165,10 @@ public class CollapseBuilderTests extends AbstractSerializingTestCase<CollapseBu
                 fieldType.setHasDocValues(true);
                 builder.setInnerHits(new InnerHitBuilder());
                 exc = expectThrows(IllegalArgumentException.class, () -> builder.build(shardContext));
-                assertEquals(exc.getMessage(),
-                    "cannot expand `inner_hits` for collapse field `field`, " +
-                        "only indexed field can retrieve `inner_hits`");
+                assertEquals(
+                    exc.getMessage(),
+                    "cannot expand `inner_hits` for collapse field `field`, " + "only indexed field can retrieve `inner_hits`"
+                );
             }
         }
     }
@@ -219,7 +218,7 @@ public class CollapseBuilderTests extends AbstractSerializingTestCase<CollapseBu
 
     @Override
     protected String[] getShuffleFieldsExceptions() {
-        //disable xcontent shuffling on the highlight builder
-        return new String[]{"fields"};
+        // disable xcontent shuffling on the highlight builder
+        return new String[] { "fields" };
     }
 }

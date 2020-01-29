@@ -29,25 +29,32 @@ public class SnapshotShardsServiceTests extends ESTestCase {
     public void testEqualsAndHashcodeUpdateIndexShardSnapshotStatusRequest() {
         EqualsHashCodeTestUtils.checkEqualsAndHashCode(
             new SnapshotShardsService.UpdateIndexShardSnapshotStatusRequest(
-                new Snapshot(randomAlphaOfLength(10),
-                    new SnapshotId(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()))),
+                new Snapshot(randomAlphaOfLength(10), new SnapshotId(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()))),
                 new ShardId(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()), randomInt(5)),
-                new SnapshotsInProgress.ShardSnapshotStatus(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()))),
-            request ->
-                new SnapshotShardsService.UpdateIndexShardSnapshotStatusRequest(request.snapshot(), request.shardId(), request.status()),
+                new SnapshotsInProgress.ShardSnapshotStatus(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()))
+            ),
+            request -> new SnapshotShardsService.UpdateIndexShardSnapshotStatusRequest(
+                request.snapshot(),
+                request.shardId(),
+                request.status()
+            ),
             request -> {
                 final boolean mutateSnapshot = randomBoolean();
                 final boolean mutateShardId = randomBoolean();
                 final boolean mutateStatus = (mutateSnapshot || mutateShardId) == false || randomBoolean();
                 return new SnapshotShardsService.UpdateIndexShardSnapshotStatusRequest(
-                    mutateSnapshot ? new Snapshot(randomAlphaOfLength(10),
-                        new SnapshotId(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()))) : request.snapshot(),
-                    mutateShardId ?
-                        new ShardId(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()), randomInt(5)) : request.shardId(),
-                    mutateStatus ? new SnapshotsInProgress.ShardSnapshotStatus(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()))
+                    mutateSnapshot
+                        ? new Snapshot(randomAlphaOfLength(10), new SnapshotId(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random())))
+                        : request.snapshot(),
+                    mutateShardId
+                        ? new ShardId(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()), randomInt(5))
+                        : request.shardId(),
+                    mutateStatus
+                        ? new SnapshotsInProgress.ShardSnapshotStatus(randomAlphaOfLength(10), UUIDs.randomBase64UUID(random()))
                         : request.status()
                 );
-            });
+            }
+        );
     }
 
 }

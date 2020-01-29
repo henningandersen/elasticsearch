@@ -87,14 +87,12 @@ public class NestedAggregationBuilder extends AbstractAggregationBuilder<NestedA
     }
 
     @Override
-    protected AggregatorFactory doBuild(QueryShardContext queryShardContext,
-                                            AggregatorFactory parent,
-                                            Builder subFactoriesBuilder) throws IOException {
+    protected AggregatorFactory doBuild(QueryShardContext queryShardContext, AggregatorFactory parent, Builder subFactoriesBuilder)
+        throws IOException {
         ObjectMapper childObjectMapper = queryShardContext.getObjectMapper(path);
         if (childObjectMapper == null) {
             // in case the path has been unmapped:
-            return new NestedAggregatorFactory(name, null, null, queryShardContext,
-                parent, subFactoriesBuilder, metaData);
+            return new NestedAggregatorFactory(name, null, null, queryShardContext, parent, subFactoriesBuilder, metaData);
         }
 
         if (childObjectMapper.nested().isNested() == false) {
@@ -102,8 +100,15 @@ public class NestedAggregationBuilder extends AbstractAggregationBuilder<NestedA
         }
         try {
             ObjectMapper parentObjectMapper = queryShardContext.nestedScope().nextLevel(childObjectMapper);
-            return new NestedAggregatorFactory(name, parentObjectMapper, childObjectMapper, queryShardContext,
-                parent, subFactoriesBuilder, metaData);
+            return new NestedAggregatorFactory(
+                name,
+                parentObjectMapper,
+                childObjectMapper,
+                queryShardContext,
+                parent,
+                subFactoriesBuilder,
+                metaData
+            );
         } finally {
             queryShardContext.nestedScope().previousLevel();
         }
@@ -129,8 +134,10 @@ public class NestedAggregationBuilder extends AbstractAggregationBuilder<NestedA
                 if (NestedAggregator.PATH_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                     path = parser.text();
                 } else {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "Unknown key for a " + token + " in [" + aggregationName + "]: [" + currentFieldName + "].");
+                    throw new ParsingException(
+                        parser.getTokenLocation(),
+                        "Unknown key for a " + token + " in [" + aggregationName + "]: [" + currentFieldName + "]."
+                    );
                 }
             } else {
                 throw new ParsingException(parser.getTokenLocation(), "Unexpected token " + token + " in [" + aggregationName + "].");

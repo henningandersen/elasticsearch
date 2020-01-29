@@ -47,8 +47,13 @@ public abstract class InternalSingleBucketAggregation extends InternalAggregatio
      * @param docCount      The document count in the single bucket.
      * @param aggregations  The already built sub-aggregations that are associated with the bucket.
      */
-    protected InternalSingleBucketAggregation(String name, long docCount, InternalAggregations aggregations,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    protected InternalSingleBucketAggregation(
+        String name,
+        long docCount,
+        InternalAggregations aggregations,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.docCount = docCount;
         this.aggregations = aggregations;
@@ -119,7 +124,7 @@ public abstract class InternalSingleBucketAggregation extends InternalAggregatio
         assert reduceContext.isFinalReduce();
         List<InternalAggregation> aggs = new ArrayList<>();
         for (Aggregation agg : getAggregations().asList()) {
-            aggs.add(((InternalAggregation)agg).reducePipelines((InternalAggregation)agg, reduceContext));
+            aggs.add(((InternalAggregation) agg).reducePipelines((InternalAggregation) agg, reduceContext));
         }
         InternalAggregations reducedSubAggs = new InternalAggregations(aggs);
         return super.reducePipelines(create(reducedSubAggs), reduceContext);
@@ -159,8 +164,7 @@ public abstract class InternalSingleBucketAggregation extends InternalAggregatio
         if (super.equals(obj) == false) return false;
 
         InternalSingleBucketAggregation other = (InternalSingleBucketAggregation) obj;
-        return Objects.equals(docCount, other.docCount) &&
-                Objects.equals(aggregations, other.aggregations);
+        return Objects.equals(docCount, other.docCount) && Objects.equals(aggregations, other.aggregations);
     }
 
     @Override

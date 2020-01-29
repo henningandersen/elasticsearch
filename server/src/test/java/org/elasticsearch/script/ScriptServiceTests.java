@@ -60,16 +60,16 @@ public class ScriptServiceTests extends ESTestCase {
     @Before
     public void setup() throws IOException {
         baseSettings = Settings.builder()
-                .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
-                .put(ScriptService.SCRIPT_MAX_COMPILATIONS_RATE.getKey(), "10000/1m")
-                .build();
+            .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
+            .put(ScriptService.SCRIPT_MAX_COMPILATIONS_RATE.getKey(), "10000/1m")
+            .build();
         Map<String, Function<Map<String, Object>, Object>> scripts = new HashMap<>();
         for (int i = 0; i < 20; ++i) {
             scripts.put(i + "+" + i, p -> null); // only care about compilation, not execution
         }
         scripts.put("script", p -> null);
         scriptEngine = new MockScriptEngine(Script.DEFAULT_SCRIPT_LANG, scripts, Collections.emptyMap());
-        //prevent duplicates using map
+        // prevent duplicates using map
         contexts = new HashMap<>(ScriptModule.CORE_CONTEXTS);
         engines = new HashMap<>();
         engines.put(scriptEngine.getType(), scriptEngine);
@@ -90,7 +90,7 @@ public class ScriptServiceTests extends ESTestCase {
 
             @Override
             StoredScriptSource getScriptFromClusterState(String id) {
-                //mock the script that gets retrieved from an index
+                // mock the script that gets retrieved from an index
                 return new StoredScriptSource("test", "1+1", Collections.emptyMap());
             }
         };
@@ -133,14 +133,26 @@ public class ScriptServiceTests extends ESTestCase {
         assertException("6.0/1m", IllegalArgumentException.class, "could not parse [6.0] as integer in value [6.0/1m]");
         assertException("6/-1m", IllegalArgumentException.class, "time value [-1m] must be positive");
         assertException("6/0m", IllegalArgumentException.class, "time value [0m] must be positive");
-        assertException("10", IllegalArgumentException.class,
-                "parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [10]");
-        assertException("anything", IllegalArgumentException.class,
-                "parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [anything]");
-        assertException("/1m", IllegalArgumentException.class,
-                "parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [/1m]");
-        assertException("10/", IllegalArgumentException.class,
-                "parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [10/]");
+        assertException(
+            "10",
+            IllegalArgumentException.class,
+            "parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [10]"
+        );
+        assertException(
+            "anything",
+            IllegalArgumentException.class,
+            "parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [anything]"
+        );
+        assertException(
+            "/1m",
+            IllegalArgumentException.class,
+            "parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [/1m]"
+        );
+        assertException(
+            "10/",
+            IllegalArgumentException.class,
+            "parameter must contain a positive integer and a timevalue, i.e. 10/1m, but was [10/]"
+        );
         assertException("-1/1m", IllegalArgumentException.class, "rate [-1] must be positive");
         assertException("10/5s", IllegalArgumentException.class, "time value [5s] must be at least on a one minute resolution");
     }
@@ -152,12 +164,20 @@ public class ScriptServiceTests extends ESTestCase {
 
     public void testNotSupportedDisableDynamicSetting() throws IOException {
         try {
-            buildScriptService(Settings.builder().put(
-                    ScriptService.DISABLE_DYNAMIC_SCRIPTING_SETTING, randomUnicodeOfLength(randomIntBetween(1, 10))).build());
+            buildScriptService(
+                Settings.builder()
+                    .put(ScriptService.DISABLE_DYNAMIC_SCRIPTING_SETTING, randomUnicodeOfLength(randomIntBetween(1, 10)))
+                    .build()
+            );
             fail("script service should have thrown exception due to non supported script.disable_dynamic setting");
-        } catch(IllegalArgumentException e) {
-            assertThat(e.getMessage(), containsString(ScriptService.DISABLE_DYNAMIC_SCRIPTING_SETTING +
-                    " is not a supported setting, replace with fine-grained script settings"));
+        } catch (IllegalArgumentException e) {
+            assertThat(
+                e.getMessage(),
+                containsString(
+                    ScriptService.DISABLE_DYNAMIC_SCRIPTING_SETTING
+                        + " is not a supported setting, replace with fine-grained script settings"
+                )
+            );
         }
     }
 
@@ -227,8 +247,10 @@ public class ScriptServiceTests extends ESTestCase {
         buildScriptService(Settings.EMPTY);
 
         String type = scriptEngine.getType();
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            scriptService.compile(new Script(ScriptType.INLINE, type, "test", Collections.emptyMap()), IngestScript.CONTEXT));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> scriptService.compile(new Script(ScriptType.INLINE, type, "test", Collections.emptyMap()), IngestScript.CONTEXT)
+        );
         assertThat(e.getMessage(), containsString("script context [" + IngestScript.CONTEXT.name + "] not supported"));
     }
 
@@ -242,8 +264,10 @@ public class ScriptServiceTests extends ESTestCase {
         buildScriptService(Settings.EMPTY);
         int numberOfCompilations = randomIntBetween(1, 20);
         for (int i = 0; i < numberOfCompilations; i++) {
-            scriptService
-                    .compile(new Script(ScriptType.INLINE, "test", i + "+" + i, Collections.emptyMap()), randomFrom(contexts.values()));
+            scriptService.compile(
+                new Script(ScriptType.INLINE, "test", i + "+" + i, Collections.emptyMap()),
+                randomFrom(contexts.values())
+            );
         }
         assertEquals(numberOfCompilations, scriptService.stats().getCompilations());
     }
@@ -276,41 +300,55 @@ public class ScriptServiceTests extends ESTestCase {
     }
 
     public void testStoreScript() throws Exception {
-        BytesReference script = BytesReference.bytes(XContentFactory.jsonBuilder()
-            .startObject()
-            .field("script")
-            .startObject()
-            .field("lang", "_lang")
-            .field("source", "abc")
-            .endObject()
-            .endObject());
+        BytesReference script = BytesReference.bytes(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .field("script")
+                .startObject()
+                .field("lang", "_lang")
+                .field("source", "abc")
+                .endObject()
+                .endObject()
+        );
         ScriptMetaData scriptMetaData = ScriptMetaData.putStoredScript(null, "_id", StoredScriptSource.parse(script, XContentType.JSON));
         assertNotNull(scriptMetaData);
         assertEquals("abc", scriptMetaData.getStoredScript("_id").getSource());
     }
 
     public void testDeleteScript() throws Exception {
-        ScriptMetaData scriptMetaData = ScriptMetaData.putStoredScript(null, "_id",
-            StoredScriptSource.parse(new BytesArray("{\"script\": {\"lang\": \"_lang\", \"source\": \"abc\"} }"), XContentType.JSON));
+        ScriptMetaData scriptMetaData = ScriptMetaData.putStoredScript(
+            null,
+            "_id",
+            StoredScriptSource.parse(new BytesArray("{\"script\": {\"lang\": \"_lang\", \"source\": \"abc\"} }"), XContentType.JSON)
+        );
         scriptMetaData = ScriptMetaData.deleteStoredScript(scriptMetaData, "_id");
         assertNotNull(scriptMetaData);
         assertNull(scriptMetaData.getStoredScript("_id"));
 
         ScriptMetaData errorMetaData = scriptMetaData;
-        ResourceNotFoundException e = expectThrows(ResourceNotFoundException.class, () -> {
-            ScriptMetaData.deleteStoredScript(errorMetaData, "_id");
-        });
+        ResourceNotFoundException e = expectThrows(
+            ResourceNotFoundException.class,
+            () -> { ScriptMetaData.deleteStoredScript(errorMetaData, "_id"); }
+        );
         assertEquals("stored script [_id] does not exist and cannot be deleted", e.getMessage());
     }
 
     public void testGetStoredScript() throws Exception {
         buildScriptService(Settings.EMPTY);
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
-            .metaData(MetaData.builder()
-                .putCustom(ScriptMetaData.TYPE,
-                    new ScriptMetaData.Builder(null).storeScript("_id",
-                        StoredScriptSource.parse(new BytesArray("{\"script\": {\"lang\": \"_lang\", \"source\": \"abc\"} }"),
-                            XContentType.JSON)).build()))
+            .metaData(
+                MetaData.builder()
+                    .putCustom(
+                        ScriptMetaData.TYPE,
+                        new ScriptMetaData.Builder(null).storeScript(
+                            "_id",
+                            StoredScriptSource.parse(
+                                new BytesArray("{\"script\": {\"lang\": \"_lang\", \"source\": \"abc\"} }"),
+                                XContentType.JSON
+                            )
+                        ).build()
+                    )
+            )
             .build();
 
         assertEquals("abc", scriptService.getStoredScript(cs, new GetStoredScriptRequest("_id")).getSource());
@@ -322,35 +360,49 @@ public class ScriptServiceTests extends ESTestCase {
     public void testMaxSizeLimit() throws Exception {
         buildScriptService(Settings.builder().put(ScriptService.SCRIPT_MAX_SIZE_IN_BYTES.getKey(), 4).build());
         scriptService.compile(new Script(ScriptType.INLINE, "test", "1+1", Collections.emptyMap()), randomFrom(contexts.values()));
-        IllegalArgumentException iae = expectThrows(IllegalArgumentException.class, () -> {
-            scriptService.compile(new Script(ScriptType.INLINE, "test", "10+10", Collections.emptyMap()), randomFrom(contexts.values()));
-        });
+        IllegalArgumentException iae = expectThrows(
+            IllegalArgumentException.class,
+            () -> {
+                scriptService.compile(
+                    new Script(ScriptType.INLINE, "test", "10+10", Collections.emptyMap()),
+                    randomFrom(contexts.values())
+                );
+            }
+        );
         assertEquals("exceeded max allowed inline script size in bytes [4] with size [5] for script [10+10]", iae.getMessage());
         clusterSettings.applySettings(Settings.builder().put(ScriptService.SCRIPT_MAX_SIZE_IN_BYTES.getKey(), 6).build());
         scriptService.compile(new Script(ScriptType.INLINE, "test", "10+10", Collections.emptyMap()), randomFrom(contexts.values()));
         clusterSettings.applySettings(Settings.builder().put(ScriptService.SCRIPT_MAX_SIZE_IN_BYTES.getKey(), 5).build());
         scriptService.compile(new Script(ScriptType.INLINE, "test", "10+10", Collections.emptyMap()), randomFrom(contexts.values()));
-        iae = expectThrows(IllegalArgumentException.class, () -> {
-            clusterSettings.applySettings(Settings.builder().put(ScriptService.SCRIPT_MAX_SIZE_IN_BYTES.getKey(), 2).build());
-        });
-        assertEquals("script.max_size_in_bytes cannot be set to [2], stored script [test1] exceeds the new value with a size of [3]",
-                iae.getMessage());
+        iae = expectThrows(
+            IllegalArgumentException.class,
+            () -> { clusterSettings.applySettings(Settings.builder().put(ScriptService.SCRIPT_MAX_SIZE_IN_BYTES.getKey(), 2).build()); }
+        );
+        assertEquals(
+            "script.max_size_in_bytes cannot be set to [2], stored script [test1] exceeds the new value with a size of [3]",
+            iae.getMessage()
+        );
     }
 
     private void assertCompileRejected(String lang, String script, ScriptType scriptType, ScriptContext scriptContext) {
         try {
             scriptService.compile(new Script(scriptType, lang, script, Collections.emptyMap()), scriptContext);
-            fail("compile should have been rejected for lang [" + lang + "], " +
-                    "script_type [" + scriptType + "], scripted_op [" + scriptContext + "]");
+            fail(
+                "compile should have been rejected for lang ["
+                    + lang
+                    + "], "
+                    + "script_type ["
+                    + scriptType
+                    + "], scripted_op ["
+                    + scriptContext
+                    + "]"
+            );
         } catch (IllegalArgumentException | IllegalStateException e) {
             // pass
         }
     }
 
     private void assertCompileAccepted(String lang, String script, ScriptType scriptType, ScriptContext scriptContext) {
-        assertThat(
-                scriptService.compile(new Script(scriptType, lang, script, Collections.emptyMap()), scriptContext),
-                notNullValue()
-        );
+        assertThat(scriptService.compile(new Script(scriptType, lang, script, Collections.emptyMap()), scriptContext), notNullValue());
     }
 }

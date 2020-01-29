@@ -42,7 +42,7 @@ public class SuggestingErrorOnUnknown implements ErrorOnUnknown {
 
     /**
      * Builds suggestions for an unknown field, returning an empty string if there
-     * aren't any suggestions or " did you mean " and then the list of suggestions. 
+     * aren't any suggestions or " did you mean " and then the list of suggestions.
      */
     public static String suggest(String unknownField, Iterable<String> candidates) {
         // TODO it'd be nice to combine this with BaseRestHandler's implementation.

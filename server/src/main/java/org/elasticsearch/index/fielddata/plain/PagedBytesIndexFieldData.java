@@ -51,7 +51,6 @@ import java.io.IOException;
 
 public class PagedBytesIndexFieldData extends AbstractIndexOrdinalsFieldData {
 
-
     public static class Builder implements IndexFieldData.Builder {
 
         private final double minFrequency, maxFrequency;
@@ -64,22 +63,44 @@ public class PagedBytesIndexFieldData extends AbstractIndexOrdinalsFieldData {
         }
 
         @Override
-        public IndexOrdinalsFieldData build(IndexSettings indexSettings, MappedFieldType fieldType,
-                IndexFieldDataCache cache, CircuitBreakerService breakerService, MapperService mapperService) {
-            return new PagedBytesIndexFieldData(indexSettings, fieldType.name(), cache, breakerService,
-                    minFrequency, maxFrequency, minSegmentSize);
+        public IndexOrdinalsFieldData build(
+            IndexSettings indexSettings,
+            MappedFieldType fieldType,
+            IndexFieldDataCache cache,
+            CircuitBreakerService breakerService,
+            MapperService mapperService
+        ) {
+            return new PagedBytesIndexFieldData(
+                indexSettings,
+                fieldType.name(),
+                cache,
+                breakerService,
+                minFrequency,
+                maxFrequency,
+                minSegmentSize
+            );
         }
     }
 
-    public PagedBytesIndexFieldData(IndexSettings indexSettings, String fieldName,
-                                    IndexFieldDataCache cache, CircuitBreakerService breakerService,
-                                    double minFrequency, double maxFrequency, int minSegmentSize) {
+    public PagedBytesIndexFieldData(
+        IndexSettings indexSettings,
+        String fieldName,
+        IndexFieldDataCache cache,
+        CircuitBreakerService breakerService,
+        double minFrequency,
+        double maxFrequency,
+        int minSegmentSize
+    ) {
         super(indexSettings, fieldName, cache, breakerService, minFrequency, maxFrequency, minSegmentSize);
     }
 
     @Override
-    public SortField sortField(@Nullable Object missingValue, MultiValueMode sortMode, XFieldComparatorSource.Nested nested,
-            boolean reverse) {
+    public SortField sortField(
+        @Nullable Object missingValue,
+        MultiValueMode sortMode,
+        XFieldComparatorSource.Nested nested,
+        boolean reverse
+    ) {
         XFieldComparatorSource source = new BytesRefFieldComparatorSource(this, missingValue, sortMode, nested);
         return new SortField(getFieldName(), source, reverse);
     }
@@ -89,8 +110,11 @@ public class PagedBytesIndexFieldData extends AbstractIndexOrdinalsFieldData {
         LeafReader reader = context.reader();
         AtomicOrdinalsFieldData data = null;
 
-        PagedBytesEstimator estimator =
-            new PagedBytesEstimator(context, breakerService.getBreaker(CircuitBreaker.FIELDDATA), getFieldName());
+        PagedBytesEstimator estimator = new PagedBytesEstimator(
+            context,
+            breakerService.getBreaker(CircuitBreaker.FIELDDATA),
+            getFieldName()
+        );
         Terms terms = reader.terms(getFieldName());
         if (terms == null) {
             data = AbstractAtomicOrdinalsFieldData.empty();
@@ -187,8 +211,12 @@ public class PagedBytesIndexFieldData extends AbstractIndexOrdinalsFieldData {
                     final Stats stats = ((FieldReader) fieldTerms).getStats();
                     long totalTermBytes = stats.totalTermBytes;
                     if (logger.isTraceEnabled()) {
-                        logger.trace("totalTermBytes: {}, terms.size(): {}, terms.getSumDocFreq(): {}",
-                                totalTermBytes, terms.size(), terms.getSumDocFreq());
+                        logger.trace(
+                            "totalTermBytes: {}, terms.size(): {}, terms.getSumDocFreq(): {}",
+                            totalTermBytes,
+                            terms.size(),
+                            terms.getSumDocFreq()
+                        );
                     }
                     long totalBytes = totalTermBytes + (2 * terms.size()) + (4 * terms.getSumDocFreq());
                     return totalBytes;

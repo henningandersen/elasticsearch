@@ -42,8 +42,9 @@ public class InternalGeoCentroid extends InternalAggregation implements GeoCentr
     private final long count;
 
     public static long encodeLatLon(double lat, double lon) {
-        return (Integer.toUnsignedLong(GeoEncodingUtils.encodeLatitude(lat)) << 32) |
-                    Integer.toUnsignedLong(GeoEncodingUtils.encodeLongitude(lon));
+        return (Integer.toUnsignedLong(GeoEncodingUtils.encodeLatitude(lat)) << 32) | Integer.toUnsignedLong(
+            GeoEncodingUtils.encodeLongitude(lon)
+        );
     }
 
     public static double decodeLatitude(long encodedLatLon) {
@@ -54,8 +55,13 @@ public class InternalGeoCentroid extends InternalAggregation implements GeoCentr
         return GeoEncodingUtils.decodeLongitude((int) (encodedLatLon & 0xFFFFFFFFL));
     }
 
-    InternalGeoCentroid(String name, GeoPoint centroid, long count, List<PipelineAggregator>
-            pipelineAggregators, Map<String, Object> metaData) {
+    InternalGeoCentroid(
+        String name,
+        GeoPoint centroid,
+        long count,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         assert (centroid == null) == (count == 0);
         this.centroid = centroid;
@@ -131,7 +137,7 @@ public class InternalGeoCentroid extends InternalAggregation implements GeoCentr
                 }
             }
         }
-        final GeoPoint result = (Double.isNaN(lonSum)) ? null : new GeoPoint(latSum/totalCount, lonSum/totalCount);
+        final GeoPoint result = (Double.isNaN(lonSum)) ? null : new GeoPoint(latSum / totalCount, lonSum / totalCount);
         return new InternalGeoCentroid(name, result, totalCount, pipelineAggregators(), getMetaData());
     }
 
@@ -185,8 +191,7 @@ public class InternalGeoCentroid extends InternalAggregation implements GeoCentr
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         InternalGeoCentroid that = (InternalGeoCentroid) obj;
-        return count == that.count &&
-                Objects.equals(centroid, that.centroid);
+        return count == that.count && Objects.equals(centroid, that.centroid);
     }
 
     @Override
@@ -196,9 +201,6 @@ public class InternalGeoCentroid extends InternalAggregation implements GeoCentr
 
     @Override
     public String toString() {
-        return "InternalGeoCentroid{" +
-                "centroid=" + centroid +
-                ", count=" + count +
-                '}';
+        return "InternalGeoCentroid{" + "centroid=" + centroid + ", count=" + count + '}';
     }
 }

@@ -35,28 +35,37 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 public class RoutingNodeTests extends ESTestCase {
-    private ShardRouting unassignedShard0 =
-        TestShardRouting.newShardRouting("test", 0, "node-1", false, ShardRoutingState.STARTED);
-    private ShardRouting initializingShard0 =
-        TestShardRouting.newShardRouting("test", 1, "node-1", false, ShardRoutingState.INITIALIZING);
-    private ShardRouting relocatingShard0 =
-        TestShardRouting.newShardRouting("test", 2, "node-1", "node-2", false, ShardRoutingState.RELOCATING);
+    private ShardRouting unassignedShard0 = TestShardRouting.newShardRouting("test", 0, "node-1", false, ShardRoutingState.STARTED);
+    private ShardRouting initializingShard0 = TestShardRouting.newShardRouting("test", 1, "node-1", false, ShardRoutingState.INITIALIZING);
+    private ShardRouting relocatingShard0 = TestShardRouting.newShardRouting(
+        "test",
+        2,
+        "node-1",
+        "node-2",
+        false,
+        ShardRoutingState.RELOCATING
+    );
     private RoutingNode routingNode;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        InetAddress inetAddress = InetAddress.getByAddress("name1", new byte[] { (byte) 192, (byte) 168, (byte) 0, (byte) 1});
+        InetAddress inetAddress = InetAddress.getByAddress("name1", new byte[] { (byte) 192, (byte) 168, (byte) 0, (byte) 1 });
         TransportAddress transportAddress = new TransportAddress(inetAddress, randomIntBetween(0, 65535));
         DiscoveryNode discoveryNode = new DiscoveryNode("name1", "node-1", transportAddress, emptyMap(), emptySet(), Version.CURRENT);
         routingNode = new RoutingNode("node1", discoveryNode, unassignedShard0, initializingShard0, relocatingShard0);
     }
 
     public void testAdd() {
-        ShardRouting initializingShard1 =
-            TestShardRouting.newShardRouting("test", 3, "node-1", false, ShardRoutingState.INITIALIZING);
-        ShardRouting relocatingShard0 =
-            TestShardRouting.newShardRouting("test", 4, "node-1", "node-2",false, ShardRoutingState.RELOCATING);
+        ShardRouting initializingShard1 = TestShardRouting.newShardRouting("test", 3, "node-1", false, ShardRoutingState.INITIALIZING);
+        ShardRouting relocatingShard0 = TestShardRouting.newShardRouting(
+            "test",
+            4,
+            "node-1",
+            "node-2",
+            false,
+            ShardRoutingState.RELOCATING
+        );
         routingNode.add(initializingShard1);
         routingNode.add(relocatingShard0);
         assertThat(routingNode.getByShardId(new ShardId("test", IndexMetaData.INDEX_UUID_NA_VALUE, 3)), equalTo(initializingShard1));
@@ -64,21 +73,24 @@ public class RoutingNodeTests extends ESTestCase {
     }
 
     public void testUpdate() {
-        ShardRouting startedShard0 =
-            TestShardRouting.newShardRouting("test", 0, "node-1", false, ShardRoutingState.STARTED);
-        ShardRouting startedShard1 =
-            TestShardRouting.newShardRouting("test", 1, "node-1", "node-2",false, ShardRoutingState.RELOCATING);
-        ShardRouting startedShard2 =
-            TestShardRouting.newShardRouting("test", 2, "node-1", false, ShardRoutingState.INITIALIZING);
+        ShardRouting startedShard0 = TestShardRouting.newShardRouting("test", 0, "node-1", false, ShardRoutingState.STARTED);
+        ShardRouting startedShard1 = TestShardRouting.newShardRouting("test", 1, "node-1", "node-2", false, ShardRoutingState.RELOCATING);
+        ShardRouting startedShard2 = TestShardRouting.newShardRouting("test", 2, "node-1", false, ShardRoutingState.INITIALIZING);
         routingNode.update(unassignedShard0, startedShard0);
         routingNode.update(initializingShard0, startedShard1);
         routingNode.update(relocatingShard0, startedShard2);
-        assertThat(routingNode.getByShardId(new ShardId("test", IndexMetaData.INDEX_UUID_NA_VALUE, 0)).state(),
-            equalTo(ShardRoutingState.STARTED));
-        assertThat(routingNode.getByShardId(new ShardId("test", IndexMetaData.INDEX_UUID_NA_VALUE, 1)).state(),
-            equalTo(ShardRoutingState.RELOCATING));
-        assertThat(routingNode.getByShardId(new ShardId("test", IndexMetaData.INDEX_UUID_NA_VALUE, 2)).state(),
-            equalTo(ShardRoutingState.INITIALIZING));
+        assertThat(
+            routingNode.getByShardId(new ShardId("test", IndexMetaData.INDEX_UUID_NA_VALUE, 0)).state(),
+            equalTo(ShardRoutingState.STARTED)
+        );
+        assertThat(
+            routingNode.getByShardId(new ShardId("test", IndexMetaData.INDEX_UUID_NA_VALUE, 1)).state(),
+            equalTo(ShardRoutingState.RELOCATING)
+        );
+        assertThat(
+            routingNode.getByShardId(new ShardId("test", IndexMetaData.INDEX_UUID_NA_VALUE, 2)).state(),
+            equalTo(ShardRoutingState.INITIALIZING)
+        );
     }
 
     public void testRemove() {

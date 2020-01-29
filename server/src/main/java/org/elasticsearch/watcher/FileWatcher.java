@@ -199,7 +199,7 @@ public class FileWatcher extends AbstractResourceWatcher<FileChangesListener> {
                 FileObserver[] newChildren = new FileObserver[files.length];
                 int child = 0;
                 int file = 0;
-                while (file < files.length || child < children.length ) {
+                while (file < files.length || child < children.length) {
                     int compare;
 
                     if (file >= files.length) {
@@ -210,7 +210,7 @@ public class FileWatcher extends AbstractResourceWatcher<FileChangesListener> {
                         compare = children[child].file.compareTo(files[file]);
                     }
 
-                    if (compare  == 0) {
+                    if (compare == 0) {
                         // Same file copy it and update
                         children[child].checkAndNotify();
                         newChildren[file] = children[child];

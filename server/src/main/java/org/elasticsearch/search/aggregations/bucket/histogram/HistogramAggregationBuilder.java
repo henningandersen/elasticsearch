@@ -53,12 +53,14 @@ import java.util.Objects;
  * fields are unsupported, and will throw at the factory layer.
  */
 public class HistogramAggregationBuilder extends ValuesSourceAggregationBuilder<ValuesSource, HistogramAggregationBuilder>
-        implements MultiBucketAggregationBuilder {
+    implements
+        MultiBucketAggregationBuilder {
     public static final String NAME = "histogram";
 
     private static final ObjectParser<double[], Void> EXTENDED_BOUNDS_PARSER = new ObjectParser<>(
-            Histogram.EXTENDED_BOUNDS_FIELD.getPreferredName(),
-            () -> new double[]{ Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY });
+        Histogram.EXTENDED_BOUNDS_FIELD.getPreferredName(),
+        () -> new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }
+    );
     static {
         EXTENDED_BOUNDS_PARSER.declareDouble((bounds, d) -> bounds[0] = d, new ParseField("min"));
         EXTENDED_BOUNDS_PARSER.declareDouble((bounds, d) -> bounds[1] = d, new ParseField("max"));
@@ -77,12 +79,18 @@ public class HistogramAggregationBuilder extends ValuesSourceAggregationBuilder<
 
         PARSER.declareLong(HistogramAggregationBuilder::minDocCount, Histogram.MIN_DOC_COUNT_FIELD);
 
-        PARSER.declareField((histogram, extendedBounds) -> {
-            histogram.extendedBounds(extendedBounds[0], extendedBounds[1]);
-        }, parser -> EXTENDED_BOUNDS_PARSER.apply(parser, null), ExtendedBounds.EXTENDED_BOUNDS_FIELD, ObjectParser.ValueType.OBJECT);
+        PARSER.declareField(
+            (histogram, extendedBounds) -> { histogram.extendedBounds(extendedBounds[0], extendedBounds[1]); },
+            parser -> EXTENDED_BOUNDS_PARSER.apply(parser, null),
+            ExtendedBounds.EXTENDED_BOUNDS_FIELD,
+            ObjectParser.ValueType.OBJECT
+        );
 
-        PARSER.declareObjectArray(HistogramAggregationBuilder::order, (p, c) -> InternalOrder.Parser.parseOrderParam(p),
-            Histogram.ORDER_FIELD);
+        PARSER.declareObjectArray(
+            HistogramAggregationBuilder::order,
+            (p, c) -> InternalOrder.Parser.parseOrderParam(p),
+            Histogram.ORDER_FIELD
+        );
     }
 
     public static HistogramAggregationBuilder parse(String aggregationName, XContentParser parser) throws IOException {
@@ -217,7 +225,7 @@ public class HistogramAggregationBuilder extends ValuesSourceAggregationBuilder<
         if (order == null) {
             throw new IllegalArgumentException("[order] must not be null: [" + name + "]");
         }
-        if(order instanceof CompoundOrder || InternalOrder.isKeyOrder(order)) {
+        if (order instanceof CompoundOrder || InternalOrder.isKeyOrder(order)) {
             this.order = order; // if order already contains a tie-breaker we are good to go
         } else { // otherwise add a tie-breaker by using a compound order
             this.order = BucketOrder.compound(order);
@@ -262,7 +270,8 @@ public class HistogramAggregationBuilder extends ValuesSourceAggregationBuilder<
     public HistogramAggregationBuilder minDocCount(long minDocCount) {
         if (minDocCount < 0) {
             throw new IllegalArgumentException(
-                    "[minDocCount] must be greater than or equal to 0. Found [" + minDocCount + "] in [" + name + "]");
+                "[minDocCount] must be greater than or equal to 0. Found [" + minDocCount + "] in [" + name + "]"
+            );
         }
         this.minDocCount = minDocCount;
         return this;
@@ -303,12 +312,27 @@ public class HistogramAggregationBuilder extends ValuesSourceAggregationBuilder<
     }
 
     @Override
-    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(QueryShardContext queryShardContext,
-                                                                        ValuesSourceConfig<ValuesSource> config,
-                                                                        AggregatorFactory parent,
-                                                                        Builder subFactoriesBuilder) throws IOException {
-        return new HistogramAggregatorFactory(name, config, interval, offset, order, keyed, minDocCount, minBound, maxBound,
-            queryShardContext, parent, subFactoriesBuilder, metaData);
+    protected ValuesSourceAggregatorFactory<ValuesSource> innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
+        return new HistogramAggregatorFactory(
+            name,
+            config,
+            interval,
+            offset,
+            order,
+            keyed,
+            minDocCount,
+            minBound,
+            maxBound,
+            queryShardContext,
+            parent,
+            subFactoriesBuilder,
+            metaData
+        );
     }
 
     @Override

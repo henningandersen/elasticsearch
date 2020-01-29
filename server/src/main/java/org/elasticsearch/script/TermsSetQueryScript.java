@@ -34,12 +34,13 @@ public abstract class TermsSetQueryScript {
     public static final ScriptContext<Factory> CONTEXT = new ScriptContext<>("terms_set", Factory.class);
 
     private static final Map<String, String> DEPRECATIONS = Map.of(
-            "doc",
-            "Accessing variable [doc] via [params.doc] from within a terms-set-query-script "
-                    + "is deprecated in favor of directly accessing [doc].",
-            "_doc",
-            "Accessing variable [doc] via [params._doc] from within a terms-set-query-script "
-                    + "is deprecated in favor of directly accessing [doc].");
+        "doc",
+        "Accessing variable [doc] via [params.doc] from within a terms-set-query-script "
+            + "is deprecated in favor of directly accessing [doc].",
+        "_doc",
+        "Accessing variable [doc] via [params._doc] from within a terms-set-query-script "
+            + "is deprecated in favor of directly accessing [doc]."
+    );
 
     /**
      * The generic runtime parameters for the script.

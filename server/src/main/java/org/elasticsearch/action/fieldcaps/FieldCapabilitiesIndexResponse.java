@@ -43,10 +43,8 @@ public class FieldCapabilitiesIndexResponse extends ActionResponse implements Wr
     FieldCapabilitiesIndexResponse(StreamInput in) throws IOException {
         super(in);
         this.indexName = in.readString();
-        this.responseMap =
-            in.readMap(StreamInput::readString, FieldCapabilities::new);
+        this.responseMap = in.readMap(StreamInput::readString, FieldCapabilities::new);
     }
-
 
     /**
      * Get the index name
@@ -73,8 +71,7 @@ public class FieldCapabilitiesIndexResponse extends ActionResponse implements Wr
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(indexName);
-        out.writeMap(responseMap,
-            StreamOutput::writeString, (valueOut, fc) -> fc.writeTo(valueOut));
+        out.writeMap(responseMap, StreamOutput::writeString, (valueOut, fc) -> fc.writeTo(valueOut));
     }
 
     @Override
@@ -82,8 +79,7 @@ public class FieldCapabilitiesIndexResponse extends ActionResponse implements Wr
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FieldCapabilitiesIndexResponse that = (FieldCapabilitiesIndexResponse) o;
-        return Objects.equals(indexName, that.indexName) &&
-            Objects.equals(responseMap, that.responseMap);
+        return Objects.equals(indexName, that.indexName) && Objects.equals(responseMap, that.responseMap);
     }
 
     @Override

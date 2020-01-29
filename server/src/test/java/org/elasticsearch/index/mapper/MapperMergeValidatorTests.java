@@ -36,26 +36,22 @@ public class MapperMergeValidatorTests extends ESTestCase {
 
     public void testMismatchedFieldTypes() {
         FieldMapper existingField = new MockFieldMapper("foo");
-        FieldTypeLookup lookup = new FieldTypeLookup()
-            .copyAndAddAll("type", singletonList(existingField), emptyList());
+        FieldTypeLookup lookup = new FieldTypeLookup().copyAndAddAll("type", singletonList(existingField), emptyList());
 
         FieldTypeLookupTests.OtherFakeFieldType newFieldType = new FieldTypeLookupTests.OtherFakeFieldType();
         newFieldType.setName("foo");
         FieldMapper invalidField = new MockFieldMapper("foo", newFieldType);
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            MapperMergeValidator.validateNewMappers(
-                emptyList(),
-                singletonList(invalidField),
-                emptyList(),
-                lookup));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> MapperMergeValidator.validateNewMappers(emptyList(), singletonList(invalidField), emptyList(), lookup)
+        );
         assertTrue(e.getMessage().contains("cannot be changed from type [faketype] to [otherfaketype]"));
     }
 
     public void testConflictingFieldTypes() {
         FieldMapper existingField = new MockFieldMapper("foo");
-        FieldTypeLookup lookup = new FieldTypeLookup()
-            .copyAndAddAll("type", singletonList(existingField), emptyList());
+        FieldTypeLookup lookup = new FieldTypeLookup().copyAndAddAll("type", singletonList(existingField), emptyList());
 
         MappedFieldType newFieldType = new MockFieldMapper.FakeFieldType();
         newFieldType.setName("foo");
@@ -63,11 +59,7 @@ public class MapperMergeValidatorTests extends ESTestCase {
         FieldMapper validField = new MockFieldMapper("foo", newFieldType);
 
         // Boost is updateable, so no exception should be thrown.
-        MapperMergeValidator.validateNewMappers(
-            emptyList(),
-            singletonList(validField),
-            emptyList(),
-            lookup);
+        MapperMergeValidator.validateNewMappers(emptyList(), singletonList(validField), emptyList(), lookup);
 
         MappedFieldType invalidFieldType = new MockFieldMapper.FakeFieldType();
         invalidFieldType.setName("foo");
@@ -75,12 +67,10 @@ public class MapperMergeValidatorTests extends ESTestCase {
         FieldMapper invalidField = new MockFieldMapper("foo", invalidFieldType);
 
         // Store is not updateable, so we expect an exception.
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            MapperMergeValidator.validateNewMappers(
-                emptyList(),
-                singletonList(invalidField),
-                emptyList(),
-                lookup));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> MapperMergeValidator.validateNewMappers(emptyList(), singletonList(invalidField), emptyList(), lookup)
+        );
         assertTrue(e.getMessage().contains("has different [store] values"));
     }
 
@@ -88,12 +78,15 @@ public class MapperMergeValidatorTests extends ESTestCase {
         ObjectMapper objectMapper = createObjectMapper("some.path");
         FieldAliasMapper aliasMapper = new FieldAliasMapper("path", "some.path", "field");
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            MapperMergeValidator.validateNewMappers(
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> MapperMergeValidator.validateNewMappers(
                 singletonList(objectMapper),
                 emptyList(),
                 singletonList(aliasMapper),
-                new FieldTypeLookup()));
+                new FieldTypeLookup()
+            )
+        );
         assertEquals("Field [some.path] is defined both as an object and a field.", e.getMessage());
     }
 
@@ -102,12 +95,15 @@ public class MapperMergeValidatorTests extends ESTestCase {
         FieldMapper invalidField = new MockFieldMapper("invalid");
         FieldAliasMapper invalidAlias = new FieldAliasMapper("invalid", "invalid", "field");
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            MapperMergeValidator.validateNewMappers(
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> MapperMergeValidator.validateNewMappers(
                 emptyList(),
                 Arrays.asList(field, invalidField),
                 singletonList(invalidAlias),
-                new FieldTypeLookup()));
+                new FieldTypeLookup()
+            )
+        );
 
         assertEquals("Field [invalid] is defined both as an alias and a concrete field.", e.getMessage());
     }
@@ -117,53 +113,61 @@ public class MapperMergeValidatorTests extends ESTestCase {
         FieldAliasMapper alias = new FieldAliasMapper("alias", "alias", "field");
         FieldAliasMapper invalidAlias = new FieldAliasMapper("invalid-alias", "invalid-alias", "alias");
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            MapperMergeValidator.validateNewMappers(
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> MapperMergeValidator.validateNewMappers(
                 emptyList(),
                 singletonList(field),
                 Arrays.asList(alias, invalidAlias),
-                new FieldTypeLookup()));
+                new FieldTypeLookup()
+            )
+        );
 
-        assertEquals("Invalid [path] value [alias] for field alias [invalid-alias]: an alias" +
-            " cannot refer to another alias.", e.getMessage());
+        assertEquals(
+            "Invalid [path] value [alias] for field alias [invalid-alias]: an alias" + " cannot refer to another alias.",
+            e.getMessage()
+        );
     }
 
     public void testAliasThatRefersToItself() {
         FieldAliasMapper invalidAlias = new FieldAliasMapper("invalid-alias", "invalid-alias", "invalid-alias");
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            MapperMergeValidator.validateNewMappers(
-                emptyList(),
-                emptyList(),
-                singletonList(invalidAlias),
-                new FieldTypeLookup()));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> MapperMergeValidator.validateNewMappers(emptyList(), emptyList(), singletonList(invalidAlias), new FieldTypeLookup())
+        );
 
-        assertEquals("Invalid [path] value [invalid-alias] for field alias [invalid-alias]: an alias" +
-            " cannot refer to itself.", e.getMessage());
+        assertEquals(
+            "Invalid [path] value [invalid-alias] for field alias [invalid-alias]: an alias" + " cannot refer to itself.",
+            e.getMessage()
+        );
     }
 
     public void testAliasWithNonExistentPath() {
         FieldAliasMapper invalidAlias = new FieldAliasMapper("invalid-alias", "invalid-alias", "non-existent");
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            MapperMergeValidator.validateNewMappers(
-                emptyList(),
-                emptyList(),
-                singletonList(invalidAlias),
-                new FieldTypeLookup()));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> MapperMergeValidator.validateNewMappers(emptyList(), emptyList(), singletonList(invalidAlias), new FieldTypeLookup())
+        );
 
-        assertEquals("Invalid [path] value [non-existent] for field alias [invalid-alias]: an alias" +
-            " must refer to an existing field in the mappings.", e.getMessage());
+        assertEquals(
+            "Invalid [path] value [non-existent] for field alias [invalid-alias]: an alias"
+                + " must refer to an existing field in the mappings.",
+            e.getMessage()
+        );
     }
 
     public void testFieldAliasWithNestedScope() {
         ObjectMapper objectMapper = createNestedObjectMapper("nested");
         FieldAliasMapper aliasMapper = new FieldAliasMapper("alias", "nested.alias", "nested.field");
 
-        MapperMergeValidator.validateFieldReferences(emptyList(),
+        MapperMergeValidator.validateFieldReferences(
+            emptyList(),
             singletonList(aliasMapper),
             Collections.singletonMap("nested", objectMapper),
-            new FieldTypeLookup());
+            new FieldTypeLookup()
+        );
     }
 
     public void testFieldAliasWithDifferentObjectScopes() {
@@ -173,25 +177,26 @@ public class MapperMergeValidatorTests extends ESTestCase {
 
         FieldAliasMapper aliasMapper = new FieldAliasMapper("alias", "object2.alias", "object1.field");
 
-        MapperMergeValidator.validateFieldReferences(emptyList(),
-            singletonList(aliasMapper),
-            fullPathObjectMappers,
-            new FieldTypeLookup());
+        MapperMergeValidator.validateFieldReferences(emptyList(), singletonList(aliasMapper), fullPathObjectMappers, new FieldTypeLookup());
     }
 
     public void testFieldAliasWithNestedTarget() {
         ObjectMapper objectMapper = createNestedObjectMapper("nested");
         FieldAliasMapper aliasMapper = new FieldAliasMapper("alias", "alias", "nested.field");
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            MapperMergeValidator.validateFieldReferences(emptyList(),
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> MapperMergeValidator.validateFieldReferences(
+                emptyList(),
                 singletonList(aliasMapper),
                 Collections.singletonMap("nested", objectMapper),
-                new FieldTypeLookup()));
+                new FieldTypeLookup()
+            )
+        );
 
-        String expectedMessage = "Invalid [path] value [nested.field] for field alias [alias]: " +
-            "an alias must have the same nested scope as its target. The alias is not nested, " +
-            "but the target's nested scope is [nested].";
+        String expectedMessage = "Invalid [path] value [nested.field] for field alias [alias]: "
+            + "an alias must have the same nested scope as its target. The alias is not nested, "
+            + "but the target's nested scope is [nested].";
         assertEquals(expectedMessage, e.getMessage());
     }
 
@@ -202,16 +207,19 @@ public class MapperMergeValidatorTests extends ESTestCase {
 
         FieldAliasMapper aliasMapper = new FieldAliasMapper("alias", "nested2.alias", "nested1.field");
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () ->
-            MapperMergeValidator.validateFieldReferences(emptyList(),
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> MapperMergeValidator.validateFieldReferences(
+                emptyList(),
                 singletonList(aliasMapper),
                 fullPathObjectMappers,
-                new FieldTypeLookup()));
+                new FieldTypeLookup()
+            )
+        );
 
-
-        String expectedMessage = "Invalid [path] value [nested1.field] for field alias [nested2.alias]: " +
-            "an alias must have the same nested scope as its target. The alias's nested scope is [nested2], " +
-            "but the target's nested scope is [nested1].";
+        String expectedMessage = "Invalid [path] value [nested1.field] for field alias [nested2.alias]: "
+            + "an alias must have the same nested scope as its target. The alias's nested scope is [nested2], "
+            + "but the target's nested scope is [nested1].";
         assertEquals(expectedMessage, e.getMessage());
     }
 
@@ -220,14 +228,18 @@ public class MapperMergeValidatorTests extends ESTestCase {
         .build();
 
     private static ObjectMapper createObjectMapper(String name) {
-        return new ObjectMapper(name, name, true,
-            ObjectMapper.Nested.NO,
-            ObjectMapper.Dynamic.FALSE, emptyMap(), SETTINGS);
+        return new ObjectMapper(name, name, true, ObjectMapper.Nested.NO, ObjectMapper.Dynamic.FALSE, emptyMap(), SETTINGS);
     }
 
     private static ObjectMapper createNestedObjectMapper(String name) {
-        return new ObjectMapper(name, name, true,
+        return new ObjectMapper(
+            name,
+            name,
+            true,
             ObjectMapper.Nested.newNested(false, false),
-            ObjectMapper.Dynamic.FALSE, emptyMap(), SETTINGS);
+            ObjectMapper.Dynamic.FALSE,
+            emptyMap(),
+            SETTINGS
+        );
     }
 }

@@ -29,9 +29,18 @@ import java.util.List;
 import java.util.Map;
 
 public class InternalExtendedStatsBucket extends InternalExtendedStats implements ExtendedStatsBucket {
-    InternalExtendedStatsBucket(String name, long count, double sum, double min, double max, double sumOfSqrs, double sigma,
-                                            DocValueFormat formatter, List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) {
+    InternalExtendedStatsBucket(
+        String name,
+        long count,
+        double sum,
+        double min,
+        double max,
+        double sumOfSqrs,
+        double sigma,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, count, sum, min, max, sumOfSqrs, sigma, formatter, pipelineAggregators, metaData);
     }
 

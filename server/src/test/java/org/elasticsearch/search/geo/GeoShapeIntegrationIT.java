@@ -46,28 +46,38 @@ public class GeoShapeIntegrationIT extends ESIntegTestCase {
      */
     public void testOrientationPersistence() throws Exception {
         String idxName = "orientation";
-        String mapping = Strings.toString(XContentFactory.jsonBuilder().startObject()
-            .startObject("properties").startObject("location")
-            .field("type", "geo_shape")
-            .field("orientation", "left")
-            .endObject()
-            .endObject().endObject());
+        String mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("properties")
+                .startObject("location")
+                .field("type", "geo_shape")
+                .field("orientation", "left")
+                .endObject()
+                .endObject()
+                .endObject()
+        );
 
         // create index
         assertAcked(prepareCreate(idxName).setMapping(mapping));
 
-        mapping = Strings.toString(XContentFactory.jsonBuilder().startObject()
-            .startObject("properties").startObject("location")
-            .field("type", "geo_shape")
-            .field("orientation", "right")
-            .endObject()
-            .endObject().endObject());
+        mapping = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("properties")
+                .startObject("location")
+                .field("type", "geo_shape")
+                .field("orientation", "right")
+                .endObject()
+                .endObject()
+                .endObject()
+        );
 
-        assertAcked(prepareCreate(idxName+"2").setMapping(mapping));
-        ensureGreen(idxName, idxName+"2");
+        assertAcked(prepareCreate(idxName + "2").setMapping(mapping));
+        ensureGreen(idxName, idxName + "2");
 
         internalCluster().fullRestart();
-        ensureGreen(idxName, idxName+"2");
+        ensureGreen(idxName, idxName + "2");
 
         // left orientation test
         IndicesService indicesService = internalCluster().getInstance(IndicesService.class, findNodeName(idxName));
@@ -75,19 +85,19 @@ public class GeoShapeIntegrationIT extends ESIntegTestCase {
         MappedFieldType fieldType = indexService.mapperService().fullName("location");
         assertThat(fieldType, instanceOf(GeoShapeFieldMapper.GeoShapeFieldType.class));
 
-        GeoShapeFieldMapper.GeoShapeFieldType gsfm = (GeoShapeFieldMapper.GeoShapeFieldType)fieldType;
+        GeoShapeFieldMapper.GeoShapeFieldType gsfm = (GeoShapeFieldMapper.GeoShapeFieldType) fieldType;
         ShapeBuilder.Orientation orientation = gsfm.orientation();
         assertThat(orientation, equalTo(ShapeBuilder.Orientation.CLOCKWISE));
         assertThat(orientation, equalTo(ShapeBuilder.Orientation.LEFT));
         assertThat(orientation, equalTo(ShapeBuilder.Orientation.CW));
 
         // right orientation test
-        indicesService = internalCluster().getInstance(IndicesService.class, findNodeName(idxName+"2"));
-        indexService = indicesService.indexService(resolveIndex((idxName+"2")));
+        indicesService = internalCluster().getInstance(IndicesService.class, findNodeName(idxName + "2"));
+        indexService = indicesService.indexService(resolveIndex((idxName + "2")));
         fieldType = indexService.mapperService().fullName("location");
         assertThat(fieldType, instanceOf(GeoShapeFieldMapper.GeoShapeFieldType.class));
 
-        gsfm = (GeoShapeFieldMapper.GeoShapeFieldType)fieldType;
+        gsfm = (GeoShapeFieldMapper.GeoShapeFieldType) fieldType;
         orientation = gsfm.orientation();
         assertThat(orientation, equalTo(ShapeBuilder.Orientation.COUNTER_CLOCKWISE));
         assertThat(orientation, equalTo(ShapeBuilder.Orientation.RIGHT));
@@ -99,49 +109,72 @@ public class GeoShapeIntegrationIT extends ESIntegTestCase {
      */
     public void testIgnoreMalformed() throws Exception {
         // create index
-        assertAcked(client().admin().indices().prepareCreate("test")
-            .setMapping("shape", "type=geo_shape,ignore_malformed=true").get());
+        assertAcked(client().admin().indices().prepareCreate("test").setMapping("shape", "type=geo_shape,ignore_malformed=true").get());
         ensureGreen();
 
         // test self crossing ccw poly not crossing dateline
-        String polygonGeoJson = Strings.toString(XContentFactory.jsonBuilder().startObject().field("type", "Polygon")
-            .startArray("coordinates")
-            .startArray()
-            .startArray().value(176.0).value(15.0).endArray()
-            .startArray().value(-177.0).value(10.0).endArray()
-            .startArray().value(-177.0).value(-10.0).endArray()
-            .startArray().value(176.0).value(-15.0).endArray()
-            .startArray().value(-177.0).value(15.0).endArray()
-            .startArray().value(172.0).value(0.0).endArray()
-            .startArray().value(176.0).value(15.0).endArray()
-            .endArray()
-            .endArray()
-            .endObject());
+        String polygonGeoJson = Strings.toString(
+            XContentFactory.jsonBuilder()
+                .startObject()
+                .field("type", "Polygon")
+                .startArray("coordinates")
+                .startArray()
+                .startArray()
+                .value(176.0)
+                .value(15.0)
+                .endArray()
+                .startArray()
+                .value(-177.0)
+                .value(10.0)
+                .endArray()
+                .startArray()
+                .value(-177.0)
+                .value(-10.0)
+                .endArray()
+                .startArray()
+                .value(176.0)
+                .value(-15.0)
+                .endArray()
+                .startArray()
+                .value(-177.0)
+                .value(15.0)
+                .endArray()
+                .startArray()
+                .value(172.0)
+                .value(0.0)
+                .endArray()
+                .startArray()
+                .value(176.0)
+                .value(15.0)
+                .endArray()
+                .endArray()
+                .endArray()
+                .endObject()
+        );
 
-        indexRandom(true, client().prepareIndex("test").setId("0").setSource("shape",
-            polygonGeoJson));
+        indexRandom(true, client().prepareIndex("test").setId("0").setSource("shape", polygonGeoJson));
         SearchResponse searchResponse = client().prepareSearch("test").setQuery(matchAllQuery()).get();
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
     }
 
     public void testMappingUpdate() throws Exception {
         // create index
-        assertAcked(client().admin().indices().prepareCreate("test")
-            .setMapping("shape", "type=geo_shape").get());
+        assertAcked(client().admin().indices().prepareCreate("test").setMapping("shape", "type=geo_shape").get());
         ensureGreen();
 
-        String update ="{\n" +
-            "  \"properties\": {\n" +
-            "    \"shape\": {\n" +
-            "      \"type\": \"geo_shape\",\n" +
-            "      \"strategy\": \"recursive\"\n" +
-            "    }\n" +
-            "  }\n" +
-            "}";
+        String update = "{\n"
+            + "  \"properties\": {\n"
+            + "    \"shape\": {\n"
+            + "      \"type\": \"geo_shape\",\n"
+            + "      \"strategy\": \"recursive\"\n"
+            + "    }\n"
+            + "  }\n"
+            + "}";
 
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> client().admin().indices()
-            .preparePutMapping("test")
-            .setSource(update, XContentType.JSON).get());
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> client().admin().indices().preparePutMapping("test").setSource(update, XContentType.JSON).get()
+        );
         assertThat(e.getMessage(), containsString("using [BKD] strategy cannot be merged with"));
     }
 
@@ -149,56 +182,54 @@ public class GeoShapeIntegrationIT extends ESIntegTestCase {
      * Test that the indexed shape routing can be provided if it is required
      */
     public void testIndexShapeRouting() throws Exception {
-        String mapping = "{\"_doc\":{\n" +
-            "    \"_routing\": {\n" +
-            "      \"required\": true\n" +
-            "    },\n" +
-            "    \"properties\": {\n" +
-            "      \"shape\": {\n" +
-            "        \"type\": \"geo_shape\"\n" +
-            "      }\n" +
-            "    }\n" +
-            "  }}";
-
+        String mapping = "{\"_doc\":{\n"
+            + "    \"_routing\": {\n"
+            + "      \"required\": true\n"
+            + "    },\n"
+            + "    \"properties\": {\n"
+            + "      \"shape\": {\n"
+            + "        \"type\": \"geo_shape\"\n"
+            + "      }\n"
+            + "    }\n"
+            + "  }}";
 
         // create index
         assertAcked(client().admin().indices().prepareCreate("test").setMapping(mapping).get());
         ensureGreen();
 
-        String source = "{\n" +
-            "    \"shape\" : {\n" +
-            "        \"type\" : \"bbox\",\n" +
-            "        \"coordinates\" : [[-45.0, 45.0], [45.0, -45.0]]\n" +
-            "    }\n" +
-            "}";
+        String source = "{\n"
+            + "    \"shape\" : {\n"
+            + "        \"type\" : \"bbox\",\n"
+            + "        \"coordinates\" : [[-45.0, 45.0], [45.0, -45.0]]\n"
+            + "    }\n"
+            + "}";
 
         indexRandom(true, client().prepareIndex("test").setId("0").setSource(source, XContentType.JSON).setRouting("ABC"));
 
-        SearchResponse searchResponse = client().prepareSearch("test").setQuery(
-            geoShapeQuery("shape", "0").indexedShapeIndex("test").indexedShapeRouting("ABC")
-        ).get();
+        SearchResponse searchResponse = client().prepareSearch("test")
+            .setQuery(geoShapeQuery("shape", "0").indexedShapeIndex("test").indexedShapeRouting("ABC"))
+            .get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
     }
 
     public void testIndexPolygonDateLine() throws Exception {
-        String mappingVector = "{\n" +
-            "    \"properties\": {\n" +
-            "      \"shape\": {\n" +
-            "        \"type\": \"geo_shape\"\n" +
-            "      }\n" +
-            "    }\n" +
-            "  }";
+        String mappingVector = "{\n"
+            + "    \"properties\": {\n"
+            + "      \"shape\": {\n"
+            + "        \"type\": \"geo_shape\"\n"
+            + "      }\n"
+            + "    }\n"
+            + "  }";
 
-        String mappingQuad = "{\n" +
-            "    \"properties\": {\n" +
-            "      \"shape\": {\n" +
-            "        \"type\": \"geo_shape\",\n" +
-            "        \"tree\": \"quadtree\"\n" +
-            "      }\n" +
-            "    }\n" +
-            "  }";
-
+        String mappingQuad = "{\n"
+            + "    \"properties\": {\n"
+            + "      \"shape\": {\n"
+            + "        \"type\": \"geo_shape\",\n"
+            + "        \"tree\": \"quadtree\"\n"
+            + "      }\n"
+            + "    }\n"
+            + "  }";
 
         // create index
         assertAcked(client().admin().indices().prepareCreate("vector").setMapping(mappingVector).get());
@@ -207,58 +238,39 @@ public class GeoShapeIntegrationIT extends ESIntegTestCase {
         assertAcked(client().admin().indices().prepareCreate("quad").setMapping(mappingQuad).get());
         ensureGreen();
 
-        String source = "{\n" +
-            "    \"shape\" : \"POLYGON((179 0, -179 0, -179 2, 179 2, 179 0))\""+
-            "}";
+        String source = "{\n" + "    \"shape\" : \"POLYGON((179 0, -179 0, -179 2, 179 2, 179 0))\"" + "}";
 
         indexRandom(true, client().prepareIndex("quad").setId("0").setSource(source, XContentType.JSON));
         indexRandom(true, client().prepareIndex("vector").setId("0").setSource(source, XContentType.JSON));
 
-        SearchResponse searchResponse = client().prepareSearch("quad").setQuery(
-            geoShapeQuery("shape", new PointBuilder(-179.75, 1))
-        ).get();
-
+        SearchResponse searchResponse = client().prepareSearch("quad").setQuery(geoShapeQuery("shape", new PointBuilder(-179.75, 1))).get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
 
-        searchResponse = client().prepareSearch("quad").setQuery(
-            geoShapeQuery("shape", new PointBuilder(90, 1))
-        ).get();
+        searchResponse = client().prepareSearch("quad").setQuery(geoShapeQuery("shape", new PointBuilder(90, 1))).get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(0L));
 
-        searchResponse = client().prepareSearch("quad").setQuery(
-            geoShapeQuery("shape", new PointBuilder(-180, 1))
-        ).get();
+        searchResponse = client().prepareSearch("quad").setQuery(geoShapeQuery("shape", new PointBuilder(-180, 1))).get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
-        searchResponse = client().prepareSearch("quad").setQuery(
-            geoShapeQuery("shape", new PointBuilder(180, 1))
-        ).get();
+        searchResponse = client().prepareSearch("quad").setQuery(geoShapeQuery("shape", new PointBuilder(180, 1))).get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
 
-        searchResponse = client().prepareSearch("vector").setQuery(
-            geoShapeQuery("shape", new PointBuilder(90, 1))
-        ).get();
+        searchResponse = client().prepareSearch("vector").setQuery(geoShapeQuery("shape", new PointBuilder(90, 1))).get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(0L));
 
-        searchResponse = client().prepareSearch("vector").setQuery(
-            geoShapeQuery("shape", new PointBuilder(-179.75, 1))
-        ).get();
+        searchResponse = client().prepareSearch("vector").setQuery(geoShapeQuery("shape", new PointBuilder(-179.75, 1))).get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
 
-        searchResponse = client().prepareSearch("vector").setQuery(
-            geoShapeQuery("shape", new PointBuilder(-180, 1))
-        ).get();
+        searchResponse = client().prepareSearch("vector").setQuery(geoShapeQuery("shape", new PointBuilder(-180, 1))).get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
 
-        searchResponse = client().prepareSearch("vector").setQuery(
-            geoShapeQuery("shape", new PointBuilder(180, 1))
-        ).get();
+        searchResponse = client().prepareSearch("vector").setQuery(geoShapeQuery("shape", new PointBuilder(180, 1))).get();
 
         assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
     }

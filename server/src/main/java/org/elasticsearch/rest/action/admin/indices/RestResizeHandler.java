@@ -32,8 +32,7 @@ import java.io.IOException;
 
 public abstract class RestResizeHandler extends BaseRestHandler {
 
-    RestResizeHandler() {
-    }
+    RestResizeHandler() {}
 
     @Override
     public abstract String getName();

@@ -34,7 +34,7 @@ import static org.hamcrest.Matchers.equalTo;
  * Tests for network utils. Please avoid using any methods that cause DNS lookups!
  */
 public class NetworkUtilsTests extends ESTestCase {
-    
+
     /**
      * test sort key order respects PREFER_IPV4
      */
@@ -44,7 +44,7 @@ public class NetworkUtilsTests extends ESTestCase {
         assertTrue(NetworkUtils.sortKey(localhostv4, false) < NetworkUtils.sortKey(localhostv6, false));
         assertTrue(NetworkUtils.sortKey(localhostv6, true) < NetworkUtils.sortKey(localhostv4, true));
     }
-    
+
     /**
      * test ordinary addresses sort before private addresses
      */
@@ -54,14 +54,14 @@ public class NetworkUtilsTests extends ESTestCase {
         InetAddress ordinary = InetAddress.getByName("192.192.192.192");
         assertTrue(NetworkUtils.sortKey(ordinary, true) < NetworkUtils.sortKey(siteLocal, true));
         assertTrue(NetworkUtils.sortKey(ordinary, false) < NetworkUtils.sortKey(siteLocal, false));
-        
+
         InetAddress siteLocal6 = InetAddress.getByName("fec0::1");
         assert siteLocal6.isSiteLocalAddress();
         InetAddress ordinary6 = InetAddress.getByName("fddd::1");
         assertTrue(NetworkUtils.sortKey(ordinary6, true) < NetworkUtils.sortKey(siteLocal6, true));
         assertTrue(NetworkUtils.sortKey(ordinary6, false) < NetworkUtils.sortKey(siteLocal6, false));
     }
-    
+
     /**
      * test private addresses sort before link local addresses
      */
@@ -72,7 +72,7 @@ public class NetworkUtilsTests extends ESTestCase {
         assertTrue(NetworkUtils.sortKey(ordinary, true) < NetworkUtils.sortKey(linkLocal, true));
         assertTrue(NetworkUtils.sortKey(ordinary, false) < NetworkUtils.sortKey(linkLocal, false));
     }
-    
+
     /**
      * Test filtering out ipv4/ipv6 addresses
      */
@@ -86,16 +86,20 @@ public class NetworkUtilsTests extends ESTestCase {
     public void testMaybeGetInterfaceByName() throws Exception {
         final List<NetworkInterface> networkInterfaces = NetworkUtils.getInterfaces();
         for (NetworkInterface netIf : networkInterfaces) {
-            final Optional<NetworkInterface> maybeNetworkInterface =
-                NetworkUtils.maybeGetInterfaceByName(networkInterfaces, netIf.getName());
+            final Optional<NetworkInterface> maybeNetworkInterface = NetworkUtils.maybeGetInterfaceByName(
+                networkInterfaces,
+                netIf.getName()
+            );
             assertThat(maybeNetworkInterface, OptionalMatchers.isPresent());
             assertThat(maybeNetworkInterface.get().getName(), equalTo(netIf.getName()));
         }
     }
 
     public void testNonExistingInterface() throws Exception {
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
-                () -> NetworkUtils.getAddressesForInterface("non-existing"));
+        IllegalArgumentException exception = expectThrows(
+            IllegalArgumentException.class,
+            () -> NetworkUtils.getAddressesForInterface("non-existing")
+        );
         assertThat(exception.getMessage(), containsString("No interface named 'non-existing' found"));
     }
 }

@@ -54,8 +54,7 @@ public class DisMaxQueryBuilder extends AbstractQueryBuilder<DisMaxQueryBuilder>
 
     private float tieBreaker = DEFAULT_TIE_BREAKER;
 
-    public DisMaxQueryBuilder() {
-    }
+    public DisMaxQueryBuilder() {}
 
     /**
      * Read from a stream.
@@ -218,8 +217,7 @@ public class DisMaxQueryBuilder extends AbstractQueryBuilder<DisMaxQueryBuilder>
 
     @Override
     protected boolean doEquals(DisMaxQueryBuilder other) {
-        return Objects.equals(queries, other.queries) &&
-               Objects.equals(tieBreaker, other.tieBreaker);
+        return Objects.equals(queries, other.queries) && Objects.equals(tieBreaker, other.tieBreaker);
     }
 
     @Override

@@ -51,7 +51,7 @@ public class DerivativeTests extends BasePipelineAggregationTestCase<DerivativeP
         }
         return factory;
     }
-    
+
     /**
      * The validation should verify the parent aggregation is allowed.
      */
@@ -74,9 +74,13 @@ public class DerivativeTests extends BasePipelineAggregationTestCase<DerivativeP
         TestAggregatorFactory parentFactory = TestAggregatorFactory.createInstance();
 
         final DerivativePipelineAggregationBuilder builder = new DerivativePipelineAggregationBuilder("name", "invalid_agg>metric");
-        IllegalStateException ex = expectThrows(IllegalStateException.class,
-                () -> builder.validate(parentFactory, Collections.emptySet(), aggBuilders));
-        assertEquals("derivative aggregation [name] must have a histogram, date_histogram or auto_date_histogram as parent",
-                ex.getMessage());
+        IllegalStateException ex = expectThrows(
+            IllegalStateException.class,
+            () -> builder.validate(parentFactory, Collections.emptySet(), aggBuilders)
+        );
+        assertEquals(
+            "derivative aggregation [name] must have a histogram, date_histogram or auto_date_histogram as parent",
+            ex.getMessage()
+        );
     }
 }

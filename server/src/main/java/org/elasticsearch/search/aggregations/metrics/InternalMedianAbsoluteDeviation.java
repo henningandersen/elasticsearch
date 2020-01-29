@@ -52,11 +52,13 @@ public class InternalMedianAbsoluteDeviation extends InternalNumericMetricsAggre
     private final TDigestState valuesSketch;
     private final double medianAbsoluteDeviation;
 
-    InternalMedianAbsoluteDeviation(String name,
-                                           List<PipelineAggregator> pipelineAggregators,
-                                           Map<String, Object> metaData,
-                                           DocValueFormat format,
-                                           TDigestState valuesSketch) {
+    InternalMedianAbsoluteDeviation(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        DocValueFormat format,
+        TDigestState valuesSketch
+    ) {
 
         super(name, pipelineAggregators, metaData);
         this.format = Objects.requireNonNull(format);
@@ -93,9 +95,7 @@ public class InternalMedianAbsoluteDeviation extends InternalNumericMetricsAggre
     @Override
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         final boolean anyResults = valuesSketch.size() > 0;
-        final Double mad = anyResults
-            ? getMedianAbsoluteDeviation()
-            : null;
+        final Double mad = anyResults ? getMedianAbsoluteDeviation() : null;
 
         builder.field(CommonFields.VALUE.getPreferredName(), mad);
         if (format != DocValueFormat.RAW && anyResults) {

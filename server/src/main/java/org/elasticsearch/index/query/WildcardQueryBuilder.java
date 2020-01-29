@@ -162,8 +162,10 @@ public class WildcardQueryBuilder extends AbstractQueryBuilder<WildcardQueryBuil
                         } else if (AbstractQueryBuilder.NAME_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                             queryName = parser.text();
                         } else {
-                            throw new ParsingException(parser.getTokenLocation(),
-                                    "[wildcard] query does not support [" + currentFieldName + "]");
+                            throw new ParsingException(
+                                parser.getTokenLocation(),
+                                "[wildcard] query does not support [" + currentFieldName + "]"
+                            );
                         }
                     }
                 }
@@ -174,24 +176,21 @@ public class WildcardQueryBuilder extends AbstractQueryBuilder<WildcardQueryBuil
             }
         }
 
-        return new WildcardQueryBuilder(fieldName, value)
-                .rewrite(rewrite)
-                .boost(boost)
-                .queryName(queryName);
-    }    
-    
+        return new WildcardQueryBuilder(fieldName, value).rewrite(rewrite).boost(boost).queryName(queryName);
+    }
+
     @Override
     protected QueryBuilder doRewrite(QueryRewriteContext queryRewriteContext) throws IOException {
         if ("_index".equals(fieldName)) {
-            // Special-case optimisation for canMatch phase:  
+            // Special-case optimisation for canMatch phase:
             // We can skip querying this shard if the index name doesn't match the value of this query on the "_index" field.
             QueryShardContext shardContext = queryRewriteContext.convertToShardContext();
             if (shardContext != null && shardContext.indexMatches(BytesRefs.toString(value)) == false) {
                 return new MatchNoneQueryBuilder();
-            }            
+            }
         }
         return super.doRewrite(queryRewriteContext);
-    }    
+    }
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
@@ -201,8 +200,7 @@ public class WildcardQueryBuilder extends AbstractQueryBuilder<WildcardQueryBuil
             return new MatchNoDocsQuery("unknown field [" + fieldName + "]");
         }
 
-        MultiTermQuery.RewriteMethod method = QueryParsers.parseRewriteMethod(
-            rewrite, null, LoggingDeprecationHandler.INSTANCE);
+        MultiTermQuery.RewriteMethod method = QueryParsers.parseRewriteMethod(rewrite, null, LoggingDeprecationHandler.INSTANCE);
         return fieldType.wildcardQuery(value, method, context);
     }
 
@@ -213,8 +211,6 @@ public class WildcardQueryBuilder extends AbstractQueryBuilder<WildcardQueryBuil
 
     @Override
     protected boolean doEquals(WildcardQueryBuilder other) {
-        return Objects.equals(fieldName, other.fieldName) &&
-                Objects.equals(value, other.value) &&
-                Objects.equals(rewrite, other.rewrite);
+        return Objects.equals(fieldName, other.fieldName) && Objects.equals(value, other.value) && Objects.equals(rewrite, other.rewrite);
     }
 }

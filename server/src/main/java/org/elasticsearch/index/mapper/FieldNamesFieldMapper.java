@@ -87,7 +87,7 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
         public FieldNamesFieldMapper build(BuilderContext context) {
             setupFieldType(context);
             fieldType.setHasDocValues(false);
-            FieldNamesFieldType fieldNamesFieldType = (FieldNamesFieldType)fieldType;
+            FieldNamesFieldType fieldNamesFieldType = (FieldNamesFieldType) fieldType;
             fieldNamesFieldType.setEnabled(enabled);
             return new FieldNamesFieldMapper(fieldType, context.indexSettings());
         }
@@ -96,12 +96,12 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
     public static class TypeParser implements MetadataFieldMapper.TypeParser {
 
         public static final String ENABLED_DEPRECATION_MESSAGE = "Index [{}] uses the deprecated `enabled` setting for `_field_names`. "
-                + "Disabling _field_names is not necessary because it no longer carries a large index overhead. Support for this setting "
-                + "will be removed in a future major version. Please remove it from your mappings and templates.";
+            + "Disabling _field_names is not necessary because it no longer carries a large index overhead. Support for this setting "
+            + "will be removed in a future major version. Please remove it from your mappings and templates.";
 
         @Override
-        public MetadataFieldMapper.Builder<?,?> parse(String name, Map<String, Object> node,
-                                                      ParserContext parserContext) throws MapperParsingException {
+        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             Builder builder = new Builder(parserContext.mapperService().fullName(NAME));
 
             for (Iterator<Map.Entry<String, Object>> iterator = node.entrySet().iterator(); iterator.hasNext();) {
@@ -111,8 +111,10 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
                 if (fieldName.equals("enabled")) {
                     String indexName = parserContext.mapperService().index().getName();
                     if (parserContext.indexVersionCreated().onOrAfter(Version.V_8_0_0)) {
-                        throw new MapperParsingException("The `enabled` setting for the `_field_names` field has been deprecated and "
-                                + "removed but is still used in index [{}]. Please remove it from your mappings and templates.");
+                        throw new MapperParsingException(
+                            "The `enabled` setting for the `_field_names` field has been deprecated and "
+                                + "removed but is still used in index [{}]. Please remove it from your mappings and templates."
+                        );
                     } else {
                         deprecationLogger.deprecatedAndMaybeLog("field_names_enabled_parameter", ENABLED_DEPRECATION_MESSAGE, indexName);
                         builder.enabled(XContentMapValues.nodeBooleanValue(fieldNode, name + ".enabled"));
@@ -134,8 +136,7 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
 
         private boolean enabled = Defaults.ENABLED;
 
-        public FieldNamesFieldType() {
-        }
+        public FieldNamesFieldType() {}
 
         protected FieldNamesFieldType(FieldNamesFieldType ref) {
             super(ref);
@@ -184,7 +185,8 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
                 throw new IllegalStateException("Cannot run [exists] queries if the [_field_names] field is disabled");
             }
             deprecationLogger.deprecated(
-                    "terms query on the _field_names field is deprecated and will be removed, use exists query instead");
+                "terms query on the _field_names field is deprecated and will be removed, use exists query instead"
+            );
             return super.termQuery(value, context);
         }
     }
@@ -199,12 +201,10 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
     }
 
     @Override
-    public void preParse(ParseContext context) {
-    }
+    public void preParse(ParseContext context) {}
 
     @Override
-    public void postParse(ParseContext context) {
-    }
+    public void postParse(ParseContext context) {}
 
     @Override
     public void parse(ParseContext context) throws IOException {

@@ -33,8 +33,13 @@ import java.util.Objects;
 public class InternalMin extends InternalNumericMetricsAggregation.SingleValue implements Min {
     private final double min;
 
-    public InternalMin(String name, double min, DocValueFormat formatter, List<PipelineAggregator> pipelineAggregators,
-            Map<String, Object> metaData) {
+    public InternalMin(
+        String name,
+        double min,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.min = min;
         this.format = formatter;

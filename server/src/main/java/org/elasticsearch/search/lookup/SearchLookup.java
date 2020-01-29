@@ -41,10 +41,7 @@ public class SearchLookup {
     }
 
     public LeafSearchLookup getLeafSearchLookup(LeafReaderContext context) {
-        return new LeafSearchLookup(context,
-                docMap.getLeafDocLookup(context),
-                sourceLookup,
-                fieldsLookup.getLeafFieldsLookup(context));
+        return new LeafSearchLookup(context, docMap.getLeafDocLookup(context), sourceLookup, fieldsLookup.getLeafFieldsLookup(context));
     }
 
     public DocLookup doc() {

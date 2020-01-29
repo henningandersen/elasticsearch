@@ -87,14 +87,32 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         internalCluster().startNode();
 
         logger.info("--> creating test index, with meta routing");
-        client().admin().indices().prepareCreate("test")
-                .setMapping(XContentFactory.jsonBuilder().startObject().startObject("_doc").startObject("_routing")
-                    .field("required", true).endObject().endObject().endObject())
-                .execute().actionGet();
+        client().admin()
+            .indices()
+            .prepareCreate("test")
+            .setMapping(
+                XContentFactory.jsonBuilder()
+                    .startObject()
+                    .startObject("_doc")
+                    .startObject("_routing")
+                    .field("required", true)
+                    .endObject()
+                    .endObject()
+                    .endObject()
+            )
+            .execute()
+            .actionGet();
 
         logger.info("--> verify meta _routing required exists");
-        MappingMetaData mappingMd = client().admin().cluster().prepareState().execute().actionGet().getState().metaData()
-            .index("test").mapping();
+        MappingMetaData mappingMd = client().admin()
+            .cluster()
+            .prepareState()
+            .execute()
+            .actionGet()
+            .getState()
+            .metaData()
+            .index("test")
+            .mapping();
         assertThat(mappingMd.routingRequired(), equalTo(true));
 
         logger.info("--> restarting nodes...");
@@ -123,8 +141,10 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         ClusterStateResponse stateResponse = client().admin().cluster().prepareState().execute().actionGet();
         assertThat(stateResponse.getState().metaData().index("test").getState(), equalTo(IndexMetaData.State.OPEN));
         assertThat(stateResponse.getState().routingTable().index("test").shards().size(), equalTo(test.numPrimaries));
-        assertThat(stateResponse.getState().routingTable().index("test").shardsWithState(ShardRoutingState.STARTED).size(),
-            equalTo(test.totalNumShards));
+        assertThat(
+            stateResponse.getState().routingTable().index("test").shardsWithState(ShardRoutingState.STARTED).size(),
+            equalTo(test.totalNumShards)
+        );
 
         logger.info("--> indexing a simple document");
         client().prepareIndex("test").setId("1").setSource("field1", "value1").get();
@@ -161,8 +181,10 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         stateResponse = client().admin().cluster().prepareState().execute().actionGet();
         assertThat(stateResponse.getState().metaData().index("test").getState(), equalTo(IndexMetaData.State.OPEN));
         assertThat(stateResponse.getState().routingTable().index("test").shards().size(), equalTo(test.numPrimaries));
-        assertThat(stateResponse.getState().routingTable().index("test").shardsWithState(ShardRoutingState.STARTED).size(),
-            equalTo(test.totalNumShards));
+        assertThat(
+            stateResponse.getState().routingTable().index("test").shardsWithState(ShardRoutingState.STARTED).size(),
+            equalTo(test.totalNumShards)
+        );
 
         logger.info("--> trying to get the indexed document on the first index");
         GetResponse getResponse = client().prepareGet("test", "1").execute().actionGet();
@@ -200,8 +222,10 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         stateResponse = client().admin().cluster().prepareState().execute().actionGet();
         assertThat(stateResponse.getState().metaData().index("test").getState(), equalTo(IndexMetaData.State.OPEN));
         assertThat(stateResponse.getState().routingTable().index("test").shards().size(), equalTo(test.numPrimaries));
-        assertThat(stateResponse.getState().routingTable().index("test").shardsWithState(ShardRoutingState.STARTED).size(),
-            equalTo(test.totalNumShards));
+        assertThat(
+            stateResponse.getState().routingTable().index("test").shardsWithState(ShardRoutingState.STARTED).size(),
+            equalTo(test.totalNumShards)
+        );
 
         logger.info("--> trying to get the indexed document on the first round (before close and shutdown)");
         getResponse = client().prepareGet("test", "1").execute().actionGet();
@@ -221,7 +245,7 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         client().admin().indices().prepareCreate("test").setWaitForActiveShards(ActiveShardCount.NONE).execute().actionGet();
 
         logger.info("--> restarting master node");
-        internalCluster().fullRestart(new RestartCallback(){
+        internalCluster().fullRestart(new RestartCallback() {
             @Override
             public Settings onNodeStopped(String nodeName) {
                 return Settings.builder().put(Node.NODE_DATA_SETTING.getKey(), false).build();
@@ -229,8 +253,13 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         });
 
         logger.info("--> waiting for test index to be created");
-        ClusterHealthResponse health = client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setIndices("test")
-            .execute().actionGet();
+        ClusterHealthResponse health = client().admin()
+            .cluster()
+            .prepareHealth()
+            .setWaitForEvents(Priority.LANGUID)
+            .setIndices("test")
+            .execute()
+            .actionGet();
         assertThat(health.isTimedOut(), equalTo(false));
 
         logger.info("--> verify we have an index");
@@ -261,8 +290,14 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         client().prepareIndex("test").setId("1").setSource("field1", "value1").setRefreshPolicy(IMMEDIATE).get();
 
         logger.info("--> waiting for green status");
-        ClusterHealthResponse health = client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus()
-            .setWaitForNodes("2").execute().actionGet();
+        ClusterHealthResponse health = client().admin()
+            .cluster()
+            .prepareHealth()
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForGreenStatus()
+            .setWaitForNodes("2")
+            .execute()
+            .actionGet();
         assertThat(health.isTimedOut(), equalTo(false));
 
         logger.info("--> verify 1 doc in the index");
@@ -281,8 +316,14 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         client().admin().indices().prepareOpen("test").execute().actionGet();
 
         logger.info("--> waiting for green status");
-        health = client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus().setWaitForNodes("2")
-            .execute().actionGet();
+        health = client().admin()
+            .cluster()
+            .prepareHealth()
+            .setWaitForEvents(Priority.LANGUID)
+            .setWaitForGreenStatus()
+            .setWaitForNodes("2")
+            .execute()
+            .actionGet();
         assertThat(health.isTimedOut(), equalTo(false));
 
         logger.info("--> verify 1 doc in the index");
@@ -302,8 +343,10 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
 
         final List<String> nodes;
         logger.info("--> starting a cluster with " + numNodes + " nodes");
-        nodes = internalCluster().startNodes(numNodes,
-            Settings.builder().put(IndexGraveyard.SETTING_MAX_TOMBSTONES.getKey(), randomIntBetween(10, 100)).build());
+        nodes = internalCluster().startNodes(
+            numNodes,
+            Settings.builder().put(IndexGraveyard.SETTING_MAX_TOMBSTONES.getKey(), randomIntBetween(10, 100)).build()
+        );
         logger.info("--> create an index");
         createIndex(indexName);
 
@@ -329,8 +372,10 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         });
 
         logger.info("--> wait until all nodes are back online");
-        client().admin().cluster().health(Requests.clusterHealthRequest().waitForEvents(Priority.LANGUID)
-                                              .waitForNodes(Integer.toString(numNodes))).actionGet();
+        client().admin()
+            .cluster()
+            .health(Requests.clusterHealthRequest().waitForEvents(Priority.LANGUID).waitForNodes(Integer.toString(numNodes)))
+            .actionGet();
 
         logger.info("--> waiting for green status");
         ensureGreen();
@@ -363,21 +408,30 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
             ensureYellow();
         } else {
             internalCluster().startNode();
-            client().admin().cluster()
-                .health(Requests.clusterHealthRequest()
-                    .waitForGreenStatus()
-                    .waitForEvents(Priority.LANGUID)
-                    .waitForNoRelocatingShards(true).waitForNodes("2")).actionGet();
+            client().admin()
+                .cluster()
+                .health(
+                    Requests.clusterHealthRequest()
+                        .waitForGreenStatus()
+                        .waitForEvents(Priority.LANGUID)
+                        .waitForNoRelocatingShards(true)
+                        .waitForNodes("2")
+                )
+                .actionGet();
         }
         ClusterState state = client().admin().cluster().prepareState().get().getState();
 
         final IndexMetaData metaData = state.getMetaData().index("test");
-        final IndexMetaData.Builder brokenMeta = IndexMetaData.builder(metaData).settings(Settings.builder().put(metaData.getSettings())
-                .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT.minimumIndexCompatibilityVersion().id)
-                // this is invalid but should be archived
-                .put("index.similarity.BM25.type", "boolean")
-                // this one is not validated ahead of time and breaks allocation
-                .put("index.analysis.filter.myCollator.type", "icu_collation"));
+        final IndexMetaData.Builder brokenMeta = IndexMetaData.builder(metaData)
+            .settings(
+                Settings.builder()
+                    .put(metaData.getSettings())
+                    .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT.minimumIndexCompatibilityVersion().id)
+                    // this is invalid but should be archived
+                    .put("index.similarity.BM25.type", "boolean")
+                    // this one is not validated ahead of time and breaks allocation
+                    .put("index.analysis.filter.myCollator.type", "icu_collation")
+            );
         restartNodesOnBrokenClusterState(ClusterState.builder(state).metaData(MetaData.builder(state.getMetaData()).put(brokenMeta)));
 
         // check that the cluster does not keep reallocating shards
@@ -387,8 +441,10 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
             assertNotNull(indexRoutingTable);
             for (IndexShardRoutingTable shardRoutingTable : indexRoutingTable) {
                 assertTrue(shardRoutingTable.primaryShard().unassigned());
-                assertEquals(UnassignedInfo.AllocationStatus.DECIDERS_NO,
-                    shardRoutingTable.primaryShard().unassignedInfo().getLastAllocationStatus());
+                assertEquals(
+                    UnassignedInfo.AllocationStatus.DECIDERS_NO,
+                    shardRoutingTable.primaryShard().unassignedInfo().getLastAllocationStatus()
+                );
                 assertThat(shardRoutingTable.primaryShard().unassignedInfo().getNumFailedAllocations(), greaterThan(0));
             }
         }, 60, TimeUnit.SECONDS);
@@ -414,17 +470,20 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
     public void testRecoverMissingAnalyzer() throws Exception {
         logger.info("--> starting one node");
         internalCluster().startNode();
-        prepareCreate("test").setSettings(Settings.builder()
-            .put("index.analysis.analyzer.test.tokenizer", "standard")
-            .put("index.number_of_shards", "1"))
-            .setMapping("{\n" +
-                "      \"properties\": {\n" +
-                "        \"field1\": {\n" +
-                "          \"type\": \"text\",\n" +
-                "          \"analyzer\": \"test\"\n" +
-                "        }\n" +
-                "      }\n" +
-                "  }}").get();
+        prepareCreate("test").setSettings(
+            Settings.builder().put("index.analysis.analyzer.test.tokenizer", "standard").put("index.number_of_shards", "1")
+        )
+            .setMapping(
+                "{\n"
+                    + "      \"properties\": {\n"
+                    + "        \"field1\": {\n"
+                    + "          \"type\": \"text\",\n"
+                    + "          \"analyzer\": \"test\"\n"
+                    + "        }\n"
+                    + "      }\n"
+                    + "  }}"
+            )
+            .get();
         logger.info("--> indexing a simple document");
         client().prepareIndex("test").setId("1").setSource("field1", "value one").setRefreshPolicy(IMMEDIATE).get();
         logger.info("--> waiting for green status");
@@ -432,17 +491,22 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
             ensureYellow();
         } else {
             internalCluster().startNode();
-            client().admin().cluster()
-                .health(Requests.clusterHealthRequest()
-                    .waitForGreenStatus()
-                    .waitForEvents(Priority.LANGUID)
-                    .waitForNoRelocatingShards(true).waitForNodes("2")).actionGet();
+            client().admin()
+                .cluster()
+                .health(
+                    Requests.clusterHealthRequest()
+                        .waitForGreenStatus()
+                        .waitForEvents(Priority.LANGUID)
+                        .waitForNoRelocatingShards(true)
+                        .waitForNodes("2")
+                )
+                .actionGet();
         }
         ClusterState state = client().admin().cluster().prepareState().get().getState();
 
         final IndexMetaData metaData = state.getMetaData().index("test");
-        final IndexMetaData.Builder brokenMeta = IndexMetaData.builder(metaData).settings(metaData.getSettings()
-                .filter((s) -> "index.analysis.analyzer.test.tokenizer".equals(s) == false));
+        final IndexMetaData.Builder brokenMeta = IndexMetaData.builder(metaData)
+            .settings(metaData.getSettings().filter((s) -> "index.analysis.analyzer.test.tokenizer".equals(s) == false));
         restartNodesOnBrokenClusterState(ClusterState.builder(state).metaData(MetaData.builder(state.getMetaData()).put(brokenMeta)));
 
         // check that the cluster does not keep reallocating shards
@@ -452,8 +516,10 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
             assertNotNull(indexRoutingTable);
             for (IndexShardRoutingTable shardRoutingTable : indexRoutingTable) {
                 assertTrue(shardRoutingTable.primaryShard().unassigned());
-                assertEquals(UnassignedInfo.AllocationStatus.DECIDERS_NO,
-                    shardRoutingTable.primaryShard().unassignedInfo().getLastAllocationStatus());
+                assertEquals(
+                    UnassignedInfo.AllocationStatus.DECIDERS_NO,
+                    shardRoutingTable.primaryShard().unassignedInfo().getLastAllocationStatus()
+                );
                 assertThat(shardRoutingTable.primaryShard().unassignedInfo().getNumFailedAllocations(), greaterThan(0));
             }
         }, 60, TimeUnit.SECONDS);
@@ -476,33 +542,45 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
             ensureYellow();
         } else {
             internalCluster().startNode();
-            client().admin().cluster()
-                .health(Requests.clusterHealthRequest()
-                    .waitForGreenStatus()
-                    .waitForEvents(Priority.LANGUID)
-                    .waitForNoRelocatingShards(true).waitForNodes("2")).actionGet();
+            client().admin()
+                .cluster()
+                .health(
+                    Requests.clusterHealthRequest()
+                        .waitForGreenStatus()
+                        .waitForEvents(Priority.LANGUID)
+                        .waitForNoRelocatingShards(true)
+                        .waitForNodes("2")
+                )
+                .actionGet();
         }
         ClusterState state = client().admin().cluster().prepareState().get().getState();
 
         final MetaData metaData = state.getMetaData();
-        final MetaData brokenMeta = MetaData.builder(metaData).persistentSettings(Settings.builder()
-                .put(metaData.persistentSettings()).put("this.is.unknown", true)
-                .put(MetaData.SETTING_CLUSTER_MAX_SHARDS_PER_NODE.getKey(), "broken").build()).build();
+        final MetaData brokenMeta = MetaData.builder(metaData)
+            .persistentSettings(
+                Settings.builder()
+                    .put(metaData.persistentSettings())
+                    .put("this.is.unknown", true)
+                    .put(MetaData.SETTING_CLUSTER_MAX_SHARDS_PER_NODE.getKey(), "broken")
+                    .build()
+            )
+            .build();
         restartNodesOnBrokenClusterState(ClusterState.builder(state).metaData(brokenMeta));
 
         ensureYellow("test"); // wait for state recovery
         state = client().admin().cluster().prepareState().get().getState();
         assertEquals("true", state.metaData().persistentSettings().get("archived.this.is.unknown"));
-        assertEquals("broken", state.metaData().persistentSettings().get("archived."
-            + MetaData.SETTING_CLUSTER_MAX_SHARDS_PER_NODE.getKey()));
+        assertEquals(
+            "broken",
+            state.metaData().persistentSettings().get("archived." + MetaData.SETTING_CLUSTER_MAX_SHARDS_PER_NODE.getKey())
+        );
 
         // delete these settings
         client().admin().cluster().prepareUpdateSettings().setPersistentSettings(Settings.builder().putNull("archived.*")).get();
 
         state = client().admin().cluster().prepareState().get().getState();
         assertNull(state.metaData().persistentSettings().get("archived.this.is.unknown"));
-        assertNull(state.metaData().persistentSettings().get("archived."
-            + MetaData.SETTING_CLUSTER_MAX_SHARDS_PER_NODE.getKey()));
+        assertNull(state.metaData().persistentSettings().get("archived." + MetaData.SETTING_CLUSTER_MAX_SHARDS_PER_NODE.getKey()));
         assertHitCount(client().prepareSearch().setQuery(matchAllQuery()).get(), 1L);
     }
 
@@ -514,30 +592,30 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
         // node won't start.
 
         internalCluster().startNode();
-        createIndex("test", Settings.builder()
-            .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
-            .build());
+        createIndex(
+            "test",
+            Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1).put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0).build()
+        );
         ensureGreen("test");
 
         final MetaData metaData = internalCluster().getInstance(ClusterService.class).state().metaData();
         final Path[] paths = internalCluster().getInstance(NodeEnvironment.class).nodeDataPaths();
-//        writeBrokenMeta(metaStateService -> {
-//            metaStateService.writeGlobalState("test", MetaData.builder(metaData)
-//                // we remove the manifest file, resetting the term and making this look like an upgrade from 6.x, so must also reset the
-//                // term in the coordination metadata
-//                .coordinationMetaData(CoordinationMetaData.builder(metaData.coordinationMetaData()).term(0L).build())
-//                // add a tombstone but do not delete the index metadata from disk
-//               .putCustom(IndexGraveyard.TYPE, IndexGraveyard.builder().addTombstone(metaData.index("test").getIndex()).build()).build());
-//            for (final Path path : paths) {
-//                try (Stream<Path> stateFiles = Files.list(path.resolve(MetaDataStateFormat.STATE_DIR_NAME))) {
-//                    for (final Path manifestPath : stateFiles
-//                        .filter(p -> p.getFileName().toString().startsWith(Manifest.FORMAT.getPrefix())).collect(Collectors.toList())) {
-//                        IOUtils.rm(manifestPath);
-//                    }
-//                }
-//            }
-//        });
+        // writeBrokenMeta(metaStateService -> {
+        // metaStateService.writeGlobalState("test", MetaData.builder(metaData)
+        // // we remove the manifest file, resetting the term and making this look like an upgrade from 6.x, so must also reset the
+        // // term in the coordination metadata
+        // .coordinationMetaData(CoordinationMetaData.builder(metaData.coordinationMetaData()).term(0L).build())
+        // // add a tombstone but do not delete the index metadata from disk
+        // .putCustom(IndexGraveyard.TYPE, IndexGraveyard.builder().addTombstone(metaData.index("test").getIndex()).build()).build());
+        // for (final Path path : paths) {
+        // try (Stream<Path> stateFiles = Files.list(path.resolve(MetaDataStateFormat.STATE_DIR_NAME))) {
+        // for (final Path manifestPath : stateFiles
+        // .filter(p -> p.getFileName().toString().startsWith(Manifest.FORMAT.getPrefix())).collect(Collectors.toList())) {
+        // IOUtils.rm(manifestPath);
+        // }
+        // }
+        // }
+        // });
 
         ensureGreen();
 
@@ -546,10 +624,14 @@ public class GatewayIndexStateIT extends ESIntegTestCase {
 
     private void restartNodesOnBrokenClusterState(ClusterState.Builder clusterStateBuilder) throws Exception {
         Map<String, PersistedClusterStateService> lucenePersistedStateFactories = Stream.of(internalCluster().getNodeNames())
-            .collect(Collectors.toMap(Function.identity(),
-                nodeName -> internalCluster().getInstance(PersistedClusterStateService.class, nodeName)));
+            .collect(
+                Collectors.toMap(
+                    Function.identity(),
+                    nodeName -> internalCluster().getInstance(PersistedClusterStateService.class, nodeName)
+                )
+            );
         final ClusterState clusterState = clusterStateBuilder.build();
-        internalCluster().fullRestart(new RestartCallback(){
+        internalCluster().fullRestart(new RestartCallback() {
             @Override
             public Settings onNodeStopped(String nodeName) throws Exception {
                 final PersistedClusterStateService lucenePersistedStateFactory = lucenePersistedStateFactories.get(nodeName);

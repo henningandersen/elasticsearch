@@ -67,8 +67,7 @@ public class SimulateProcessorResultTests extends AbstractXContentTestCase<Simul
         }
     }
 
-    static SimulateProcessorResult createTestInstance(boolean isSuccessful,
-                                                                boolean isIgnoredException) {
+    static SimulateProcessorResult createTestInstance(boolean isSuccessful, boolean isIgnoredException) {
         String processorTag = randomAlphaOfLengthBetween(1, 10);
         SimulateProcessorResult simulateProcessorResult;
         if (isSuccessful) {
@@ -109,29 +108,20 @@ public class SimulateProcessorResultTests extends AbstractXContentTestCase<Simul
     @Override
     protected Predicate<String> getRandomFieldsExcludeFilter() {
         // We cannot have random fields in the _source field and _ingest field
-        return field ->
-            field.startsWith(
-                new StringJoiner(".")
-                    .add(WriteableIngestDocument.DOC_FIELD)
-                    .add(WriteableIngestDocument.SOURCE_FIELD).toString()
-            ) ||
-                field.startsWith(
-                    new StringJoiner(".")
-                        .add(WriteableIngestDocument.DOC_FIELD)
-                        .add(WriteableIngestDocument.INGEST_FIELD).toString()
-                );
+        return field -> field.startsWith(
+            new StringJoiner(".").add(WriteableIngestDocument.DOC_FIELD).add(WriteableIngestDocument.SOURCE_FIELD).toString()
+        )
+            || field.startsWith(
+                new StringJoiner(".").add(WriteableIngestDocument.DOC_FIELD).add(WriteableIngestDocument.INGEST_FIELD).toString()
+            );
     }
 
-    static void assertEqualProcessorResults(SimulateProcessorResult response,
-                                                      SimulateProcessorResult parsedResponse) {
+    static void assertEqualProcessorResults(SimulateProcessorResult response, SimulateProcessorResult parsedResponse) {
         assertEquals(response.getProcessorTag(), parsedResponse.getProcessorTag());
         assertEquals(response.getIngestDocument(), parsedResponse.getIngestDocument());
-        if (response.getFailure() != null ) {
+        if (response.getFailure() != null) {
             assertNotNull(parsedResponse.getFailure());
-            assertThat(
-                parsedResponse.getFailure().getMessage(),
-                containsString(response.getFailure().getMessage())
-            );
+            assertThat(parsedResponse.getFailure().getMessage(), containsString(response.getFailure().getMessage()));
         } else {
             assertNull(parsedResponse.getFailure());
         }
@@ -149,13 +139,22 @@ public class SimulateProcessorResultTests extends AbstractXContentTestCase<Simul
      */
     public void testFromXContentWithFailures() throws IOException {
         Supplier<SimulateProcessorResult> instanceSupplier = SimulateProcessorResultTests::createTestInstanceWithFailures;
-        //with random fields insertion in the inner exceptions, some random stuff may be parsed back as metadata,
-        //but that does not bother our assertions, as we only want to test that we don't break.
+        // with random fields insertion in the inner exceptions, some random stuff may be parsed back as metadata,
+        // but that does not bother our assertions, as we only want to test that we don't break.
         boolean supportsUnknownFields = true;
-        //exceptions are not of the same type whenever parsed back
+        // exceptions are not of the same type whenever parsed back
         boolean assertToXContentEquivalence = false;
-        AbstractXContentTestCase.testFromXContent(NUMBER_OF_TEST_RUNS, instanceSupplier, supportsUnknownFields,
-            getShuffleFieldsExceptions(), getRandomFieldsExcludeFilter(), this::createParser, this::doParseInstance,
-            this::assertEqualInstances, assertToXContentEquivalence, getToXContentParams());
+        AbstractXContentTestCase.testFromXContent(
+            NUMBER_OF_TEST_RUNS,
+            instanceSupplier,
+            supportsUnknownFields,
+            getShuffleFieldsExceptions(),
+            getRandomFieldsExcludeFilter(),
+            this::createParser,
+            this::doParseInstance,
+            this::assertEqualInstances,
+            assertToXContentEquivalence,
+            getToXContentParams()
+        );
     }
 }

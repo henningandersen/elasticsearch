@@ -31,7 +31,6 @@ import org.elasticsearch.rest.action.RestToXContentListener;
 
 import java.io.IOException;
 
-
 public class RestPutPipelineAction extends BaseRestHandler {
 
     public RestPutPipelineAction(RestController controller) {

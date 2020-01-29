@@ -42,14 +42,20 @@ import static java.util.Collections.unmodifiableList;
  * All geo-grid hash-encoding in a grid are of the same precision and held internally as a single long
  * for efficiency's sake.
  */
-public abstract class InternalGeoGrid<B extends InternalGeoGridBucket>
-        extends InternalMultiBucketAggregation<InternalGeoGrid, InternalGeoGridBucket> implements GeoGrid {
+public abstract class InternalGeoGrid<B extends InternalGeoGridBucket> extends InternalMultiBucketAggregation<
+    InternalGeoGrid,
+    InternalGeoGridBucket> implements GeoGrid {
 
     protected final int requiredSize;
     protected final List<InternalGeoGridBucket> buckets;
 
-    InternalGeoGrid(String name, int requiredSize, List<InternalGeoGridBucket> buckets, List<PipelineAggregator> pipelineAggregators,
-                    Map<String, Object> metaData) {
+    InternalGeoGrid(
+        String name,
+        int requiredSize,
+        List<InternalGeoGridBucket> buckets,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         super(name, pipelineAggregators, metaData);
         this.requiredSize = requiredSize;
         this.buckets = buckets;
@@ -72,8 +78,13 @@ public abstract class InternalGeoGrid<B extends InternalGeoGridBucket>
         out.writeList(buckets);
     }
 
-    abstract InternalGeoGrid create(String name, int requiredSize, List<InternalGeoGridBucket> buckets,
-                                    List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData);
+    abstract InternalGeoGrid create(
+        String name,
+        int requiredSize,
+        List<InternalGeoGridBucket> buckets,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    );
 
     @Override
     public List<InternalGeoGridBucket> getBuckets() {
@@ -160,8 +171,7 @@ public abstract class InternalGeoGrid<B extends InternalGeoGridBucket>
         if (super.equals(obj) == false) return false;
 
         InternalGeoGrid other = (InternalGeoGrid) obj;
-        return Objects.equals(requiredSize, other.requiredSize)
-            && Objects.equals(buckets, other.buckets);
+        return Objects.equals(requiredSize, other.requiredSize) && Objects.equals(buckets, other.buckets);
     }
 
 }

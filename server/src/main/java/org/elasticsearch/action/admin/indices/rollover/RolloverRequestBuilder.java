@@ -26,9 +26,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
-
-public class RolloverRequestBuilder extends MasterNodeOperationRequestBuilder<RolloverRequest, RolloverResponse,
-    RolloverRequestBuilder> {
+public class RolloverRequestBuilder extends MasterNodeOperationRequestBuilder<RolloverRequest, RolloverResponse, RolloverRequestBuilder> {
     public RolloverRequestBuilder(ElasticsearchClient client, RolloverAction action) {
         super(client, action, new RolloverRequest());
     }
@@ -53,7 +51,7 @@ public class RolloverRequestBuilder extends MasterNodeOperationRequestBuilder<Ro
         return this;
     }
 
-    public RolloverRequestBuilder addMaxIndexSizeCondition(ByteSizeValue size){
+    public RolloverRequestBuilder addMaxIndexSizeCondition(ByteSizeValue size) {
         this.request.addMaxIndexSizeCondition(size);
         return this;
     }

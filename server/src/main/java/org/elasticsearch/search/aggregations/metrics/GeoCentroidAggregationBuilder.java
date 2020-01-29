@@ -38,8 +38,9 @@ import org.elasticsearch.search.aggregations.support.ValuesSourceParserHelper;
 import java.io.IOException;
 import java.util.Map;
 
-public class GeoCentroidAggregationBuilder
-        extends ValuesSourceAggregationBuilder.LeafOnly<ValuesSource.GeoPoint, GeoCentroidAggregationBuilder> {
+public class GeoCentroidAggregationBuilder extends ValuesSourceAggregationBuilder.LeafOnly<
+    ValuesSource.GeoPoint,
+    GeoCentroidAggregationBuilder> {
     public static final String NAME = "geo_centroid";
 
     private static final ObjectParser<GeoCentroidAggregationBuilder, Void> PARSER;
@@ -78,8 +79,12 @@ public class GeoCentroidAggregationBuilder
     }
 
     @Override
-    protected GeoCentroidAggregatorFactory innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<ValuesSource.GeoPoint> config,
-                                                      AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected GeoCentroidAggregatorFactory innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<ValuesSource.GeoPoint> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         return new GeoCentroidAggregatorFactory(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
     }
 

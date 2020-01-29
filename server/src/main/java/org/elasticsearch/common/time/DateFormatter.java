@@ -94,8 +94,9 @@ public interface DateFormatter {
      * Return the given Joda {@link DateTime} formatted with this format.
      */
     default String formatJoda(DateTime dateTime) {
-        return format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateTime.getMillis()),
-            DateUtils.dateTimeZoneToZoneId(dateTime.getZone())));
+        return format(
+            ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateTime.getMillis()), DateUtils.dateTimeZoneToZoneId(dateTime.getZone()))
+        );
     }
 
     /**

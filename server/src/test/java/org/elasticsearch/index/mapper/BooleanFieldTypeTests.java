@@ -57,8 +57,7 @@ public class BooleanFieldTypeTests extends FieldTypeTestCase {
         assertEquals(new TermQuery(new Term("field", "F")), ft.termQuery("false", null));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.termQuery("true", null));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> ft.termQuery("true", null));
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 }

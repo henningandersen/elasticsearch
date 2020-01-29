@@ -35,7 +35,6 @@ import org.elasticsearch.rest.action.RestResponseListener;
 
 import java.io.IOException;
 
-
 public class RestNodesHotThreadsAction extends BaseRestHandler {
 
     public RestNodesHotThreadsAction(RestController controller) {
@@ -65,20 +64,20 @@ public class RestNodesHotThreadsAction extends BaseRestHandler {
         nodesHotThreadsRequest.interval(TimeValue.parseTimeValue(request.param("interval"), nodesHotThreadsRequest.interval(), "interval"));
         nodesHotThreadsRequest.snapshots(request.paramAsInt("snapshots", nodesHotThreadsRequest.snapshots()));
         nodesHotThreadsRequest.timeout(request.param("timeout"));
-        return channel -> client.admin().cluster().nodesHotThreads(
-                nodesHotThreadsRequest,
-                new RestResponseListener<NodesHotThreadsResponse>(channel) {
-                    @Override
-                    public RestResponse buildResponse(NodesHotThreadsResponse response) throws Exception {
-                        StringBuilder sb = new StringBuilder();
-                        for (NodeHotThreads node : response.getNodes()) {
-                            sb.append("::: ").append(node.getNode().toString()).append("\n");
-                            Strings.spaceify(3, node.getHotThreads(), sb);
-                            sb.append('\n');
-                        }
-                        return new BytesRestResponse(RestStatus.OK, sb.toString());
+        return channel -> client.admin()
+            .cluster()
+            .nodesHotThreads(nodesHotThreadsRequest, new RestResponseListener<NodesHotThreadsResponse>(channel) {
+                @Override
+                public RestResponse buildResponse(NodesHotThreadsResponse response) throws Exception {
+                    StringBuilder sb = new StringBuilder();
+                    for (NodeHotThreads node : response.getNodes()) {
+                        sb.append("::: ").append(node.getNode().toString()).append("\n");
+                        Strings.spaceify(3, node.getHotThreads(), sb);
+                        sb.append('\n');
                     }
-                });
+                    return new BytesRestResponse(RestStatus.OK, sb.toString());
+                }
+            });
     }
 
     @Override

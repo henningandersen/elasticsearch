@@ -62,13 +62,13 @@ public abstract class ScoreScript {
     }
 
     private static final Map<String, String> DEPRECATIONS = Map.of(
-            "doc",
-            "Accessing variable [doc] via [params.doc] from within a score script "
-                    + "is deprecated in favor of directly accessing [doc].",
-            "_doc", "Accessing variable [doc] via [params._doc] from within a score script "
-                    + "is deprecated in favor of directly accessing [doc].");
+        "doc",
+        "Accessing variable [doc] via [params.doc] from within a score script " + "is deprecated in favor of directly accessing [doc].",
+        "_doc",
+        "Accessing variable [doc] via [params._doc] from within a score script " + "is deprecated in favor of directly accessing [doc]."
+    );
 
-    public static final String[] PARAMETERS = new String[]{ "explanation" };
+    public static final String[] PARAMETERS = new String[] { "explanation" };
 
     /** The generic runtime parameters for the script. */
     private final Map<String, Object> params;
@@ -136,7 +136,6 @@ public abstract class ScoreScript {
     public double get_score() {
         return scoreSupplier.getAsDouble();
     }
-
 
     /**
      * Starting a name with underscore, so that the user cannot access this function directly through a script
@@ -215,7 +214,6 @@ public abstract class ScoreScript {
     public void _setIndexVersion(Version indexVersion) {
         this.indexVersion = indexVersion;
     }
-
 
     /** A factory to construct {@link ScoreScript} instances. */
     public interface LeafFactory {

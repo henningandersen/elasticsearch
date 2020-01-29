@@ -40,7 +40,7 @@ public final class BufferedChecksumStreamInput extends FilterStreamInput {
     public BufferedChecksumStreamInput(StreamInput in, String source, BufferedChecksumStreamInput reuse) {
         super(in);
         this.source = source;
-        if (reuse == null ) {
+        if (reuse == null) {
             this.digest = new BufferedChecksum(new CRC32());
         } else {
             this.digest = reuse.digest;
@@ -96,7 +96,7 @@ public final class BufferedChecksumStreamInput extends FilterStreamInput {
         }
         assert skipBuffer.length == SKIP_BUFFER_SIZE;
         long skipped = 0;
-        for (; skipped < numBytes; ) {
+        for (; skipped < numBytes;) {
             final int step = (int) Math.min(SKIP_BUFFER_SIZE, numBytes - skipped);
             readBytes(skipBuffer, 0, step);
             skipped += step;
@@ -113,7 +113,7 @@ public final class BufferedChecksumStreamInput extends FilterStreamInput {
         digest.reset();
     }
 
-    public String getSource(){
+    public String getSource() {
         return source;
     }
 }

@@ -179,11 +179,11 @@ public class MatchPhrasePrefixQueryBuilder extends AbstractQueryBuilder<MatchPhr
 
     @Override
     protected boolean doEquals(MatchPhrasePrefixQueryBuilder other) {
-        return Objects.equals(fieldName, other.fieldName) &&
-                Objects.equals(value, other.value) &&
-                Objects.equals(analyzer, other.analyzer)&&
-                Objects.equals(slop, other.slop) &&
-                Objects.equals(maxExpansions, other.maxExpansions);
+        return Objects.equals(fieldName, other.fieldName)
+            && Objects.equals(value, other.value)
+            && Objects.equals(analyzer, other.analyzer)
+            && Objects.equals(slop, other.slop)
+            && Objects.equals(maxExpansions, other.maxExpansions);
     }
 
     @Override
@@ -224,12 +224,16 @@ public class MatchPhrasePrefixQueryBuilder extends AbstractQueryBuilder<MatchPhr
                         } else if (AbstractQueryBuilder.NAME_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                             queryName = parser.text();
                         } else {
-                            throw new ParsingException(parser.getTokenLocation(),
-                                    "[" + NAME + "] query does not support [" + currentFieldName + "]");
+                            throw new ParsingException(
+                                parser.getTokenLocation(),
+                                "[" + NAME + "] query does not support [" + currentFieldName + "]"
+                            );
                         }
                     } else {
-                        throw new ParsingException(parser.getTokenLocation(),
-                                "[" + NAME + "] unknown token [" + token + "] after [" + currentFieldName + "]");
+                        throw new ParsingException(
+                            parser.getTokenLocation(),
+                            "[" + NAME + "] unknown token [" + token + "] after [" + currentFieldName + "]"
+                        );
                     }
                 }
             } else {

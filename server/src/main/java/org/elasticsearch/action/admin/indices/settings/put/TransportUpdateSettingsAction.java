@@ -50,11 +50,23 @@ public class TransportUpdateSettingsAction extends TransportMasterNodeAction<Upd
     private final MetaDataUpdateSettingsService updateSettingsService;
 
     @Inject
-    public TransportUpdateSettingsAction(TransportService transportService, ClusterService clusterService,
-                                         ThreadPool threadPool, MetaDataUpdateSettingsService updateSettingsService,
-                                         ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
-        super(UpdateSettingsAction.NAME, transportService, clusterService, threadPool, actionFilters, UpdateSettingsRequest::new,
-            indexNameExpressionResolver);
+    public TransportUpdateSettingsAction(
+        TransportService transportService,
+        ClusterService clusterService,
+        ThreadPool threadPool,
+        MetaDataUpdateSettingsService updateSettingsService,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver
+    ) {
+        super(
+            UpdateSettingsAction.NAME,
+            transportService,
+            clusterService,
+            threadPool,
+            actionFilters,
+            UpdateSettingsRequest::new,
+            indexNameExpressionResolver
+        );
         this.updateSettingsService = updateSettingsService;
     }
 
@@ -77,8 +89,8 @@ public class TransportUpdateSettingsAction extends TransportMasterNodeAction<Upd
             || IndexMetaData.INDEX_BLOCKS_READ_ONLY_ALLOW_DELETE_SETTING.exists(request.settings())) {
             return null;
         }
-        return state.blocks().indicesBlockedException(ClusterBlockLevel.METADATA_WRITE,
-            indexNameExpressionResolver.concreteIndexNames(state, request));
+        return state.blocks()
+            .indicesBlockedException(ClusterBlockLevel.METADATA_WRITE, indexNameExpressionResolver.concreteIndexNames(state, request));
     }
 
     @Override
@@ -87,15 +99,20 @@ public class TransportUpdateSettingsAction extends TransportMasterNodeAction<Upd
     }
 
     @Override
-    protected void masterOperation(Task task, final UpdateSettingsRequest request, final ClusterState state,
-                                   final ActionListener<AcknowledgedResponse> listener) {
+    protected void masterOperation(
+        Task task,
+        final UpdateSettingsRequest request,
+        final ClusterState state,
+        final ActionListener<AcknowledgedResponse> listener
+    ) {
         final Index[] concreteIndices = indexNameExpressionResolver.concreteIndices(state, request);
-        UpdateSettingsClusterStateUpdateRequest clusterStateUpdateRequest = new UpdateSettingsClusterStateUpdateRequest()
-                .indices(concreteIndices)
-                .settings(request.settings())
-                .setPreserveExisting(request.isPreserveExisting())
-                .ackTimeout(request.timeout())
-                .masterNodeTimeout(request.masterNodeTimeout());
+        UpdateSettingsClusterStateUpdateRequest clusterStateUpdateRequest = new UpdateSettingsClusterStateUpdateRequest().indices(
+            concreteIndices
+        )
+            .settings(request.settings())
+            .setPreserveExisting(request.isPreserveExisting())
+            .ackTimeout(request.timeout())
+            .masterNodeTimeout(request.masterNodeTimeout());
 
         updateSettingsService.updateSettings(clusterStateUpdateRequest, new ActionListener<ClusterStateUpdateResponse>() {
             @Override

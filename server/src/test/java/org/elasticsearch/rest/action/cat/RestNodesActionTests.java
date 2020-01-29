@@ -51,8 +51,7 @@ public class RestNodesActionTests extends ESTestCase {
     @Before
     public void setUpAction() {
         UsageService usageService = new UsageService();
-        action = new RestNodesAction(
-            new RestController(Collections.emptySet(), null, null, null, usageService));
+        action = new RestNodesAction(new RestController(Collections.emptySet(), null, null, null, usageService));
     }
 
     public void testBuildTableDoesNotThrowGivenNullNodeInfoAndStats() {
@@ -76,8 +75,10 @@ public class RestNodesActionTests extends ESTestCase {
         NodeClient client = new NodeClient(Settings.EMPTY, threadPool);
         FakeRestRequest request = new FakeRestRequest();
         request.params().put("local", randomFrom("", "true", "false", randomAlphaOfLength(10)));
-        assertThat(expectThrows(IllegalArgumentException.class, () -> action.doCatRequest(request, client)).getMessage(),
-            is("parameter [local] is not supported"));
+        assertThat(
+            expectThrows(IllegalArgumentException.class, () -> action.doCatRequest(request, client)).getMessage(),
+            is("parameter [local] is not supported")
+        );
         terminate(threadPool);
     }
 }

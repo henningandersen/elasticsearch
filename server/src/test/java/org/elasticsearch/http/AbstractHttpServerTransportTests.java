@@ -74,33 +74,50 @@ public class AbstractHttpServerTransportTests extends ESTestCase {
         int boundPort = randomIntBetween(9000, 9100);
         int otherBoundPort = randomIntBetween(9200, 9300);
 
-        int publishPort = resolvePublishPort(Settings.builder().put(HttpTransportSettings.SETTING_HTTP_PUBLISH_PORT.getKey(), 9080).build(),
-            randomAddresses(), getByName("127.0.0.2"));
+        int publishPort = resolvePublishPort(
+            Settings.builder().put(HttpTransportSettings.SETTING_HTTP_PUBLISH_PORT.getKey(), 9080).build(),
+            randomAddresses(),
+            getByName("127.0.0.2")
+        );
         assertThat("Publish port should be explicitly set to 9080", publishPort, equalTo(9080));
 
-        publishPort = resolvePublishPort(Settings.EMPTY, asList(address("127.0.0.1", boundPort), address("127.0.0.2", otherBoundPort)),
-            getByName("127.0.0.1"));
+        publishPort = resolvePublishPort(
+            Settings.EMPTY,
+            asList(address("127.0.0.1", boundPort), address("127.0.0.2", otherBoundPort)),
+            getByName("127.0.0.1")
+        );
         assertThat("Publish port should be derived from matched address", publishPort, equalTo(boundPort));
 
-        publishPort = resolvePublishPort(Settings.EMPTY, asList(address("127.0.0.1", boundPort), address("127.0.0.2", boundPort)),
-            getByName("127.0.0.3"));
+        publishPort = resolvePublishPort(
+            Settings.EMPTY,
+            asList(address("127.0.0.1", boundPort), address("127.0.0.2", boundPort)),
+            getByName("127.0.0.3")
+        );
         assertThat("Publish port should be derived from unique port of bound addresses", publishPort, equalTo(boundPort));
 
-        final BindHttpException e =
-            expectThrows(BindHttpException.class,
-                () -> resolvePublishPort(
-                    Settings.EMPTY,
-                    asList(address("127.0.0.1", boundPort), address("127.0.0.2", otherBoundPort)),
-                    getByName("127.0.0.3")));
+        final BindHttpException e = expectThrows(
+            BindHttpException.class,
+            () -> resolvePublishPort(
+                Settings.EMPTY,
+                asList(address("127.0.0.1", boundPort), address("127.0.0.2", otherBoundPort)),
+                getByName("127.0.0.3")
+            )
+        );
         assertThat(e.getMessage(), containsString("Failed to auto-resolve http publish port"));
 
-        publishPort = resolvePublishPort(Settings.EMPTY, asList(address("0.0.0.0", boundPort), address("127.0.0.2", otherBoundPort)),
-            getByName("127.0.0.1"));
+        publishPort = resolvePublishPort(
+            Settings.EMPTY,
+            asList(address("0.0.0.0", boundPort), address("127.0.0.2", otherBoundPort)),
+            getByName("127.0.0.1")
+        );
         assertThat("Publish port should be derived from matching wildcard address", publishPort, equalTo(boundPort));
 
         if (NetworkUtils.SUPPORTS_V6) {
-            publishPort = resolvePublishPort(Settings.EMPTY, asList(address("0.0.0.0", boundPort), address("127.0.0.2", otherBoundPort)),
-                getByName("::1"));
+            publishPort = resolvePublishPort(
+                Settings.EMPTY,
+                asList(address("0.0.0.0", boundPort), address("127.0.0.2", otherBoundPort)),
+                getByName("::1")
+            );
             assertThat("Publish port should be derived from matching wildcard address", publishPort, equalTo(boundPort));
         }
     }
@@ -115,38 +132,44 @@ public class AbstractHttpServerTransportTests extends ESTestCase {
             }
 
             @Override
-            public void dispatchBadRequest(final RestChannel channel,
-                                           final ThreadContext threadContext,
-                                           final Throwable cause) {
+            public void dispatchBadRequest(final RestChannel channel, final ThreadContext threadContext, final Throwable cause) {
                 threadContext.putHeader("foo_bad", "bar");
                 threadContext.putTransient("bar_bad", "baz");
             }
 
         };
 
-        try (AbstractHttpServerTransport transport =
-                 new AbstractHttpServerTransport(Settings.EMPTY, networkService, bigArrays, threadPool, xContentRegistry(), dispatcher) {
+        try (
+            AbstractHttpServerTransport transport = new AbstractHttpServerTransport(
+                Settings.EMPTY,
+                networkService,
+                bigArrays,
+                threadPool,
+                xContentRegistry(),
+                dispatcher
+            ) {
 
-                     @Override
-                     protected HttpServerChannel bind(InetSocketAddress hostAddress) {
-                         return null;
-                     }
+                @Override
+                protected HttpServerChannel bind(InetSocketAddress hostAddress) {
+                    return null;
+                }
 
-                     @Override
-                     protected void doStart() {
+                @Override
+                protected void doStart() {
 
-                     }
+                }
 
-                     @Override
-                     protected void stopInternal() {
+                @Override
+                protected void stopInternal() {
 
-                     }
+                }
 
-                     @Override
-                     public HttpStats stats() {
-                         return null;
-                     }
-                 }) {
+                @Override
+                public HttpStats stats() {
+                    return null;
+                }
+            }
+        ) {
 
             transport.dispatchRequest(null, null, null);
             assertNull(threadPool.getThreadContext().getHeader("foo"));

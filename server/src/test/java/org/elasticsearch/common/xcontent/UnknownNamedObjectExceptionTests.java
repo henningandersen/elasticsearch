@@ -29,8 +29,11 @@ import java.io.IOException;
 public class UnknownNamedObjectExceptionTests extends ESTestCase {
     public void testRoundTrip() throws IOException {
         XContentLocation location = new XContentLocation(between(1, 1000), between(1, 1000));
-        UnknownNamedObjectException created = new UnknownNamedObjectException(location, UnknownNamedObjectExceptionTests.class,
-                randomAlphaOfLength(5));
+        UnknownNamedObjectException created = new UnknownNamedObjectException(
+            location,
+            UnknownNamedObjectExceptionTests.class,
+            randomAlphaOfLength(5)
+        );
         UnknownNamedObjectException roundTripped;
 
         try (BytesStreamOutput out = new BytesStreamOutput()) {
@@ -48,8 +51,11 @@ public class UnknownNamedObjectExceptionTests extends ESTestCase {
 
     public void testStatusCode() {
         XContentLocation location = new XContentLocation(between(1, 1000), between(1, 1000));
-        UnknownNamedObjectException e = new UnknownNamedObjectException(location, UnknownNamedObjectExceptionTests.class,
-                randomAlphaOfLength(5));
+        UnknownNamedObjectException e = new UnknownNamedObjectException(
+            location,
+            UnknownNamedObjectExceptionTests.class,
+            randomAlphaOfLength(5)
+        );
         assertEquals(RestStatus.BAD_REQUEST, e.status());
     }
 }

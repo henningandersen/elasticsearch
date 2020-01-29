@@ -145,9 +145,15 @@ public class ContextIndexSearcher extends IndexSearcher {
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public void search(List<LeafReaderContext> leaves, Weight weight, CollectorManager manager,
-            QuerySearchResult result, DocValueFormat[] formats, TotalHits totalHits) throws IOException {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void search(
+        List<LeafReaderContext> leaves,
+        Weight weight,
+        CollectorManager manager,
+        QuerySearchResult result,
+        DocValueFormat[] formats,
+        TotalHits totalHits
+    ) throws IOException {
         final List<Collector> collectors = new ArrayList<>(leaves.size());
         for (LeafReaderContext ctx : leaves) {
             final Collector collector = manager.newCollector();
@@ -207,8 +213,7 @@ public class ContextIndexSearcher extends IndexSearcher {
             Scorer scorer = weight.scorer(ctx);
             if (scorer != null) {
                 try {
-                    intersectScorerAndBitSet(scorer, liveDocsBitSet, leafCollector,
-                        checkCancelled == null ? () -> { } : checkCancelled);
+                    intersectScorerAndBitSet(scorer, liveDocsBitSet, leafCollector, checkCancelled == null ? () -> {} : checkCancelled);
                 } catch (CollectionTerminatedException e) {
                     // collection was terminated prematurely
                     // continue with the following leaf
@@ -255,27 +260,27 @@ public class ContextIndexSearcher extends IndexSearcher {
         }
     }
 
-
     private static BitSet getSparseBitSetOrNull(Bits liveDocs) {
         if (liveDocs instanceof SparseFixedBitSet) {
             return (BitSet) liveDocs;
         } else if (liveDocs instanceof CombinedBitSet
-                        // if the underlying role bitset is sparse
-                        && ((CombinedBitSet) liveDocs).getFirst() instanceof SparseFixedBitSet) {
-            return (BitSet) liveDocs;
-        } else {
-            return null;
-        }
+            // if the underlying role bitset is sparse
+            && ((CombinedBitSet) liveDocs).getFirst() instanceof SparseFixedBitSet) {
+                return (BitSet) liveDocs;
+            } else {
+                return null;
+            }
 
     }
 
-    static void intersectScorerAndBitSet(Scorer scorer, BitSet acceptDocs,
-                                         LeafCollector collector, Runnable checkCancelled) throws IOException {
+    static void intersectScorerAndBitSet(Scorer scorer, BitSet acceptDocs, LeafCollector collector, Runnable checkCancelled)
+        throws IOException {
         collector.setScorer(scorer);
         // ConjunctionDISI uses the DocIdSetIterator#cost() to order the iterators, so if roleBits has the lowest cardinality it should
         // be used first:
-        DocIdSetIterator iterator = ConjunctionDISI.intersectIterators(Arrays.asList(new BitSetIterator(acceptDocs,
-            acceptDocs.approximateCardinality()), scorer.iterator()));
+        DocIdSetIterator iterator = ConjunctionDISI.intersectIterators(
+            Arrays.asList(new BitSetIterator(acceptDocs, acceptDocs.approximateCardinality()), scorer.iterator())
+        );
         int seen = 0;
         checkCancelled.run();
         for (int docId = iterator.nextDoc(); docId < DocIdSetIterator.NO_MORE_DOCS; docId = iterator.nextDoc()) {

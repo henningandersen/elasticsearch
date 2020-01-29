@@ -64,10 +64,12 @@ public class ConstantScoreQueryBuilderTests extends AbstractQueryTestCase<Consta
      * test that "filter" does not accept an array of queries, throws {@link ParsingException}
      */
     public void testNoArrayAsFilterElements() throws IOException {
-        String queryString = "{ \"" + ConstantScoreQueryBuilder.NAME + "\" : {\n" +
-                                    "\"filter\" : [ { \"term\": { \"foo\": \"a\" } },\n" +
-                                                   "{ \"term\": { \"foo\": \"x\" } } ]\n" +
-                            "} }";
+        String queryString = "{ \""
+            + ConstantScoreQueryBuilder.NAME
+            + "\" : {\n"
+            + "\"filter\" : [ { \"term\": { \"foo\": \"a\" } },\n"
+            + "{ \"term\": { \"foo\": \"x\" } } ]\n"
+            + "} }";
         ParsingException e = expectThrows(ParsingException.class, () -> parseQuery(queryString));
         assertThat(e.getMessage(), containsString("unexpected token [START_ARRAY]"));
     }
@@ -82,18 +84,17 @@ public class ConstantScoreQueryBuilderTests extends AbstractQueryTestCase<Consta
     }
 
     public void testFromJson() throws IOException {
-        String json =
-                "{\n" +
-                "  \"constant_score\" : {\n" +
-                "    \"filter\" : {\n" +
-                "      \"terms\" : {\n" +
-                "        \"user\" : [ \"kimchy\", \"elasticsearch\" ],\n" +
-                "        \"boost\" : 42.0\n" +
-                "      }\n" +
-                "    },\n" +
-                "    \"boost\" : 23.0\n" +
-                "  }\n" +
-                "}";
+        String json = "{\n"
+            + "  \"constant_score\" : {\n"
+            + "    \"filter\" : {\n"
+            + "      \"terms\" : {\n"
+            + "        \"user\" : [ \"kimchy\", \"elasticsearch\" ],\n"
+            + "        \"boost\" : 42.0\n"
+            + "      }\n"
+            + "    },\n"
+            + "    \"boost\" : 23.0\n"
+            + "  }\n"
+            + "}";
 
         ConstantScoreQueryBuilder parsed = (ConstantScoreQueryBuilder) parseQuery(json);
         checkGeneratedJson(json, parsed);

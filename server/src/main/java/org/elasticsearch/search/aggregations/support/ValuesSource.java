@@ -88,8 +88,11 @@ public abstract class ValuesSource {
             return org.elasticsearch.index.fielddata.FieldData.docsWithValue(bytes);
         }
 
-        public RangeType rangeType() { return rangeType; }
+        public RangeType rangeType() {
+            return rangeType;
+        }
     }
+
     public abstract static class Bytes extends ValuesSource {
 
         @Override
@@ -130,11 +133,9 @@ public abstract class ValuesSource {
                 return org.elasticsearch.index.fielddata.FieldData.docsWithValue(ordinals);
             }
 
-            public abstract SortedSetDocValues ordinalsValues(LeafReaderContext context)
-                    throws IOException;
+            public abstract SortedSetDocValues ordinalsValues(LeafReaderContext context) throws IOException;
 
-            public abstract SortedSetDocValues globalOrdinalsValues(LeafReaderContext context)
-                    throws IOException;
+            public abstract SortedSetDocValues globalOrdinalsValues(LeafReaderContext context) throws IOException;
 
             /**
              * Whether this values source is able to provide a mapping between global and segment ordinals,
@@ -146,8 +147,7 @@ public abstract class ValuesSource {
             }
 
             /** Returns a mapping from segment ordinals to global ordinals. */
-            public abstract LongUnaryOperator globalOrdinalsMapping(LeafReaderContext context)
-                    throws IOException;
+            public abstract LongUnaryOperator globalOrdinalsMapping(LeafReaderContext context) throws IOException;
 
             public long globalMaxOrd(IndexSearcher indexSearcher) throws IOException {
                 IndexReader indexReader = indexSearcher.getIndexReader();
@@ -182,7 +182,7 @@ public abstract class ValuesSource {
 
                 @Override
                 public SortedSetDocValues globalOrdinalsValues(LeafReaderContext context) {
-                    final IndexOrdinalsFieldData global = indexFieldData.loadGlobal((DirectoryReader)context.parent.reader());
+                    final IndexOrdinalsFieldData global = indexFieldData.loadGlobal((DirectoryReader) context.parent.reader());
                     final AtomicOrdinalsFieldData atomicFieldData = global.load(context);
                     return atomicFieldData.getOrdinalsValues();
                 }
@@ -194,7 +194,7 @@ public abstract class ValuesSource {
 
                 @Override
                 public LongUnaryOperator globalOrdinalsMapping(LeafReaderContext context) throws IOException {
-                    final IndexOrdinalsFieldData global = indexFieldData.loadGlobal((DirectoryReader)context.parent.reader());
+                    final IndexOrdinalsFieldData global = indexFieldData.loadGlobal((DirectoryReader) context.parent.reader());
                     final OrdinalMap map = global.getOrdinalMap();
                     if (map == null) {
                         // segments and global ordinals are the same
@@ -565,7 +565,7 @@ public abstract class ValuesSource {
             }
         }
     }
-    
+
     public abstract static class Histogram extends ValuesSource {
 
         public abstract HistogramValues getHistogramValues(LeafReaderContext context) throws IOException;

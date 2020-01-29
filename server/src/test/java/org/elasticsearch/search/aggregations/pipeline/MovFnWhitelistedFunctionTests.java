@@ -20,7 +20,6 @@
 package org.elasticsearch.search.aggregations.pipeline;
 
 import org.elasticsearch.common.collect.EvictingQueue;
-import org.elasticsearch.search.aggregations.pipeline.MovingFunctions;
 import org.elasticsearch.test.ESTestCase;
 
 import java.util.Arrays;
@@ -298,8 +297,10 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
                 continue;
             }
 
-            double actual = MovingFunctions.stdDev(window.stream().mapToDouble(Double::doubleValue).toArray(),
-                MovingFunctions.unweightedAvg(window.stream().mapToDouble(Double::doubleValue).toArray()));
+            double actual = MovingFunctions.stdDev(
+                window.stream().mapToDouble(Double::doubleValue).toArray(),
+                MovingFunctions.unweightedAvg(window.stream().mapToDouble(Double::doubleValue).toArray())
+            );
             assertThat(actual, equalTo(Double.NaN));
             if (randValue != null) {
                 window.offer(randValue);
@@ -309,8 +310,10 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
 
     public void testEmptySimpleStdDev() {
         EvictingQueue<Double> window = new EvictingQueue<>(0);
-        double actual = MovingFunctions.stdDev(window.stream().mapToDouble(Double::doubleValue).toArray(),
-            MovingFunctions.unweightedAvg(window.stream().mapToDouble(Double::doubleValue).toArray()));
+        double actual = MovingFunctions.stdDev(
+            window.stream().mapToDouble(Double::doubleValue).toArray(),
+            MovingFunctions.unweightedAvg(window.stream().mapToDouble(Double::doubleValue).toArray())
+        );
         assertThat(actual, equalTo(Double.NaN));
     }
 
@@ -483,7 +486,7 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
                 last_b = b;
             }
 
-            double expected = s + (0 * b) ;
+            double expected = s + (0 * b);
             double actual = MovingFunctions.holt(window.stream().mapToDouble(Double::doubleValue).toArray(), alpha, beta);
             assertEquals(expected, actual, 0.01 * Math.abs(expected));
             window.offer(randValue);
@@ -528,7 +531,7 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
         double alpha = randomDouble();
         double beta = randomDouble();
         double gamma = randomDouble();
-        int period = randomIntBetween(1,10);
+        int period = randomIntBetween(1, 10);
         int windowSize = randomIntBetween(period * 2, 50); // HW requires at least two periods of data
 
         EvictingQueue<Double> window = new EvictingQueue<>(windowSize);
@@ -577,15 +580,21 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
             s = alpha * (vs[i] / seasonal[i - period]) + (1.0d - alpha) * (last_s + last_b);
             b = beta * (s - last_s) + (1 - beta) * last_b;
 
-            seasonal[i] = gamma * (vs[i] / (last_s + last_b )) + (1 - gamma) * seasonal[i - period];
+            seasonal[i] = gamma * (vs[i] / (last_s + last_b)) + (1 - gamma) * seasonal[i - period];
             last_s = s;
             last_b = b;
         }
 
         int idx = window.size() - period + (0 % period);
         double expected = (s + (1 * b)) * seasonal[idx];
-        double actual = MovingFunctions.holtWinters(window.stream().mapToDouble(Double::doubleValue).toArray(),
-            alpha, beta, gamma, period, true);
+        double actual = MovingFunctions.holtWinters(
+            window.stream().mapToDouble(Double::doubleValue).toArray(),
+            alpha,
+            beta,
+            gamma,
+            period,
+            true
+        );
         assertEquals(expected, actual, 0.01 * Math.abs(expected));
     }
 
@@ -593,7 +602,7 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
         double alpha = randomDouble();
         double beta = randomDouble();
         double gamma = randomDouble();
-        int period = randomIntBetween(1,10);
+        int period = randomIntBetween(1, 10);
         int numValues = randomIntBetween(1, 100);
         int windowSize = randomIntBetween(period * 2, 50); // HW requires at least two periods of data
 
@@ -603,8 +612,14 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
         }
 
         for (int i = 0; i < numValues; i++) {
-            double actual = MovingFunctions.holtWinters(window.stream().mapToDouble(Double::doubleValue).toArray(),
-                alpha, beta, gamma, period, false);
+            double actual = MovingFunctions.holtWinters(
+                window.stream().mapToDouble(Double::doubleValue).toArray(),
+                alpha,
+                beta,
+                gamma,
+                period,
+                false
+            );
             assertThat(actual, equalTo(Double.NaN));
         }
     }
@@ -613,10 +628,16 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
         double alpha = randomDouble();
         double beta = randomDouble();
         double gamma = randomDouble();
-        int period = randomIntBetween(1,10);
+        int period = randomIntBetween(1, 10);
         EvictingQueue<Double> window = new EvictingQueue<>(0);
-        double actual = MovingFunctions.holtWinters(window.stream().mapToDouble(Double::doubleValue).toArray(),
-            alpha, beta, gamma, period, false);
+        double actual = MovingFunctions.holtWinters(
+            window.stream().mapToDouble(Double::doubleValue).toArray(),
+            alpha,
+            beta,
+            gamma,
+            period,
+            false
+        );
         assertThat(actual, equalTo(Double.NaN));
     }
 
@@ -624,7 +645,7 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
         double alpha = randomDouble();
         double beta = randomDouble();
         double gamma = randomDouble();
-        int period = randomIntBetween(1,10);
+        int period = randomIntBetween(1, 10);
 
         int windowSize = randomIntBetween(period * 2, 50); // HW requires at least two periods of data
 
@@ -674,15 +695,21 @@ public class MovFnWhitelistedFunctionTests extends ESTestCase {
             s = alpha * (vs[i] - seasonal[i - period]) + (1.0d - alpha) * (last_s + last_b);
             b = beta * (s - last_s) + (1 - beta) * last_b;
 
-            seasonal[i] = gamma * (vs[i] - (last_s - last_b )) + (1 - gamma) * seasonal[i - period];
+            seasonal[i] = gamma * (vs[i] - (last_s - last_b)) + (1 - gamma) * seasonal[i - period];
             last_s = s;
             last_b = b;
         }
 
         int idx = window.size() - period + (0 % period);
         double expected = s + (1 * b) + seasonal[idx];
-        double actual = MovingFunctions.holtWinters(window.stream().mapToDouble(Double::doubleValue).toArray(),
-            alpha, beta, gamma, period, false);
+        double actual = MovingFunctions.holtWinters(
+            window.stream().mapToDouble(Double::doubleValue).toArray(),
+            alpha,
+            beta,
+            gamma,
+            period,
+            false
+        );
         assertEquals(expected, actual, 0.01 * Math.abs(expected));
     }
 

@@ -106,18 +106,21 @@ public class BlobStoreRepositoryRestoreTests extends IndexShardTestCase {
             }
 
             // build a new shard using the same store directory as the closed shard
-            ShardRouting shardRouting = ShardRoutingHelper.initWithSameId(shard.routingEntry(),
-                RecoverySource.ExistingStoreRecoverySource.INSTANCE);
+            ShardRouting shardRouting = ShardRoutingHelper.initWithSameId(
+                shard.routingEntry(),
+                RecoverySource.ExistingStoreRecoverySource.INSTANCE
+            );
             shard = newShard(
-                    shardRouting,
-                    shard.shardPath(),
-                    shard.indexSettings().getIndexMetaData(),
-                    null,
-                    null,
-                    new InternalEngineFactory(),
-                    () -> {},
-                    RetentionLeaseSyncer.EMPTY,
-                    EMPTY_EVENT_LISTENER);
+                shardRouting,
+                shard.shardPath(),
+                shard.indexSettings().getIndexMetaData(),
+                null,
+                null,
+                new InternalEngineFactory(),
+                () -> {},
+                RetentionLeaseSyncer.EMPTY,
+                EMPTY_EVENT_LISTENER
+            );
 
             // restore the shard
             recoverShardFromSnapshot(shard, snapshot, repository);
@@ -167,17 +170,30 @@ public class BlobStoreRepositoryRestoreTests extends IndexShardTestCase {
             final Snapshot snapshot = new Snapshot(repository.getMetadata().name(), new SnapshotId(randomAlphaOfLength(10), "_uuid"));
             final String shardGen = snapshotShard(shard, snapshot, repository);
             assertNotNull(shardGen);
-            final Snapshot snapshotWithSameName = new Snapshot(repository.getMetadata().name(), new SnapshotId(
-                snapshot.getSnapshotId().getName(), "_uuid2"));
+            final Snapshot snapshotWithSameName = new Snapshot(
+                repository.getMetadata().name(),
+                new SnapshotId(snapshot.getSnapshotId().getName(), "_uuid2")
+            );
             final PlainActionFuture<SnapshotInfo> future = PlainActionFuture.newFuture();
-            repository.finalizeSnapshot(snapshot.getSnapshotId(),
+            repository.finalizeSnapshot(
+                snapshot.getSnapshotId(),
                 ShardGenerations.builder().put(indexId, 0, shardGen).build(),
-                0L, null, 1, Collections.emptyList(), -1L, false,
-                MetaData.builder().put(shard.indexSettings().getIndexMetaData(), false).build(), Collections.emptyMap(), true,
-                future);
+                0L,
+                null,
+                1,
+                Collections.emptyList(),
+                -1L,
+                false,
+                MetaData.builder().put(shard.indexSettings().getIndexMetaData(), false).build(),
+                Collections.emptyMap(),
+                true,
+                future
+            );
             future.actionGet();
-            IndexShardSnapshotFailedException isfe = expectThrows(IndexShardSnapshotFailedException.class,
-                () -> snapshotShard(shard, snapshotWithSameName, repository));
+            IndexShardSnapshotFailedException isfe = expectThrows(
+                IndexShardSnapshotFailedException.class,
+                () -> snapshotShard(shard, snapshotWithSameName, repository)
+            );
             assertThat(isfe.getMessage(), containsString("Duplicate snapshot name"));
         } finally {
             if (shard != null && shard.state() != IndexShardState.CLOSED) {
@@ -211,9 +227,11 @@ public class BlobStoreRepositoryRestoreTests extends IndexShardTestCase {
     /** Create a {@link Environment} with random path.home and path.repo **/
     private Environment createEnvironment() {
         Path home = createTempDir();
-        return TestEnvironment.newEnvironment(Settings.builder()
-                                                      .put(Environment.PATH_HOME_SETTING.getKey(), home.toAbsolutePath())
-            .put(Environment.PATH_REPO_SETTING.getKey(), home.resolve("repo").toAbsolutePath())
-                                                      .build());
+        return TestEnvironment.newEnvironment(
+            Settings.builder()
+                .put(Environment.PATH_HOME_SETTING.getKey(), home.toAbsolutePath())
+                .put(Environment.PATH_REPO_SETTING.getKey(), home.resolve("repo").toAbsolutePath())
+                .build()
+        );
     }
 }

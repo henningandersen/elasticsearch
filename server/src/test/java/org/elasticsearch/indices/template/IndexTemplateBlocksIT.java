@@ -35,14 +35,30 @@ import static org.hamcrest.Matchers.hasSize;
 public class IndexTemplateBlocksIT extends ESIntegTestCase {
     public void testIndexTemplatesWithBlocks() throws IOException {
         // creates a simple index template
-        client().admin().indices().preparePutTemplate("template_blocks")
-                .setPatterns(Collections.singletonList("te*"))
-                .setOrder(0)
-                .setMapping(XContentFactory.jsonBuilder().startObject().startObject("_doc").startObject("properties")
-                        .startObject("field1").field("type", "text").field("store", true).endObject()
-                        .startObject("field2").field("type", "keyword").field("store", true).endObject()
-                        .endObject().endObject().endObject())
-                .execute().actionGet();
+        client().admin()
+            .indices()
+            .preparePutTemplate("template_blocks")
+            .setPatterns(Collections.singletonList("te*"))
+            .setOrder(0)
+            .setMapping(
+                XContentFactory.jsonBuilder()
+                    .startObject()
+                    .startObject("_doc")
+                    .startObject("properties")
+                    .startObject("field1")
+                    .field("type", "text")
+                    .field("store", true)
+                    .endObject()
+                    .startObject("field2")
+                    .field("type", "keyword")
+                    .field("store", true)
+                    .endObject()
+                    .endObject()
+                    .endObject()
+                    .endObject()
+            )
+            .execute()
+            .actionGet();
 
         try {
             setClusterReadOnly(true);
@@ -50,10 +66,14 @@ public class IndexTemplateBlocksIT extends ESIntegTestCase {
             GetIndexTemplatesResponse response = client().admin().indices().prepareGetTemplates("template_blocks").execute().actionGet();
             assertThat(response.getIndexTemplates(), hasSize(1));
 
-            assertBlocked(client().admin().indices().preparePutTemplate("template_blocks_2")
+            assertBlocked(
+                client().admin()
+                    .indices()
+                    .preparePutTemplate("template_blocks_2")
                     .setPatterns(Collections.singletonList("block*"))
                     .setOrder(0)
-                    .addAlias(new Alias("alias_1")));
+                    .addAlias(new Alias("alias_1"))
+            );
 
             assertBlocked(client().admin().indices().prepareDeleteTemplate("template_blocks"));
 

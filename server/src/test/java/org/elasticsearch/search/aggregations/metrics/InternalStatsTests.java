@@ -48,8 +48,16 @@ public class InternalStatsTests extends InternalAggregationTestCase<InternalStat
         return createInstance(name, count, sum, min, max, format, pipelineAggregators, metaData);
     }
 
-    protected InternalStats createInstance(String name, long count, double sum, double min, double max, DocValueFormat formatter,
-                                           List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    protected InternalStats createInstance(
+        String name,
+        long count,
+        double sum,
+        double min,
+        double max,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         return new InternalStats(name, count, sum, min, max, formatter, pipelineAggregators, metaData);
     }
 
@@ -76,7 +84,7 @@ public class InternalStatsTests extends InternalAggregationTestCase<InternalStat
     }
 
     public void testSummationAccuracy() {
-        double[] values = new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7};
+        double[] values = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 };
         verifyStatsOfDoubles(values, 13.5, 0.9, 0d);
 
         int n = randomIntBetween(5, 10);
@@ -133,7 +141,7 @@ public class InternalStatsTests extends InternalAggregationTestCase<InternalStat
     static void assertStats(InternalStats aggregation, ParsedStats parsed) {
         long count = aggregation.getCount();
         assertEquals(count, parsed.getCount());
-        // for count == 0, fields are rendered as `null`, so  we test that we parse to default values used also in the reduce phase
+        // for count == 0, fields are rendered as `null`, so we test that we parse to default values used also in the reduce phase
         assertEquals(count > 0 ? aggregation.getMin() : Double.POSITIVE_INFINITY, parsed.getMin(), 0);
         assertEquals(count > 0 ? aggregation.getMax() : Double.NEGATIVE_INFINITY, parsed.getMax(), 0);
         assertEquals(count > 0 ? aggregation.getSum() : 0, parsed.getSum(), 0);
@@ -163,47 +171,47 @@ public class InternalStatsTests extends InternalAggregationTestCase<InternalStat
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 5)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            if (Double.isFinite(count)) {
-                count += between(1, 100);
-            } else {
-                count = between(1, 100);
-            }
-            break;
-        case 2:
-            if (Double.isFinite(sum)) {
-                sum += between(1, 100);
-            } else {
-                sum = between(1, 100);
-            }
-            break;
-        case 3:
-            if (Double.isFinite(min)) {
-                min += between(1, 100);
-            } else {
-                min = between(1, 100);
-            }
-            break;
-        case 4:
-            if (Double.isFinite(max)) {
-                max += between(1, 100);
-            } else {
-                max = between(1, 100);
-            }
-            break;
-        case 5:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
-        default:
-            throw new AssertionError("Illegal randomisation branch");
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                if (Double.isFinite(count)) {
+                    count += between(1, 100);
+                } else {
+                    count = between(1, 100);
+                }
+                break;
+            case 2:
+                if (Double.isFinite(sum)) {
+                    sum += between(1, 100);
+                } else {
+                    sum = between(1, 100);
+                }
+                break;
+            case 3:
+                if (Double.isFinite(min)) {
+                    min += between(1, 100);
+                } else {
+                    min = between(1, 100);
+                }
+                break;
+            case 4:
+                if (Double.isFinite(max)) {
+                    max += between(1, 100);
+                } else {
+                    max = between(1, 100);
+                }
+                break;
+            case 5:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
+            default:
+                throw new AssertionError("Illegal randomisation branch");
         }
         return new InternalStats(name, count, sum, min, max, formatter, pipelineAggregators, metaData);
     }
@@ -221,18 +229,35 @@ public class InternalStatsTests extends InternalAggregationTestCase<InternalStat
         internalStats.doXContentBody(builder, ToXContent.EMPTY_PARAMS);
         builder.endObject();
 
-        String expected = "{\n" +
-            "  \"count\" : " + count + ",\n" +
-            "  \"min\" : " + min + ",\n" +
-            "  \"max\" : " + max + ",\n" +
-            "  \"avg\" : " + internalStats.getAvg() + ",\n" +
-            "  \"sum\" : " + sum;
+        String expected = "{\n"
+            + "  \"count\" : "
+            + count
+            + ",\n"
+            + "  \"min\" : "
+            + min
+            + ",\n"
+            + "  \"max\" : "
+            + max
+            + ",\n"
+            + "  \"avg\" : "
+            + internalStats.getAvg()
+            + ",\n"
+            + "  \"sum\" : "
+            + sum;
         if (format != DocValueFormat.RAW) {
-            expected += ",\n"+
-                "  \"min_as_string\" : \"" + format.format(internalStats.getMin()) + "\",\n" +
-                "  \"max_as_string\" : \"" + format.format(internalStats.getMax()) + "\",\n" +
-                "  \"avg_as_string\" : \"" + format.format(internalStats.getAvg()) + "\",\n" +
-                "  \"sum_as_string\" : \"" + format.format(internalStats.getSum()) + "\"";
+            expected += ",\n"
+                + "  \"min_as_string\" : \""
+                + format.format(internalStats.getMin())
+                + "\",\n"
+                + "  \"max_as_string\" : \""
+                + format.format(internalStats.getMax())
+                + "\",\n"
+                + "  \"avg_as_string\" : \""
+                + format.format(internalStats.getAvg())
+                + "\",\n"
+                + "  \"sum_as_string\" : \""
+                + format.format(internalStats.getSum())
+                + "\"";
         }
         expected += "\n}";
         assertEquals(expected, Strings.toString(builder));
@@ -249,13 +274,15 @@ public class InternalStatsTests extends InternalAggregationTestCase<InternalStat
         internalStats.doXContentBody(builder, ToXContent.EMPTY_PARAMS);
         builder.endObject();
 
-        assertEquals("{\n" +
-            "  \"count\" : 0,\n" +
-            "  \"min\" : null,\n" +
-            "  \"max\" : null,\n" +
-            "  \"avg\" : null,\n" +
-            "  \"sum\" : 0.0\n" +
-            "}", Strings.toString(builder));
+        assertEquals(
+            "{\n"
+                + "  \"count\" : 0,\n"
+                + "  \"min\" : null,\n"
+                + "  \"max\" : null,\n"
+                + "  \"avg\" : null,\n"
+                + "  \"sum\" : 0.0\n"
+                + "}",
+            Strings.toString(builder)
+        );
     }
 }
-

@@ -55,14 +55,12 @@ public final class CompositeBytesReference extends AbstractBytesReference {
             offset += reference.length();
             ramBytesUsed += reference.ramBytesUsed();
         }
-        this.ramBytesUsed = ramBytesUsed
-            + (Integer.BYTES * offsets.length + RamUsageEstimator.NUM_BYTES_ARRAY_HEADER) // offsets
+        this.ramBytesUsed = ramBytesUsed + (Integer.BYTES * offsets.length + RamUsageEstimator.NUM_BYTES_ARRAY_HEADER) // offsets
             + (references.length * RamUsageEstimator.NUM_BYTES_OBJECT_REF + RamUsageEstimator.NUM_BYTES_ARRAY_HEADER) // references
             + Integer.BYTES // length
             + Long.BYTES; // ramBytesUsed
         length = offset;
     }
-
 
     @Override
     public byte get(int index) {
@@ -98,7 +96,7 @@ public final class CompositeBytesReference extends AbstractBytesReference {
         }
         // now adjust slices in front and at the end
         inSlice[0] = inSlice[0].slice(inSliceOffset, inSlice[0].length() - inSliceOffset);
-        inSlice[inSlice.length-1] = inSlice[inSlice.length-1].slice(0, to - offsets[limit]);
+        inSlice[inSlice.length - 1] = inSlice[inSlice.length - 1].slice(0, to - offsets[limit]);
         return new CompositeBytesReference(inSlice);
     }
 
@@ -129,6 +127,7 @@ public final class CompositeBytesReference extends AbstractBytesReference {
             return new BytesRefIterator() {
                 int index = 0;
                 private BytesRefIterator current = references[index++].iterator();
+
                 @Override
                 public BytesRef next() throws IOException {
                     BytesRef next = current.next();
@@ -152,6 +151,6 @@ public final class CompositeBytesReference extends AbstractBytesReference {
 
     @Override
     public long ramBytesUsed() {
-       return ramBytesUsed;
+        return ramBytesUsed;
     }
 }

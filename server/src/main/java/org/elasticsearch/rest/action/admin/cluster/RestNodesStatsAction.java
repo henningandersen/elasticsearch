@@ -56,19 +56,20 @@ public class RestNodesStatsAction extends BaseRestHandler {
     }
 
     static final Map<String, Consumer<NodesStatsRequest>> METRICS = Map.ofEntries(
-            entry("os", r -> r.os(true)),
-            entry("jvm", r -> r.jvm(true)),
-            entry("thread_pool", r -> r.threadPool(true)),
-            entry("fs", r -> r.fs(true)),
-            entry("transport", r -> r.transport(true)),
-            entry("http", r -> r.http(true)),
-            entry("indices", r -> r.indices(true)),
-            entry("process", r -> r.process(true)),
-            entry("breaker", r -> r.breaker(true)),
-            entry("script", r -> r.script(true)),
-            entry("discovery", r -> r.discovery(true)),
-            entry("ingest", r -> r.ingest(true)),
-            entry("adaptive_selection", r -> r.adaptiveSelection(true)));
+        entry("os", r -> r.os(true)),
+        entry("jvm", r -> r.jvm(true)),
+        entry("thread_pool", r -> r.threadPool(true)),
+        entry("fs", r -> r.fs(true)),
+        entry("transport", r -> r.transport(true)),
+        entry("http", r -> r.http(true)),
+        entry("indices", r -> r.indices(true)),
+        entry("process", r -> r.process(true)),
+        entry("breaker", r -> r.breaker(true)),
+        entry("script", r -> r.script(true)),
+        entry("discovery", r -> r.discovery(true)),
+        entry("ingest", r -> r.ingest(true)),
+        entry("adaptive_selection", r -> r.adaptiveSelection(true))
+    );
 
     static final Map<String, Consumer<CommonStatsFlags>> FLAGS;
 
@@ -100,16 +101,21 @@ public class RestNodesStatsAction extends BaseRestHandler {
                         Locale.ROOT,
                         "request [%s] contains index metrics [%s] but all stats requested",
                         request.path(),
-                        request.param("index_metric")));
+                        request.param("index_metric")
+                    )
+                );
             }
             nodesStatsRequest.all();
             nodesStatsRequest.indices(CommonStatsFlags.ALL);
         } else if (metrics.contains("_all")) {
             throw new IllegalArgumentException(
-                String.format(Locale.ROOT,
+                String.format(
+                    Locale.ROOT,
                     "request [%s] contains _all and individual metrics [%s]",
                     request.path(),
-                    request.param("metric")));
+                    request.param("metric")
+                )
+            );
         } else {
             nodesStatsRequest.clear();
 
@@ -159,17 +165,19 @@ public class RestNodesStatsAction extends BaseRestHandler {
                         Locale.ROOT,
                         "request [%s] contains index metrics [%s] but indices stats not requested",
                         request.path(),
-                        request.param("index_metric")));
+                        request.param("index_metric")
+                    )
+                );
             }
         }
 
         if (nodesStatsRequest.indices().isSet(Flag.FieldData) && (request.hasParam("fields") || request.hasParam("fielddata_fields"))) {
-            nodesStatsRequest.indices().fieldDataFields(
-                    request.paramAsStringArray("fielddata_fields", request.paramAsStringArray("fields", null)));
+            nodesStatsRequest.indices()
+                .fieldDataFields(request.paramAsStringArray("fielddata_fields", request.paramAsStringArray("fields", null)));
         }
         if (nodesStatsRequest.indices().isSet(Flag.Completion) && (request.hasParam("fields") || request.hasParam("completion_fields"))) {
-            nodesStatsRequest.indices().completionDataFields(
-                    request.paramAsStringArray("completion_fields", request.paramAsStringArray("fields", null)));
+            nodesStatsRequest.indices()
+                .completionDataFields(request.paramAsStringArray("completion_fields", request.paramAsStringArray("fields", null)));
         }
         if (nodesStatsRequest.indices().isSet(Flag.Search) && (request.hasParam("groups"))) {
             nodesStatsRequest.indices().groups(request.paramAsStringArray("groups", null));

@@ -46,12 +46,12 @@ public class ESLogMessage extends MapMessage<ESLogMessage, Object> {
 
     public ESLogMessage argAndField(String key, Object value) {
         this.arguments.add(value);
-        super.with(key,value);
+        super.with(key, value);
         return this;
     }
 
     public ESLogMessage field(String key, Object value) {
-        super.with(key,value);
+        super.with(key, value);
         return this;
     }
 
@@ -66,7 +66,7 @@ public class ESLogMessage extends MapMessage<ESLogMessage, Object> {
         sb.append(message);
     }
 
-    //taken from super.asJson without the wrapping '{' '}'
+    // taken from super.asJson without the wrapping '{' '}'
     @Override
     protected void asJson(StringBuilder sb) {
         for (int i = 0; i < getIndexedReadOnlyStringMap().size(); i++) {
@@ -86,20 +86,16 @@ public class ESLogMessage extends MapMessage<ESLogMessage, Object> {
     }
 
     public static String inQuotes(String s) {
-        if(s == null)
-            return inQuotes("");
+        if (s == null) return inQuotes("");
         return "\"" + s + "\"";
     }
 
     public static String inQuotes(Object s) {
-        if(s == null)
-            return inQuotes("");
+        if (s == null) return inQuotes("");
         return inQuotes(s.toString());
     }
 
     public static String asJsonArray(Stream<String> stream) {
-        return "[" + stream
-            .map(ESLogMessage::inQuotes)
-            .collect(Collectors.joining(", ")) + "]";
+        return "[" + stream.map(ESLogMessage::inQuotes).collect(Collectors.joining(", ")) + "]";
     }
 }

@@ -54,11 +54,18 @@ public class SnapshotShardsServiceIT extends AbstractSnapshotIntegTestCase {
         String dataNode = internalCluster().startDataOnlyNode();
 
         logger.info("-->  creating repository");
-        assertAcked(client().admin().cluster().preparePutRepository("test-repo")
-            .setType("mock").setSettings(Settings.builder()
-                .put("location", randomRepoPath())
-                .put("compress", randomBoolean())
-                .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)));
+        assertAcked(
+            client().admin()
+                .cluster()
+                .preparePutRepository("test-repo")
+                .setType("mock")
+                .setSettings(
+                    Settings.builder()
+                        .put("location", randomRepoPath())
+                        .put("compress", randomBoolean())
+                        .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)
+                )
+        );
 
         final int shards = between(1, 10);
         assertAcked(prepareCreate("test-index", 0, Settings.builder().put("number_of_shards", shards).put("number_of_replicas", 0)));
@@ -70,18 +77,28 @@ public class SnapshotShardsServiceIT extends AbstractSnapshotIntegTestCase {
 
         logger.info("--> blocking repository");
         String blockedNode = blockNodeWithIndex("test-repo", "test-index");
-        dataNodeClient().admin().cluster().prepareCreateSnapshot("test-repo", "test-snap")
+        dataNodeClient().admin()
+            .cluster()
+            .prepareCreateSnapshot("test-repo", "test-snap")
             .setWaitForCompletion(false)
             .setIndices("test-index")
             .get();
         waitForBlock(blockedNode, "test-repo", TimeValue.timeValueSeconds(60));
 
-        final SnapshotId snapshotId = client().admin().cluster().prepareGetSnapshots("test-repo").setSnapshots("test-snap")
-            .get().getSnapshots("test-repo").get(0).snapshotId();
+        final SnapshotId snapshotId = client().admin()
+            .cluster()
+            .prepareGetSnapshots("test-repo")
+            .setSnapshots("test-snap")
+            .get()
+            .getSnapshots("test-repo")
+            .get(0)
+            .snapshotId();
 
         logger.info("--> start disrupting cluster");
-        final NetworkDisruption networkDisruption = new NetworkDisruption(new NetworkDisruption.TwoPartitions(masterNode, dataNode),
-            NetworkDisruption.NetworkDelay.random(random()));
+        final NetworkDisruption networkDisruption = new NetworkDisruption(
+            new NetworkDisruption.TwoPartitions(masterNode, dataNode),
+            NetworkDisruption.NetworkDelay.random(random())
+        );
         internalCluster().setDisruptionScheme(networkDisruption);
         networkDisruption.startDisrupting();
 
@@ -93,7 +110,10 @@ public class SnapshotShardsServiceIT extends AbstractSnapshotIntegTestCase {
         assertBusy(() -> {
             final Snapshot snapshot = new Snapshot("test-repo", snapshotId);
             List<IndexShardSnapshotStatus.Stage> stages = snapshotShardsService.currentSnapshotShards(snapshot)
-                .values().stream().map(status -> status.asCopy().getStage()).collect(Collectors.toList());
+                .values()
+                .stream()
+                .map(status -> status.asCopy().getStage())
+                .collect(Collectors.toList());
             assertThat(stages, hasSize(shards));
             assertThat(stages, everyItem(equalTo(IndexShardSnapshotStatus.Stage.DONE)));
         }, 30L, TimeUnit.SECONDS);
@@ -103,9 +123,11 @@ public class SnapshotShardsServiceIT extends AbstractSnapshotIntegTestCase {
         internalCluster().clearDisruptionScheme(true);
 
         assertBusy(() -> {
-            GetSnapshotsResponse snapshotsStatusResponse = client().admin().cluster()
+            GetSnapshotsResponse snapshotsStatusResponse = client().admin()
+                .cluster()
                 .prepareGetSnapshots("test-repo")
-                .setSnapshots("test-snap").get();
+                .setSnapshots("test-snap")
+                .get();
             SnapshotInfo snapshotInfo = snapshotsStatusResponse.getSnapshots("test-repo").get(0);
             logger.info("Snapshot status [{}], successfulShards [{}]", snapshotInfo.state(), snapshotInfo.successfulShards());
             assertThat(snapshotInfo.state(), equalTo(SnapshotState.SUCCESS));

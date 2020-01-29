@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 public class ByteBufferReferenceTests extends AbstractBytesReferenceTestCase {
 
     private void initializeBytes(byte[] bytes) {
-        for (int i = 0 ; i < bytes.length; ++i) {
+        for (int i = 0; i < bytes.length; ++i) {
             bytes[i] = (byte) i;
         }
     }

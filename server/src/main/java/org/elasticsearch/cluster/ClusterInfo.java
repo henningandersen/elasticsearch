@@ -32,6 +32,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.Map;
+
 /**
  * ClusterInfo is an object representing a map of nodes to {@link DiskUsage}
  * and a map of shard ids to shard sizes, see
@@ -46,7 +47,7 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
     final ImmutableOpenMap<ShardRouting, String> routingToDataPath;
 
     protected ClusterInfo() {
-       this(ImmutableOpenMap.of(), ImmutableOpenMap.of(), ImmutableOpenMap.of(), ImmutableOpenMap.of());
+        this(ImmutableOpenMap.of(), ImmutableOpenMap.of(), ImmutableOpenMap.of(), ImmutableOpenMap.of());
     }
 
     /**
@@ -58,9 +59,12 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
      * @param routingToDataPath the shard routing to datapath mapping
      * @see #shardIdentifierFromRouting
      */
-    public ClusterInfo(ImmutableOpenMap<String, DiskUsage> leastAvailableSpaceUsage,
-            ImmutableOpenMap<String, DiskUsage> mostAvailableSpaceUsage, ImmutableOpenMap<String, Long> shardSizes,
-            ImmutableOpenMap<ShardRouting, String> routingToDataPath) {
+    public ClusterInfo(
+        ImmutableOpenMap<String, DiskUsage> leastAvailableSpaceUsage,
+        ImmutableOpenMap<String, DiskUsage> mostAvailableSpaceUsage,
+        ImmutableOpenMap<String, Long> shardSizes,
+        ImmutableOpenMap<ShardRouting, String> routingToDataPath
+    ) {
         this.leastAvailableSpaceUsage = leastAvailableSpaceUsage;
         this.shardSizes = shardSizes;
         this.mostAvailableSpaceUsage = mostAvailableSpaceUsage;
@@ -112,15 +116,19 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
     }
 
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject("nodes"); {
+        builder.startObject("nodes");
+        {
             for (ObjectObjectCursor<String, DiskUsage> c : this.leastAvailableSpaceUsage) {
-                builder.startObject(c.key); { // node
+                builder.startObject(c.key);
+                { // node
                     builder.field("node_name", c.value.getNodeName());
-                    builder.startObject("least_available"); {
+                    builder.startObject("least_available");
+                    {
                         c.value.toShortXContent(builder);
                     }
                     builder.endObject(); // end "least_available"
-                    builder.startObject("most_available"); {
+                    builder.startObject("most_available");
+                    {
                         DiskUsage most = this.mostAvailableSpaceUsage.get(c.key);
                         if (most != null) {
                             most.toShortXContent(builder);
@@ -132,13 +140,15 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
             }
         }
         builder.endObject(); // end "nodes"
-        builder.startObject("shard_sizes"); {
+        builder.startObject("shard_sizes");
+        {
             for (ObjectObjectCursor<String, Long> c : this.shardSizes) {
                 builder.humanReadableField(c.key + "_bytes", c.key, new ByteSizeValue(c.value));
             }
         }
         builder.endObject(); // end "shard_sizes"
-        builder.startObject("shard_paths"); {
+        builder.startObject("shard_paths");
+        {
             for (ObjectObjectCursor<ShardRouting, String> c : this.routingToDataPath) {
                 builder.field(c.key.toString(), c.value);
             }

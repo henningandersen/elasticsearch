@@ -77,24 +77,28 @@ public abstract class Rounding implements Writeable {
         },
         DAY_OF_MONTH((byte) 5, ChronoField.DAY_OF_MONTH) {
             final long unitMillis = ChronoField.DAY_OF_MONTH.getBaseUnit().getDuration().toMillis();
+
             long roundFloor(long utcMillis) {
                 return DateUtils.roundFloor(utcMillis, unitMillis);
             }
         },
         HOUR_OF_DAY((byte) 6, ChronoField.HOUR_OF_DAY) {
             final long unitMillis = ChronoField.HOUR_OF_DAY.getBaseUnit().getDuration().toMillis();
+
             long roundFloor(long utcMillis) {
                 return DateUtils.roundFloor(utcMillis, unitMillis);
             }
         },
         MINUTES_OF_HOUR((byte) 7, ChronoField.MINUTE_OF_HOUR) {
             final long unitMillis = ChronoField.MINUTE_OF_HOUR.getBaseUnit().getDuration().toMillis();
+
             long roundFloor(long utcMillis) {
                 return DateUtils.roundFloor(utcMillis, unitMillis);
             }
         },
         SECOND_OF_MINUTE((byte) 8, ChronoField.SECOND_OF_MINUTE) {
             final long unitMillis = ChronoField.SECOND_OF_MINUTE.getBaseUnit().getDuration().toMillis();
+
             long roundFloor(long utcMillis) {
                 return DateUtils.roundFloor(utcMillis, unitMillis);
             }
@@ -127,15 +131,24 @@ public abstract class Rounding implements Writeable {
 
         public static DateTimeUnit resolve(byte id) {
             switch (id) {
-                case 1: return WEEK_OF_WEEKYEAR;
-                case 2: return YEAR_OF_CENTURY;
-                case 3: return QUARTER_OF_YEAR;
-                case 4: return MONTH_OF_YEAR;
-                case 5: return DAY_OF_MONTH;
-                case 6: return HOUR_OF_DAY;
-                case 7: return MINUTES_OF_HOUR;
-                case 8: return SECOND_OF_MINUTE;
-                default: throw new ElasticsearchException("Unknown date time unit id [" + id + "]");
+                case 1:
+                    return WEEK_OF_WEEKYEAR;
+                case 2:
+                    return YEAR_OF_CENTURY;
+                case 3:
+                    return QUARTER_OF_YEAR;
+                case 4:
+                    return MONTH_OF_YEAR;
+                case 5:
+                    return DAY_OF_MONTH;
+                case 6:
+                    return HOUR_OF_DAY;
+                case 7:
+                    return MINUTES_OF_HOUR;
+                case 8:
+                    return SECOND_OF_MINUTE;
+                default:
+                    throw new ElasticsearchException("Unknown date time unit id [" + id + "]");
             }
         }
     }
@@ -206,8 +219,7 @@ public abstract class Rounding implements Writeable {
 
         public Builder(TimeValue interval) {
             this.unit = null;
-            if (interval.millis() < 1)
-                throw new IllegalArgumentException("Zero or negative time interval not supported");
+            if (interval.millis() < 1) throw new IllegalArgumentException("Zero or negative time interval not supported");
             this.interval = interval.millis();
         }
 
@@ -228,7 +240,6 @@ public abstract class Rounding implements Writeable {
             this.offset = offset;
             return this;
         }
-
 
         public Rounding build() {
             Rounding rounding;
@@ -260,8 +271,9 @@ public abstract class Rounding implements Writeable {
             this.unit = unit;
             this.timeZone = timeZone;
             this.unitRoundsToMidnight = this.unit.field.getBaseUnit().getDuration().toMillis() > 3600000L;
-            this.fixedOffsetMillis = timeZone.getRules().isFixedOffset() == true ?
-                timeZone.getRules().getOffset(Instant.EPOCH).getTotalSeconds() * 1000 : TZ_OFFSET_NON_FIXED;
+            this.fixedOffsetMillis = timeZone.getRules().isFixedOffset() == true
+                ? timeZone.getRules().getOffset(Instant.EPOCH).getTotalSeconds() * 1000
+                : TZ_OFFSET_NON_FIXED;
         }
 
         TimeUnitRounding(StreamInput in) throws IOException {
@@ -285,12 +297,25 @@ public abstract class Rounding implements Writeable {
                     return localDateTime.withNano(0);
 
                 case MINUTES_OF_HOUR:
-                    return LocalDateTime.of(localDateTime.getYear(), localDateTime.getMonthValue(), localDateTime.getDayOfMonth(),
-                        localDateTime.getHour(), localDateTime.getMinute(), 0, 0);
+                    return LocalDateTime.of(
+                        localDateTime.getYear(),
+                        localDateTime.getMonthValue(),
+                        localDateTime.getDayOfMonth(),
+                        localDateTime.getHour(),
+                        localDateTime.getMinute(),
+                        0,
+                        0
+                    );
 
                 case HOUR_OF_DAY:
-                    return LocalDateTime.of(localDateTime.getYear(), localDateTime.getMonth(), localDateTime.getDayOfMonth(),
-                        localDateTime.getHour(), 0, 0);
+                    return LocalDateTime.of(
+                        localDateTime.getYear(),
+                        localDateTime.getMonth(),
+                        localDateTime.getDayOfMonth(),
+                        localDateTime.getHour(),
+                        0,
+                        0
+                    );
 
                 case DAY_OF_MONTH:
                     LocalDate localDate = localDateTime.query(TemporalQueries.localDate());
@@ -477,12 +502,12 @@ public abstract class Rounding implements Writeable {
         private final long fixedOffsetMillis;
 
         TimeIntervalRounding(long interval, ZoneId timeZone) {
-            if (interval < 1)
-                throw new IllegalArgumentException("Zero or negative time interval not supported");
+            if (interval < 1) throw new IllegalArgumentException("Zero or negative time interval not supported");
             this.interval = interval;
             this.timeZone = timeZone;
-            this.fixedOffsetMillis = timeZone.getRules().isFixedOffset() == true ?
-                timeZone.getRules().getOffset(Instant.EPOCH).getTotalSeconds() * 1000 : TZ_OFFSET_NON_FIXED;
+            this.fixedOffsetMillis = timeZone.getRules().isFixedOffset() == true
+                ? timeZone.getRules().getOffset(Instant.EPOCH).getTotalSeconds() * 1000
+                : TZ_OFFSET_NON_FIXED;
         }
 
         TimeIntervalRounding(StreamInput in) throws IOException {
@@ -566,7 +591,8 @@ public abstract class Rounding implements Writeable {
             long millis = time + interval + offsetSeconds * 1000;
             return ZonedDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC)
                 .withZoneSameLocal(timeZone)
-                .toInstant().toEpochMilli();
+                .toInstant()
+                .toEpochMilli();
         }
 
         @Override

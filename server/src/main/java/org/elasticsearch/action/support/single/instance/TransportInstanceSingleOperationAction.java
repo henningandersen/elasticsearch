@@ -51,9 +51,8 @@ import org.elasticsearch.transport.TransportService;
 import java.io.IOException;
 
 public abstract class TransportInstanceSingleOperationAction<
-            Request extends InstanceShardOperationRequest<Request>,
-            Response extends ActionResponse
-       > extends HandledTransportAction<Request, Response> {
+    Request extends InstanceShardOperationRequest<Request>,
+    Response extends ActionResponse> extends HandledTransportAction<Request, Response> {
 
     protected final ThreadPool threadPool;
     protected final ClusterService clusterService;
@@ -63,10 +62,15 @@ public abstract class TransportInstanceSingleOperationAction<
     final String executor;
     final String shardActionName;
 
-    protected TransportInstanceSingleOperationAction(String actionName, ThreadPool threadPool,
-                                                     ClusterService clusterService, TransportService transportService,
-                                                     ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                                                     Writeable.Reader<Request> request) {
+    protected TransportInstanceSingleOperationAction(
+        String actionName,
+        ThreadPool threadPool,
+        ClusterService clusterService,
+        TransportService transportService,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        Writeable.Reader<Request> request
+    ) {
         super(actionName, transportService, actionFilters, request);
         this.threadPool = threadPool;
         this.clusterService = clusterService;
@@ -200,8 +204,7 @@ public abstract class TransportInstanceSingleOperationAction<
                 public void handleException(TransportException exp) {
                     final Throwable cause = exp.unwrapCause();
                     // if we got disconnected from the node, or the node / shard is not in the right state (being closed)
-                    if (cause instanceof ConnectTransportException || cause instanceof NodeClosedException ||
-                            retryOnFailure(exp)) {
+                    if (cause instanceof ConnectTransportException || cause instanceof NodeClosedException || retryOnFailure(exp)) {
                         retry((Exception) cause);
                     } else {
                         listener.onFailure(exp);
@@ -216,12 +219,22 @@ public abstract class TransportInstanceSingleOperationAction<
                 Exception listenFailure = failure;
                 if (listenFailure == null) {
                     if (shardIt == null) {
-                        listenFailure = new UnavailableShardsException(request.concreteIndex(), -1, "Timeout waiting for [{}], request: {}",
-                            request.timeout(), actionName);
+                        listenFailure = new UnavailableShardsException(
+                            request.concreteIndex(),
+                            -1,
+                            "Timeout waiting for [{}], request: {}",
+                            request.timeout(),
+                            actionName
+                        );
                     } else {
-                        listenFailure = new UnavailableShardsException(shardIt.shardId(),
-                            "[{}] shardIt, [{}] active : Timeout waiting for [{}], request: {}", shardIt.size(), shardIt.sizeActive(),
-                            request.timeout(), actionName);
+                        listenFailure = new UnavailableShardsException(
+                            shardIt.shardId(),
+                            "[{}] shardIt, [{}] active : Timeout waiting for [{}], request: {}",
+                            shardIt.size(),
+                            shardIt.sizeActive(),
+                            request.timeout(),
+                            actionName
+                        );
                     }
                 }
                 listener.onFailure(listenFailure);
@@ -252,16 +265,14 @@ public abstract class TransportInstanceSingleOperationAction<
 
         @Override
         public void messageReceived(final Request request, final TransportChannel channel, Task task) throws Exception {
-            shardOperation(request,
-                ActionListener.wrap(channel::sendResponse, e -> {
-                        try {
-                            channel.sendResponse(e);
-                        } catch (Exception inner) {
-                            inner.addSuppressed(e);
-                            logger.warn("failed to send response for get", inner);
-                        }
-                    }
-                ));
+            shardOperation(request, ActionListener.wrap(channel::sendResponse, e -> {
+                try {
+                    channel.sendResponse(e);
+                } catch (Exception inner) {
+                    inner.addSuppressed(e);
+                    logger.warn("failed to send response for get", inner);
+                }
+            }));
         }
     }
 }

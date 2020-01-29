@@ -38,12 +38,37 @@ import java.util.stream.Collectors;
 
 public class DoubleTermsAggregator extends LongTermsAggregator {
 
-    DoubleTermsAggregator(String name, AggregatorFactories factories, ValuesSource.Numeric valuesSource, DocValueFormat format,
-            BucketOrder order, BucketCountThresholds bucketCountThresholds, SearchContext aggregationContext, Aggregator parent,
-            SubAggCollectionMode collectionMode, boolean showTermDocCountError, IncludeExclude.LongFilter longFilter,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
-        super(name, factories, valuesSource, format, order, bucketCountThresholds, aggregationContext, parent, collectionMode,
-                showTermDocCountError, longFilter, pipelineAggregators, metaData);
+    DoubleTermsAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource.Numeric valuesSource,
+        DocValueFormat format,
+        BucketOrder order,
+        BucketCountThresholds bucketCountThresholds,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        SubAggCollectionMode collectionMode,
+        boolean showTermDocCountError,
+        IncludeExclude.LongFilter longFilter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
+        super(
+            name,
+            factories,
+            valuesSource,
+            format,
+            order,
+            bucketCountThresholds,
+            aggregationContext,
+            parent,
+            collectionMode,
+            showTermDocCountError,
+            longFilter,
+            pipelineAggregators,
+            metaData
+        );
     }
 
     @Override
@@ -65,14 +90,31 @@ public class DoubleTermsAggregator extends LongTermsAggregator {
 
     private static DoubleTerms convertToDouble(LongTerms terms) {
         List<DoubleTerms.Bucket> buckets = terms.buckets.stream().map(DoubleTermsAggregator::convertToDouble).collect(Collectors.toList());
-        return new DoubleTerms(terms.getName(), terms.order, terms.requiredSize, terms.minDocCount, terms.pipelineAggregators(),
-                terms.getMetaData(), terms.format, terms.shardSize, terms.showTermDocCountError, terms.otherDocCount, buckets,
-                terms.docCountError);
+        return new DoubleTerms(
+            terms.getName(),
+            terms.order,
+            terms.requiredSize,
+            terms.minDocCount,
+            terms.pipelineAggregators(),
+            terms.getMetaData(),
+            terms.format,
+            terms.shardSize,
+            terms.showTermDocCountError,
+            terms.otherDocCount,
+            buckets,
+            terms.docCountError
+        );
     }
 
     private static DoubleTerms.Bucket convertToDouble(LongTerms.Bucket bucket) {
         double value = NumericUtils.sortableLongToDouble(bucket.term);
-        return new DoubleTerms.Bucket(value, bucket.docCount, bucket.aggregations, bucket.showDocCountError, bucket.docCountError,
-                bucket.format);
+        return new DoubleTerms.Bucket(
+            value,
+            bucket.docCount,
+            bucket.aggregations,
+            bucket.showDocCountError,
+            bucket.docCountError,
+            bucket.format
+        );
     }
 }

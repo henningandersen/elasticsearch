@@ -57,17 +57,16 @@ public class ScriptQueryBuilderTests extends AbstractQueryTestCase<ScriptQueryBu
     }
 
     public void testFromJsonVerbose() throws IOException {
-        String json =
-            "{\n" +
-                "  \"script\" : {\n" +
-                "    \"script\" : {\n" +
-                "      \"source\" : \"5\",\n" +
-                "      \"lang\" : \"mockscript\"\n" +
-                "    },\n" +
-                "    \"boost\" : 1.0,\n" +
-                "    \"_name\" : \"PcKdEyPOmR\"\n" +
-                "  }\n" +
-                "}";
+        String json = "{\n"
+            + "  \"script\" : {\n"
+            + "    \"script\" : {\n"
+            + "      \"source\" : \"5\",\n"
+            + "      \"lang\" : \"mockscript\"\n"
+            + "    },\n"
+            + "    \"boost\" : 1.0,\n"
+            + "    \"_name\" : \"PcKdEyPOmR\"\n"
+            + "  }\n"
+            + "}";
 
         ScriptQueryBuilder parsed = (ScriptQueryBuilder) parseQuery(json);
         checkGeneratedJson(json, parsed);
@@ -76,33 +75,31 @@ public class ScriptQueryBuilderTests extends AbstractQueryTestCase<ScriptQueryBu
     }
 
     public void testFromJson() throws IOException {
-        String json =
-            "{\n" +
-                "  \"script\" : {\n" +
-                "    \"script\" : \"5\"," +
-                "    \"boost\" : 1.0,\n" +
-                "    \"_name\" : \"PcKdEyPOmR\"\n" +
-                "  }\n" +
-                "}";
+        String json = "{\n"
+            + "  \"script\" : {\n"
+            + "    \"script\" : \"5\","
+            + "    \"boost\" : 1.0,\n"
+            + "    \"_name\" : \"PcKdEyPOmR\"\n"
+            + "  }\n"
+            + "}";
 
         ScriptQueryBuilder parsed = (ScriptQueryBuilder) parseQuery(json);
         assertEquals(json, "5", parsed.script().getIdOrCode());
     }
 
     public void testArrayOfScriptsException() {
-        String json =
-            "{\n" +
-                "  \"script\" : {\n" +
-                "    \"script\" : [ {\n" +
-                "      \"source\" : \"5\",\n" +
-                "      \"lang\" : \"mockscript\"\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"source\" : \"6\",\n" +
-                "      \"lang\" : \"mockscript\"\n" +
-                "    }\n ]" +
-                "  }\n" +
-                "}";
+        String json = "{\n"
+            + "  \"script\" : {\n"
+            + "    \"script\" : [ {\n"
+            + "      \"source\" : \"5\",\n"
+            + "      \"lang\" : \"mockscript\"\n"
+            + "    },\n"
+            + "    {\n"
+            + "      \"source\" : \"6\",\n"
+            + "      \"lang\" : \"mockscript\"\n"
+            + "    }\n ]"
+            + "  }\n"
+            + "}";
 
         ParsingException e = expectThrows(ParsingException.class, () -> parseQuery(json));
         assertThat(e.getMessage(), containsString("does not support an array of scripts"));
@@ -110,8 +107,8 @@ public class ScriptQueryBuilderTests extends AbstractQueryTestCase<ScriptQueryBu
 
     @Override
     protected Set<String> getObjectsHoldingArbitraryContent() {
-        //script_score.script.params can contain arbitrary parameters. no error is expected when
-        //adding additional objects within the params object.
+        // script_score.script.params can contain arbitrary parameters. no error is expected when
+        // adding additional objects within the params object.
         return Collections.singleton(Script.PARAMS_PARSE_FIELD.getPreferredName());
     }
 

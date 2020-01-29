@@ -55,28 +55,28 @@ public class TextFieldTypeTests extends FieldTypeTestCase {
         addModifier(new Modifier("fielddata", true) {
             @Override
             public void modify(MappedFieldType ft) {
-                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType)ft;
+                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType) ft;
                 tft.setFielddata(tft.fielddata() == false);
             }
         });
         addModifier(new Modifier("fielddata_frequency_filter.min", true) {
             @Override
             public void modify(MappedFieldType ft) {
-                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType)ft;
+                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType) ft;
                 tft.setFielddataMinFrequency(3);
             }
         });
         addModifier(new Modifier("fielddata_frequency_filter.max", true) {
             @Override
             public void modify(MappedFieldType ft) {
-                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType)ft;
+                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType) ft;
                 tft.setFielddataMaxFrequency(0.2);
             }
         });
         addModifier(new Modifier("fielddata_frequency_filter.min_segment_size", true) {
             @Override
             public void modify(MappedFieldType ft) {
-                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType)ft;
+                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType) ft;
                 tft.setFielddataMinSegmentSize(1000);
             }
         });
@@ -90,12 +90,11 @@ public class TextFieldTypeTests extends FieldTypeTestCase {
         addModifier(new Modifier("index_prefixes", false) {
             @Override
             public void modify(MappedFieldType ft) {
-                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType)ft;
+                TextFieldMapper.TextFieldType tft = (TextFieldMapper.TextFieldType) ft;
                 TextFieldMapper.PrefixFieldType pft = tft.getPrefixFieldType();
                 if (pft == null) {
                     tft.setPrefixFieldType(new TextFieldMapper.PrefixFieldType(ft.name(), ft.name() + "._index_prefix", 3, 3));
-                }
-                else {
+                } else {
                     tft.setPrefixFieldType(null);
                 }
             }
@@ -109,8 +108,7 @@ public class TextFieldTypeTests extends FieldTypeTestCase {
         assertEquals(new TermQuery(new Term("field", "foo")), ft.termQuery("foo", null));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.termQuery("bar", null));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> ft.termQuery("bar", null));
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 
@@ -121,12 +119,10 @@ public class TextFieldTypeTests extends FieldTypeTestCase {
         List<BytesRef> terms = new ArrayList<>();
         terms.add(new BytesRef("foo"));
         terms.add(new BytesRef("bar"));
-        assertEquals(new TermInSetQuery("field", terms),
-                ft.termsQuery(Arrays.asList("foo", "bar"), null));
+        assertEquals(new TermInSetQuery("field", terms), ft.termsQuery(Arrays.asList("foo", "bar"), null));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.termsQuery(Arrays.asList("foo", "bar"), null));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> ft.termsQuery(Arrays.asList("foo", "bar"), null));
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 
@@ -134,12 +130,10 @@ public class TextFieldTypeTests extends FieldTypeTestCase {
         MappedFieldType ft = createDefaultFieldType();
         ft.setName("field");
         ft.setIndexOptions(IndexOptions.DOCS);
-        assertEquals(new RegexpQuery(new Term("field","foo.*")),
-                ft.regexpQuery("foo.*", 0, 10, null, null));
+        assertEquals(new RegexpQuery(new Term("field", "foo.*")), ft.regexpQuery("foo.*", 0, 10, null, null));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.regexpQuery("foo.*", 0, 10, null, null));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> ft.regexpQuery("foo.*", 0, 10, null, null));
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 
@@ -147,12 +141,13 @@ public class TextFieldTypeTests extends FieldTypeTestCase {
         MappedFieldType ft = createDefaultFieldType();
         ft.setName("field");
         ft.setIndexOptions(IndexOptions.DOCS);
-        assertEquals(new FuzzyQuery(new Term("field","foo"), 2, 1, 50, true),
-                ft.fuzzyQuery("foo", Fuzziness.fromEdits(2), 1, 50, true));
+        assertEquals(new FuzzyQuery(new Term("field", "foo"), 2, 1, 50, true), ft.fuzzyQuery("foo", Fuzziness.fromEdits(2), 1, 50, true));
 
         ft.setIndexOptions(IndexOptions.NONE);
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> ft.fuzzyQuery("foo", Fuzziness.fromEdits(2), 1, 50, true));
+        IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> ft.fuzzyQuery("foo", Fuzziness.fromEdits(2), 1, 50, true)
+        );
         assertEquals("Cannot search on field [field] since it is not indexed.", e.getMessage());
     }
 
@@ -168,13 +163,13 @@ public class TextFieldTypeTests extends FieldTypeTestCase {
         assertEquals(new PrefixQuery(new Term("field", "internationalisatio")), q);
 
         q = ft.prefixQuery("g", CONSTANT_SCORE_REWRITE, null);
-        Automaton automaton
-            = Operations.concatenate(Arrays.asList(Automata.makeChar('g'), Automata.makeAnyChar()));
+        Automaton automaton = Operations.concatenate(Arrays.asList(Automata.makeChar('g'), Automata.makeAnyChar()));
 
-        Query expected = new ConstantScoreQuery(new BooleanQuery.Builder()
-            .add(new AutomatonQuery(new Term("field._index_prefix", "g*"), automaton), BooleanClause.Occur.SHOULD)
-            .add(new TermQuery(new Term("field", "g")), BooleanClause.Occur.SHOULD)
-            .build());
+        Query expected = new ConstantScoreQuery(
+            new BooleanQuery.Builder().add(new AutomatonQuery(new Term("field._index_prefix", "g*"), automaton), BooleanClause.Occur.SHOULD)
+                .add(new TermQuery(new Term("field", "g")), BooleanClause.Occur.SHOULD)
+                .build()
+        );
 
         assertThat(q, equalTo(expected));
     }

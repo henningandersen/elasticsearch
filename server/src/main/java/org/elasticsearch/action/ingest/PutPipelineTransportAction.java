@@ -49,12 +49,22 @@ public class PutPipelineTransportAction extends TransportMasterNodeAction<PutPip
     private final NodeClient client;
 
     @Inject
-    public PutPipelineTransportAction(ThreadPool threadPool, TransportService transportService,
-        ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-        IngestService ingestService, NodeClient client) {
+    public PutPipelineTransportAction(
+        ThreadPool threadPool,
+        TransportService transportService,
+        ActionFilters actionFilters,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        IngestService ingestService,
+        NodeClient client
+    ) {
         super(
-            PutPipelineAction.NAME, transportService, ingestService.getClusterService(),
-            threadPool, actionFilters, PutPipelineRequest::new, indexNameExpressionResolver
+            PutPipelineAction.NAME,
+            transportService,
+            ingestService.getClusterService(),
+            threadPool,
+            actionFilters,
+            PutPipelineRequest::new,
+            indexNameExpressionResolver
         );
         this.client = client;
         this.ingestService = ingestService;
@@ -72,7 +82,7 @@ public class PutPipelineTransportAction extends TransportMasterNodeAction<PutPip
 
     @Override
     protected void masterOperation(Task task, PutPipelineRequest request, ClusterState state, ActionListener<AcknowledgedResponse> listener)
-            throws Exception {
+        throws Exception {
         NodesInfoRequest nodesInfoRequest = new NodesInfoRequest();
         nodesInfoRequest.clear();
         nodesInfoRequest.ingest(true);

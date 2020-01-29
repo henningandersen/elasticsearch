@@ -49,8 +49,12 @@ public class BlobStoreRepositoryCleanupIT extends AbstractSnapshotIntegTestCase 
 
         logger.info("-->  wait for cleanup to finish and disappear from cluster state");
         assertBusy(() -> {
-            RepositoryCleanupInProgress cleanupInProgress =
-                client().admin().cluster().prepareState().get().getState().custom(RepositoryCleanupInProgress.TYPE);
+            RepositoryCleanupInProgress cleanupInProgress = client().admin()
+                .cluster()
+                .prepareState()
+                .get()
+                .getState()
+                .custom(RepositoryCleanupInProgress.TYPE);
             assertFalse(cleanupInProgress.hasCleanupInProgress());
         }, 30, TimeUnit.SECONDS);
     }
@@ -62,8 +66,12 @@ public class BlobStoreRepositoryCleanupIT extends AbstractSnapshotIntegTestCase 
         assertThrows(client().admin().cluster().prepareCleanupRepository("test-repo").execute(), IllegalStateException.class);
 
         logger.info("-->  ensure cleanup is still in progress");
-        final RepositoryCleanupInProgress cleanup =
-            client().admin().cluster().prepareState().get().getState().custom(RepositoryCleanupInProgress.TYPE);
+        final RepositoryCleanupInProgress cleanup = client().admin()
+            .cluster()
+            .prepareState()
+            .get()
+            .getState()
+            .custom(RepositoryCleanupInProgress.TYPE);
         assertTrue(cleanup.hasCleanupInProgress());
 
         logger.info("-->  unblocking master node");
@@ -71,8 +79,12 @@ public class BlobStoreRepositoryCleanupIT extends AbstractSnapshotIntegTestCase 
 
         logger.info("-->  wait for cleanup to finish and disappear from cluster state");
         assertBusy(() -> {
-            RepositoryCleanupInProgress cleanupInProgress =
-                client().admin().cluster().prepareState().get().getState().custom(RepositoryCleanupInProgress.TYPE);
+            RepositoryCleanupInProgress cleanupInProgress = client().admin()
+                .cluster()
+                .prepareState()
+                .get()
+                .getState()
+                .custom(RepositoryCleanupInProgress.TYPE);
             assertFalse(cleanupInProgress.hasCleanupInProgress());
         }, 30, TimeUnit.SECONDS);
     }
@@ -83,23 +95,37 @@ public class BlobStoreRepositoryCleanupIT extends AbstractSnapshotIntegTestCase 
         internalCluster().startDataOnlyNodes(1);
 
         logger.info("-->  creating repository");
-        assertAcked(client().admin().cluster().preparePutRepository(repoName)
-            .setType("mock").setSettings(Settings.builder()
-                .put("location", randomRepoPath())
-                .put("compress", randomBoolean())
-                .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)));
+        assertAcked(
+            client().admin()
+                .cluster()
+                .preparePutRepository(repoName)
+                .setType("mock")
+                .setSettings(
+                    Settings.builder()
+                        .put("location", randomRepoPath())
+                        .put("compress", randomBoolean())
+                        .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)
+                )
+        );
 
         logger.info("-->  snapshot");
-        client().admin().cluster().prepareCreateSnapshot(repoName, "test-snap")
-            .setWaitForCompletion(true).get();
+        client().admin().cluster().prepareCreateSnapshot(repoName, "test-snap").setWaitForCompletion(true).get();
 
         final RepositoriesService service = internalCluster().getInstance(RepositoriesService.class, internalCluster().getMasterName());
         final BlobStoreRepository repository = (BlobStoreRepository) service.repository(repoName);
 
         logger.info("--> creating a garbage data blob");
         final PlainActionFuture<Void> garbageFuture = PlainActionFuture.newFuture();
-        repository.threadPool().generic().execute(ActionRunnable.run(garbageFuture, () -> repository.blobStore()
-            .blobContainer(repository.basePath()).writeBlob("snap-foo.dat", new ByteArrayInputStream(new byte[1]), 1, true)));
+        repository.threadPool()
+            .generic()
+            .execute(
+                ActionRunnable.run(
+                    garbageFuture,
+                    () -> repository.blobStore()
+                        .blobContainer(repository.basePath())
+                        .writeBlob("snap-foo.dat", new ByteArrayInputStream(new byte[1]), 1, true)
+                )
+            );
         garbageFuture.get();
 
         final String masterNode = blockMasterFromFinalizingSnapshotOnIndexFile(repoName);
@@ -117,15 +143,26 @@ public class BlobStoreRepositoryCleanupIT extends AbstractSnapshotIntegTestCase 
 
         final String repoName = "test-repo";
         logger.info("-->  creating repository");
-        assertAcked(client().admin().cluster().preparePutRepository(repoName).setType("fs").setSettings(Settings.builder()
-            .put("location", randomRepoPath())
-            .put("compress", randomBoolean())
-            .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)));
+        assertAcked(
+            client().admin()
+                .cluster()
+                .preparePutRepository(repoName)
+                .setType("fs")
+                .setSettings(
+                    Settings.builder()
+                        .put("location", randomRepoPath())
+                        .put("compress", randomBoolean())
+                        .put("chunk_size", randomIntBetween(100, 1000), ByteSizeUnit.BYTES)
+                )
+        );
 
         logger.info("--> create three snapshots");
         for (int i = 0; i < 3; ++i) {
-            CreateSnapshotResponse createSnapshotResponse = client().admin().cluster().prepareCreateSnapshot(repoName, "test-snap-" + i)
-                .setWaitForCompletion(true).get();
+            CreateSnapshotResponse createSnapshotResponse = client().admin()
+                .cluster()
+                .prepareCreateSnapshot(repoName, "test-snap-" + i)
+                .setWaitForCompletion(true)
+                .get();
             assertThat(createSnapshotResponse.getSnapshotInfo().state(), is(SnapshotState.SUCCESS));
         }
 
@@ -136,9 +173,16 @@ public class BlobStoreRepositoryCleanupIT extends AbstractSnapshotIntegTestCase 
         for (int i = 0; i < 2; ++i) {
             final PlainActionFuture<Void> createOldIndexNFuture = PlainActionFuture.newFuture();
             final int generation = i;
-            repository.threadPool().generic().execute(ActionRunnable.run(createOldIndexNFuture, () -> repository.blobStore()
-                .blobContainer(repository.basePath()).writeBlob(BlobStoreRepository.INDEX_FILE_PREFIX + generation,
-                    new ByteArrayInputStream(new byte[1]), 1, true)));
+            repository.threadPool()
+                .generic()
+                .execute(
+                    ActionRunnable.run(
+                        createOldIndexNFuture,
+                        () -> repository.blobStore()
+                            .blobContainer(repository.basePath())
+                            .writeBlob(BlobStoreRepository.INDEX_FILE_PREFIX + generation, new ByteArrayInputStream(new byte[1]), 1, true)
+                    )
+                );
             createOldIndexNFuture.get();
         }
 

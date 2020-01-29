@@ -47,10 +47,6 @@ class ScrollIdForNode {
 
     @Override
     public String toString() {
-        return "ScrollIdForNode{" +
-            "node='" + node + '\'' +
-            ", scrollId=" + scrollId +
-            ", clusterAlias='" + clusterAlias + '\'' +
-            '}';
+        return "ScrollIdForNode{" + "node='" + node + '\'' + ", scrollId=" + scrollId + ", clusterAlias='" + clusterAlias + '\'' + '}';
     }
 }

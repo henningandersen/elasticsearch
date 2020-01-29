@@ -44,9 +44,18 @@ public class DiversifiedAggregatorFactory extends ValuesSourceAggregatorFactory<
     private final int maxDocsPerValue;
     private final String executionHint;
 
-    DiversifiedAggregatorFactory(String name, ValuesSourceConfig<ValuesSource> config, int shardSize, int maxDocsPerValue,
-                                 String executionHint, QueryShardContext queryShardContext, AggregatorFactory parent,
-                                 AggregatorFactories.Builder subFactoriesBuilder, Map<String, Object> metaData) throws IOException {
+    DiversifiedAggregatorFactory(
+        String name,
+        ValuesSourceConfig<ValuesSource> config,
+        int shardSize,
+        int maxDocsPerValue,
+        String executionHint,
+        QueryShardContext queryShardContext,
+        AggregatorFactory parent,
+        AggregatorFactories.Builder subFactoriesBuilder,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, config, queryShardContext, parent, subFactoriesBuilder, metaData);
         this.shardSize = shardSize;
         this.maxDocsPerValue = maxDocsPerValue;
@@ -54,16 +63,27 @@ public class DiversifiedAggregatorFactory extends ValuesSourceAggregatorFactory<
     }
 
     @Override
-    protected Aggregator doCreateInternal(ValuesSource valuesSource,
-                                            SearchContext searchContext,
-                                            Aggregator parent,
-                                            boolean collectsFromSingleBucket,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator doCreateInternal(
+        ValuesSource valuesSource,
+        SearchContext searchContext,
+        Aggregator parent,
+        boolean collectsFromSingleBucket,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
 
         if (valuesSource instanceof ValuesSource.Numeric) {
-            return new DiversifiedNumericSamplerAggregator(name, shardSize, factories, searchContext, parent, pipelineAggregators, metaData,
-                    (Numeric) valuesSource, maxDocsPerValue);
+            return new DiversifiedNumericSamplerAggregator(
+                name,
+                shardSize,
+                factories,
+                searchContext,
+                parent,
+                pipelineAggregators,
+                metaData,
+                (Numeric) valuesSource,
+                maxDocsPerValue
+            );
         }
 
         if (valuesSource instanceof ValuesSource.Bytes) {
@@ -80,19 +100,33 @@ public class DiversifiedAggregatorFactory extends ValuesSourceAggregatorFactory<
             if ((execution.needsGlobalOrdinals()) && (!(valuesSource instanceof ValuesSource.Bytes.WithOrdinals))) {
                 execution = ExecutionMode.MAP;
             }
-            return execution.create(name, factories, shardSize, maxDocsPerValue, valuesSource, searchContext, parent, pipelineAggregators,
-                    metaData);
+            return execution.create(
+                name,
+                factories,
+                shardSize,
+                maxDocsPerValue,
+                valuesSource,
+                searchContext,
+                parent,
+                pipelineAggregators,
+                metaData
+            );
         }
 
-        throw new AggregationExecutionException("Sampler aggregation cannot be applied to field [" + config.fieldContext().field()
-                + "]. It can only be applied to numeric or string fields.");
+        throw new AggregationExecutionException(
+            "Sampler aggregation cannot be applied to field ["
+                + config.fieldContext().field()
+                + "]. It can only be applied to numeric or string fields."
+        );
     }
 
     @Override
-    protected Aggregator createUnmapped(SearchContext searchContext,
-                                            Aggregator parent,
-                                            List<PipelineAggregator> pipelineAggregators,
-                                            Map<String, Object> metaData) throws IOException {
+    protected Aggregator createUnmapped(
+        SearchContext searchContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) throws IOException {
         final UnmappedSampler aggregation = new UnmappedSampler(name, pipelineAggregators, metaData);
 
         return new NonCollectingAggregator(name, searchContext, parent, factories, pipelineAggregators, metaData) {

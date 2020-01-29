@@ -34,11 +34,13 @@ public class SourceSimpleFragmentsBuilder extends SimpleFragmentsBuilder {
 
     private final QueryShardContext context;
 
-    public SourceSimpleFragmentsBuilder(MappedFieldType fieldType,
-                                        QueryShardContext context,
-                                        String[] preTags,
-                                        String[] postTags,
-                                        BoundaryScanner boundaryScanner) {
+    public SourceSimpleFragmentsBuilder(
+        MappedFieldType fieldType,
+        QueryShardContext context,
+        String[] preTags,
+        String[] postTags,
+        BoundaryScanner boundaryScanner
+    ) {
         super(fieldType, preTags, postTags, boundaryScanner);
         this.context = context;
     }

@@ -33,17 +33,29 @@ import java.util.Map;
  */
 public class GeoHashGridAggregator extends GeoGridAggregator<InternalGeoHashGrid> {
 
-    GeoHashGridAggregator(String name, AggregatorFactories factories, CellIdSource valuesSource,
-                          int requiredSize, int shardSize, SearchContext aggregationContext,
-                          Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-                          Map<String, Object> metaData) throws IOException {
-        super(name, factories, valuesSource, requiredSize, shardSize, aggregationContext, parent,
-            pipelineAggregators, metaData);
+    GeoHashGridAggregator(
+        String name,
+        AggregatorFactories factories,
+        CellIdSource valuesSource,
+        int requiredSize,
+        int shardSize,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
+        super(name, factories, valuesSource, requiredSize, shardSize, aggregationContext, parent, pipelineAggregators, metaData);
     }
 
     @Override
-    InternalGeoHashGrid buildAggregation(String name, int requiredSize, List<InternalGeoGridBucket> buckets,
-                                         List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) {
+    InternalGeoHashGrid buildAggregation(
+        String name,
+        int requiredSize,
+        List<InternalGeoGridBucket> buckets,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    ) {
         return new InternalGeoHashGrid(name, requiredSize, buckets, pipelineAggregators, metaData);
     }
 

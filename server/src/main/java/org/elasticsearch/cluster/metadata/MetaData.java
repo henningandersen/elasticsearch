@@ -129,23 +129,47 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
         EnumSet<XContentContext> context();
     }
 
-    public static final Setting<Integer> SETTING_CLUSTER_MAX_SHARDS_PER_NODE =
-        Setting.intSetting("cluster.max_shards_per_node", 1000, 1, Property.Dynamic, Property.NodeScope);
+    public static final Setting<Integer> SETTING_CLUSTER_MAX_SHARDS_PER_NODE = Setting.intSetting(
+        "cluster.max_shards_per_node",
+        1000,
+        1,
+        Property.Dynamic,
+        Property.NodeScope
+    );
 
-    public static final Setting<Boolean> SETTING_READ_ONLY_SETTING =
-        Setting.boolSetting("cluster.blocks.read_only", false, Property.Dynamic, Property.NodeScope);
+    public static final Setting<Boolean> SETTING_READ_ONLY_SETTING = Setting.boolSetting(
+        "cluster.blocks.read_only",
+        false,
+        Property.Dynamic,
+        Property.NodeScope
+    );
 
-    public static final ClusterBlock CLUSTER_READ_ONLY_BLOCK = new ClusterBlock(6, "cluster read-only (api)",
-        false, false, false, RestStatus.FORBIDDEN,
-        EnumSet.of(ClusterBlockLevel.WRITE, ClusterBlockLevel.METADATA_WRITE));
+    public static final ClusterBlock CLUSTER_READ_ONLY_BLOCK = new ClusterBlock(
+        6,
+        "cluster read-only (api)",
+        false,
+        false,
+        false,
+        RestStatus.FORBIDDEN,
+        EnumSet.of(ClusterBlockLevel.WRITE, ClusterBlockLevel.METADATA_WRITE)
+    );
 
-    public static final Setting<Boolean> SETTING_READ_ONLY_ALLOW_DELETE_SETTING =
-        Setting.boolSetting("cluster.blocks.read_only_allow_delete", false, Property.Dynamic, Property.NodeScope);
+    public static final Setting<Boolean> SETTING_READ_ONLY_ALLOW_DELETE_SETTING = Setting.boolSetting(
+        "cluster.blocks.read_only_allow_delete",
+        false,
+        Property.Dynamic,
+        Property.NodeScope
+    );
 
-    public static final ClusterBlock CLUSTER_READ_ONLY_ALLOW_DELETE_BLOCK =
-        new ClusterBlock(13, "cluster read-only / allow delete (api)",
-        false, false, true, RestStatus.FORBIDDEN,
-            EnumSet.of(ClusterBlockLevel.WRITE, ClusterBlockLevel.METADATA_WRITE));
+    public static final ClusterBlock CLUSTER_READ_ONLY_ALLOW_DELETE_BLOCK = new ClusterBlock(
+        13,
+        "cluster read-only / allow delete (api)",
+        false,
+        false,
+        true,
+        RestStatus.FORBIDDEN,
+        EnumSet.of(ClusterBlockLevel.WRITE, ClusterBlockLevel.METADATA_WRITE)
+    );
 
     public static final MetaData EMPTY_META_DATA = builder().build();
 
@@ -185,12 +209,25 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
 
     private final SortedMap<String, AliasOrIndex> aliasAndIndexLookup;
 
-    MetaData(String clusterUUID, boolean clusterUUIDCommitted, long version, CoordinationMetaData coordinationMetaData,
-             Settings transientSettings, Settings persistentSettings, DiffableStringMap hashesOfConsistentSettings,
-             ImmutableOpenMap<String, IndexMetaData> indices, ImmutableOpenMap<String, IndexTemplateMetaData> templates,
-             ImmutableOpenMap<String, Custom> customs, String[] allIndices, String[] visibleIndices, String[] allOpenIndices,
-             String[] visibleOpenIndices, String[] allClosedIndices, String[] visibleClosedIndices,
-             SortedMap<String, AliasOrIndex> aliasAndIndexLookup) {
+    MetaData(
+        String clusterUUID,
+        boolean clusterUUIDCommitted,
+        long version,
+        CoordinationMetaData coordinationMetaData,
+        Settings transientSettings,
+        Settings persistentSettings,
+        DiffableStringMap hashesOfConsistentSettings,
+        ImmutableOpenMap<String, IndexMetaData> indices,
+        ImmutableOpenMap<String, IndexTemplateMetaData> templates,
+        ImmutableOpenMap<String, Custom> customs,
+        String[] allIndices,
+        String[] visibleIndices,
+        String[] allOpenIndices,
+        String[] visibleOpenIndices,
+        String[] allClosedIndices,
+        String[] visibleClosedIndices,
+        SortedMap<String, AliasOrIndex> aliasAndIndexLookup
+    ) {
         this.clusterUUID = clusterUUID;
         this.clusterUUIDCommitted = clusterUUIDCommitted;
         this.version = version;
@@ -381,9 +418,8 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
      * @see MapperPlugin#getFieldFilter()
      *
      */
-    public ImmutableOpenMap<String, MappingMetaData> findMappings(String[] concreteIndices,
-                                                                  Function<String, Predicate<String>> fieldFilter)
-            throws IOException {
+    public ImmutableOpenMap<String, MappingMetaData> findMappings(String[] concreteIndices, Function<String, Predicate<String>> fieldFilter)
+        throws IOException {
         assert concreteIndices != null;
         if (concreteIndices.length == 0) {
             return ImmutableOpenMap.of();
@@ -415,7 +451,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
             mapping = sourceAsMap;
         }
 
-        Map<String, Object> properties = (Map<String, Object>)mapping.get("properties");
+        Map<String, Object> properties = (Map<String, Object>) mapping.get("properties");
         if (properties == null || properties.isEmpty()) {
             return mappingMetaData;
         }
@@ -437,11 +473,11 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
             boolean isMultiField = false;
             if (value instanceof Map) {
                 Map<String, Object> map = (Map<String, Object>) value;
-                Map<String, Object> properties = (Map<String, Object>)map.get("properties");
+                Map<String, Object> properties = (Map<String, Object>) map.get("properties");
                 if (properties != null) {
                     mayRemove = filterFields(newPath, properties, fieldPredicate);
                 } else {
-                    Map<String, Object> subFields = (Map<String, Object>)map.get("fields");
+                    Map<String, Object> subFields = (Map<String, Object>) map.get("fields");
                     if (subFields != null) {
                         isMultiField = true;
                         if (mayRemove = filterFields(newPath, subFields, fieldPredicate)) {
@@ -453,14 +489,14 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
                 throw new IllegalStateException("cannot filter mappings, found unknown element of type [" + value.getClass() + "]");
             }
 
-            //only remove a field if it has no sub-fields left and it has to be excluded
+            // only remove a field if it has no sub-fields left and it has to be excluded
             if (fieldPredicate.test(newPath) == false) {
                 if (mayRemove) {
                     entryIterator.remove();
                 } else if (isMultiField) {
-                    //multi fields that should be excluded but hold subfields that don't have to be excluded are converted to objects
+                    // multi fields that should be excluded but hold subfields that don't have to be excluded are converted to objects
                     Map<String, Object> map = (Map<String, Object>) value;
-                    Map<String, Object> subFields = (Map<String, Object>)map.get("fields");
+                    Map<String, Object> subFields = (Map<String, Object>) map.get("fields");
                     assert subFields.size() > 0;
                     map.put("properties", subFields);
                     map.remove("fields");
@@ -468,7 +504,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
                 }
             }
         }
-        //return true if the ancestor may be removed, as it has no sub-fields left
+        // return true if the ancestor may be removed, as it has no sub-fields left
         return fields.size() == 0;
     }
 
@@ -542,13 +578,25 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
         AliasMetaData aliasMd = writeIndex.getAliases().get(alias.getAliasName());
         if (aliasMd.indexRouting() != null) {
             if (aliasMd.indexRouting().indexOf(',') != -1) {
-                throw new IllegalArgumentException("index/alias [" + aliasOrIndex + "] provided with routing value ["
-                    + aliasMd.getIndexRouting() + "] that resolved to several routing values, rejecting operation");
+                throw new IllegalArgumentException(
+                    "index/alias ["
+                        + aliasOrIndex
+                        + "] provided with routing value ["
+                        + aliasMd.getIndexRouting()
+                        + "] that resolved to several routing values, rejecting operation"
+                );
             }
             if (routing != null) {
                 if (!routing.equals(aliasMd.indexRouting())) {
-                    throw new IllegalArgumentException("Alias [" + aliasOrIndex + "] has index routing associated with it ["
-                        + aliasMd.indexRouting() + "], and was provided with routing value [" + routing + "], rejecting operation");
+                    throw new IllegalArgumentException(
+                        "Alias ["
+                            + aliasOrIndex
+                            + "] has index routing associated with it ["
+                            + aliasMd.indexRouting()
+                            + "], and was provided with routing value ["
+                            + routing
+                            + "], rejecting operation"
+                    );
                 }
             }
             // Alias routing overrides the parent routing (if any).
@@ -578,13 +626,25 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
         AliasMetaData aliasMd = alias.getFirstAliasMetaData();
         if (aliasMd.indexRouting() != null) {
             if (aliasMd.indexRouting().indexOf(',') != -1) {
-                throw new IllegalArgumentException("index/alias [" + aliasOrIndex + "] provided with routing value [" +
-                    aliasMd.getIndexRouting() + "] that resolved to several routing values, rejecting operation");
+                throw new IllegalArgumentException(
+                    "index/alias ["
+                        + aliasOrIndex
+                        + "] provided with routing value ["
+                        + aliasMd.getIndexRouting()
+                        + "] that resolved to several routing values, rejecting operation"
+                );
             }
             if (routing != null) {
                 if (!routing.equals(aliasMd.indexRouting())) {
-                    throw new IllegalArgumentException("Alias [" + aliasOrIndex + "] has index routing associated with it [" +
-                        aliasMd.indexRouting() + "], and was provided with routing value [" + routing + "], rejecting operation");
+                    throw new IllegalArgumentException(
+                        "Alias ["
+                            + aliasOrIndex
+                            + "] has index routing associated with it ["
+                            + aliasMd.indexRouting()
+                            + "], and was provided with routing value ["
+                            + routing
+                            + "], rejecting operation"
+                    );
                 }
             }
             // Alias routing overrides the parent routing (if any).
@@ -599,8 +659,13 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
         for (IndexMetaData indexMetaData : result.getIndices()) {
             indexNames[i++] = indexMetaData.getIndex().getName();
         }
-        throw new IllegalArgumentException("Alias [" + aliasOrIndex + "] has more than one index associated with it [" +
-            Arrays.toString(indexNames) + "], can't execute a single index op");
+        throw new IllegalArgumentException(
+            "Alias ["
+                + aliasOrIndex
+                + "] has more than one index associated with it ["
+                + Arrays.toString(indexNames)
+                + "], can't execute a single index op"
+        );
     }
 
     public boolean hasIndex(String index) {
@@ -635,12 +700,15 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
     public IndexMetaData getIndexSafe(Index index) {
         IndexMetaData metaData = index(index.getName());
         if (metaData != null) {
-            if(metaData.getIndexUUID().equals(index.getUUID())) {
+            if (metaData.getIndexUUID().equals(index.getUUID())) {
                 return metaData;
             }
-            throw new IndexNotFoundException(index,
-                new IllegalStateException("index uuid doesn't match expected: [" + index.getUUID()
-                    + "] but got: [" + metaData.getIndexUUID() +"]"));
+            throw new IndexNotFoundException(
+                index,
+                new IllegalStateException(
+                    "index uuid doesn't match expected: [" + index.getUUID() + "] but got: [" + metaData.getIndexUUID() + "]"
+                )
+            );
         }
         throw new IndexNotFoundException(index);
     }
@@ -680,7 +748,6 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
     public <T extends Custom> T custom(String type) {
         return (T) customs.get(type);
     }
-
 
     /**
      * Gets the total number of shards from all indices, including replicas and
@@ -836,10 +903,18 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
             } else {
                 hashesOfConsistentSettings = DiffableStringMap.DiffableStringMapDiff.EMPTY;
             }
-            indices = DiffableUtils.readImmutableOpenMapDiff(in, DiffableUtils.getStringKeySerializer(), IndexMetaData::readFrom,
-                IndexMetaData::readDiffFrom);
-            templates = DiffableUtils.readImmutableOpenMapDiff(in, DiffableUtils.getStringKeySerializer(), IndexTemplateMetaData::readFrom,
-                IndexTemplateMetaData::readDiffFrom);
+            indices = DiffableUtils.readImmutableOpenMapDiff(
+                in,
+                DiffableUtils.getStringKeySerializer(),
+                IndexMetaData::readFrom,
+                IndexMetaData::readDiffFrom
+            );
+            templates = DiffableUtils.readImmutableOpenMapDiff(
+                in,
+                DiffableUtils.getStringKeySerializer(),
+                IndexTemplateMetaData::readFrom,
+                IndexTemplateMetaData::readDiffFrom
+            );
             customs = DiffableUtils.readImmutableOpenMapDiff(in, DiffableUtils.getStringKeySerializer(), CUSTOM_VALUE_SERIALIZER);
         }
 
@@ -1008,12 +1083,15 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
         public IndexMetaData getSafe(Index index) {
             IndexMetaData indexMetaData = get(index.getName());
             if (indexMetaData != null) {
-                if(indexMetaData.getIndexUUID().equals(index.getUUID())) {
+                if (indexMetaData.getIndexUUID().equals(index.getUUID())) {
                     return indexMetaData;
                 }
-                throw new IndexNotFoundException(index,
-                    new IllegalStateException("index uuid doesn't match expected: [" + index.getUUID()
-                        + "] but got: [" + indexMetaData.getIndexUUID() +"]"));
+                throw new IndexNotFoundException(
+                    index,
+                    new IllegalStateException(
+                        "index uuid doesn't match expected: [" + index.getUUID() + "] but got: [" + indexMetaData.getIndexUUID() + "]"
+                    )
+                );
             }
             throw new IndexNotFoundException(index);
         }
@@ -1091,8 +1169,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
                 if (indexMetaData == null) {
                     throw new IndexNotFoundException(index);
                 }
-                put(IndexMetaData.builder(indexMetaData)
-                        .settings(Settings.builder().put(indexMetaData.getSettings()).put(settings)));
+                put(IndexMetaData.builder(indexMetaData).settings(Settings.builder().put(indexMetaData.getSettings()).put(settings)));
             }
             return this;
         }
@@ -1177,7 +1254,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
         public MetaData build() {
             // TODO: We should move these datastructures to IndexNameExpressionResolver, this will give the following benefits:
             // 1) The datastructures will only be rebuilded when needed. Now during serializing we rebuild these datastructures
-            //    while these datastructures aren't even used.
+            // while these datastructures aren't even used.
             // 2) The aliasAndIndexLookup can be updated instead of rebuilding it all the time.
 
             final Set<String> allIndices = new HashSet<>(indices.size());
@@ -1214,20 +1291,22 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
                 // iterate again and constructs a helpful message
                 ArrayList<String> duplicates = new ArrayList<>();
                 for (ObjectCursor<IndexMetaData> cursor : indices.values()) {
-                    for (String alias: duplicateAliasesIndices) {
+                    for (String alias : duplicateAliasesIndices) {
                         if (cursor.value.getAliases().containsKey(alias)) {
                             duplicates.add(alias + " (alias of " + cursor.value.getIndex() + ")");
                         }
                     }
                 }
                 assert duplicates.size() > 0;
-                throw new IllegalStateException("index and alias names need to be unique, but the following duplicates were found ["
-                    + Strings.collectionToCommaDelimitedString(duplicates)+ "]");
+                throw new IllegalStateException(
+                    "index and alias names need to be unique, but the following duplicates were found ["
+                        + Strings.collectionToCommaDelimitedString(duplicates)
+                        + "]"
+                );
 
             }
 
             SortedMap<String, AliasOrIndex> aliasAndIndexLookup = Collections.unmodifiableSortedMap(buildAliasAndIndexLookup());
-
 
             // build all concrete indices arrays:
             // TODO: I think we can remove these arrays. it isn't worth the effort, for operations on all indices.
@@ -1240,9 +1319,25 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
             String[] allClosedIndicesArray = allClosedIndices.toArray(Strings.EMPTY_ARRAY);
             String[] visibleClosedIndicesArray = visibleClosedIndices.toArray(Strings.EMPTY_ARRAY);
 
-            return new MetaData(clusterUUID, clusterUUIDCommitted, version, coordinationMetaData, transientSettings, persistentSettings,
-                hashesOfConsistentSettings, indices.build(), templates.build(), customs.build(), allIndicesArray, visibleIndicesArray,
-                allOpenIndicesArray, visibleOpenIndicesArray, allClosedIndicesArray, visibleClosedIndicesArray, aliasAndIndexLookup);
+            return new MetaData(
+                clusterUUID,
+                clusterUUIDCommitted,
+                version,
+                coordinationMetaData,
+                transientSettings,
+                persistentSettings,
+                hashesOfConsistentSettings,
+                indices.build(),
+                templates.build(),
+                customs.build(),
+                allIndicesArray,
+                visibleIndicesArray,
+                allOpenIndicesArray,
+                visibleOpenIndicesArray,
+                allClosedIndicesArray,
+                visibleClosedIndicesArray,
+                aliasAndIndexLookup
+            );
         }
 
         private SortedMap<String, AliasOrIndex> buildAliasAndIndexLookup() {
@@ -1265,7 +1360,9 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
                     });
                 }
             }
-            aliasAndIndexLookup.values().stream().filter(AliasOrIndex::isAlias)
+            aliasAndIndexLookup.values()
+                .stream()
+                .filter(AliasOrIndex::isAlias)
                 .forEach(alias -> ((AliasOrIndex.Alias) alias).computeAndValidateWriteIndex());
             return aliasAndIndexLookup;
         }

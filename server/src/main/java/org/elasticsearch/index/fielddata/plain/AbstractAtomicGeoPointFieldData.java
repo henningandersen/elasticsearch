@@ -47,15 +47,14 @@ public abstract class AbstractAtomicGeoPointFieldData implements AtomicGeoPointF
             public long ramBytesUsed() {
                 return 0;
             }
-            
+
             @Override
             public Collection<Accountable> getChildResources() {
                 return Collections.emptyList();
             }
 
             @Override
-            public void close() {
-            }
+            public void close() {}
 
             @Override
             public MultiGeoPointValues getGeoPointValues() {

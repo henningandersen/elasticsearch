@@ -27,8 +27,9 @@ import org.elasticsearch.transport.TransportChannel;
 import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.transport.TransportResponse;
 
-public final class ChannelActionListener<
-    Response extends TransportResponse, Request extends TransportRequest> implements ActionListener<Response> {
+public final class ChannelActionListener<Response extends TransportResponse, Request extends TransportRequest>
+    implements
+        ActionListener<Response> {
 
     private static final Logger logger = LogManager.getLogger(ChannelActionListener.class);
     private final TransportChannel channel;
@@ -56,8 +57,10 @@ public final class ChannelActionListener<
             channel.sendResponse(e);
         } catch (Exception e1) {
             e1.addSuppressed(e);
-            logger.warn(() -> new ParameterizedMessage(
-                "Failed to send error response for action [{}] and request [{}]", actionName, request), e1);
+            logger.warn(
+                () -> new ParameterizedMessage("Failed to send error response for action [{}] and request [{}]", actionName, request),
+                e1
+            );
         }
     }
 }

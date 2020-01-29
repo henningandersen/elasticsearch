@@ -34,8 +34,13 @@ public class MaxBucketPipelineAggregator extends BucketMetricsPipelineAggregator
     private List<String> maxBucketKeys;
     private double maxValue;
 
-    MaxBucketPipelineAggregator(String name, String[] bucketsPaths, GapPolicy gapPolicy, DocValueFormat formatter,
-            Map<String, Object> metaData) {
+    MaxBucketPipelineAggregator(
+        String name,
+        String[] bucketsPaths,
+        GapPolicy gapPolicy,
+        DocValueFormat formatter,
+        Map<String, Object> metaData
+    ) {
         super(name, bucketsPaths, gapPolicy, formatter, metaData);
     }
 

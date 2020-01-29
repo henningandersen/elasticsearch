@@ -26,8 +26,6 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.search.DocValueFormat;
 import org.elasticsearch.search.aggregations.Aggregation.CommonFields;
 import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.metrics.ParsedPercentiles;
-import org.elasticsearch.search.aggregations.metrics.Percentile;
 import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
 import org.elasticsearch.test.InternalAggregationTestCase;
 
@@ -41,8 +39,8 @@ import java.util.function.Predicate;
 
 import static org.hamcrest.Matchers.equalTo;
 
-public abstract class AbstractPercentilesTestCase<T extends InternalAggregation & Iterable<Percentile>>
-        extends InternalAggregationTestCase<T> {
+public abstract class AbstractPercentilesTestCase<T extends InternalAggregation & Iterable<Percentile>> extends InternalAggregationTestCase<
+    T> {
 
     private double[] percents;
     private boolean keyed;
@@ -66,8 +64,15 @@ public abstract class AbstractPercentilesTestCase<T extends InternalAggregation 
         return createTestInstance(name, pipelineAggregators, metaData, keyed, docValueFormat, percents, values);
     }
 
-    protected abstract T createTestInstance(String name, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData,
-                                            boolean keyed, DocValueFormat format, double[] percents, double[] values);
+    protected abstract T createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        boolean keyed,
+        DocValueFormat format,
+        double[] percents,
+        double[] values
+    );
 
     protected abstract Class<? extends ParsedPercentiles> implementationClass();
 
@@ -102,7 +107,7 @@ public abstract class AbstractPercentilesTestCase<T extends InternalAggregation 
     protected abstract void assertPercentile(T agg, Double value);
 
     public void testEmptyRanksXContent() throws IOException {
-        double[] percents = new double[]{1,2,3};
+        double[] percents = new double[] { 1, 2, 3 };
         boolean keyed = randomBoolean();
         DocValueFormat docValueFormat = randomNumericDocValueFormat();
 
@@ -119,30 +124,30 @@ public abstract class AbstractPercentilesTestCase<T extends InternalAggregation 
         builder.endObject();
         String expected;
         if (keyed) {
-            expected = "{\n" +
-                "  \"values\" : {\n" +
-                "    \"1.0\" : null,\n" +
-                "    \"2.0\" : null,\n" +
-                "    \"3.0\" : null\n" +
-                "  }\n" +
-                "}";
+            expected = "{\n"
+                + "  \"values\" : {\n"
+                + "    \"1.0\" : null,\n"
+                + "    \"2.0\" : null,\n"
+                + "    \"3.0\" : null\n"
+                + "  }\n"
+                + "}";
         } else {
-            expected = "{\n" +
-                "  \"values\" : [\n" +
-                "    {\n" +
-                "      \"key\" : 1.0,\n" +
-                "      \"value\" : null\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"key\" : 2.0,\n" +
-                "      \"value\" : null\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"key\" : 3.0,\n" +
-                "      \"value\" : null\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
+            expected = "{\n"
+                + "  \"values\" : [\n"
+                + "    {\n"
+                + "      \"key\" : 1.0,\n"
+                + "      \"value\" : null\n"
+                + "    },\n"
+                + "    {\n"
+                + "      \"key\" : 2.0,\n"
+                + "      \"value\" : null\n"
+                + "    },\n"
+                + "    {\n"
+                + "      \"key\" : 3.0,\n"
+                + "      \"value\" : null\n"
+                + "    }\n"
+                + "  ]\n"
+                + "}";
         }
 
         assertThat(Strings.toString(builder), equalTo(expected));

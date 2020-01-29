@@ -28,7 +28,6 @@ import org.elasticsearch.client.ElasticsearchClient;
  */
 public class MultiSearchRequestBuilder extends ActionRequestBuilder<MultiSearchRequest, MultiSearchResponse> {
 
-
     public MultiSearchRequestBuilder(ElasticsearchClient client, MultiSearchAction action) {
         super(client, action, new MultiSearchRequest());
     }

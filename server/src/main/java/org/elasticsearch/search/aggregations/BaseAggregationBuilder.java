@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public interface BaseAggregationBuilder {
     /**
-     * The name of the type of aggregation built by this builder. 
+     * The name of the type of aggregation built by this builder.
      */
     String getType();
 

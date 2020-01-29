@@ -51,8 +51,9 @@ import java.util.Objects;
 
 import static java.util.Map.entry;
 
-public class AutoDateHistogramAggregationBuilder
-        extends ValuesSourceAggregationBuilder<ValuesSource.Numeric, AutoDateHistogramAggregationBuilder> {
+public class AutoDateHistogramAggregationBuilder extends ValuesSourceAggregationBuilder<
+    ValuesSource.Numeric,
+    AutoDateHistogramAggregationBuilder> {
 
     public static final String NAME = "auto_date_histogram";
 
@@ -71,7 +72,7 @@ public class AutoDateHistogramAggregationBuilder
         entry(Rounding.DateTimeUnit.YEAR_OF_CENTURY, "year"),
         entry(Rounding.DateTimeUnit.MONTH_OF_YEAR, "month"),
         entry(Rounding.DateTimeUnit.DAY_OF_MONTH, "day"),
-        entry( Rounding.DateTimeUnit.HOUR_OF_DAY, "hour"),
+        entry(Rounding.DateTimeUnit.HOUR_OF_DAY, "hour"),
         entry(Rounding.DateTimeUnit.MINUTES_OF_HOUR, "minute"),
         entry(Rounding.DateTimeUnit.SECOND_OF_MINUTE, "second")
     );
@@ -87,18 +88,23 @@ public class AutoDateHistogramAggregationBuilder
         int indexToSliceFrom = 0;
 
         RoundingInfo[] roundings = new RoundingInfo[6];
-        roundings[0] = new RoundingInfo(Rounding.DateTimeUnit.SECOND_OF_MINUTE,
-            timeZone, 1000L, "s",1, 5, 10, 30);
-        roundings[1] = new RoundingInfo(Rounding.DateTimeUnit.MINUTES_OF_HOUR, timeZone,
-            60 * 1000L, "m", 1, 5, 10, 30);
-        roundings[2] = new RoundingInfo(Rounding.DateTimeUnit.HOUR_OF_DAY, timeZone,
-            60 * 60 * 1000L, "h", 1, 3, 12);
-        roundings[3] = new RoundingInfo(Rounding.DateTimeUnit.DAY_OF_MONTH, timeZone,
-            24 * 60 * 60 * 1000L, "d", 1, 7);
-        roundings[4] = new RoundingInfo(Rounding.DateTimeUnit.MONTH_OF_YEAR, timeZone,
-            30 * 24 * 60 * 60 * 1000L, "M", 1, 3);
-        roundings[5] = new RoundingInfo(Rounding.DateTimeUnit.YEAR_OF_CENTURY, timeZone,
-            365 * 24 * 60 * 60 * 1000L, "y", 1, 5, 10, 20, 50, 100);
+        roundings[0] = new RoundingInfo(Rounding.DateTimeUnit.SECOND_OF_MINUTE, timeZone, 1000L, "s", 1, 5, 10, 30);
+        roundings[1] = new RoundingInfo(Rounding.DateTimeUnit.MINUTES_OF_HOUR, timeZone, 60 * 1000L, "m", 1, 5, 10, 30);
+        roundings[2] = new RoundingInfo(Rounding.DateTimeUnit.HOUR_OF_DAY, timeZone, 60 * 60 * 1000L, "h", 1, 3, 12);
+        roundings[3] = new RoundingInfo(Rounding.DateTimeUnit.DAY_OF_MONTH, timeZone, 24 * 60 * 60 * 1000L, "d", 1, 7);
+        roundings[4] = new RoundingInfo(Rounding.DateTimeUnit.MONTH_OF_YEAR, timeZone, 30 * 24 * 60 * 60 * 1000L, "M", 1, 3);
+        roundings[5] = new RoundingInfo(
+            Rounding.DateTimeUnit.YEAR_OF_CENTURY,
+            timeZone,
+            365 * 24 * 60 * 60 * 1000L,
+            "y",
+            1,
+            5,
+            10,
+            20,
+            50,
+            100
+        );
 
         for (int i = 0; i < roundings.length; i++) {
             RoundingInfo roundingInfo = roundings[i];
@@ -124,13 +130,13 @@ public class AutoDateHistogramAggregationBuilder
 
     public AutoDateHistogramAggregationBuilder setMinimumIntervalExpression(String minimumIntervalExpression) {
         if (minimumIntervalExpression != null && !ALLOWED_INTERVALS.containsValue(minimumIntervalExpression)) {
-            throw new IllegalArgumentException(MINIMUM_INTERVAL_FIELD.getPreferredName() +
-                " must be one of [" + ALLOWED_INTERVALS.values().toString() + "]");
+            throw new IllegalArgumentException(
+                MINIMUM_INTERVAL_FIELD.getPreferredName() + " must be one of [" + ALLOWED_INTERVALS.values().toString() + "]"
+            );
         }
         this.minimumIntervalExpression = minimumIntervalExpression;
         return this;
     }
-
 
     /** Create a new builder with the given name. */
     public AutoDateHistogramAggregationBuilder(String name) {
@@ -146,8 +152,11 @@ public class AutoDateHistogramAggregationBuilder
         }
     }
 
-    protected AutoDateHistogramAggregationBuilder(AutoDateHistogramAggregationBuilder clone, Builder factoriesBuilder,
-            Map<String, Object> metaData) {
+    protected AutoDateHistogramAggregationBuilder(
+        AutoDateHistogramAggregationBuilder clone,
+        Builder factoriesBuilder,
+        Map<String, Object> metaData
+    ) {
         super(clone, factoriesBuilder, metaData);
         this.numBuckets = clone.numBuckets;
         this.minimumIntervalExpression = clone.minimumIntervalExpression;
@@ -184,24 +193,35 @@ public class AutoDateHistogramAggregationBuilder
     }
 
     @Override
-    protected ValuesSourceAggregatorFactory<Numeric> innerBuild(QueryShardContext queryShardContext, ValuesSourceConfig<Numeric> config,
-                                                                AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
+    protected ValuesSourceAggregatorFactory<Numeric> innerBuild(
+        QueryShardContext queryShardContext,
+        ValuesSourceConfig<Numeric> config,
+        AggregatorFactory parent,
+        Builder subFactoriesBuilder
+    ) throws IOException {
         RoundingInfo[] roundings = buildRoundings(timeZone(), getMinimumIntervalExpression());
-        int maxRoundingInterval = Arrays.stream(roundings,0, roundings.length-1)
+        int maxRoundingInterval = Arrays.stream(roundings, 0, roundings.length - 1)
             .map(rounding -> rounding.innerIntervals)
             .flatMapToInt(Arrays::stream)
             .boxed()
-            .reduce(Integer::max).get();
+            .reduce(Integer::max)
+            .get();
         Settings settings = queryShardContext.getIndexSettings().getNodeSettings();
         int maxBuckets = MultiBucketConsumerService.MAX_BUCKET_SETTING.get(settings);
         int bucketCeiling = maxBuckets / maxRoundingInterval;
         if (numBuckets > bucketCeiling) {
-            throw new IllegalArgumentException(NUM_BUCKETS_FIELD.getPreferredName()+
-                " must be less than " + bucketCeiling);
+            throw new IllegalArgumentException(NUM_BUCKETS_FIELD.getPreferredName() + " must be less than " + bucketCeiling);
         }
-        return new AutoDateHistogramAggregatorFactory(name, config, numBuckets, roundings, queryShardContext, parent,
+        return new AutoDateHistogramAggregatorFactory(
+            name,
+            config,
+            numBuckets,
+            roundings,
+            queryShardContext,
+            parent,
             subFactoriesBuilder,
-            metaData);
+            metaData
+        );
     }
 
     static Rounding createRounding(Rounding.DateTimeUnit interval, ZoneId timeZone) {
@@ -241,11 +261,13 @@ public class AutoDateHistogramAggregationBuilder
         final String unitAbbreviation;
         final String dateTimeUnit;
 
-        public RoundingInfo(Rounding.DateTimeUnit dateTimeUnit,
-                            ZoneId timeZone,
-                            long roughEstimateDurationMillis,
-                            String unitAbbreviation,
-                            int... innerIntervals) {
+        public RoundingInfo(
+            Rounding.DateTimeUnit dateTimeUnit,
+            ZoneId timeZone,
+            long roughEstimateDurationMillis,
+            String unitAbbreviation,
+            int... innerIntervals
+        ) {
             this.rounding = createRounding(dateTimeUnit, timeZone);
             this.roughEstimateDurationMillis = roughEstimateDurationMillis;
             this.unitAbbreviation = unitAbbreviation;
@@ -278,7 +300,9 @@ public class AutoDateHistogramAggregationBuilder
             return innerIntervals[innerIntervals.length - 1];
         }
 
-        public String getDateTimeUnit() { return this.dateTimeUnit; }
+        public String getDateTimeUnit() {
+            return this.dateTimeUnit;
+        }
 
         public long getRoughEstimateDurationMillis() {
             return roughEstimateDurationMillis;
@@ -300,8 +324,7 @@ public class AutoDateHistogramAggregationBuilder
             RoundingInfo other = (RoundingInfo) obj;
             return Objects.equals(rounding, other.rounding)
                 && Objects.deepEquals(innerIntervals, other.innerIntervals)
-                && Objects.equals(dateTimeUnit, other.dateTimeUnit)
-                ;
+                && Objects.equals(dateTimeUnit, other.dateTimeUnit);
         }
     }
 }

@@ -31,16 +31,19 @@ import java.util.Map;
 
 class TDigestPercentileRanksAggregator extends AbstractTDigestPercentilesAggregator {
 
-    TDigestPercentileRanksAggregator(String name,
-                                        ValuesSource valuesSource,
-                                        SearchContext context,
-                                         Aggregator parent,
-                                        double[] percents,
-                                        double compression,
-                                        boolean keyed,
-                                        DocValueFormat formatter,
-                                        List<PipelineAggregator> pipelineAggregators,
-                                        Map<String, Object> metaData) throws IOException {
+    TDigestPercentileRanksAggregator(
+        String name,
+        ValuesSource valuesSource,
+        SearchContext context,
+        Aggregator parent,
+        double[] percents,
+        double compression,
+        boolean keyed,
+        DocValueFormat formatter,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
         super(name, valuesSource, context, parent, percents, compression, keyed, formatter, pipelineAggregators, metaData);
     }
 
@@ -56,8 +59,15 @@ class TDigestPercentileRanksAggregator extends AbstractTDigestPercentilesAggrega
 
     @Override
     public InternalAggregation buildEmptyAggregation() {
-        return new InternalTDigestPercentileRanks(name, keys, new TDigestState(compression), keyed,
-            formatter, pipelineAggregators(), metaData());
+        return new InternalTDigestPercentileRanks(
+            name,
+            keys,
+            new TDigestState(compression),
+            keyed,
+            formatter,
+            pipelineAggregators(),
+            metaData()
+        );
     }
 
     @Override

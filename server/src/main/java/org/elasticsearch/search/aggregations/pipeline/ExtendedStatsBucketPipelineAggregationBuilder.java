@@ -31,8 +31,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
-public class ExtendedStatsBucketPipelineAggregationBuilder
-        extends BucketMetricsPipelineAggregationBuilder<ExtendedStatsBucketPipelineAggregationBuilder> {
+public class ExtendedStatsBucketPipelineAggregationBuilder extends BucketMetricsPipelineAggregationBuilder<
+    ExtendedStatsBucketPipelineAggregationBuilder> {
     public static final String NAME = "extended_stats_bucket";
 
     private double sigma = 2.0;
@@ -80,13 +80,15 @@ public class ExtendedStatsBucketPipelineAggregationBuilder
     }
 
     @Override
-    public void doValidate(AggregatorFactory parent, Collection<AggregationBuilder> aggBuilders,
-            Collection<PipelineAggregationBuilder> pipelineAggregatorFactories) {
+    public void doValidate(
+        AggregatorFactory parent,
+        Collection<AggregationBuilder> aggBuilders,
+        Collection<PipelineAggregationBuilder> pipelineAggregatorFactories
+    ) {
         super.doValidate(parent, aggBuilders, pipelineAggregatorFactories);
 
-        if (sigma < 0.0 ) {
-            throw new IllegalStateException(ExtendedStatsBucketParser.SIGMA.getPreferredName()
-                    + " must be a non-negative double");
+        if (sigma < 0.0) {
+            throw new IllegalStateException(ExtendedStatsBucketParser.SIGMA.getPreferredName() + " must be a non-negative double");
         }
     }
 

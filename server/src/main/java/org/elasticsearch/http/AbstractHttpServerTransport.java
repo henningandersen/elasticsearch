@@ -86,8 +86,14 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
     private final Set<HttpChannel> httpChannels = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Set<HttpServerChannel> httpServerChannels = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    protected AbstractHttpServerTransport(Settings settings, NetworkService networkService, BigArrays bigArrays, ThreadPool threadPool,
-                                          NamedXContentRegistry xContentRegistry, Dispatcher dispatcher) {
+    protected AbstractHttpServerTransport(
+        Settings settings,
+        NetworkService networkService,
+        BigArrays bigArrays,
+        ThreadPool threadPool,
+        NamedXContentRegistry xContentRegistry,
+        Dispatcher dispatcher
+    ) {
         this.settings = settings;
         this.networkService = networkService;
         this.bigArrays = bigArrays;
@@ -99,8 +105,9 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
 
         // we can't make the network.bind_host a fallback since we already fall back to http.host hence the extra conditional here
         List<String> httpBindHost = SETTING_HTTP_BIND_HOST.get(settings);
-        this.bindHosts = (httpBindHost.isEmpty() ? NetworkService.GLOBAL_NETWORK_BIND_HOST_SETTING.get(settings) : httpBindHost)
-            .toArray(Strings.EMPTY_ARRAY);
+        this.bindHosts = (httpBindHost.isEmpty() ? NetworkService.GLOBAL_NETWORK_BIND_HOST_SETTING.get(settings) : httpBindHost).toArray(
+            Strings.EMPTY_ARRAY
+        );
         // we can't make the network.publish_host a fallback since we already fall back to http.host hence the extra conditional here
         List<String> httpPublishHost = SETTING_HTTP_PUBLISH_HOST.get(settings);
         this.publishHosts = (httpPublishHost.isEmpty() ? NetworkService.GLOBAL_NETWORK_PUBLISH_HOST_SETTING.get(settings) : httpPublishHost)
@@ -210,8 +217,7 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
     }
 
     @Override
-    protected void doClose() {
-    }
+    protected void doClose() {}
 
     /**
      * Called to tear down internal resources
@@ -244,9 +250,17 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
         }
 
         if (publishPort < 0) {
-            throw new BindHttpException("Failed to auto-resolve http publish port, multiple bound addresses " + boundAddresses +
-                " with distinct ports and none of them matched the publish address (" + publishInetAddress + "). " +
-                "Please specify a unique port by setting " + SETTING_HTTP_PORT.getKey() + " or " + SETTING_HTTP_PUBLISH_PORT.getKey());
+            throw new BindHttpException(
+                "Failed to auto-resolve http publish port, multiple bound addresses "
+                    + boundAddresses
+                    + " with distinct ports and none of them matched the publish address ("
+                    + publishInetAddress
+                    + "). "
+                    + "Please specify a unique port by setting "
+                    + SETTING_HTTP_PORT.getKey()
+                    + " or "
+                    + SETTING_HTTP_PUBLISH_PORT.getKey()
+            );
         }
         return publishPort;
     }
@@ -258,23 +272,40 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
             return;
         }
         if (NetworkExceptionHelper.isCloseConnectionException(e)) {
-            logger.trace(() -> new ParameterizedMessage(
-                "close connection exception caught while handling client http traffic, closing connection {}", channel), e);
+            logger.trace(
+                () -> new ParameterizedMessage(
+                    "close connection exception caught while handling client http traffic, closing connection {}",
+                    channel
+                ),
+                e
+            );
             CloseableChannel.closeChannel(channel);
         } else if (NetworkExceptionHelper.isConnectException(e)) {
-            logger.trace(() -> new ParameterizedMessage(
-                "connect exception caught while handling client http traffic, closing connection {}", channel), e);
+            logger.trace(
+                () -> new ParameterizedMessage(
+                    "connect exception caught while handling client http traffic, closing connection {}",
+                    channel
+                ),
+                e
+            );
             CloseableChannel.closeChannel(channel);
         } else if (e instanceof HttpReadTimeoutException) {
             logger.trace(() -> new ParameterizedMessage("http read timeout, closing connection {}", channel), e);
             CloseableChannel.closeChannel(channel);
         } else if (e instanceof CancelledKeyException) {
-            logger.trace(() -> new ParameterizedMessage(
-                "cancelled key exception caught while handling client http traffic, closing connection {}", channel), e);
+            logger.trace(
+                () -> new ParameterizedMessage(
+                    "cancelled key exception caught while handling client http traffic, closing connection {}",
+                    channel
+                ),
+                e
+            );
             CloseableChannel.closeChannel(channel);
         } else {
-            logger.warn(() -> new ParameterizedMessage(
-                "caught exception while handling client http traffic, closing connection {}", channel), e);
+            logger.warn(
+                () -> new ParameterizedMessage("caught exception while handling client http traffic, closing connection {}", channel),
+                e
+            );
             CloseableChannel.closeChannel(channel);
         }
     }

@@ -33,7 +33,7 @@ public class GeoShapeFieldTypeTests extends FieldTypeTestCase {
         addModifier(new FieldTypeTestCase.Modifier("orientation", true) {
             @Override
             public void modify(MappedFieldType ft) {
-                ((GeoShapeFieldType)ft).setOrientation(ShapeBuilder.Orientation.LEFT);
+                ((GeoShapeFieldType) ft).setOrientation(ShapeBuilder.Orientation.LEFT);
             }
         });
     }

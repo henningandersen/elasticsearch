@@ -30,7 +30,6 @@ import org.elasticsearch.index.fielddata.SortedNumericDoubleValues;
 import java.util.Collection;
 import java.util.Collections;
 
-
 /**
  * Specialization of {@link AtomicNumericFieldData} for floating-point numerics.
  */
@@ -79,7 +78,6 @@ abstract class AtomicDoubleFieldData implements AtomicNumericFieldData {
     }
 
     @Override
-    public void close() {
-    }
+    public void close() {}
 
 }

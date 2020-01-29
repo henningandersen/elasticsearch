@@ -121,11 +121,10 @@ final class Security {
         Policy.setPolicy(new ESPolicy(codebases, createPermissions(environment), getPluginPermissions(environment), filterBadDefaults));
 
         // enable security manager
-        final String[] classesThatCanExit =
-                new String[]{
-                        // SecureSM matches class names as regular expressions so we escape the $ that arises from the nested class name
-                        ElasticsearchUncaughtExceptionHandler.PrivilegedHaltAction.class.getName().replace("$", "\\$"),
-                        Command.class.getName()};
+        final String[] classesThatCanExit = new String[] {
+            // SecureSM matches class names as regular expressions so we escape the $ that arises from the nested class name
+            ElasticsearchUncaughtExceptionHandler.PrivilegedHaltAction.class.getName().replace("$", "\\$"),
+            Command.class.getName() };
         System.setSecurityManager(new SecureSM(classesThatCanExit));
 
         // do some basic tests
@@ -158,8 +157,8 @@ final class Security {
      * we look for matching plugins and set URLs to fit
      */
     @SuppressForbidden(reason = "proper use of URL")
-    static Map<String,Policy> getPluginPermissions(Environment environment) throws IOException, NoSuchAlgorithmException {
-        Map<String,Policy> map = new HashMap<>();
+    static Map<String, Policy> getPluginPermissions(Environment environment) throws IOException, NoSuchAlgorithmException {
+        Map<String, Policy> map = new HashMap<>();
         // collect up set of plugins and modules by listing directories.
         Set<Path> pluginsAndModules = new LinkedHashSet<>(PluginsService.findPluginDirs(environment.pluginsFile()));
         pluginsAndModules.addAll(PluginsService.findPluginDirs(environment.modulesFile()));
@@ -209,7 +208,7 @@ final class Security {
             List<String> propertiesSet = new ArrayList<>();
             try {
                 // set codebase properties
-                for (Map.Entry<String,URL> codebase : codebases.entrySet()) {
+                for (Map.Entry<String, URL> codebase : codebases.entrySet()) {
                     String name = codebase.getKey();
                     URL url = codebase.getValue();
 
@@ -222,15 +221,17 @@ final class Security {
                         propertiesSet.add(aliasProperty);
                         String previous = System.setProperty(aliasProperty, url.toString());
                         if (previous != null) {
-                            throw new IllegalStateException("codebase property already set: " + aliasProperty + " -> " + previous +
-                                                            ", cannot set to " + url.toString());
+                            throw new IllegalStateException(
+                                "codebase property already set: " + aliasProperty + " -> " + previous + ", cannot set to " + url.toString()
+                            );
                         }
                     }
                     propertiesSet.add(property);
                     String previous = System.setProperty(property, url.toString());
                     if (previous != null) {
-                        throw new IllegalStateException("codebase property already set: " + property + " -> " + previous +
-                                                        ", cannot set to " + url.toString());
+                        throw new IllegalStateException(
+                            "codebase property already set: " + property + " -> " + previous + ", cannot set to " + url.toString()
+                        );
                     }
                 }
                 return Policy.getInstance("JavaPolicy", new URIParameter(policyFile.toURI()));
@@ -289,8 +290,12 @@ final class Security {
         addDirectoryPath(policy, "java.io.tmpdir", environment.tmpFile(), "read,readlink,write,delete");
         addDirectoryPath(policy, Environment.PATH_LOGS_SETTING.getKey(), environment.logsFile(), "read,readlink,write,delete");
         if (environment.sharedDataFile() != null) {
-            addDirectoryPath(policy, Environment.PATH_SHARED_DATA_SETTING.getKey(), environment.sharedDataFile(),
-                "read,readlink,write,delete");
+            addDirectoryPath(
+                policy,
+                Environment.PATH_SHARED_DATA_SETTING.getKey(),
+                environment.sharedDataFile(),
+                "read,readlink,write,delete"
+            );
         }
         final Set<Path> dataFilesPaths = new HashSet<>();
         for (Path path : environment.dataFiles()) {

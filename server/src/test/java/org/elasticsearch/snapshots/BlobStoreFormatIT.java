@@ -84,7 +84,7 @@ public class BlobStoreFormatIT extends AbstractSnapshotIntegTestCase {
                     String currentFieldName = parser.currentName();
                     token = parser.nextToken();
                     if (token.isValue()) {
-                        if ("text" .equals(currentFieldName)) {
+                        if ("text".equals(currentFieldName)) {
                             text = parser.text();
                         } else {
                             throw new ElasticsearchParseException("unexpected field [{}]", currentFieldName);
@@ -110,10 +110,20 @@ public class BlobStoreFormatIT extends AbstractSnapshotIntegTestCase {
     public void testBlobStoreOperations() throws IOException {
         BlobStore blobStore = createTestBlobStore();
         BlobContainer blobContainer = blobStore.blobContainer(BlobPath.cleanPath());
-        ChecksumBlobStoreFormat<BlobObj> checksumSMILE = new ChecksumBlobStoreFormat<>(BLOB_CODEC, "%s", BlobObj::fromXContent,
-            xContentRegistry(), false);
-        ChecksumBlobStoreFormat<BlobObj> checksumSMILECompressed = new ChecksumBlobStoreFormat<>(BLOB_CODEC, "%s", BlobObj::fromXContent,
-            xContentRegistry(), true);
+        ChecksumBlobStoreFormat<BlobObj> checksumSMILE = new ChecksumBlobStoreFormat<>(
+            BLOB_CODEC,
+            "%s",
+            BlobObj::fromXContent,
+            xContentRegistry(),
+            false
+        );
+        ChecksumBlobStoreFormat<BlobObj> checksumSMILECompressed = new ChecksumBlobStoreFormat<>(
+            BLOB_CODEC,
+            "%s",
+            BlobObj::fromXContent,
+            xContentRegistry(),
+            true
+        );
 
         // Write blobs in different formats
         checksumSMILE.write(new BlobObj("checksum smile"), blobContainer, "check-smile", true);
@@ -131,10 +141,20 @@ public class BlobStoreFormatIT extends AbstractSnapshotIntegTestCase {
         for (int i = 0; i < randomIntBetween(100, 300); i++) {
             veryRedundantText.append("Blah ");
         }
-        ChecksumBlobStoreFormat<BlobObj> checksumFormat = new ChecksumBlobStoreFormat<>(BLOB_CODEC, "%s", BlobObj::fromXContent,
-            xContentRegistry(), false);
-        ChecksumBlobStoreFormat<BlobObj> checksumFormatComp = new ChecksumBlobStoreFormat<>(BLOB_CODEC, "%s", BlobObj::fromXContent,
-            xContentRegistry(), true);
+        ChecksumBlobStoreFormat<BlobObj> checksumFormat = new ChecksumBlobStoreFormat<>(
+            BLOB_CODEC,
+            "%s",
+            BlobObj::fromXContent,
+            xContentRegistry(),
+            false
+        );
+        ChecksumBlobStoreFormat<BlobObj> checksumFormatComp = new ChecksumBlobStoreFormat<>(
+            BLOB_CODEC,
+            "%s",
+            BlobObj::fromXContent,
+            xContentRegistry(),
+            true
+        );
         BlobObj blobObj = new BlobObj(veryRedundantText.toString());
         checksumFormatComp.write(blobObj, blobContainer, "blob-comp", true);
         checksumFormat.write(blobObj, blobContainer, "blob-not-comp", true);
@@ -148,8 +168,13 @@ public class BlobStoreFormatIT extends AbstractSnapshotIntegTestCase {
         BlobContainer blobContainer = blobStore.blobContainer(BlobPath.cleanPath());
         String testString = randomAlphaOfLength(randomInt(10000));
         BlobObj blobObj = new BlobObj(testString);
-        ChecksumBlobStoreFormat<BlobObj> checksumFormat = new ChecksumBlobStoreFormat<>(BLOB_CODEC, "%s", BlobObj::fromXContent,
-            xContentRegistry(), randomBoolean());
+        ChecksumBlobStoreFormat<BlobObj> checksumFormat = new ChecksumBlobStoreFormat<>(
+            BLOB_CODEC,
+            "%s",
+            BlobObj::fromXContent,
+            xContentRegistry(),
+            randomBoolean()
+        );
         checksumFormat.write(blobObj, blobContainer, "test-path", true);
         assertEquals(checksumFormat.read(blobContainer, "test-path").getText(), testString);
         randomCorruption(blobContainer, "test-path");
@@ -183,8 +208,13 @@ public class BlobStoreFormatIT extends AbstractSnapshotIntegTestCase {
                 return builder;
             }
         };
-        final ChecksumBlobStoreFormat<BlobObj> checksumFormat = new ChecksumBlobStoreFormat<>(BLOB_CODEC, "%s", BlobObj::fromXContent,
-            xContentRegistry(), randomBoolean());
+        final ChecksumBlobStoreFormat<BlobObj> checksumFormat = new ChecksumBlobStoreFormat<>(
+            BLOB_CODEC,
+            "%s",
+            BlobObj::fromXContent,
+            xContentRegistry(),
+            randomBoolean()
+        );
         ExecutorService threadPool = Executors.newFixedThreadPool(1);
         try {
             Future<Void> future = threadPool.submit(new Callable<Void>() {
@@ -208,8 +238,13 @@ public class BlobStoreFormatIT extends AbstractSnapshotIntegTestCase {
     public void testAtomicWriteFailures() throws Exception {
         final String name = randomAlphaOfLength(10);
         final BlobObj blobObj = new BlobObj("test");
-        final ChecksumBlobStoreFormat<BlobObj> checksumFormat = new ChecksumBlobStoreFormat<>(BLOB_CODEC, "%s", BlobObj::fromXContent,
-            xContentRegistry(), randomBoolean());
+        final ChecksumBlobStoreFormat<BlobObj> checksumFormat = new ChecksumBlobStoreFormat<>(
+            BLOB_CODEC,
+            "%s",
+            BlobObj::fromXContent,
+            xContentRegistry(),
+            randomBoolean()
+        );
 
         final BlobStore blobStore = createTestBlobStore();
         final BlobContainer blobContainer = blobStore.blobContainer(BlobPath.cleanPath());

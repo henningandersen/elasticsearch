@@ -73,23 +73,37 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         assertNoRunningTasks();
     }
 
-    public static class WaitForPersistentTaskFuture<Params extends PersistentTaskParams>
-            extends PlainActionFuture<PersistentTask<Params>>
-            implements WaitForPersistentTaskListener<Params> {
-    }
+    public static class WaitForPersistentTaskFuture<Params extends PersistentTaskParams> extends PlainActionFuture<PersistentTask<Params>>
+        implements
+            WaitForPersistentTaskListener<Params> {}
 
     public void testPersistentActionFailure() throws Exception {
         PersistentTasksService persistentTasksService = internalCluster().getInstance(PersistentTasksService.class);
         PlainActionFuture<PersistentTask<TestParams>> future = new PlainActionFuture<>();
         persistentTasksService.sendStartRequest(UUIDs.base64UUID(), TestPersistentTasksExecutor.NAME, new TestParams("Blah"), future);
         long allocationId = future.get().getAllocationId();
-        assertBusy(() -> {
-            // Wait for the task to start
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get()
-                    .getTasks().size(), equalTo(1));
-        });
-        TaskInfo firstRunningTask = client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]")
-                .get().getTasks().get(0);
+        assertBusy(
+            () -> {
+                // Wait for the task to start
+                assertThat(
+                    client().admin()
+                        .cluster()
+                        .prepareListTasks()
+                        .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+                        .get()
+                        .getTasks()
+                        .size(),
+                    equalTo(1)
+                );
+            }
+        );
+        TaskInfo firstRunningTask = client().admin()
+            .cluster()
+            .prepareListTasks()
+            .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+            .get()
+            .getTasks()
+            .get(0);
         logger.info("Found running task with id {} and parent {}", firstRunningTask.getId(), firstRunningTask.getParentTaskId());
         // Verifying parent
         assertThat(firstRunningTask.getParentTaskId().getId(), equalTo(allocationId));
@@ -97,15 +111,21 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
 
         logger.info("Failing the running task");
         // Fail the running task and make sure it restarts properly
-        assertThat(new TestTasksRequestBuilder(client()).setOperation("fail").setTaskId(firstRunningTask.getTaskId())
-                .get().getTasks().size(), equalTo(1));
+        assertThat(
+            new TestTasksRequestBuilder(client()).setOperation("fail").setTaskId(firstRunningTask.getTaskId()).get().getTasks().size(),
+            equalTo(1)
+        );
 
         logger.info("Waiting for persistent task with id {} to disappear", firstRunningTask.getId());
-        assertBusy(() -> {
-            // Wait for the task to disappear completely
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get().getTasks(),
-                    empty());
-        });
+        assertBusy(
+            () -> {
+                // Wait for the task to disappear completely
+                assertThat(
+                    client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get().getTasks(),
+                    empty()
+                );
+            }
+        );
     }
 
     public void testPersistentActionCompletion() throws Exception {
@@ -114,13 +134,29 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         String taskId = UUIDs.base64UUID();
         persistentTasksService.sendStartRequest(taskId, TestPersistentTasksExecutor.NAME, new TestParams("Blah"), future);
         long allocationId = future.get().getAllocationId();
-        assertBusy(() -> {
-            // Wait for the task to start
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get()
-                    .getTasks().size(), equalTo(1));
-        });
-        TaskInfo firstRunningTask = client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]")
-                .setDetailed(true).get().getTasks().get(0);
+        assertBusy(
+            () -> {
+                // Wait for the task to start
+                assertThat(
+                    client().admin()
+                        .cluster()
+                        .prepareListTasks()
+                        .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+                        .get()
+                        .getTasks()
+                        .size(),
+                    equalTo(1)
+                );
+            }
+        );
+        TaskInfo firstRunningTask = client().admin()
+            .cluster()
+            .prepareListTasks()
+            .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+            .setDetailed(true)
+            .get()
+            .getTasks()
+            .get(0);
         logger.info("Found running task with id {} and parent {}", firstRunningTask.getId(), firstRunningTask.getParentTaskId());
         // Verifying parent and description
         assertThat(firstRunningTask.getParentTaskId().getId(), equalTo(allocationId));
@@ -129,13 +165,22 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
 
         if (randomBoolean()) {
             logger.info("Simulating errant completion notification");
-            //try sending completion request with incorrect allocation id
+            // try sending completion request with incorrect allocation id
             PlainActionFuture<PersistentTask<?>> failedCompletionNotificationFuture = new PlainActionFuture<>();
             persistentTasksService.sendCompletionRequest(taskId, Long.MAX_VALUE, null, failedCompletionNotificationFuture);
             assertThrows(failedCompletionNotificationFuture, ResourceNotFoundException.class);
             // Make sure that the task is still running
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]")
-                    .setDetailed(true).get().getTasks().size(), equalTo(1));
+            assertThat(
+                client().admin()
+                    .cluster()
+                    .prepareListTasks()
+                    .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+                    .setDetailed(true)
+                    .get()
+                    .getTasks()
+                    .size(),
+                equalTo(1)
+            );
         }
 
         stopOrCancelTask(firstRunningTask.getTaskId());
@@ -154,19 +199,28 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         String newNodeId = internalCluster().clusterService(newNode).localNode().getId();
         waitForTaskToStart();
 
-        TaskInfo taskInfo = client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]")
-                .get().getTasks().get(0);
+        TaskInfo taskInfo = client().admin()
+            .cluster()
+            .prepareListTasks()
+            .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+            .get()
+            .getTasks()
+            .get(0);
 
         // Verifying the task runs on the new node
         assertThat(taskInfo.getTaskId().getNodeId(), equalTo(newNodeId));
 
         internalCluster().stopRandomNode(settings -> "test".equals(settings.get("node.attr.test_attr")));
 
-        assertBusy(() -> {
-            // Wait for the task to disappear completely
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get().getTasks(),
-                    empty());
-        });
+        assertBusy(
+            () -> {
+                // Wait for the task to disappear completely
+                assertThat(
+                    client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get().getTasks(),
+                    empty()
+                );
+            }
+        );
 
         // Remove the persistent task
         PlainActionFuture<PersistentTask<?>> removeFuture = new PlainActionFuture<>();
@@ -175,8 +229,10 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
     }
 
     public void testPersistentActionWithNonClusterStateCondition() throws Exception {
-        PersistentTasksClusterService persistentTasksClusterService =
-            internalCluster().getInstance(PersistentTasksClusterService.class, internalCluster().getMasterName());
+        PersistentTasksClusterService persistentTasksClusterService = internalCluster().getInstance(
+            PersistentTasksClusterService.class,
+            internalCluster().getMasterName()
+        );
         // Speed up rechecks to a rate that is quicker than what settings would allow
         persistentTasksClusterService.setRecheckInterval(TimeValue.timeValueMillis(1));
 
@@ -188,14 +244,21 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         persistentTasksService.sendStartRequest(UUIDs.base64UUID(), TestPersistentTasksExecutor.NAME, testParams, future);
         String taskId = future.get().getId();
 
-        assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get().getTasks(),
-            empty());
+        assertThat(
+            client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get().getTasks(),
+            empty()
+        );
 
         TestPersistentTasksExecutor.setNonClusterStateCondition(true);
 
         waitForTaskToStart();
-        TaskInfo taskInfo = client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]")
-            .get().getTasks().get(0);
+        TaskInfo taskInfo = client().admin()
+            .cluster()
+            .prepareListTasks()
+            .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+            .get()
+            .getTasks()
+            .get(0);
 
         // Verifying the task can now be assigned
         assertThat(taskInfo.getTaskId().getNodeId(), notNullValue());
@@ -212,11 +275,18 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         persistentTasksService.sendStartRequest(UUIDs.base64UUID(), TestPersistentTasksExecutor.NAME, new TestParams("Blah"), future);
         String taskId = future.get().getId();
         waitForTaskToStart();
-        TaskInfo firstRunningTask = client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]")
-                .get().getTasks().get(0);
+        TaskInfo firstRunningTask = client().admin()
+            .cluster()
+            .prepareListTasks()
+            .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+            .get()
+            .getTasks()
+            .get(0);
 
-        PersistentTasksCustomMetaData tasksInProgress = internalCluster().clusterService().state().getMetaData()
-                .custom(PersistentTasksCustomMetaData.TYPE);
+        PersistentTasksCustomMetaData tasksInProgress = internalCluster().clusterService()
+            .state()
+            .getMetaData()
+            .custom(PersistentTasksCustomMetaData.TYPE);
         assertThat(tasksInProgress.tasks().size(), equalTo(1));
         assertThat(tasksInProgress.tasks().iterator().next().getState(), nullValue());
 
@@ -224,28 +294,41 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         for (int i = 0; i < numberOfUpdates; i++) {
             logger.info("Updating the task states");
             // Complete the running task and make sure it finishes properly
-            assertThat(new TestTasksRequestBuilder(client()).setOperation("update_status").setTaskId(firstRunningTask.getTaskId())
-                    .get().getTasks().size(), equalTo(1));
+            assertThat(
+                new TestTasksRequestBuilder(client()).setOperation("update_status")
+                    .setTaskId(firstRunningTask.getTaskId())
+                    .get()
+                    .getTasks()
+                    .size(),
+                equalTo(1)
+            );
 
             int finalI = i;
             WaitForPersistentTaskFuture<?> future1 = new WaitForPersistentTaskFuture<>();
-            persistentTasksService.waitForPersistentTaskCondition(taskId,
-                    task -> task != null && task.getState() != null && task.getState().toString() != null &&
-                            task.getState().toString().equals("{\"phase\":\"phase " + (finalI + 1) + "\"}"),
-                    TimeValue.timeValueSeconds(10), future1);
+            persistentTasksService.waitForPersistentTaskCondition(
+                taskId,
+                task -> task != null
+                    && task.getState() != null
+                    && task.getState().toString() != null
+                    && task.getState().toString().equals("{\"phase\":\"phase " + (finalI + 1) + "\"}"),
+                TimeValue.timeValueSeconds(10),
+                future1
+            );
             assertThat(future1.get().getId(), equalTo(taskId));
         }
 
         WaitForPersistentTaskFuture<?> future1 = new WaitForPersistentTaskFuture<>();
-        persistentTasksService.waitForPersistentTaskCondition(taskId,
-                task -> false, TimeValue.timeValueMillis(10), future1);
+        persistentTasksService.waitForPersistentTaskCondition(taskId, task -> false, TimeValue.timeValueMillis(10), future1);
 
         assertThrows(future1, IllegalStateException.class, "timed out after 10ms");
 
         PlainActionFuture<PersistentTask<?>> failedUpdateFuture = new PlainActionFuture<>();
         persistentTasksService.sendUpdateStateRequest(taskId, -2, new State("should fail"), failedUpdateFuture);
-        assertThrows(failedUpdateFuture, ResourceNotFoundException.class, "the task with id " + taskId +
-                " and allocation id -2 doesn't exist");
+        assertThrows(
+            failedUpdateFuture,
+            ResourceNotFoundException.class,
+            "the task with id " + taskId + " and allocation id -2 doesn't exist"
+        );
 
         // Wait for the task to disappear
         WaitForPersistentTaskFuture<?> future2 = new WaitForPersistentTaskFuture<>();
@@ -253,8 +336,10 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
 
         logger.info("Completing the running task");
         // Complete the running task and make sure it finishes properly
-        assertThat(new TestTasksRequestBuilder(client()).setOperation("finish").setTaskId(firstRunningTask.getTaskId())
-                .get().getTasks().size(), equalTo(1));
+        assertThat(
+            new TestTasksRequestBuilder(client()).setOperation("finish").setTaskId(firstRunningTask.getTaskId()).get().getTasks().size(),
+            equalTo(1)
+        );
 
         assertThat(future2.get(), nullValue());
     }
@@ -270,31 +355,54 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         persistentTasksService.sendStartRequest(taskId, TestPersistentTasksExecutor.NAME, new TestParams("Blah"), future2);
         assertThrows(future2, ResourceAlreadyExistsException.class);
 
-        assertBusy(() -> {
-            // Wait for the task to start
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get()
-                    .getTasks().size(), equalTo(1));
-        });
+        assertBusy(
+            () -> {
+                // Wait for the task to start
+                assertThat(
+                    client().admin()
+                        .cluster()
+                        .prepareListTasks()
+                        .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+                        .get()
+                        .getTasks()
+                        .size(),
+                    equalTo(1)
+                );
+            }
+        );
 
-        TaskInfo firstRunningTask = client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]")
-                .get().getTasks().get(0);
+        TaskInfo firstRunningTask = client().admin()
+            .cluster()
+            .prepareListTasks()
+            .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+            .get()
+            .getTasks()
+            .get(0);
 
         logger.info("Completing the running task");
         // Fail the running task and make sure it restarts properly
-        assertThat(new TestTasksRequestBuilder(client()).setOperation("finish").setTaskId(firstRunningTask.getTaskId())
-                .get().getTasks().size(), equalTo(1));
+        assertThat(
+            new TestTasksRequestBuilder(client()).setOperation("finish").setTaskId(firstRunningTask.getTaskId()).get().getTasks().size(),
+            equalTo(1)
+        );
 
         logger.info("Waiting for persistent task with id {} to disappear", firstRunningTask.getId());
-        assertBusy(() -> {
-            // Wait for the task to disappear completely
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get().getTasks(),
-                    empty());
-        });
+        assertBusy(
+            () -> {
+                // Wait for the task to disappear completely
+                assertThat(
+                    client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get().getTasks(),
+                    empty()
+                );
+            }
+        );
     }
 
     public void testUnassignRunningPersistentTask() throws Exception {
-        PersistentTasksClusterService persistentTasksClusterService =
-            internalCluster().getInstance(PersistentTasksClusterService.class, internalCluster().getMasterName());
+        PersistentTasksClusterService persistentTasksClusterService = internalCluster().getInstance(
+            PersistentTasksClusterService.class,
+            internalCluster().getMasterName()
+        );
         // Speed up rechecks to a rate that is quicker than what settings would allow
         persistentTasksClusterService.setRecheckInterval(TimeValue.timeValueMillis(1));
         PersistentTasksService persistentTasksService = internalCluster().getInstance(PersistentTasksService.class);
@@ -315,10 +423,7 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         // Disallow re-assignment after it is unallocated to verify master and node state
         TestPersistentTasksExecutor.setNonClusterStateCondition(false);
 
-        persistentTasksClusterService.unassignPersistentTask(taskId,
-            task.getAllocationId() + 1,
-            "unassignment test",
-            unassignmentFuture);
+        persistentTasksClusterService.unassignPersistentTask(taskId, task.getAllocationId() + 1, "unassignment test", unassignmentFuture);
         PersistentTask<?> unassignedTask = unassignmentFuture.get();
         assertThat(unassignedTask.getId(), equalTo(taskId));
         assertThat(unassignedTask.getAssignment().getExplanation(), equalTo("unassignment test"));
@@ -326,7 +431,11 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
 
         assertBusy(() -> {
             // Verify that the task is NOT running on the node
-            List<TaskInfo> tasks = client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get()
+            List<TaskInfo> tasks = client().admin()
+                .cluster()
+                .prepareListTasks()
+                .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+                .get()
                 .getTasks();
             assertThat(tasks.size(), equalTo(0));
 
@@ -343,8 +452,13 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         assertClusterStateHasTask(taskId);
 
         // Complete or cancel the running task
-        TaskInfo taskInfo = client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]")
-            .get().getTasks().get(0);
+        TaskInfo taskInfo = client().admin()
+            .cluster()
+            .prepareListTasks()
+            .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+            .get()
+            .getTasks()
+            .get(0);
         stopOrCancelTask(taskInfo.getTaskId());
     }
 
@@ -352,32 +466,38 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
         if (randomBoolean()) {
             logger.info("Completing the running task");
             // Complete the running task and make sure it finishes properly
-            assertThat(new TestTasksRequestBuilder(client()).setOperation("finish").setTaskId(taskId)
-                    .get().getTasks().size(), equalTo(1));
+            assertThat(new TestTasksRequestBuilder(client()).setOperation("finish").setTaskId(taskId).get().getTasks().size(), equalTo(1));
 
         } else {
             logger.info("Cancelling the running task");
             // Cancel the running task and make sure it finishes properly
-            assertThat(client().admin().cluster().prepareCancelTasks().setTaskId(taskId)
-                    .get().getTasks().size(), equalTo(1));
+            assertThat(client().admin().cluster().prepareCancelTasks().setTaskId(taskId).get().getTasks().size(), equalTo(1));
         }
     }
 
     private static void waitForTaskToStart() throws Exception {
-        assertBusy(() -> {
-            // Wait for the task to start
-            assertThat(client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get().getTasks()
-                .size(), equalTo(1));
-        });
+        assertBusy(
+            () -> {
+                // Wait for the task to start
+                assertThat(
+                    client().admin()
+                        .cluster()
+                        .prepareListTasks()
+                        .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+                        .get()
+                        .getTasks()
+                        .size(),
+                    equalTo(1)
+                );
+            }
+        );
     }
 
     private static void assertClusterStateHasTask(String taskId) {
-        Collection<PersistentTask<?>> clusterTasks = ((PersistentTasksCustomMetaData) internalCluster()
-            .clusterService()
+        Collection<PersistentTask<?>> clusterTasks = ((PersistentTasksCustomMetaData) internalCluster().clusterService()
             .state()
             .getMetaData()
-            .custom(PersistentTasksCustomMetaData.TYPE))
-            .tasks();
+            .custom(PersistentTasksCustomMetaData.TYPE)).tasks();
         assertThat(clusterTasks, hasSize(1));
         assertThat(clusterTasks.iterator().next().getId(), equalTo(taskId));
     }
@@ -385,14 +505,23 @@ public class PersistentTasksExecutorIT extends ESIntegTestCase {
     private void assertNoRunningTasks() throws Exception {
         assertBusy(() -> {
             // Wait for the task to finish
-            List<TaskInfo> tasks = client().admin().cluster().prepareListTasks().setActions(TestPersistentTasksExecutor.NAME + "[c]").get()
-                    .getTasks();
+            List<TaskInfo> tasks = client().admin()
+                .cluster()
+                .prepareListTasks()
+                .setActions(TestPersistentTasksExecutor.NAME + "[c]")
+                .get()
+                .getTasks();
             logger.info("Found {} tasks", tasks.size());
             assertThat(tasks.size(), equalTo(0));
 
             // Make sure the task is removed from the cluster state
-            assertThat(((PersistentTasksCustomMetaData) internalCluster().clusterService().state().getMetaData()
-                    .custom(PersistentTasksCustomMetaData.TYPE)).tasks(), empty());
+            assertThat(
+                ((PersistentTasksCustomMetaData) internalCluster().clusterService()
+                    .state()
+                    .getMetaData()
+                    .custom(PersistentTasksCustomMetaData.TYPE)).tasks(),
+                empty()
+            );
         });
     }
 

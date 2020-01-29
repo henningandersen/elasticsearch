@@ -54,8 +54,12 @@ public class InternalFiltersTests extends InternalMultiBucketAggregationTestCase
     }
 
     @Override
-    protected InternalFilters createTestInstance(String name, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData,
-            InternalAggregations aggregations) {
+    protected InternalFilters createTestInstance(
+        String name,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        InternalAggregations aggregations
+    ) {
         final List<InternalFilters.InternalBucket> buckets = new ArrayList<>();
         for (int i = 0; i < keys.size(); ++i) {
             String key = keys.get(i);
@@ -70,14 +74,15 @@ public class InternalFiltersTests extends InternalMultiBucketAggregationTestCase
         final Map<String, Long> expectedCounts = new TreeMap<>();
         for (InternalFilters input : inputs) {
             for (InternalFilters.InternalBucket bucket : input.getBuckets()) {
-                expectedCounts.compute(bucket.getKeyAsString(),
-                        (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount());
+                expectedCounts.compute(
+                    bucket.getKeyAsString(),
+                    (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount()
+                );
             }
         }
         final Map<String, Long> actualCounts = new TreeMap<>();
         for (InternalFilters.InternalBucket bucket : reduced.getBuckets()) {
-            actualCounts.compute(bucket.getKeyAsString(),
-                    (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount());
+            actualCounts.compute(bucket.getKeyAsString(), (key, oldValue) -> (oldValue == null ? 0 : oldValue) + bucket.getDocCount());
         }
         assertEquals(expectedCounts, actualCounts);
     }
@@ -99,22 +104,22 @@ public class InternalFiltersTests extends InternalMultiBucketAggregationTestCase
         List<PipelineAggregator> pipelineAggregators = instance.pipelineAggregators();
         Map<String, Object> metaData = instance.getMetaData();
         switch (between(0, 2)) {
-        case 0:
-            name += randomAlphaOfLength(5);
-            break;
-        case 1:
-            buckets = new ArrayList<>(buckets);
-            buckets.add(new InternalFilters.InternalBucket("test", randomIntBetween(0, 1000), InternalAggregations.EMPTY, keyed));
-            break;
-        case 2:
-        default:
-            if (metaData == null) {
-                metaData = new HashMap<>(1);
-            } else {
-                metaData = new HashMap<>(instance.getMetaData());
-            }
-            metaData.put(randomAlphaOfLength(15), randomInt());
-            break;
+            case 0:
+                name += randomAlphaOfLength(5);
+                break;
+            case 1:
+                buckets = new ArrayList<>(buckets);
+                buckets.add(new InternalFilters.InternalBucket("test", randomIntBetween(0, 1000), InternalAggregations.EMPTY, keyed));
+                break;
+            case 2:
+            default:
+                if (metaData == null) {
+                    metaData = new HashMap<>(1);
+                } else {
+                    metaData = new HashMap<>(instance.getMetaData());
+                }
+                metaData.put(randomAlphaOfLength(15), randomInt());
+                break;
         }
         return new InternalFilters(name, buckets, keyed, pipelineAggregators, metaData);
     }

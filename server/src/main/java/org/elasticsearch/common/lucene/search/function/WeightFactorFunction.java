@@ -60,8 +60,11 @@ public class WeightFactorFunction extends ScoreFunction {
             public Explanation explainScore(int docId, Explanation subQueryScore) throws IOException {
                 Explanation functionExplanation = leafFunction.explainScore(docId, subQueryScore);
                 return Explanation.match(
-                        functionExplanation.getValue().floatValue() * (float) getWeight(), "product of:",
-                        functionExplanation, explainWeight());
+                    functionExplanation.getValue().floatValue() * (float) getWeight(),
+                    "product of:",
+                    functionExplanation,
+                    explainWeight()
+                );
             }
         };
     }
@@ -87,8 +90,7 @@ public class WeightFactorFunction extends ScoreFunction {
     @Override
     protected boolean doEquals(ScoreFunction other) {
         WeightFactorFunction weightFactorFunction = (WeightFactorFunction) other;
-        return this.weight == weightFactorFunction.weight &&
-                Objects.equals(this.scoreFunction, weightFactorFunction.scoreFunction);
+        return this.weight == weightFactorFunction.weight && Objects.equals(this.scoreFunction, weightFactorFunction.scoreFunction);
     }
 
     @Override

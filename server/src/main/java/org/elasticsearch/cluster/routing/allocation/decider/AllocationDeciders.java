@@ -59,9 +59,9 @@ public class AllocationDeciders extends AllocationDecider {
                     ret.add(decision);
                 }
             } else if (decision != Decision.ALWAYS
-                        && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
-                ret.add(decision);
-            }
+                && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
+                    ret.add(decision);
+                }
         }
         return ret;
     }
@@ -77,8 +77,12 @@ public class AllocationDeciders extends AllocationDecider {
             // short track if a NO is returned.
             if (decision == Decision.NO) {
                 if (logger.isTraceEnabled()) {
-                    logger.trace("Can not allocate [{}] on node [{}] due to [{}]",
-                        shardRouting, node.node(), allocationDecider.getClass().getSimpleName());
+                    logger.trace(
+                        "Can not allocate [{}] on node [{}] due to [{}]",
+                        shardRouting,
+                        node.node(),
+                        allocationDecider.getClass().getSimpleName()
+                    );
                 }
                 // short circuit only if debugging is not enabled
                 if (!allocation.debugDecision()) {
@@ -87,11 +91,11 @@ public class AllocationDeciders extends AllocationDecider {
                     ret.add(decision);
                 }
             } else if (decision != Decision.ALWAYS
-                        && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
-                // the assumption is that a decider that returns the static instance Decision#ALWAYS
-                // does not really implements canAllocate
-                ret.add(decision);
-            }
+                && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
+                    // the assumption is that a decider that returns the static instance Decision#ALWAYS
+                    // does not really implements canAllocate
+                    ret.add(decision);
+                }
         }
         return ret;
     }
@@ -110,8 +114,12 @@ public class AllocationDeciders extends AllocationDecider {
             // short track if a NO is returned.
             if (decision == Decision.NO) {
                 if (logger.isTraceEnabled()) {
-                    logger.trace("Shard [{}] can not remain on node [{}] due to [{}]",
-                        shardRouting, node.nodeId(), allocationDecider.getClass().getSimpleName());
+                    logger.trace(
+                        "Shard [{}] can not remain on node [{}] due to [{}]",
+                        shardRouting,
+                        node.nodeId(),
+                        allocationDecider.getClass().getSimpleName()
+                    );
                 }
                 if (!allocation.debugDecision()) {
                     return decision;
@@ -119,9 +127,9 @@ public class AllocationDeciders extends AllocationDecider {
                     ret.add(decision);
                 }
             } else if (decision != Decision.ALWAYS
-                        && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
-                ret.add(decision);
-            }
+                && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
+                    ret.add(decision);
+                }
         }
         return ret;
     }
@@ -139,9 +147,9 @@ public class AllocationDeciders extends AllocationDecider {
                     ret.add(decision);
                 }
             } else if (decision != Decision.ALWAYS
-                        && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
-                ret.add(decision);
-            }
+                && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
+                    ret.add(decision);
+                }
         }
         return ret;
     }
@@ -160,8 +168,8 @@ public class AllocationDeciders extends AllocationDecider {
                 }
             } else if (decision != Decision.ALWAYS
                 && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
-                ret.add(decision);
-            }
+                    ret.add(decision);
+                }
         }
         return ret;
     }
@@ -179,9 +187,9 @@ public class AllocationDeciders extends AllocationDecider {
                     ret.add(decision);
                 }
             } else if (decision != Decision.ALWAYS
-                        && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
-                ret.add(decision);
-            }
+                && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
+                    ret.add(decision);
+                }
         }
         return ret;
     }
@@ -199,9 +207,9 @@ public class AllocationDeciders extends AllocationDecider {
                     ret.add(decision);
                 }
             } else if (decision != Decision.ALWAYS
-                        && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
-                ret.add(decision);
-            }
+                && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
+                    ret.add(decision);
+                }
         }
         return ret;
     }
@@ -219,9 +227,9 @@ public class AllocationDeciders extends AllocationDecider {
                     ret.add(decision);
                 }
             } else if (decision != Decision.ALWAYS
-                        && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
-                ret.add(decision);
-            }
+                && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
+                    ret.add(decision);
+                }
         }
         return ret;
     }
@@ -239,8 +247,12 @@ public class AllocationDeciders extends AllocationDecider {
             // short track if a NO is returned.
             if (decision == Decision.NO) {
                 if (logger.isTraceEnabled()) {
-                    logger.trace("Shard [{}] can not be forcefully allocated to node [{}] due to [{}].",
-                        shardRouting.shardId(), node.nodeId(), decider.getClass().getSimpleName());
+                    logger.trace(
+                        "Shard [{}] can not be forcefully allocated to node [{}] due to [{}].",
+                        shardRouting.shardId(),
+                        node.nodeId(),
+                        decider.getClass().getSimpleName()
+                    );
                 }
                 if (!allocation.debugDecision()) {
                     return decision;
@@ -248,9 +260,9 @@ public class AllocationDeciders extends AllocationDecider {
                     ret.add(decision);
                 }
             } else if (decision != Decision.ALWAYS
-                        && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
-                ret.add(decision);
-            }
+                && (allocation.getDebugMode() != EXCLUDE_YES_DECISIONS || decision.type() != Decision.Type.YES)) {
+                    ret.add(decision);
+                }
         }
         return ret;
     }

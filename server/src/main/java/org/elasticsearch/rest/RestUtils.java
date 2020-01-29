@@ -189,9 +189,8 @@ public class RestUtils {
                     final char c2 = decodeHexNibble(s.charAt(++i));
                     if (c == Character.MAX_VALUE || c2 == Character.MAX_VALUE) {
                         throw new IllegalArgumentException(
-                            "invalid escape sequence `%" + s.charAt(i - 1)
-                                + s.charAt(i) + "' at index " + (i - 2)
-                                + " of: " + s);
+                            "invalid escape sequence `%" + s.charAt(i - 1) + s.charAt(i) + "' at index " + (i - 2) + " of: " + s
+                        );
                     }
                     c = (char) (c * 16 + c2);
                     // Fall through.
@@ -233,10 +232,10 @@ public class RestUtils {
             return null;
         }
         int len = corsSetting.length();
-        boolean isRegex = len > 2 &&  corsSetting.startsWith("/") && corsSetting.endsWith("/");
+        boolean isRegex = len > 2 && corsSetting.startsWith("/") && corsSetting.endsWith("/");
 
         if (isRegex) {
-            return Pattern.compile(corsSetting.substring(1, corsSetting.length()-1));
+            return Pattern.compile(corsSetting.substring(1, corsSetting.length() - 1));
         }
 
         return null;
@@ -253,9 +252,6 @@ public class RestUtils {
         if (Strings.isNullOrEmpty(corsSetting)) {
             return new String[0];
         }
-        return Arrays.asList(corsSetting.split(","))
-                     .stream()
-                     .map(String::trim)
-                     .toArray(size -> new String[size]);
+        return Arrays.asList(corsSetting.split(",")).stream().map(String::trim).toArray(size -> new String[size]);
     }
 }

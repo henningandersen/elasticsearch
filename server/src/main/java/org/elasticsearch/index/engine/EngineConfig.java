@@ -110,7 +110,8 @@ public final class EngineConfig {
             default:
                 if (Codec.availableCodecs().contains(s) == false) { // we don't error message the not officially supported ones
                     throw new IllegalArgumentException(
-                        "unknown value for [index.codec] must be one of [default, best_compression] but was: " + s);
+                        "unknown value for [index.codec] must be one of [default, best_compression] but was: " + s
+                    );
                 }
                 return s;
         }
@@ -121,18 +122,31 @@ public final class EngineConfig {
     /**
      * Creates a new {@link org.elasticsearch.index.engine.EngineConfig}
      */
-    public EngineConfig(ShardId shardId, String allocationId, ThreadPool threadPool,
-                        IndexSettings indexSettings, Engine.Warmer warmer, Store store,
-                        MergePolicy mergePolicy, Analyzer analyzer,
-                        Similarity similarity, CodecService codecService, Engine.EventListener eventListener,
-                        QueryCache queryCache, QueryCachingPolicy queryCachingPolicy,
-                        TranslogConfig translogConfig, TimeValue flushMergesAfter,
-                        List<ReferenceManager.RefreshListener> externalRefreshListener,
-                        List<ReferenceManager.RefreshListener> internalRefreshListener, Sort indexSort,
-                        CircuitBreakerService circuitBreakerService, LongSupplier globalCheckpointSupplier,
-                        Supplier<RetentionLeases> retentionLeasesSupplier,
-                        LongSupplier primaryTermSupplier,
-                        TombstoneDocSupplier tombstoneDocSupplier) {
+    public EngineConfig(
+        ShardId shardId,
+        String allocationId,
+        ThreadPool threadPool,
+        IndexSettings indexSettings,
+        Engine.Warmer warmer,
+        Store store,
+        MergePolicy mergePolicy,
+        Analyzer analyzer,
+        Similarity similarity,
+        CodecService codecService,
+        Engine.EventListener eventListener,
+        QueryCache queryCache,
+        QueryCachingPolicy queryCachingPolicy,
+        TranslogConfig translogConfig,
+        TimeValue flushMergesAfter,
+        List<ReferenceManager.RefreshListener> externalRefreshListener,
+        List<ReferenceManager.RefreshListener> internalRefreshListener,
+        Sort indexSort,
+        CircuitBreakerService circuitBreakerService,
+        LongSupplier globalCheckpointSupplier,
+        Supplier<RetentionLeases> retentionLeasesSupplier,
+        LongSupplier primaryTermSupplier,
+        TombstoneDocSupplier tombstoneDocSupplier
+    ) {
         this.shardId = shardId;
         this.allocationId = allocationId;
         this.indexSettings = indexSettings;
@@ -274,7 +288,9 @@ public final class EngineConfig {
     /**
      * Returns the engines shard ID
      */
-    public ShardId getShardId() { return shardId; }
+    public ShardId getShardId() {
+        return shardId;
+    }
 
     /**
      * Returns the allocation ID for the shard.
@@ -325,7 +341,9 @@ public final class EngineConfig {
      * should be automatically flushed. This is used to free up transient disk usage of potentially large segments that
      * are written after the engine became inactive from an indexing perspective.
      */
-    public TimeValue getFlushMergesAfter() { return flushMergesAfter; }
+    public TimeValue getFlushMergesAfter() {
+        return flushMergesAfter;
+    }
 
     /**
      * The refresh listeners to add to Lucene for externally visible refreshes
@@ -337,7 +355,9 @@ public final class EngineConfig {
     /**
      * The refresh listeners to add to Lucene for internally visible refreshes. These listeners will also be invoked on external refreshes
      */
-    public List<ReferenceManager.RefreshListener> getInternalRefreshListener() { return internalRefreshListener;}
+    public List<ReferenceManager.RefreshListener> getInternalRefreshListener() {
+        return internalRefreshListener;
+    }
 
     /**
      * Return the sort order of this index, or null if the index has no sort.

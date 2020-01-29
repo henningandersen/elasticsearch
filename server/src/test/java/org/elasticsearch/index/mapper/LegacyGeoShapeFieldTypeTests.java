@@ -36,37 +36,37 @@ public class LegacyGeoShapeFieldTypeTests extends FieldTypeTestCase {
         addModifier(new Modifier("tree", false) {
             @Override
             public void modify(MappedFieldType ft) {
-                ((GeoShapeFieldType)ft).setTree("geohash");
+                ((GeoShapeFieldType) ft).setTree("geohash");
             }
         });
         addModifier(new Modifier("strategy", false) {
             @Override
             public void modify(MappedFieldType ft) {
-                ((GeoShapeFieldType)ft).setStrategy(SpatialStrategy.TERM);
+                ((GeoShapeFieldType) ft).setStrategy(SpatialStrategy.TERM);
             }
         });
         addModifier(new Modifier("tree_levels", false) {
             @Override
             public void modify(MappedFieldType ft) {
-                ((GeoShapeFieldType)ft).setTreeLevels(10);
+                ((GeoShapeFieldType) ft).setTreeLevels(10);
             }
         });
         addModifier(new Modifier("precision", false) {
             @Override
             public void modify(MappedFieldType ft) {
-                ((GeoShapeFieldType)ft).setPrecisionInMeters(20);
+                ((GeoShapeFieldType) ft).setPrecisionInMeters(20);
             }
         });
         addModifier(new Modifier("distance_error_pct", true) {
             @Override
             public void modify(MappedFieldType ft) {
-                ((GeoShapeFieldType)ft).setDefaultDistanceErrorPct(0.5);
+                ((GeoShapeFieldType) ft).setDefaultDistanceErrorPct(0.5);
             }
         });
         addModifier(new Modifier("orientation", true) {
             @Override
             public void modify(MappedFieldType ft) {
-                ((GeoShapeFieldType)ft).setOrientation(ShapeBuilder.Orientation.LEFT);
+                ((GeoShapeFieldType) ft).setOrientation(ShapeBuilder.Orientation.LEFT);
             }
         });
     }

@@ -58,8 +58,8 @@ public class VersionFieldMapper extends MetadataFieldMapper {
 
     public static class TypeParser implements MetadataFieldMapper.TypeParser {
         @Override
-        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node,
-                                                       ParserContext parserContext) throws MapperParsingException {
+        public MetadataFieldMapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             throw new MapperParsingException(NAME + " is not configurable");
         }
 
@@ -72,8 +72,7 @@ public class VersionFieldMapper extends MetadataFieldMapper {
 
     static final class VersionFieldType extends MappedFieldType {
 
-        VersionFieldType() {
-        }
+        VersionFieldType() {}
 
         protected VersionFieldType(VersionFieldType ref) {
             super(ref);

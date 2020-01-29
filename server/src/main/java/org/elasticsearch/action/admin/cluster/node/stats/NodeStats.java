@@ -110,14 +110,23 @@ public class NodeStats extends BaseNodeResponse implements ToXContentFragment {
         adaptiveSelectionStats = in.readOptionalWriteable(AdaptiveSelectionStats::new);
     }
 
-    public NodeStats(DiscoveryNode node, long timestamp, @Nullable NodeIndicesStats indices,
-                     @Nullable OsStats os, @Nullable ProcessStats process, @Nullable JvmStats jvm, @Nullable ThreadPoolStats threadPool,
-                     @Nullable FsInfo fs, @Nullable TransportStats transport, @Nullable HttpStats http,
-                     @Nullable AllCircuitBreakerStats breaker,
-                     @Nullable ScriptStats scriptStats,
-                     @Nullable DiscoveryStats discoveryStats,
-                     @Nullable IngestStats ingestStats,
-                     @Nullable AdaptiveSelectionStats adaptiveSelectionStats) {
+    public NodeStats(
+        DiscoveryNode node,
+        long timestamp,
+        @Nullable NodeIndicesStats indices,
+        @Nullable OsStats os,
+        @Nullable ProcessStats process,
+        @Nullable JvmStats jvm,
+        @Nullable ThreadPoolStats threadPool,
+        @Nullable FsInfo fs,
+        @Nullable TransportStats transport,
+        @Nullable HttpStats http,
+        @Nullable AllCircuitBreakerStats breaker,
+        @Nullable ScriptStats scriptStats,
+        @Nullable DiscoveryStats discoveryStats,
+        @Nullable IngestStats ingestStats,
+        @Nullable AdaptiveSelectionStats adaptiveSelectionStats
+    ) {
         super(node);
         this.timestamp = timestamp;
         this.indices = indices;

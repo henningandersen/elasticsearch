@@ -64,9 +64,19 @@ class AutoDateHistogramAggregator extends DeferableBucketAggregator {
     private int targetBuckets;
     private MergingBucketsDeferringCollector deferringCollector;
 
-    AutoDateHistogramAggregator(String name, AggregatorFactories factories, int numBuckets, RoundingInfo[] roundingInfos,
-            @Nullable ValuesSource.Numeric valuesSource, DocValueFormat formatter, SearchContext aggregationContext, Aggregator parent,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    AutoDateHistogramAggregator(
+        String name,
+        AggregatorFactories factories,
+        int numBuckets,
+        RoundingInfo[] roundingInfos,
+        @Nullable ValuesSource.Numeric valuesSource,
+        DocValueFormat formatter,
+        SearchContext aggregationContext,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
 
         super(name, factories, aggregationContext, parent, pipelineAggregators, metaData);
         this.targetBuckets = numBuckets;
@@ -98,8 +108,7 @@ class AutoDateHistogramAggregator extends DeferableBucketAggregator {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         if (valuesSource == null) {
             return LeafBucketCollector.NO_OP_COLLECTOR;
         }
@@ -126,7 +135,7 @@ class AutoDateHistogramAggregator extends DeferableBucketAggregator {
                         } else {
                             collectBucket(sub, doc, bucketOrd);
                             while (roundingIdx < roundingInfos.length - 1
-                                    && bucketOrds.size() > (targetBuckets * roundingInfos[roundingIdx].getMaximumInnerInterval())) {
+                                && bucketOrds.size() > (targetBuckets * roundingInfos[roundingIdx].getMaximumInnerInterval())) {
                                 increaseRounding();
                             }
                         }
@@ -182,19 +191,41 @@ class AutoDateHistogramAggregator extends DeferableBucketAggregator {
         CollectionUtil.introSort(buckets, BucketOrder.key(true).comparator(this));
 
         // value source will be null for unmapped fields
-        InternalAutoDateHistogram.BucketInfo emptyBucketInfo = new InternalAutoDateHistogram.BucketInfo(roundingInfos, roundingIdx,
-                buildEmptySubAggregations());
+        InternalAutoDateHistogram.BucketInfo emptyBucketInfo = new InternalAutoDateHistogram.BucketInfo(
+            roundingInfos,
+            roundingIdx,
+            buildEmptySubAggregations()
+        );
 
-        return new InternalAutoDateHistogram(name, buckets, targetBuckets, emptyBucketInfo,
-            formatter, pipelineAggregators(), metaData(), 1);
+        return new InternalAutoDateHistogram(
+            name,
+            buckets,
+            targetBuckets,
+            emptyBucketInfo,
+            formatter,
+            pipelineAggregators(),
+            metaData(),
+            1
+        );
     }
 
     @Override
     public InternalAggregation buildEmptyAggregation() {
-        InternalAutoDateHistogram.BucketInfo emptyBucketInfo = new InternalAutoDateHistogram.BucketInfo(roundingInfos, roundingIdx,
-                buildEmptySubAggregations());
-        return new InternalAutoDateHistogram(name, Collections.emptyList(), targetBuckets, emptyBucketInfo, formatter,
-                pipelineAggregators(), metaData(), 1);
+        InternalAutoDateHistogram.BucketInfo emptyBucketInfo = new InternalAutoDateHistogram.BucketInfo(
+            roundingInfos,
+            roundingIdx,
+            buildEmptySubAggregations()
+        );
+        return new InternalAutoDateHistogram(
+            name,
+            Collections.emptyList(),
+            targetBuckets,
+            emptyBucketInfo,
+            formatter,
+            pipelineAggregators(),
+            metaData(),
+            1
+        );
     }
 
     @Override

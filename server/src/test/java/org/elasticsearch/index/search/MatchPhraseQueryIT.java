@@ -46,7 +46,8 @@ public class MatchPhraseQueryIT extends ESIntegTestCase {
             Settings.builder()
                 .put(indexSettings())
                 .put("index.analysis.analyzer.standard_stopwords.type", "standard")
-                .putList("index.analysis.analyzer.standard_stopwords.stopwords", "of", "the", "who"));
+                .putList("index.analysis.analyzer.standard_stopwords.stopwords", "of", "the", "who")
+        );
         assertAcked(createIndexRequest);
         ensureGreen();
     }
@@ -55,8 +56,7 @@ public class MatchPhraseQueryIT extends ESIntegTestCase {
         List<IndexRequestBuilder> indexRequests = getIndexRequests();
         indexRandom(true, false, indexRequests);
 
-        MatchPhraseQueryBuilder baseQuery = matchPhraseQuery("name", "the who")
-            .analyzer("standard_stopwords");
+        MatchPhraseQueryBuilder baseQuery = matchPhraseQuery("name", "the who").analyzer("standard_stopwords");
 
         MatchPhraseQueryBuilder matchNoneQuery = baseQuery.zeroTermsQuery(ZeroTermsQuery.NONE);
         SearchResponse matchNoneResponse = client().prepareSearch(INDEX).setQuery(matchNoneQuery).get();

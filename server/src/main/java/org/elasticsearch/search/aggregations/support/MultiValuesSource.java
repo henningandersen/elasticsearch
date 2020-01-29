@@ -30,12 +30,14 @@ import java.util.Objects;
 /**
  * Class to encapsulate a set of ValuesSource objects labeled by field name
  */
-public abstract class MultiValuesSource <VS extends ValuesSource> {
+public abstract class MultiValuesSource<VS extends ValuesSource> {
     protected Map<String, VS> values;
 
     public static class NumericMultiValuesSource extends MultiValuesSource<ValuesSource.Numeric> {
-        public NumericMultiValuesSource(Map<String, ValuesSourceConfig<ValuesSource.Numeric>> valuesSourceConfigs,
-                                        QueryShardContext context) {
+        public NumericMultiValuesSource(
+            Map<String, ValuesSourceConfig<ValuesSource.Numeric>> valuesSourceConfigs,
+            QueryShardContext context
+        ) {
             values = new HashMap<>(valuesSourceConfigs.size());
             for (Map.Entry<String, ValuesSourceConfig<ValuesSource.Numeric>> entry : valuesSourceConfigs.entrySet()) {
                 values.put(entry.getKey(), entry.getValue().toValuesSource(context));

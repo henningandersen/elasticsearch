@@ -85,10 +85,11 @@ public class IngestDocumentTests extends ESTestCase {
         assertThat(ingestDocument.getFieldValue("_source.int", Integer.class), equalTo(123));
         assertThat(ingestDocument.getFieldValue("_index", String.class), equalTo("index"));
         assertThat(ingestDocument.getFieldValue("_id", String.class), equalTo("id"));
-        assertThat(ingestDocument.getFieldValue("_ingest.timestamp", ZonedDateTime.class),
-            both(notNullValue()).and(not(equalTo(BOGUS_TIMESTAMP))));
-        assertThat(ingestDocument.getFieldValue("_source._ingest.timestamp", ZonedDateTime.class),
-            equalTo(BOGUS_TIMESTAMP));
+        assertThat(
+            ingestDocument.getFieldValue("_ingest.timestamp", ZonedDateTime.class),
+            both(notNullValue()).and(not(equalTo(BOGUS_TIMESTAMP)))
+        );
+        assertThat(ingestDocument.getFieldValue("_source._ingest.timestamp", ZonedDateTime.class), equalTo(BOGUS_TIMESTAMP));
     }
 
     public void testGetSourceObject() {
@@ -149,8 +150,10 @@ public class IngestDocumentTests extends ESTestCase {
         try {
             ingestDocument.getFieldValue("foo.foo.bar", String.class);
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage(),
-                    equalTo("cannot resolve [foo] from object of type [java.lang.String] as part of path [foo.foo.bar]"));
+            assertThat(
+                e.getMessage(),
+                equalTo("cannot resolve [foo] from object of type [java.lang.String] as part of path [foo.foo.bar]")
+            );
         }
     }
 
@@ -368,8 +371,10 @@ public class IngestDocumentTests extends ESTestCase {
             ingestDocument.setFieldValue("fizz.buzz.new", "bar");
             fail("add field should have failed");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage(),
-                    equalTo("cannot set [new] with parent object of type [java.lang.String] as part of path [fizz.buzz.new]"));
+            assertThat(
+                e.getMessage(),
+                equalTo("cannot set [new] with parent object of type [java.lang.String] as part of path [fizz.buzz.new]")
+            );
         }
     }
 
@@ -402,7 +407,7 @@ public class IngestDocumentTests extends ESTestCase {
     }
 
     public void testSetIngestSourceObject() {
-        //test that we don't strip out the _source prefix when _ingest is used
+        // test that we don't strip out the _source prefix when _ingest is used
         ingestDocument.setFieldValue("_ingest._source", "value");
         assertThat(ingestDocument.getIngestMetadata().get("_source"), equalTo("value"));
     }
@@ -804,8 +809,10 @@ public class IngestDocumentTests extends ESTestCase {
             ingestDocument.removeField("foo.foo.bar");
             fail("remove field should have failed");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage(),
-                    equalTo("cannot resolve [foo] from object of type [java.lang.String] as part of path [foo.foo.bar]"));
+            assertThat(
+                e.getMessage(),
+                equalTo("cannot resolve [foo] from object of type [java.lang.String] as part of path [foo.foo.bar]")
+            );
         }
     }
 
@@ -959,8 +966,10 @@ public class IngestDocumentTests extends ESTestCase {
             assertThat(ingestDocument, equalTo(otherIngestDocument));
             assertThat(otherIngestDocument, equalTo(ingestDocument));
             assertThat(ingestDocument.hashCode(), equalTo(otherIngestDocument.hashCode()));
-            IngestDocument thirdIngestDocument = new IngestDocument(Collections.unmodifiableMap(sourceAndMetadata),
-                    Collections.unmodifiableMap(ingestMetadata));
+            IngestDocument thirdIngestDocument = new IngestDocument(
+                Collections.unmodifiableMap(sourceAndMetadata),
+                Collections.unmodifiableMap(ingestMetadata)
+            );
             assertThat(thirdIngestDocument, equalTo(ingestDocument));
             assertThat(ingestDocument, equalTo(thirdIngestDocument));
             assertThat(ingestDocument.hashCode(), equalTo(thirdIngestDocument.hashCode()));
@@ -995,10 +1004,8 @@ public class IngestDocumentTests extends ESTestCase {
         IngestDocument original = new IngestDocument(sourceAndMetadata, new HashMap<>());
         IngestDocument copy = new IngestDocument(original);
 
-        assertThat(copy.getSourceAndMetadata().get("beforeClockChange"),
-            equalTo(original.getSourceAndMetadata().get("beforeClockChange")));
-        assertThat(copy.getSourceAndMetadata().get("afterClockChange"),
-            equalTo(original.getSourceAndMetadata().get("afterClockChange")));
+        assertThat(copy.getSourceAndMetadata().get("beforeClockChange"), equalTo(original.getSourceAndMetadata().get("beforeClockChange")));
+        assertThat(copy.getSourceAndMetadata().get("afterClockChange"), equalTo(original.getSourceAndMetadata().get("afterClockChange")));
     }
 
     public void testSetInvalidSourceField() throws Exception {
@@ -1013,8 +1020,10 @@ public class IngestDocumentTests extends ESTestCase {
         } catch (IllegalArgumentException e) {
             String expectedClassName = randomObject.getClass().getName();
 
-            assertThat(e.getMessage(),
-                    containsString("field [source_field] of unknown type [" + expectedClassName + "], must be string or byte array"));
+            assertThat(
+                e.getMessage(),
+                containsString("field [source_field] of unknown type [" + expectedClassName + "], must be string or byte array")
+            );
         }
     }
 

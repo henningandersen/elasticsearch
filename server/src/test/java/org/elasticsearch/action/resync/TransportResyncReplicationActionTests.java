@@ -95,17 +95,37 @@ public class TransportResyncReplicationActionTests extends ESTestCase {
             final String indexName = randomAlphaOfLength(5);
             setState(clusterService, state(indexName, true, ShardRoutingState.STARTED));
 
-            setState(clusterService,
-                ClusterState.builder(clusterService.state()).blocks(ClusterBlocks.builder()
-                    .addGlobalBlock(NoMasterBlockService.NO_MASTER_BLOCK_ALL)
-                    .addIndexBlock(indexName, IndexMetaData.INDEX_WRITE_BLOCK)));
+            setState(
+                clusterService,
+                ClusterState.builder(clusterService.state())
+                    .blocks(
+                        ClusterBlocks.builder()
+                            .addGlobalBlock(NoMasterBlockService.NO_MASTER_BLOCK_ALL)
+                            .addIndexBlock(indexName, IndexMetaData.INDEX_WRITE_BLOCK)
+                    )
+            );
 
-            try (MockNioTransport transport = new MockNioTransport(Settings.EMPTY, Version.CURRENT, threadPool,
-                new NetworkService(emptyList()), PageCacheRecycler.NON_RECYCLING_INSTANCE, new NamedWriteableRegistry(emptyList()),
-                new NoneCircuitBreakerService())) {
+            try (
+                MockNioTransport transport = new MockNioTransport(
+                    Settings.EMPTY,
+                    Version.CURRENT,
+                    threadPool,
+                    new NetworkService(emptyList()),
+                    PageCacheRecycler.NON_RECYCLING_INSTANCE,
+                    new NamedWriteableRegistry(emptyList()),
+                    new NoneCircuitBreakerService()
+                )
+            ) {
 
-                final MockTransportService transportService = new MockTransportService(Settings.EMPTY, transport, threadPool,
-                    NOOP_TRANSPORT_INTERCEPTOR, x -> clusterService.localNode(), null, Collections.emptySet());
+                final MockTransportService transportService = new MockTransportService(
+                    Settings.EMPTY,
+                    transport,
+                    threadPool,
+                    NOOP_TRANSPORT_INTERCEPTOR,
+                    x -> clusterService.localNode(),
+                    null,
+                    Collections.emptySet()
+                );
                 transportService.start();
                 transportService.acceptIncomingRequests();
                 final ShardStateAction shardStateAction = new ShardStateAction(clusterService, transportService, null, null, threadPool);
@@ -132,9 +152,12 @@ public class TransportResyncReplicationActionTests extends ESTestCase {
                     return null;
                 }).when(indexShard).acquirePrimaryOperationPermit(any(ActionListener.class), anyString(), anyObject());
                 when(indexShard.getReplicationGroup()).thenReturn(
-                    new ReplicationGroup(shardRoutingTable,
+                    new ReplicationGroup(
+                        shardRoutingTable,
                         clusterService.state().metaData().index(index).inSyncAllocationIds(shardId.id()),
-                        shardRoutingTable.getAllAllocationIds()));
+                        shardRoutingTable.getAllAllocationIds()
+                    )
+                );
 
                 final IndexService indexService = mock(IndexService.class);
                 when(indexService.getShard(eq(shardId.id()))).thenReturn(indexShard);
@@ -142,8 +165,15 @@ public class TransportResyncReplicationActionTests extends ESTestCase {
                 final IndicesService indexServices = mock(IndicesService.class);
                 when(indexServices.indexServiceSafe(eq(index))).thenReturn(indexService);
 
-                final TransportResyncReplicationAction action = new TransportResyncReplicationAction(Settings.EMPTY, transportService,
-                    clusterService, indexServices, threadPool, shardStateAction, new ActionFilters(new HashSet<>()));
+                final TransportResyncReplicationAction action = new TransportResyncReplicationAction(
+                    Settings.EMPTY,
+                    transportService,
+                    clusterService,
+                    indexServices,
+                    threadPool,
+                    shardStateAction,
+                    new ActionFilters(new HashSet<>())
+                );
 
                 assertThat(action.globalBlockLevel(), nullValue());
                 assertThat(action.indexBlockLevel(), nullValue());
@@ -152,8 +182,12 @@ public class TransportResyncReplicationActionTests extends ESTestCase {
                 when(task.getId()).thenReturn(randomNonNegativeLong());
 
                 final byte[] bytes = "{}".getBytes(Charset.forName("UTF-8"));
-                final ResyncReplicationRequest request = new ResyncReplicationRequest(shardId, 42L, 100,
-                    new Translog.Operation[]{new Translog.Index("id", 0, primaryTerm, 0L, bytes, null, -1)});
+                final ResyncReplicationRequest request = new ResyncReplicationRequest(
+                    shardId,
+                    42L,
+                    100,
+                    new Translog.Operation[] { new Translog.Index("id", 0, primaryTerm, 0L, bytes, null, -1) }
+                );
 
                 final PlainActionFuture<ResyncReplicationResponse> listener = new PlainActionFuture<>();
                 action.sync(request, task, allocationId, primaryTerm, listener);

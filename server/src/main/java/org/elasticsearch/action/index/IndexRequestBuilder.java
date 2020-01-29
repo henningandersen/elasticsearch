@@ -35,7 +35,8 @@ import java.util.Map;
  * An index document action request builder.
  */
 public class IndexRequestBuilder extends ReplicationRequestBuilder<IndexRequest, IndexResponse, IndexRequestBuilder>
-        implements WriteRequestBuilder<IndexRequestBuilder> {
+    implements
+        WriteRequestBuilder<IndexRequestBuilder> {
 
     public IndexRequestBuilder(ElasticsearchClient client, IndexAction action) {
         super(client, action, new IndexRequest());

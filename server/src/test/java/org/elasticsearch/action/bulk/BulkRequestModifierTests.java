@@ -108,15 +108,13 @@ public class BulkRequestModifierTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Exception e) {
-            }
+            public void onFailure(Exception e) {}
         });
 
         List<BulkItemResponse> originalResponses = new ArrayList<>();
         for (DocWriteRequest<?> actionRequest : bulkRequest.requests()) {
             IndexRequest indexRequest = (IndexRequest) actionRequest;
-            IndexResponse indexResponse = new IndexResponse(new ShardId("index", "_na_", 0),
-                                                               indexRequest.id(), 1, 17, 1, true);
+            IndexResponse indexResponse = new IndexResponse(new ShardId("index", "_na_", 0), indexRequest.id(), 1, 17, 1, true);
             originalResponses.add(new BulkItemResponse(Integer.parseInt(indexRequest.id()), indexRequest.opType(), indexResponse));
         }
         bulkResponseListener.onResponse(new BulkResponse(originalResponses.toArray(new BulkItemResponse[originalResponses.size()]), 0));
@@ -155,8 +153,7 @@ public class BulkRequestModifierTests extends ESTestCase {
         }
 
         @Override
-        public void onFailure(Exception e) {
-        }
+        public void onFailure(Exception e) {}
 
         public BulkResponse getResponse() {
             return response;

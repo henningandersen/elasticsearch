@@ -50,7 +50,9 @@ public class AllocationServiceTests extends ESTestCase {
 
     public void testFirstListElementsToCommaDelimitedStringReportsFirstElementsIfLong() {
         List<String> strings = IntStream.range(0, between(0, 100))
-            .mapToObj(i -> randomAlphaOfLength(between(6, 10))).distinct().collect(Collectors.toList());
+            .mapToObj(i -> randomAlphaOfLength(between(6, 10)))
+            .distinct()
+            .collect(Collectors.toList());
         final String abbreviated = AllocationService.firstListElementsToCommaDelimitedString(strings, Function.identity(), false);
         for (int i = 0; i < strings.size(); i++) {
             if (i < 10) {

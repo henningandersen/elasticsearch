@@ -74,8 +74,7 @@ public class CorsHandler {
     public static final String ACCESS_CONTROL_REQUEST_METHOD = "access-control-request-method";
     public static final String ACCESS_CONTROL_ALLOW_ORIGIN = "access-control-allow-origin";
 
-    private CorsHandler() {
-    }
+    private CorsHandler() {}
 
     public static class Config {
 
@@ -138,16 +137,24 @@ public class CorsHandler {
 
         @Override
         public String toString() {
-            return "Config{" +
-                "enabled=" + enabled +
-                ", origins=" + origins +
-                ", pattern=" + pattern +
-                ", anyOrigin=" + anyOrigin +
-                ", credentialsAllowed=" + credentialsAllowed +
-                ", allowedRequestMethods=" + allowedRequestMethods +
-                ", allowedRequestHeaders=" + allowedRequestHeaders +
-                ", maxAge=" + maxAge +
-                '}';
+            return "Config{"
+                + "enabled="
+                + enabled
+                + ", origins="
+                + origins
+                + ", pattern="
+                + pattern
+                + ", anyOrigin="
+                + anyOrigin
+                + ", credentialsAllowed="
+                + credentialsAllowed
+                + ", allowedRequestMethods="
+                + allowedRequestMethods
+                + ", allowedRequestHeaders="
+                + allowedRequestHeaders
+                + ", maxAge="
+                + maxAge
+                + '}';
         }
 
         private static class Builder {
@@ -195,7 +202,6 @@ public class CorsHandler {
                 this.allowCredentials = true;
                 return this;
             }
-
 
             public Builder allowedRequestMethods(RestRequest.Method[] methods) {
                 requestMethods.addAll(Arrays.asList(methods));

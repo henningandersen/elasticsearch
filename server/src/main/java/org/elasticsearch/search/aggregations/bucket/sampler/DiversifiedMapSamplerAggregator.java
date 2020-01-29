@@ -48,9 +48,18 @@ public class DiversifiedMapSamplerAggregator extends SamplerAggregator {
     private int maxDocsPerValue;
     private BytesRefHash bucketOrds;
 
-    DiversifiedMapSamplerAggregator(String name, int shardSize, AggregatorFactories factories,
-            SearchContext context, Aggregator parent, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData,
-            ValuesSource valuesSource, int maxDocsPerValue) throws IOException {
+    DiversifiedMapSamplerAggregator(
+        String name,
+        int shardSize,
+        AggregatorFactories factories,
+        SearchContext context,
+        Aggregator parent,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData,
+        ValuesSource valuesSource,
+        int maxDocsPerValue
+    )
+        throws IOException {
         super(name, shardSize, factories, context, parent, pipelineAggregators, metaData);
         this.valuesSource = valuesSource;
         this.maxDocsPerValue = maxDocsPerValue;
@@ -119,8 +128,7 @@ public class DiversifiedMapSamplerAggregator extends SamplerAggregator {
                         docID = target;
                         if (values.advanceExact(target)) {
                             if (values.docValueCount() > 1) {
-                                throw new IllegalArgumentException(
-                                        "Sample diversifying key must be a single valued-field");
+                                throw new IllegalArgumentException("Sample diversifying key must be a single valued-field");
                             }
                             return true;
                         } else {

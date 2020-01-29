@@ -33,8 +33,9 @@ import static java.util.Collections.emptySet;
 public class DiscoveryNodeTests extends ESTestCase {
 
     public void testDiscoveryNodeIsCreatedWithHostFromInetAddress() throws Exception {
-        InetAddress inetAddress = randomBoolean() ? InetAddress.getByName("192.0.2.1") :
-            InetAddress.getByAddress("name1", new byte[] { (byte) 192, (byte) 168, (byte) 0, (byte) 1});
+        InetAddress inetAddress = randomBoolean()
+            ? InetAddress.getByName("192.0.2.1")
+            : InetAddress.getByAddress("name1", new byte[] { (byte) 192, (byte) 168, (byte) 0, (byte) 1 });
         TransportAddress transportAddress = new TransportAddress(inetAddress, randomIntBetween(0, 65535));
         DiscoveryNode node = new DiscoveryNode("name1", "id1", transportAddress, emptyMap(), emptySet(), Version.CURRENT);
         assertEquals(transportAddress.address().getHostString(), node.getHostName());
@@ -42,7 +43,7 @@ public class DiscoveryNodeTests extends ESTestCase {
     }
 
     public void testDiscoveryNodeSerializationKeepsHost() throws Exception {
-        InetAddress inetAddress = InetAddress.getByAddress("name1", new byte[] { (byte) 192, (byte) 168, (byte) 0, (byte) 1});
+        InetAddress inetAddress = InetAddress.getByAddress("name1", new byte[] { (byte) 192, (byte) 168, (byte) 0, (byte) 1 });
         TransportAddress transportAddress = new TransportAddress(inetAddress, randomIntBetween(0, 65535));
         DiscoveryNode node = new DiscoveryNode("name1", "id1", transportAddress, emptyMap(), emptySet(), Version.CURRENT);
 

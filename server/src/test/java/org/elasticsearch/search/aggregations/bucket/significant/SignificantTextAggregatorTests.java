@@ -58,9 +58,7 @@ public class SignificantTextAggregatorTests extends AggregatorTestCase {
      */
     @Override
     protected Map<String, MappedFieldType> getFieldAliases(MappedFieldType... fieldTypes) {
-        return Arrays.stream(fieldTypes).collect(Collectors.toMap(
-            ft -> ft.name() + "-alias",
-            Function.identity()));
+        return Arrays.stream(fieldTypes).collect(Collectors.toMap(ft -> ft.name() + "-alias", Function.identity()));
     }
 
     /**
@@ -78,11 +76,10 @@ public class SignificantTextAggregatorTests extends AggregatorTestCase {
             indexDocuments(w, textFieldType);
 
             SignificantTextAggregationBuilder sigAgg = new SignificantTextAggregationBuilder("sig_text", "text").filterDuplicateText(true);
-            if(randomBoolean()){
-                sigAgg.sourceFieldNames(Arrays.asList(new String [] {"json_only_field"}));
+            if (randomBoolean()) {
+                sigAgg.sourceFieldNames(Arrays.asList(new String[] { "json_only_field" }));
             }
-            SamplerAggregationBuilder aggBuilder = new SamplerAggregationBuilder("sampler")
-                    .subAggregation(sigAgg);
+            SamplerAggregationBuilder aggBuilder = new SamplerAggregationBuilder("sampler").subAggregation(sigAgg);
 
             try (IndexReader reader = DirectoryReader.open(w)) {
                 assertEquals("test expects a single segment", 1, reader.leaves().size());
@@ -126,13 +123,11 @@ public class SignificantTextAggregatorTests extends AggregatorTestCase {
         try (Directory dir = newDirectory(); IndexWriter w = new IndexWriter(dir, indexWriterConfig)) {
             indexDocuments(w, textFieldType);
 
-            SignificantTextAggregationBuilder agg = significantText("sig_text", "text")
-                .filterDuplicateText(true);
-            SignificantTextAggregationBuilder aliasAgg = significantText("sig_text", "text-alias")
-                .filterDuplicateText(true);
+            SignificantTextAggregationBuilder agg = significantText("sig_text", "text").filterDuplicateText(true);
+            SignificantTextAggregationBuilder aliasAgg = significantText("sig_text", "text-alias").filterDuplicateText(true);
 
             if (randomBoolean()) {
-                List<String> sourceFieldNames = Arrays.asList(new String [] {"json_only_field"});
+                List<String> sourceFieldNames = Arrays.asList(new String[] { "json_only_field" });
                 agg.sourceFieldNames(sourceFieldNames);
                 aliasAgg.sourceFieldNames(sourceFieldNames);
             }
@@ -145,8 +140,12 @@ public class SignificantTextAggregatorTests extends AggregatorTestCase {
                 SamplerAggregationBuilder aliasSamplerAgg = sampler("sampler").subAggregation(aliasAgg);
 
                 InternalSampler sampler = searchAndReduce(searcher, new TermQuery(new Term("text", "odd")), samplerAgg, textFieldType);
-                InternalSampler aliasSampler = searchAndReduce(searcher, new TermQuery(new Term("text", "odd")),
-                    aliasSamplerAgg, textFieldType);
+                InternalSampler aliasSampler = searchAndReduce(
+                    searcher,
+                    new TermQuery(new Term("text", "odd")),
+                    aliasSamplerAgg,
+                    textFieldType
+                );
 
                 SignificantTerms terms = sampler.getAggregations().get("sig_text");
                 SignificantTerms aliasTerms = aliasSampler.getAggregations().get("sig_text");
@@ -178,9 +177,7 @@ public class SignificantTextAggregatorTests extends AggregatorTestCase {
             }
 
             doc.add(new Field("text", text.toString(), textFieldType));
-            String json ="{ \"text\" : \"" + text.toString() + "\","+
-                " \"json_only_field\" : \"" + text.toString() + "\"" +
-                " }";
+            String json = "{ \"text\" : \"" + text.toString() + "\"," + " \"json_only_field\" : \"" + text.toString() + "\"" + " }";
             doc.add(new StoredField("_source", new BytesRef(json)));
             writer.addDocument(doc);
         }
@@ -201,13 +198,13 @@ public class SignificantTextAggregatorTests extends AggregatorTestCase {
             for (int i = 0; i < 10; i++) {
                 Document doc = new Document();
                 doc.add(new Field("text", "foo", textFieldType));
-                String json ="{ \"text\" : [\"foo\",\"foo\"], \"title\" : [\"foo\", \"foo\"]}";
+                String json = "{ \"text\" : [\"foo\",\"foo\"], \"title\" : [\"foo\", \"foo\"]}";
                 doc.add(new StoredField("_source", new BytesRef(json)));
                 w.addDocument(doc);
             }
 
             SignificantTextAggregationBuilder sigAgg = new SignificantTextAggregationBuilder("sig_text", "text");
-            sigAgg.sourceFieldNames(Arrays.asList(new String [] {"title", "text"}));
+            sigAgg.sourceFieldNames(Arrays.asList(new String[] { "title", "text" }));
             try (IndexReader reader = DirectoryReader.open(w)) {
                 assertEquals("test expects a single segment", 1, reader.leaves().size());
                 IndexSearcher searcher = new IndexSearcher(reader);
@@ -217,6 +214,5 @@ public class SignificantTextAggregatorTests extends AggregatorTestCase {
             }
         }
     }
-
 
 }

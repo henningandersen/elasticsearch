@@ -89,18 +89,25 @@ public class IpFieldMapper extends FieldMapper {
         @Override
         public IpFieldMapper build(BuilderContext context) {
             setupFieldType(context);
-            return new IpFieldMapper(name, fieldType, defaultFieldType, ignoreMalformed(context),
-                    context.indexSettings(), multiFieldsBuilder.build(this, context), copyTo);
+            return new IpFieldMapper(
+                name,
+                fieldType,
+                defaultFieldType,
+                ignoreMalformed(context),
+                context.indexSettings(),
+                multiFieldsBuilder.build(this, context),
+                copyTo
+            );
         }
     }
 
     public static class TypeParser implements Mapper.TypeParser {
 
-        public TypeParser() {
-        }
+        public TypeParser() {}
 
         @Override
-        public Mapper.Builder<?,?> parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
+        public Mapper.Builder<?, ?> parse(String name, Map<String, Object> node, ParserContext parserContext)
+            throws MapperParsingException {
             Builder builder = new Builder(name);
             TypeParsers.parseField(builder, name, node, parserContext);
             for (Iterator<Map.Entry<String, Object>> iterator = node.entrySet().iterator(); iterator.hasNext();) {
@@ -275,7 +282,8 @@ public class IpFieldMapper extends FieldMapper {
                 try {
                     BytesRef encoded = in.lookupOrd(ords[index]);
                     InetAddress address = InetAddressPoint.decode(
-                            Arrays.copyOfRange(encoded.bytes, encoded.offset, encoded.offset + encoded.length));
+                        Arrays.copyOfRange(encoded.bytes, encoded.offset, encoded.offset + encoded.length)
+                    );
                     return InetAddresses.toAddrString(address);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -308,8 +316,9 @@ public class IpFieldMapper extends FieldMapper {
                 throw new IllegalArgumentException("Field [" + name() + "] of type [" + typeName() + "] does not support custom formats");
             }
             if (timeZone != null) {
-                throw new IllegalArgumentException("Field [" + name() + "] of type [" + typeName()
-                    + "] does not support custom time zones");
+                throw new IllegalArgumentException(
+                    "Field [" + name() + "] of type [" + typeName() + "] does not support custom time zones"
+                );
             }
             return DocValueFormat.IP;
         }
@@ -318,13 +327,14 @@ public class IpFieldMapper extends FieldMapper {
     private Explicit<Boolean> ignoreMalformed;
 
     private IpFieldMapper(
-            String simpleName,
-            MappedFieldType fieldType,
-            MappedFieldType defaultFieldType,
-            Explicit<Boolean> ignoreMalformed,
-            Settings indexSettings,
-            MultiFields multiFields,
-            CopyTo copyTo) {
+        String simpleName,
+        MappedFieldType fieldType,
+        MappedFieldType defaultFieldType,
+        Explicit<Boolean> ignoreMalformed,
+        Settings indexSettings,
+        MultiFields multiFields,
+        CopyTo copyTo
+    ) {
         super(simpleName, fieldType, defaultFieldType, indexSettings, multiFields, copyTo);
         this.ignoreMalformed = ignoreMalformed;
     }

@@ -34,7 +34,7 @@ import org.elasticsearch.common.util.LongArray;
 import java.io.IOException;
 
 /**
- * A frequency terms enum that maintains a cache of docFreq, totalTermFreq, or both for repeated term lookup. 
+ * A frequency terms enum that maintains a cache of docFreq, totalTermFreq, or both for repeated term lookup.
  */
 public class FreqTermsEnum extends FilterableTermsEnum implements Releasable {
 
@@ -46,9 +46,15 @@ public class FreqTermsEnum extends FilterableTermsEnum implements Releasable {
     private final boolean needDocFreqs;
     private final boolean needTotalTermFreqs;
 
-
-    public FreqTermsEnum(IndexReader reader, String field, boolean needDocFreq, boolean needTotalTermFreq,
-            @Nullable Query filter, BigArrays bigArrays) throws IOException {
+    public FreqTermsEnum(
+        IndexReader reader,
+        String field,
+        boolean needDocFreq,
+        boolean needTotalTermFreq,
+        @Nullable Query filter,
+        BigArrays bigArrays
+    )
+        throws IOException {
         super(reader, field, needTotalTermFreq ? PostingsEnum.FREQS : PostingsEnum.NONE, filter);
         this.bigArrays = bigArrays;
         this.needDocFreqs = needDocFreq;
@@ -66,10 +72,9 @@ public class FreqTermsEnum extends FilterableTermsEnum implements Releasable {
         cachedTermOrds = new BytesRefHash(INITIAL_NUM_TERM_FREQS_CACHED, bigArrays);
     }
 
-
     @Override
     public boolean seekExact(BytesRef text) throws IOException {
-        //Check cache
+        // Check cache
         long currentTermOrd = cachedTermOrds.add(text);
         if (currentTermOrd < 0) { // already seen, initialize instance data with the cached frequencies
             currentTermOrd = -1 - currentTermOrd;
@@ -85,11 +90,11 @@ public class FreqTermsEnum extends FilterableTermsEnum implements Releasable {
             current = found ? text : null;
             return found;
         }
-        
-        //Cache miss - gather stats
+
+        // Cache miss - gather stats
         final boolean found = super.seekExact(text);
 
-        //Cache the result - found or not. 
+        // Cache the result - found or not.
         if (needDocFreqs) {
             termDocFreqs = bigArrays.grow(termDocFreqs, currentTermOrd + 1);
             termDocFreqs.set(currentTermOrd, currentDocFreq);
@@ -100,7 +105,6 @@ public class FreqTermsEnum extends FilterableTermsEnum implements Releasable {
         }
         return found;
     }
-
 
     @Override
     public void close() {

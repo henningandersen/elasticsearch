@@ -51,14 +51,36 @@ public class StringTermsAggregator extends AbstractStringTermsAggregator {
     protected final BytesRefHash bucketOrds;
     private final IncludeExclude.StringFilter includeExclude;
 
-    public StringTermsAggregator(String name, AggregatorFactories factories, ValuesSource valuesSource,
-            BucketOrder order, DocValueFormat format, BucketCountThresholds bucketCountThresholds,
-            IncludeExclude.StringFilter includeExclude, SearchContext context,
-            Aggregator parent, SubAggCollectionMode collectionMode, boolean showTermDocCountError,
-            List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+    public StringTermsAggregator(
+        String name,
+        AggregatorFactories factories,
+        ValuesSource valuesSource,
+        BucketOrder order,
+        DocValueFormat format,
+        BucketCountThresholds bucketCountThresholds,
+        IncludeExclude.StringFilter includeExclude,
+        SearchContext context,
+        Aggregator parent,
+        SubAggCollectionMode collectionMode,
+        boolean showTermDocCountError,
+        List<PipelineAggregator> pipelineAggregators,
+        Map<String, Object> metaData
+    )
+        throws IOException {
 
-        super(name, factories, context, parent, order, format, bucketCountThresholds, collectionMode, showTermDocCountError,
-                pipelineAggregators, metaData);
+        super(
+            name,
+            factories,
+            context,
+            parent,
+            order,
+            format,
+            bucketCountThresholds,
+            collectionMode,
+            showTermDocCountError,
+            pipelineAggregators,
+            metaData
+        );
         this.valuesSource = valuesSource;
         this.includeExclude = includeExclude;
         bucketOrds = new BytesRefHash(1, context.bigArrays());
@@ -73,8 +95,7 @@ public class StringTermsAggregator extends AbstractStringTermsAggregator {
     }
 
     @Override
-    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx,
-            final LeafBucketCollector sub) throws IOException {
+    public LeafBucketCollector getLeafCollector(LeafReaderContext ctx, final LeafBucketCollector sub) throws IOException {
         final SortedBinaryDocValues values = valuesSource.bytesValues(ctx);
         return new LeafBucketCollectorBase(sub, values) {
             final BytesRefBuilder previous = new BytesRefBuilder();
@@ -115,8 +136,7 @@ public class StringTermsAggregator extends AbstractStringTermsAggregator {
         assert owningBucketOrdinal == 0;
 
         if (bucketCountThresholds.getMinDocCount() == 0
-            && (InternalOrder.isCountDesc(order) == false
-                    || bucketOrds.size() < bucketCountThresholds.getRequiredSize())) {
+            && (InternalOrder.isCountDesc(order) == false || bucketOrds.size() < bucketCountThresholds.getRequiredSize())) {
             // we need to fill-in the blanks
             for (LeafReaderContext ctx : context.searcher().getTopReaderContext().leaves()) {
                 final SortedBinaryDocValues values = valuesSource.bytesValues(ctx);
@@ -175,9 +195,20 @@ public class StringTermsAggregator extends AbstractStringTermsAggregator {
             bucket.docCountError = 0;
         }
 
-        return new StringTerms(name, order, bucketCountThresholds.getRequiredSize(), bucketCountThresholds.getMinDocCount(),
-                pipelineAggregators(), metaData(), format, bucketCountThresholds.getShardSize(), showTermDocCountError, otherDocCount,
-                Arrays.asList(list), 0);
+        return new StringTerms(
+            name,
+            order,
+            bucketCountThresholds.getRequiredSize(),
+            bucketCountThresholds.getMinDocCount(),
+            pipelineAggregators(),
+            metaData(),
+            format,
+            bucketCountThresholds.getShardSize(),
+            showTermDocCountError,
+            otherDocCount,
+            Arrays.asList(list),
+            0
+        );
     }
 
     @Override
@@ -186,4 +217,3 @@ public class StringTermsAggregator extends AbstractStringTermsAggregator {
     }
 
 }
-
