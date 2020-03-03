@@ -156,9 +156,9 @@ public class UpdateSettingsStepTests extends ESSingleNodeTestCase {
                         latch.countDown();
                         fail("unexpected failure when trying to update setting to a valid value");
                     }
-                }, client);
+                }, client());
             }
-        }, client);
+        }, client());
 
         latch.await(10, TimeUnit.SECONDS);
 
