@@ -170,7 +170,7 @@ class IndexLifecycleRunner {
                 public void onFailure(Exception e) {
                     moveToErrorStep(indexMetaData.getIndex(), policy, currentStep.getKey(), e);
                 }
-            }, AsyncActionStep.getMasterTimeout(clusterService.state()));
+            }, AsyncActionStep.getMasterTimeout(clusterService.state()), stepRegistry.getLifecyclePolicySecurityClient(policy));
         } else {
             logger.trace("[{}] ignoring non periodic step execution from step transition [{}]", index, currentStep.getKey());
         }
@@ -277,7 +277,7 @@ class IndexLifecycleRunner {
                     public void onFailure(Exception e) {
                         moveToErrorStep(indexMetaData.getIndex(), policy, currentStep.getKey(), e);
                     }
-                });
+                }, stepRegistry.getLifecyclePolicySecurityClient(policy));
         } else {
             logger.trace("[{}] ignoring non async action step execution from step transition [{}]", index, currentStep.getKey());
         }

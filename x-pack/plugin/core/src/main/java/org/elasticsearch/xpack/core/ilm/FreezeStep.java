@@ -18,13 +18,13 @@ import org.elasticsearch.xpack.core.frozen.action.FreezeIndexAction;
 public class FreezeStep extends AsyncRetryDuringSnapshotActionStep {
     public static final String NAME = "freeze";
 
-    public FreezeStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    public FreezeStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
-    public void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentState, Listener listener) {
-        getClient().admin().indices().execute(FreezeIndexAction.INSTANCE,
+    public void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentState, Listener listener, Client client) {
+        client.admin().indices().execute(FreezeIndexAction.INSTANCE,
             new FreezeRequest(indexMetaData.getIndex().getName()).masterNodeTimeout(getMasterTimeout(currentState)),
             ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
     }

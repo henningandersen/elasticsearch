@@ -36,7 +36,7 @@ public class ReadOnlyActionTests extends AbstractActionTestCase<ReadOnlyAction> 
         String phase = randomAlphaOfLengthBetween(1, 10);
         StepKey nextStepKey = new StepKey(randomAlphaOfLengthBetween(1, 10), randomAlphaOfLengthBetween(1, 10),
                 randomAlphaOfLengthBetween(1, 10));
-        List<Step> steps = action.toSteps(null, phase, nextStepKey);
+        List<Step> steps = action.toSteps(phase, nextStepKey);
         assertNotNull(steps);
         assertEquals(1, steps.size());
         StepKey expectedFirstStepKey = new StepKey(phase, ReadOnlyAction.NAME, ReadOnlyAction.NAME);

@@ -22,8 +22,8 @@ public class ShrinkSetAliasStep extends AsyncRetryDuringSnapshotActionStep {
     public static final String NAME = "aliases";
     private String shrunkIndexPrefix;
 
-    public ShrinkSetAliasStep(StepKey key, StepKey nextStepKey, Client client, String shrunkIndexPrefix) {
-        super(key, nextStepKey, client);
+    public ShrinkSetAliasStep(StepKey key, StepKey nextStepKey, String shrunkIndexPrefix) {
+        super(key, nextStepKey);
         this.shrunkIndexPrefix = shrunkIndexPrefix;
     }
 
@@ -32,7 +32,7 @@ public class ShrinkSetAliasStep extends AsyncRetryDuringSnapshotActionStep {
     }
 
     @Override
-    public void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentState, Listener listener) {
+    public void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentState, Listener listener, Client client) {
         // get source index
         String index = indexMetaData.getIndex().getName();
         // get target shrink index
@@ -52,7 +52,7 @@ public class ShrinkSetAliasStep extends AsyncRetryDuringSnapshotActionStep {
                 .filter(aliasMetaDataToAdd.filter() == null ? null : aliasMetaDataToAdd.filter().string())
                 .writeIndex(null));
         });
-        getClient().admin().indices().aliases(aliasesRequest, ActionListener.wrap(response ->
+        client.admin().indices().aliases(aliasesRequest, ActionListener.wrap(response ->
             listener.onResponse(true), listener::onFailure));
     }
 

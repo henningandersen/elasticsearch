@@ -27,7 +27,7 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
 
     @Override
     protected UnfollowFollowIndexStep newInstance(Step.StepKey key, Step.StepKey nextKey) {
-        return new UnfollowFollowIndexStep(key, nextKey, client);
+        return new UnfollowFollowIndexStep(key, nextKey);
     }
 
     public void testUnFollow() {
@@ -49,7 +49,7 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey(), client);
+        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey());
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -60,7 +60,7 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
             public void onFailure(Exception e) {
                 failure[0] = e;
             }
-        });
+        }, client);
         assertThat(completed[0], is(true));
         assertThat(failure[0], nullValue());
     }
@@ -85,7 +85,7 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey(), client);
+        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey());
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -96,7 +96,7 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
             public void onFailure(Exception e) {
                 failure[0] = e;
             }
-        });
+        }, client);
         assertThat(completed[0], nullValue());
         assertThat(failure[0], sameInstance(error));
     }
@@ -122,7 +122,7 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
 
         AtomicBoolean completed = new AtomicBoolean(false);
         AtomicReference<Exception> failure = new AtomicReference<>();
-        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey(), client);
+        UnfollowFollowIndexStep step = new UnfollowFollowIndexStep(randomStepKey(), randomStepKey());
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -133,7 +133,7 @@ public class UnfollowFollowIndexStepTests extends AbstractUnfollowIndexStepTestC
             public void onFailure(Exception e) {
                 failure.set(e);
             }
-        });
+        }, client);
         assertThat(completed.get(), equalTo(true));
         assertThat(failure.get(), nullValue());
     }

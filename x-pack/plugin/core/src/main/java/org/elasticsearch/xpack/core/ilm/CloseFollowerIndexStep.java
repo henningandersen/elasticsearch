@@ -19,12 +19,12 @@ final class CloseFollowerIndexStep extends AsyncRetryDuringSnapshotActionStep {
 
     static final String NAME = "close-follower-index";
 
-    CloseFollowerIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    CloseFollowerIndexStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
-    void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentClusterState, Listener listener) {
+    void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentClusterState, Listener listener, Client client) {
         String followerIndex = indexMetaData.getIndex().getName();
         Map<String, String> customIndexMetadata = indexMetaData.getCustomData(CCR_METADATA_KEY);
         if (customIndexMetadata == null) {
@@ -35,7 +35,7 @@ final class CloseFollowerIndexStep extends AsyncRetryDuringSnapshotActionStep {
         if (indexMetaData.getState() == IndexMetaData.State.OPEN) {
             CloseIndexRequest closeIndexRequest = new CloseIndexRequest(followerIndex)
                 .masterNodeTimeout(getMasterTimeout(currentClusterState));
-            getClient().admin().indices().close(closeIndexRequest, ActionListener.wrap(
+            client.admin().indices().close(closeIndexRequest, ActionListener.wrap(
                 r -> {
                     assert r.isAcknowledged() : "close index response is not acknowledged";
                     listener.onResponse(true);

@@ -124,7 +124,7 @@ public class UpdateSettingsStepTests extends ESSingleNodeTestCase {
         // fail the first setting update by using an invalid valid
         Settings invalidValueSetting = Settings.builder().put("index.test.setting", INVALID_VALUE).build();
         UpdateSettingsStep step = new UpdateSettingsStep(
-            new StepKey("hot", "action", "updateSetting"), new StepKey("hot", "action", "validate"), client(),
+            new StepKey("hot", "action", "updateSetting"), new StepKey("hot", "action", "validate"),
             invalidValueSetting);
 
         step.performAction(indexMetaData, state, observer, new AsyncActionStep.Listener() {
@@ -141,7 +141,7 @@ public class UpdateSettingsStepTests extends ESSingleNodeTestCase {
                 // use a valid setting value so the second update call is successful
                 Settings validIndexSetting = Settings.builder().put("index.test.setting", "valid").build();
                 UpdateSettingsStep step = new UpdateSettingsStep(
-                    new StepKey("hot", "action", "updateSetting"), new StepKey("hot", "action", "validate"), client(),
+                    new StepKey("hot", "action", "updateSetting"), new StepKey("hot", "action", "validate"),
                     validIndexSetting);
 
                 step.performAction(indexMetaData, state, observer, new AsyncActionStep.Listener() {
@@ -156,9 +156,9 @@ public class UpdateSettingsStepTests extends ESSingleNodeTestCase {
                         latch.countDown();
                         fail("unexpected failure when trying to update setting to a valid value");
                     }
-                });
+                }, client);
             }
-        });
+        }, client);
 
         latch.await(10, TimeUnit.SECONDS);
 

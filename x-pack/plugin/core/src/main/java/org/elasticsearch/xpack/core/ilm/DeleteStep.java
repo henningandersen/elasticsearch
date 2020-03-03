@@ -17,13 +17,13 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 public class DeleteStep extends AsyncRetryDuringSnapshotActionStep {
     public static final String NAME = "delete";
 
-    public DeleteStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    public DeleteStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
-    public void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentState, Listener listener) {
-        getClient().admin().indices()
+    public void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentState, Listener listener, Client client) {
+        client.admin().indices()
             .delete(new DeleteIndexRequest(indexMetaData.getIndex().getName()).masterNodeTimeout(getMasterTimeout(currentState)),
                 ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
     }

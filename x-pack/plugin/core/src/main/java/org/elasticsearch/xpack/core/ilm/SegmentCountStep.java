@@ -39,8 +39,8 @@ public class SegmentCountStep extends AsyncWaitStep {
 
     private final int maxNumSegments;
 
-    public SegmentCountStep(StepKey key, StepKey nextStepKey, Client client, int maxNumSegments) {
-        super(key, nextStepKey, client);
+    public SegmentCountStep(StepKey key, StepKey nextStepKey, int maxNumSegments) {
+        super(key, nextStepKey);
         this.maxNumSegments = maxNumSegments;
     }
 
@@ -49,8 +49,8 @@ public class SegmentCountStep extends AsyncWaitStep {
     }
 
     @Override
-    public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout) {
-        getClient().admin().indices().segments(new IndicesSegmentsRequest(indexMetaData.getIndex().getName()),
+    public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout, Client client) {
+        client.admin().indices().segments(new IndicesSegmentsRequest(indexMetaData.getIndex().getName()),
             ActionListener.wrap(response -> {
                 IndexSegments idxSegments = response.getIndices().get(indexMetaData.getIndex().getName());
                 if (idxSegments == null || (response.getShardFailures() != null && response.getShardFailures().length > 0)) {

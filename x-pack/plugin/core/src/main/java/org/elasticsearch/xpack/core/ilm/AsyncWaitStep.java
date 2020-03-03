@@ -18,18 +18,12 @@ import org.elasticsearch.common.xcontent.ToXContentObject;
  */
 public abstract class AsyncWaitStep extends Step {
 
-    private Client client;
 
-    public AsyncWaitStep(StepKey key, StepKey nextStepKey, Client client) {
+    public AsyncWaitStep(StepKey key, StepKey nextStepKey) {
         super(key, nextStepKey);
-        this.client = client;
     }
 
-    protected Client getClient() {
-        return client;
-    }
-
-    public abstract void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout);
+    public abstract void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout, Client client);
 
     public interface Listener {
 

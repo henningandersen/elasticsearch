@@ -53,7 +53,7 @@ public class SetSingleNodeAllocateStepTests extends AbstractStepTestCase<SetSing
 
     @Override
     protected SetSingleNodeAllocateStep createRandomInstance() {
-        return new SetSingleNodeAllocateStep(randomStepKey(), randomStepKey(), client);
+        return new SetSingleNodeAllocateStep(randomStepKey(), randomStepKey());
     }
 
     @Override
@@ -72,12 +72,12 @@ public class SetSingleNodeAllocateStepTests extends AbstractStepTestCase<SetSing
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new SetSingleNodeAllocateStep(key, nextKey, instance.getClient());
+        return new SetSingleNodeAllocateStep(key, nextKey);
     }
 
     @Override
     protected SetSingleNodeAllocateStep copyInstance(SetSingleNodeAllocateStep instance) {
-        return new SetSingleNodeAllocateStep(instance.getKey(), instance.getNextStepKey(), client);
+        return new SetSingleNodeAllocateStep(instance.getKey(), instance.getNextStepKey());
     }
 
     public static void assertSettingsRequestContainsValueFrom(UpdateSettingsRequest request, String settingsKey,
@@ -262,7 +262,7 @@ public class SetSingleNodeAllocateStepTests extends AbstractStepTestCase<SetSing
                 assertSame(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertEquals(true, exceptionThrown.get());
 
@@ -319,7 +319,7 @@ public class SetSingleNodeAllocateStepTests extends AbstractStepTestCase<SetSing
                 assertEquals(indexMetaData.getIndex(), ((IndexNotFoundException) e).getIndex());
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertEquals(true, exceptionThrown.get());
 
@@ -540,7 +540,7 @@ public class SetSingleNodeAllocateStepTests extends AbstractStepTestCase<SetSing
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         assertEquals(true, actionCompleted.get());
 
@@ -578,7 +578,7 @@ public class SetSingleNodeAllocateStepTests extends AbstractStepTestCase<SetSing
             public void onFailure(Exception e) {
                 actionCompleted.set(e);
             }
-        });
+        }, client);
 
         Exception failure = actionCompleted.get();
         assertThat(failure, instanceOf(NoNodeAvailableException.class));

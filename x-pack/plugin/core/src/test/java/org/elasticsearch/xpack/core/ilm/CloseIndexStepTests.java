@@ -34,7 +34,7 @@ public class CloseIndexStepTests extends AbstractStepTestCase<CloseIndexStep> {
 
     @Override
     protected CloseIndexStep createRandomInstance() {
-        return new CloseIndexStep(randomStepKey(), randomStepKey(), client);
+        return new CloseIndexStep(randomStepKey(), randomStepKey());
     }
 
     @Override
@@ -53,12 +53,12 @@ public class CloseIndexStepTests extends AbstractStepTestCase<CloseIndexStep> {
                 throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new CloseIndexStep(key, nextKey, client);
+        return new CloseIndexStep(key, nextKey);
     }
 
     @Override
     protected CloseIndexStep copyInstance(CloseIndexStep instance) {
-        return new CloseIndexStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new CloseIndexStep(instance.getKey(), instance.getNextStepKey());
     }
 
     public void testPerformAction() {
@@ -96,7 +96,7 @@ public class CloseIndexStepTests extends AbstractStepTestCase<CloseIndexStep> {
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         assertEquals(true, actionCompleted.get());
         Mockito.verify(client, Mockito.only()).admin();
@@ -140,7 +140,7 @@ public class CloseIndexStepTests extends AbstractStepTestCase<CloseIndexStep> {
                 assertSame(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertEquals(true, exceptionThrown.get());
         Mockito.verify(client, Mockito.only()).admin();

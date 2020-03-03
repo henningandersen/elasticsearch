@@ -19,14 +19,14 @@ final class UnfollowFollowIndexStep extends AbstractUnfollowIndexStep {
 
     static final String NAME = "unfollow-follower-index";
 
-    UnfollowFollowIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    UnfollowFollowIndexStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
-    void innerPerformAction(String followerIndex, Listener listener) {
+    void innerPerformAction(String followerIndex, Listener listener, Client client) {
         UnfollowAction.Request request = new UnfollowAction.Request(followerIndex);
-        getClient().execute(UnfollowAction.INSTANCE, request, ActionListener.wrap(
+        client.execute(UnfollowAction.INSTANCE, request, ActionListener.wrap(
             r -> {
                 assert r.isAcknowledged() : "unfollow response is not acknowledged";
                 listener.onResponse(true);

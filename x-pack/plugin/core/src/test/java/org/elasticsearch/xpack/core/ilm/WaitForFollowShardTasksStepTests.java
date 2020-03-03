@@ -30,7 +30,7 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
     protected WaitForFollowShardTasksStep createRandomInstance() {
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
-        return new WaitForFollowShardTasksStep(stepKey, nextStepKey, client);
+        return new WaitForFollowShardTasksStep(stepKey, nextStepKey);
     }
 
     @Override
@@ -44,12 +44,12 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
             nextKey = new StepKey(key.getPhase(), key.getAction(), key.getName() + randomAlphaOfLength(5));
         }
 
-        return new WaitForFollowShardTasksStep(key, nextKey, instance.getClient());
+        return new WaitForFollowShardTasksStep(key, nextKey);
     }
 
     @Override
     protected WaitForFollowShardTasksStep copyInstance(WaitForFollowShardTasksStep instance) {
-        return new WaitForFollowShardTasksStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new WaitForFollowShardTasksStep(instance.getKey(), instance.getNextStepKey());
     }
 
     public void testConditionMet() {
@@ -79,7 +79,7 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
             public void onFailure(Exception e) {
                 exceptionHolder[0] = e;
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertThat(conditionMetHolder[0], is(true));
         assertThat(informationContextHolder[0], nullValue());
@@ -113,7 +113,7 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
             public void onFailure(Exception e) {
                 exceptionHolder[0] = e;
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertThat(conditionMetHolder[0], is(false));
         assertThat(informationContextHolder[0], notNullValue());
@@ -146,7 +146,7 @@ public class WaitForFollowShardTasksStepTests extends AbstractStepTestCase<WaitF
             public void onFailure(Exception e) {
                 exceptionHolder[0] = e;
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertThat(conditionMetHolder[0], is(true));
         assertThat(informationContextHolder[0], nullValue());

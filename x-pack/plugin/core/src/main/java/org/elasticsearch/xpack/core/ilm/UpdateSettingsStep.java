@@ -23,8 +23,8 @@ public class UpdateSettingsStep extends AsyncActionStep {
 
     private final Settings settings;
 
-    public UpdateSettingsStep(StepKey key, StepKey nextStepKey, Client client, Settings settings) {
-        super(key, nextStepKey, client);
+    public UpdateSettingsStep(StepKey key, StepKey nextStepKey, Settings settings) {
+        super(key, nextStepKey);
         this.settings = settings;
     }
 
@@ -34,11 +34,11 @@ public class UpdateSettingsStep extends AsyncActionStep {
     }
 
     @Override
-    public void performAction(IndexMetaData indexMetaData, ClusterState currentState, ClusterStateObserver observer, Listener listener) {
+    public void performAction(IndexMetaData indexMetaData, ClusterState currentState, ClusterStateObserver observer, Listener listener, Client client) {
         UpdateSettingsRequest updateSettingsRequest = new UpdateSettingsRequest(indexMetaData.getIndex().getName())
             .masterNodeTimeout(getMasterTimeout(currentState))
             .settings(settings);
-        getClient().admin().indices().updateSettings(updateSettingsRequest,
+        client.admin().indices().updateSettings(updateSettingsRequest,
                 ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
     }
 

@@ -24,7 +24,7 @@ public class DeleteStepTests extends AbstractStepMasterTimeoutTestCase<DeleteSte
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
 
-        return new DeleteStep(stepKey, nextStepKey, client);
+        return new DeleteStep(stepKey, nextStepKey);
     }
 
     @Override
@@ -43,12 +43,12 @@ public class DeleteStepTests extends AbstractStepMasterTimeoutTestCase<DeleteSte
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new DeleteStep(key, nextKey, instance.getClient());
+        return new DeleteStep(key, nextKey);
     }
 
     @Override
     public DeleteStep copyInstance(DeleteStep instance) {
-        return new DeleteStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new DeleteStep(instance.getKey(), instance.getNextStepKey());
     }
 
     @Override
@@ -88,7 +88,7 @@ public class DeleteStepTests extends AbstractStepMasterTimeoutTestCase<DeleteSte
             public void onFailure(Exception e) {
                 throw new AssertionError(e);
             }
-        });
+        }, client);
 
         assertThat(actionCompleted.get(), equalTo(true));
 
@@ -125,7 +125,7 @@ public class DeleteStepTests extends AbstractStepMasterTimeoutTestCase<DeleteSte
                 assertEquals(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertThat(exceptionThrown.get(), equalTo(true));
     }

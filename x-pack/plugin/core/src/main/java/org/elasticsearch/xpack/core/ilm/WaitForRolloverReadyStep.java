@@ -34,9 +34,9 @@ public class WaitForRolloverReadyStep extends AsyncWaitStep {
     private final TimeValue maxAge;
     private final Long maxDocs;
 
-    public WaitForRolloverReadyStep(StepKey key, StepKey nextStepKey, Client client, ByteSizeValue maxSize, TimeValue maxAge,
+    public WaitForRolloverReadyStep(StepKey key, StepKey nextStepKey, ByteSizeValue maxSize, TimeValue maxAge,
                                     Long maxDocs) {
-        super(key, nextStepKey, client);
+        super(key, nextStepKey);
         this.maxSize = maxSize;
         this.maxAge = maxAge;
         this.maxDocs = maxDocs;
@@ -48,7 +48,7 @@ public class WaitForRolloverReadyStep extends AsyncWaitStep {
     }
 
     @Override
-    public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout) {
+    public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout, Client client) {
         String rolloverAlias = RolloverAction.LIFECYCLE_ROLLOVER_ALIAS_SETTING.get(indexMetaData.getSettings());
 
         if (Strings.isNullOrEmpty(rolloverAlias)) {
@@ -124,7 +124,7 @@ public class WaitForRolloverReadyStep extends AsyncWaitStep {
         if (maxDocs != null) {
             rolloverRequest.addMaxIndexDocsCondition(maxDocs);
         }
-        getClient().admin().indices().rolloverIndex(rolloverRequest,
+        client.admin().indices().rolloverIndex(rolloverRequest,
             ActionListener.wrap(response -> listener.onResponse(response.getConditionStatus().values().stream().anyMatch(i -> i),
                 new WaitForRolloverReadyStep.EmptyInfo()), listener::onFailure));
     }

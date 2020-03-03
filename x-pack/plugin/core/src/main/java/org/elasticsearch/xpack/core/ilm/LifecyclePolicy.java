@@ -7,7 +7,6 @@ package org.elasticsearch.xpack.core.ilm;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.AbstractDiffable;
 import org.elasticsearch.cluster.Diffable;
 import org.elasticsearch.common.ParseField;
@@ -165,11 +164,9 @@ public class LifecyclePolicy extends AbstractDiffable<LifecyclePolicy>
      * associated with the hot phase so that it is clear that we haven't stepped into the warm phase
      * just yet (until this step is complete).
      *
-     * @param client The Elasticsearch Client to use during execution of {@link AsyncActionStep}
-     *               and {@link AsyncWaitStep} steps.
      * @return The list of {@link Step} objects in order of their execution.
      */
-    public List<Step> toSteps(Client client) {
+    public List<Step> toSteps() {
         List<Step> steps = new ArrayList<>();
         List<Phase> orderedPhases = type.getOrderedPhases(phases);
         ListIterator<Phase> phaseIterator = orderedPhases.listIterator(orderedPhases.size());
@@ -198,7 +195,7 @@ public class LifecyclePolicy extends AbstractDiffable<LifecyclePolicy>
             // add steps for each action, in reverse
             while (actionIterator.hasPrevious()) {
                 LifecycleAction action = actionIterator.previous();
-                List<Step> actionSteps = action.toSteps(client, phase.getName(), lastStepKey);
+                List<Step> actionSteps = action.toSteps(phase.getName(), lastStepKey);
                 ListIterator<Step> actionStepsIterator = actionSteps.listIterator(actionSteps.size());
                 while (actionStepsIterator.hasPrevious()) {
                     Step step = actionStepsIterator.previous();

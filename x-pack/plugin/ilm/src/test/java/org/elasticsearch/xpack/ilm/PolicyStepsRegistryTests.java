@@ -25,10 +25,10 @@ import org.elasticsearch.index.Index;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.core.ilm.ErrorStep;
-import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
 import org.elasticsearch.xpack.core.ilm.IndexLifecycleMetadata;
 import org.elasticsearch.xpack.core.ilm.InitializePolicyContextStep;
 import org.elasticsearch.xpack.core.ilm.LifecycleAction;
+import org.elasticsearch.xpack.core.ilm.LifecycleExecutionState;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicyMetadata;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicyTests;
@@ -92,7 +92,7 @@ public class PolicyStepsRegistryTests extends ESTestCase {
         PhaseExecutionInfo pei = new PhaseExecutionInfo(policy.getName(), phase, 1, randomNonNegativeLong());
         String phaseJson = Strings.toString(pei);
         LifecycleAction action = randomFrom(phase.getActions().values());
-        Step step = randomFrom(action.toSteps(client, phaseName, MOCK_STEP_KEY));
+        Step step = randomFrom(action.toSteps(phaseName, MOCK_STEP_KEY));
         LifecycleExecutionState.Builder lifecycleState = LifecycleExecutionState.builder();
         lifecycleState.setPhaseDefinition(phaseJson);
         IndexMetaData indexMetaData = IndexMetaData.builder("test")
@@ -160,7 +160,7 @@ public class PolicyStepsRegistryTests extends ESTestCase {
         PhaseExecutionInfo pei = new PhaseExecutionInfo(policy.getName(), phase, 1, randomNonNegativeLong());
         String phaseJson = Strings.toString(pei);
         LifecycleAction action = randomFrom(phase.getActions().values());
-        Step step = randomFrom(action.toSteps(client, phaseName, MOCK_STEP_KEY));
+        Step step = randomFrom(action.toSteps(phaseName, MOCK_STEP_KEY));
         LifecycleExecutionState.Builder lifecycleState = LifecycleExecutionState.builder();
         lifecycleState.setPhaseDefinition(phaseJson);
         IndexMetaData indexMetaData = IndexMetaData.builder("test")
@@ -187,7 +187,7 @@ public class PolicyStepsRegistryTests extends ESTestCase {
         String policyName = randomAlphaOfLength(5);
         LifecyclePolicy newPolicy = LifecyclePolicyTests.randomTestLifecyclePolicy(policyName);
         logger.info("--> policy: {}", newPolicy);
-        List<Step> policySteps = newPolicy.toSteps(client);
+        List<Step> policySteps = newPolicy.toSteps();
         Map<String, String> headers = new HashMap<>();
         if (randomBoolean()) {
             headers.put(randomAlphaOfLength(10), randomAlphaOfLength(10));
@@ -335,7 +335,7 @@ public class PolicyStepsRegistryTests extends ESTestCase {
         LifecyclePolicy updatedPolicy = new LifecyclePolicy(policyName, phases);
         logger.info("--> policy: {}", newPolicy);
         logger.info("--> updated policy: {}", updatedPolicy);
-        List<Step> policySteps = newPolicy.toSteps(client);
+        List<Step> policySteps = newPolicy.toSteps();
         Map<String, String> headers = new HashMap<>();
         if (randomBoolean()) {
             headers.put(randomAlphaOfLength(10), randomAlphaOfLength(10));

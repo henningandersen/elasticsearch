@@ -75,7 +75,7 @@ public abstract class AbstractStepMasterTimeoutTestCase<T extends AsyncActionSte
             public void onFailure(Exception e) {
 
             }
-        });
+        }, client);
         assertTrue(timeoutChecked.get());
     }
 

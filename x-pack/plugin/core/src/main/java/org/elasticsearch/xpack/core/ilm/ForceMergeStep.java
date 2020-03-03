@@ -21,8 +21,8 @@ public class ForceMergeStep extends AsyncActionStep {
     public static final String NAME = "forcemerge";
     private final int maxNumSegments;
 
-    public ForceMergeStep(StepKey key, StepKey nextStepKey, Client client, int maxNumSegments) {
-        super(key, nextStepKey, client);
+    public ForceMergeStep(StepKey key, StepKey nextStepKey, int maxNumSegments) {
+        super(key, nextStepKey);
         this.maxNumSegments = maxNumSegments;
     }
 
@@ -31,10 +31,10 @@ public class ForceMergeStep extends AsyncActionStep {
     }
 
     @Override
-    public void performAction(IndexMetaData indexMetaData, ClusterState currentState, ClusterStateObserver observer, Listener listener) {
+    public void performAction(IndexMetaData indexMetaData, ClusterState currentState, ClusterStateObserver observer, Listener listener, Client client) {
         ForceMergeRequest request = new ForceMergeRequest(indexMetaData.getIndex().getName());
         request.maxNumSegments(maxNumSegments);
-        getClient().admin().indices()
+        client.admin().indices()
             .forceMerge(request, ActionListener.wrap(response -> listener.onResponse(true),
                 listener::onFailure));
     }

@@ -16,17 +16,17 @@ final class OpenFollowerIndexStep extends AsyncActionStep {
 
     static final String NAME = "open-follower-index";
 
-    OpenFollowerIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    OpenFollowerIndexStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
     public void performAction(IndexMetaData indexMetaData, ClusterState currentClusterState,
-                              ClusterStateObserver observer, Listener listener) {
+                              ClusterStateObserver observer, Listener listener, Client client) {
         if (indexMetaData.getState() == IndexMetaData.State.CLOSE) {
             OpenIndexRequest request = new OpenIndexRequest(indexMetaData.getIndex().getName())
                 .masterNodeTimeout(getMasterTimeout(currentClusterState));
-            getClient().admin().indices().open(request, ActionListener.wrap(
+            client.admin().indices().open(request, ActionListener.wrap(
                 r -> {
                     assert r.isAcknowledged() : "open index response is not acknowledged";
                     listener.onResponse(true);

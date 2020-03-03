@@ -28,12 +28,12 @@ final class WaitForFollowShardTasksStep extends AsyncWaitStep {
 
     static final String NAME = "wait-for-follow-shard-tasks";
 
-    WaitForFollowShardTasksStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    WaitForFollowShardTasksStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
-    public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout) {
+    public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout, Client client) {
         Map<String, String> customIndexMetadata = indexMetaData.getCustomData(CCR_METADATA_KEY);
         if (customIndexMetadata == null) {
             listener.onResponse(true, null);
@@ -42,7 +42,7 @@ final class WaitForFollowShardTasksStep extends AsyncWaitStep {
 
         FollowStatsAction.StatsRequest request = new FollowStatsAction.StatsRequest();
         request.setIndices(new String[]{indexMetaData.getIndex().getName()});
-        getClient().execute(FollowStatsAction.INSTANCE, request,
+        client.execute(FollowStatsAction.INSTANCE, request,
             ActionListener.wrap(r -> handleResponse(r, listener), listener::onFailure));
     }
 

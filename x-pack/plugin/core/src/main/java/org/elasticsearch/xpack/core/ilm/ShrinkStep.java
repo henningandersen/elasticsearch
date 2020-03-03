@@ -24,8 +24,8 @@ public class ShrinkStep extends AsyncActionStep {
     private int numberOfShards;
     private String shrunkIndexPrefix;
 
-    public ShrinkStep(StepKey key, StepKey nextStepKey, Client client, int numberOfShards, String shrunkIndexPrefix) {
-        super(key, nextStepKey, client);
+    public ShrinkStep(StepKey key, StepKey nextStepKey, int numberOfShards, String shrunkIndexPrefix) {
+        super(key, nextStepKey);
         this.numberOfShards = numberOfShards;
         this.shrunkIndexPrefix = shrunkIndexPrefix;
     }
@@ -39,7 +39,7 @@ public class ShrinkStep extends AsyncActionStep {
     }
 
     @Override
-    public void performAction(IndexMetaData indexMetaData, ClusterState currentState, ClusterStateObserver observer, Listener listener) {
+    public void performAction(IndexMetaData indexMetaData, ClusterState currentState, ClusterStateObserver observer, Listener listener, Client client) {
         LifecycleExecutionState lifecycleState = LifecycleExecutionState.fromIndexMetadata(indexMetaData);
         if (lifecycleState.getLifecycleDate() == null) {
             throw new IllegalStateException("source index [" + indexMetaData.getIndex().getName() +
@@ -61,7 +61,7 @@ public class ShrinkStep extends AsyncActionStep {
             .masterNodeTimeout(getMasterTimeout(currentState));
         resizeRequest.getTargetIndexRequest().settings(relevantTargetSettings);
 
-        getClient().admin().indices().resizeIndex(resizeRequest, ActionListener.wrap(response -> {
+        client.admin().indices().resizeIndex(resizeRequest, ActionListener.wrap(response -> {
             listener.onResponse(response.isAcknowledged());
         }, listener::onFailure));
 

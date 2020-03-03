@@ -27,7 +27,7 @@ public class ForceMergeStepTests extends AbstractStepTestCase<ForceMergeStep> {
         StepKey nextStepKey = randomStepKey();
         int maxNumSegments = randomIntBetween(1, 10);
 
-        return new ForceMergeStep(stepKey, nextStepKey, null, maxNumSegments);
+        return new ForceMergeStep(stepKey, nextStepKey, maxNumSegments);
     }
 
     @Override
@@ -50,13 +50,13 @@ public class ForceMergeStepTests extends AbstractStepTestCase<ForceMergeStep> {
                 throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new ForceMergeStep(key, nextKey, instance.getClient(), maxNumSegments);
+        return new ForceMergeStep(key, nextKey, maxNumSegments);
     }
 
     @Override
     public ForceMergeStep copyInstance(ForceMergeStep instance) {
         return new ForceMergeStep(instance.getKey(), instance.getNextStepKey(),
-            instance.getClient(), instance.getMaxNumSegments());
+            instance.getMaxNumSegments());
     }
 
     public void testPerformActionComplete() {
@@ -76,7 +76,7 @@ public class ForceMergeStepTests extends AbstractStepTestCase<ForceMergeStep> {
             return null;
         }).when(indicesClient).forceMerge(any(), any());
 
-        ForceMergeStep step = new ForceMergeStep(stepKey, nextStepKey, client, maxNumSegments);
+        ForceMergeStep step = new ForceMergeStep(stepKey, nextStepKey, maxNumSegments);
         SetOnce<Boolean> completed = new SetOnce<>();
         step.performAction(indexMetaData, null, null, new AsyncActionStep.Listener() {
             @Override
@@ -88,7 +88,7 @@ public class ForceMergeStepTests extends AbstractStepTestCase<ForceMergeStep> {
             public void onFailure(Exception e) {
                 throw new AssertionError("unexpected method call", e);
             }
-        });
+        }, client);
         assertThat(completed.get(), equalTo(true));
     }
 
@@ -112,7 +112,7 @@ public class ForceMergeStepTests extends AbstractStepTestCase<ForceMergeStep> {
             return null;
         }).when(indicesClient).forceMerge(any(), any());
 
-        ForceMergeStep step = new ForceMergeStep(stepKey, nextStepKey, client, maxNumSegments);
+        ForceMergeStep step = new ForceMergeStep(stepKey, nextStepKey, maxNumSegments);
         SetOnce<Boolean> exceptionThrown = new SetOnce<>();
         step.performAction(indexMetaData, null, null, new AsyncActionStep.Listener() {
             @Override
@@ -125,7 +125,7 @@ public class ForceMergeStepTests extends AbstractStepTestCase<ForceMergeStep> {
                 assertEquals(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
         assertThat(exceptionThrown.get(), equalTo(true));
     }
 }

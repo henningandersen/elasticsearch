@@ -28,39 +28,41 @@ import java.util.function.Consumer;
 public abstract class AsyncRetryDuringSnapshotActionStep extends AsyncActionStep {
     private final Logger logger = LogManager.getLogger(AsyncRetryDuringSnapshotActionStep.class);
 
-    public AsyncRetryDuringSnapshotActionStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    public AsyncRetryDuringSnapshotActionStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
     public void performAction(IndexMetaData indexMetaData, ClusterState currentClusterState,
-                              ClusterStateObserver observer, Listener listener) {
+                              ClusterStateObserver observer, Listener listener, Client client) {
         // Wrap the original listener to handle exceptions caused by ongoing snapshots
-        SnapshotExceptionListener snapshotExceptionListener = new SnapshotExceptionListener(indexMetaData.getIndex(), listener, observer);
-        performDuringNoSnapshot(indexMetaData, currentClusterState, snapshotExceptionListener);
+        SnapshotExceptionListener snapshotExceptionListener = new SnapshotExceptionListener(indexMetaData.getIndex(), listener, observer, client);
+        performDuringNoSnapshot(indexMetaData, currentClusterState, snapshotExceptionListener, client);
     }
 
     /**
      * Method to be performed during which no snapshots for the index are already underway.
      */
-    abstract void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentClusterState, Listener listener);
+    abstract void performDuringNoSnapshot(IndexMetaData indexMetaData, ClusterState currentClusterState, Listener listener, Client client);
 
     /**
      * SnapshotExceptionListener is an injected listener wrapper that checks to see if a particular
      * action failed due to a {@code SnapshotInProgressException}. If it did, then it registers a
      * ClusterStateObserver listener waiting for the next time the snapshot is not running,
-     * re-running the step's {@link #performAction(IndexMetaData, ClusterState, ClusterStateObserver, Listener)}
+     * re-running the step's {@link AsyncActionStep#performAction(IndexMetaData, ClusterState, ClusterStateObserver, Listener, Client)}
      * method when the snapshot is no longer running.
      */
     class SnapshotExceptionListener implements AsyncActionStep.Listener {
         private final Index index;
         private final Listener originalListener;
         private final ClusterStateObserver observer;
+        private final Client client;
 
-        SnapshotExceptionListener(Index index, Listener originalListener, ClusterStateObserver observer) {
+        SnapshotExceptionListener(Index index, Listener originalListener, ClusterStateObserver observer, Client client) {
             this.index = index;
             this.originalListener = originalListener;
             this.observer = observer;
+            this.client = client;
         }
 
         @Override
@@ -82,7 +84,7 @@ public abstract class AsyncRetryDuringSnapshotActionStep extends AsyncActionStep
                                 originalListener.onResponse(true);
                             }
                             // Re-invoke the performAction method with the new state
-                            performAction(idxMeta, state, observer, originalListener);
+                            performAction(idxMeta, state, observer, originalListener, client);
                         }, originalListener::onFailure),
                         // TODO: what is a good timeout value for no new state received during this time?
                         TimeValue.timeValueHours(12));

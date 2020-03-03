@@ -191,7 +191,7 @@ public class TransportPutLifecycleAction extends TransportMasterNodeAction<Reque
         }
 
         return phaseExecutionInfo.getPhase().getActions().values().stream()
-            .flatMap(a -> a.toSteps(client, phaseExecutionInfo.getPhase().getName(), null).stream())
+            .flatMap(a -> a.toSteps(phaseExecutionInfo.getPhase().getName(), null).stream())
             .map(Step::getKey)
             .collect(Collectors.toCollection(LinkedHashSet::new));
     }
@@ -212,7 +212,7 @@ public class TransportPutLifecycleAction extends TransportMasterNodeAction<Reque
         final Step.StepKey currentStepKey = LifecycleExecutionState.getCurrentStepKey(executionState);
         final String currentPhase = currentStepKey.getPhase();
 
-        final Set<Step.StepKey> newStepKeys = newPolicy.toSteps(client).stream()
+        final Set<Step.StepKey> newStepKeys = newPolicy.toSteps().stream()
             .map(Step::getKey)
             .collect(Collectors.toCollection(LinkedHashSet::new));
 

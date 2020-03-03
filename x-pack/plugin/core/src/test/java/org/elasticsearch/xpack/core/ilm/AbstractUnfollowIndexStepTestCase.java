@@ -61,7 +61,7 @@ public abstract class AbstractUnfollowIndexStepTestCase<T extends AbstractUnfoll
             public void onFailure(Exception e) {
                 failure[0] = e;
             }
-        });
+        }, client);
         assertThat(completed[0], is(true));
         assertThat(failure[0], nullValue());
         Mockito.verifyZeroInteractions(client);

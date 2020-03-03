@@ -40,7 +40,7 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
     protected WaitForNoFollowersStep createRandomInstance() {
         Step.StepKey stepKey = randomStepKey();
         Step.StepKey nextStepKey = randomStepKey();
-        return new WaitForNoFollowersStep(stepKey, nextStepKey, client);
+        return new WaitForNoFollowersStep(stepKey, nextStepKey);
     }
 
     @Override
@@ -54,12 +54,12 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
             nextKey = new Step.StepKey(key.getPhase(), key.getAction(), key.getName() + randomAlphaOfLength(5));
         }
 
-        return new WaitForNoFollowersStep(key, nextKey, instance.getClient());
+        return new WaitForNoFollowersStep(key, nextKey);
     }
 
     @Override
     protected WaitForNoFollowersStep copyInstance(WaitForNoFollowersStep instance) {
-        return new WaitForNoFollowersStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new WaitForNoFollowersStep(instance.getKey(), instance.getNextStepKey());
     }
 
     public void testConditionMet() {
@@ -89,7 +89,7 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
             public void onFailure(Exception e) {
                 fail("onFailure should not be called in this test, called with exception: " + e.getMessage());
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertTrue(conditionMetHolder.get());
         assertNull(stepInfoHolder.get());
@@ -122,7 +122,7 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
             public void onFailure(Exception e) {
                 fail("onFailure should not be called in this test, called with exception: " + e.getMessage());
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertFalse(conditionMetHolder.get());
         assertThat(Strings.toString(stepInfoHolder.get()),
@@ -159,7 +159,7 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
             public void onFailure(Exception e) {
                 fail("onFailure should not be called in this test, called with exception: " + e.getMessage());
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertTrue(conditionMetHolder.get());
         assertNull(stepInfoHolder.get());
@@ -198,7 +198,7 @@ public class WaitForNoFollowersStepTests extends AbstractStepTestCase<WaitForNoF
             public void onFailure(Exception e) {
                 exceptionHolder.set(e);
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertThat(exceptionHolder.get(), equalTo(expectedException));
     }

@@ -39,7 +39,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
         StepKey nextStepKey = randomStepKey();
         int maxNumSegments = randomIntBetween(1, 10);
 
-        return new SegmentCountStep(stepKey, nextStepKey, null, maxNumSegments);
+        return new SegmentCountStep(stepKey, nextStepKey, maxNumSegments);
     }
 
     private IndexMetaData makeMeta(Index index) {
@@ -71,12 +71,12 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
                 throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new SegmentCountStep(key, nextKey, null, maxNumSegments);
+        return new SegmentCountStep(key, nextKey, maxNumSegments);
     }
 
     @Override
     public SegmentCountStep copyInstance(SegmentCountStep instance) {
-        return new SegmentCountStep(instance.getKey(), instance.getNextStepKey(), null, instance.getMaxNumSegments());
+        return new SegmentCountStep(instance.getKey(), instance.getNextStepKey(), instance.getMaxNumSegments());
     }
 
     public void testIsConditionMet() {
@@ -112,7 +112,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
         SetOnce<Boolean> conditionMetResult = new SetOnce<>();
         SetOnce<ToXContentObject> conditionInfo = new SetOnce<>();
 
-        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, client, maxNumSegments);
+        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, maxNumSegments);
         step.evaluateCondition(makeMeta(index), new AsyncWaitStep.Listener() {
             @Override
             public void onResponse(boolean conditionMet, ToXContentObject info) {
@@ -125,7 +125,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
                 logger.warn("unexpected onFailure call", e);
                 throw new AssertionError("unexpected method call");
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertTrue(conditionMetResult.get());
         assertEquals(new SegmentCountStep.Info(0L), conditionInfo.get());
@@ -164,7 +164,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
         SetOnce<Boolean> conditionMetResult = new SetOnce<>();
         SetOnce<ToXContentObject> conditionInfo = new SetOnce<>();
 
-        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, client, maxNumSegments);
+        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, maxNumSegments);
         step.evaluateCondition(makeMeta(index), new AsyncWaitStep.Listener() {
             @Override
             public void onResponse(boolean conditionMet, ToXContentObject info) {
@@ -177,7 +177,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
                 logger.warn("unexpected onFailure call", e);
                 throw new AssertionError("unexpected method call");
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertTrue(conditionMetResult.get());
         assertEquals(new SegmentCountStep.Info(0L), conditionInfo.get());
@@ -219,7 +219,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
         SetOnce<Boolean> conditionMetResult = new SetOnce<>();
         SetOnce<ToXContentObject> conditionInfo = new SetOnce<>();
 
-        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, client, maxNumSegments);
+        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, maxNumSegments);
         step.evaluateCondition(makeMeta(index), new AsyncWaitStep.Listener() {
             @Override
             public void onResponse(boolean conditionMet, ToXContentObject info) {
@@ -232,7 +232,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
                 logger.warn("unexpected onFailure call", e);
                 throw new AssertionError("unexpected method call: " + e);
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertTrue(conditionMetResult.get());
         assertEquals(new SegmentCountStep.Info(-1L), conditionInfo.get());
@@ -255,7 +255,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
 
         SetOnce<Boolean> exceptionThrown = new SetOnce<>();
 
-        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, client, maxNumSegments);
+        SegmentCountStep step = new SegmentCountStep(stepKey, nextStepKey, maxNumSegments);
         step.evaluateCondition(makeMeta(index), new AsyncWaitStep.Listener() {
             @Override
             public void onResponse(boolean conditionMet, ToXContentObject info) {
@@ -267,7 +267,7 @@ public class SegmentCountStepTests extends AbstractStepTestCase<SegmentCountStep
                 assertThat(e, equalTo(exception));
                 exceptionThrown.set(true);
             }
-        }, MASTER_TIMEOUT);
+        }, MASTER_TIMEOUT, client);
 
         assertTrue(exceptionThrown.get());
     }

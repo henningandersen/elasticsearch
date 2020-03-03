@@ -31,7 +31,7 @@ public class ShrinkSetAliasStepTests extends AbstractStepTestCase<ShrinkSetAlias
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
         String shrunkIndexPrefix = randomAlphaOfLength(10);
-        return new ShrinkSetAliasStep(stepKey, nextStepKey, client, shrunkIndexPrefix);
+        return new ShrinkSetAliasStep(stepKey, nextStepKey, shrunkIndexPrefix);
     }
 
     @Override
@@ -52,12 +52,12 @@ public class ShrinkSetAliasStepTests extends AbstractStepTestCase<ShrinkSetAlias
         default:
             throw new AssertionError("Illegal randomisation branch");
         }
-        return new ShrinkSetAliasStep(key, nextKey, instance.getClient(), shrunkIndexPrefix);
+        return new ShrinkSetAliasStep(key, nextKey, shrunkIndexPrefix);
     }
 
     @Override
     public ShrinkSetAliasStep copyInstance(ShrinkSetAliasStep instance) {
-        return new ShrinkSetAliasStep(instance.getKey(), instance.getNextStepKey(), instance.getClient(), instance.getShrunkIndexPrefix());
+        return new ShrinkSetAliasStep(instance.getKey(), instance.getNextStepKey(), instance.getShrunkIndexPrefix());
     }
 
     public void testPerformAction() {
@@ -110,7 +110,7 @@ public class ShrinkSetAliasStepTests extends AbstractStepTestCase<ShrinkSetAlias
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         assertTrue(actionCompleted.get());
 
@@ -145,7 +145,7 @@ public class ShrinkSetAliasStepTests extends AbstractStepTestCase<ShrinkSetAlias
                 assertSame(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertEquals(true, exceptionThrown.get());
 

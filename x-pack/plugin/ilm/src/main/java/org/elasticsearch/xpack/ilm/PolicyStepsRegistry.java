@@ -120,10 +120,8 @@ public class PolicyStepsRegistry {
 
         if (mapDiff.getUpserts().isEmpty() == false) {
             for (LifecyclePolicyMetadata policyMetadata : mapDiff.getUpserts().values()) {
-                LifecyclePolicySecurityClient policyClient = new LifecyclePolicySecurityClient(client, ClientHelper.INDEX_LIFECYCLE_ORIGIN,
-                        policyMetadata.getHeaders());
                 lifecyclePolicyMap.put(policyMetadata.getName(), policyMetadata);
-                List<Step> policyAsSteps = policyMetadata.getPolicy().toSteps(policyClient);
+                List<Step> policyAsSteps = policyMetadata.getPolicy().toSteps();
                 if (policyAsSteps.isEmpty() == false) {
                     firstStepMap.put(policyMetadata.getName(), policyAsSteps.get(0));
                     final Map<Step.StepKey, Step> stepMapForPolicy = new LinkedHashMap<>();
@@ -163,9 +161,7 @@ public class PolicyStepsRegistry {
             }
             policyToExecute = new LifecyclePolicy(currentPolicy.getType(), currentPolicy.getName(), phaseMap);
         }
-        LifecyclePolicySecurityClient policyClient = new LifecyclePolicySecurityClient(client,
-            ClientHelper.INDEX_LIFECYCLE_ORIGIN, lifecyclePolicyMap.get(policy).getHeaders());
-        final List<Step> steps = policyToExecute.toSteps(policyClient);
+        final List<Step> steps = policyToExecute.toSteps();
         // Build a list of steps that correspond with the phase the index is currently in
         final List<Step> phaseSteps;
         if (steps == null) {
@@ -253,5 +249,15 @@ public class PolicyStepsRegistry {
                 return retrievedPhase.getMinimumAge();
             }
         }
+    }
+
+    // TODO: find a better place for this.
+    private LifecyclePolicySecurityClient getLifecyclePolicySecurityClient(LifecyclePolicyMetadata policyMetadata) {
+        return new LifecyclePolicySecurityClient(client, ClientHelper.INDEX_LIFECYCLE_ORIGIN,
+            policyMetadata.getHeaders());
+    }
+
+    public LifecyclePolicySecurityClient getLifecyclePolicySecurityClient(String policy) {
+        return getLifecyclePolicySecurityClient(lifecyclePolicyMap.get(policy));
     }
 }

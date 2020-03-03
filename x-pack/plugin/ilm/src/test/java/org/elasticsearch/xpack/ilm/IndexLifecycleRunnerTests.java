@@ -172,7 +172,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         PhaseExecutionInfo phaseExecutionInfo = new PhaseExecutionInfo(policy.getName(), phase, 1, randomNonNegativeLong());
         String phaseJson = Strings.toString(phaseExecutionInfo);
         LifecycleAction action = randomFrom(phase.getActions().values());
-        Step step = randomFrom(action.toSteps(new NoOpClient(threadPool), phaseName, null));
+        Step step = randomFrom(action.toSteps(phaseName, null));
         StepKey stepKey = step.getKey();
 
         PolicyStepsRegistry stepRegistry = createOneStepPolicyStepRegistry(policyName, step);
@@ -208,7 +208,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         String phaseJson = Strings.toString(phaseExecutionInfo);
         NoOpClient client = new NoOpClient(threadPool);
         List<Step> waitForRolloverStepList =
-            action.toSteps(client, phaseName, null).stream()
+            action.toSteps(phaseName, null).stream()
                 .filter(s -> s.getKey().getName().equals(WaitForRolloverReadyStep.NAME))
                 .collect(toList());
         assertThat(waitForRolloverStepList.size(), is(1));
@@ -722,7 +722,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         PhaseExecutionInfo pei = new PhaseExecutionInfo(policy.getName(), phase, 1, randomNonNegativeLong());
         String phaseJson = Strings.toString(pei);
         LifecycleAction action = randomFrom(phase.getActions().values());
-        Step step = randomFrom(action.toSteps(client, phaseName, MOCK_STEP_KEY));
+        Step step = randomFrom(action.toSteps(phaseName, MOCK_STEP_KEY));
         Settings indexSettings = Settings.builder()
             .put("index.number_of_shards", 1)
             .put("index.number_of_replicas", 0)
@@ -874,7 +874,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         private CountDownLatch latch;
 
         MockAsyncActionStep(StepKey key, StepKey nextStepKey) {
-            super(key, nextStepKey, null);
+            super(key, nextStepKey);
         }
 
         void setException(Exception exception) {
@@ -900,7 +900,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
 
         @Override
         public void performAction(IndexMetaData indexMetaData, ClusterState currentState,
-                                  ClusterStateObserver observer, Listener listener) {
+                                  ClusterStateObserver observer, Listener listener, Client client) {
             executeCount++;
             if (latch != null) {
                 latch.countDown();
@@ -923,7 +923,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         private CountDownLatch latch;
 
         MockAsyncWaitStep(StepKey key, StepKey nextStepKey) {
-            super(key, nextStepKey, null);
+            super(key, nextStepKey);
         }
 
         void setException(Exception exception) {
@@ -939,7 +939,7 @@ public class IndexLifecycleRunnerTests extends ESTestCase {
         }
 
         @Override
-        public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout) {
+        public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout, Client client) {
             executeCount++;
             if (latch != null) {
                 latch.countDown();

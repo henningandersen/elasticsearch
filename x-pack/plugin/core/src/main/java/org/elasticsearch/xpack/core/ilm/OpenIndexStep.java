@@ -22,16 +22,16 @@ final class OpenIndexStep extends AsyncActionStep {
 
     static final String NAME = "open-index";
 
-    OpenIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    OpenIndexStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
     public void performAction(IndexMetaData indexMetaData, ClusterState currentClusterState,
-                              ClusterStateObserver observer, Listener listener) {
+                              ClusterStateObserver observer, Listener listener, Client client) {
         if (indexMetaData.getState() == IndexMetaData.State.CLOSE) {
             OpenIndexRequest request = new OpenIndexRequest(indexMetaData.getIndex().getName());
-            getClient().admin().indices()
+            client.admin().indices()
                 .open(request,
                     ActionListener.wrap(openIndexResponse -> {
                         if (openIndexResponse.isAcknowledged() == false) {

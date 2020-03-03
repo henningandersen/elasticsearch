@@ -46,7 +46,7 @@ public class CloseFollowerIndexStepTests extends AbstractStepMasterTimeoutTestCa
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey());
         step.performAction(indexMetadata, emptyClusterState(), null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -57,7 +57,7 @@ public class CloseFollowerIndexStepTests extends AbstractStepMasterTimeoutTestCa
             public void onFailure(Exception e) {
                 failure[0] = e;
             }
-        });
+        }, client);
         assertThat(completed[0], is(true));
         assertThat(failure[0], nullValue());
     }
@@ -77,7 +77,7 @@ public class CloseFollowerIndexStepTests extends AbstractStepMasterTimeoutTestCa
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey());
         step.performAction(indexMetadata, emptyClusterState(), null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -88,7 +88,7 @@ public class CloseFollowerIndexStepTests extends AbstractStepMasterTimeoutTestCa
             public void onFailure(Exception e) {
                 failure[0] = e;
             }
-        });
+        }, client);
         assertThat(completed[0], nullValue());
         assertThat(failure[0], sameInstance(error));
         Mockito.verify(indicesClient).close(Mockito.any(), Mockito.any());
@@ -103,7 +103,7 @@ public class CloseFollowerIndexStepTests extends AbstractStepMasterTimeoutTestCa
             .numberOfShards(1)
             .numberOfReplicas(0)
             .build();
-        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        CloseFollowerIndexStep step = new CloseFollowerIndexStep(randomStepKey(), randomStepKey());
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -113,7 +113,7 @@ public class CloseFollowerIndexStepTests extends AbstractStepMasterTimeoutTestCa
             @Override
             public void onFailure(Exception e) {
             }
-        });
+        }, client);
 
         Mockito.verifyZeroInteractions(client);
     }
@@ -122,7 +122,7 @@ public class CloseFollowerIndexStepTests extends AbstractStepMasterTimeoutTestCa
     protected CloseFollowerIndexStep createRandomInstance() {
         Step.StepKey stepKey = randomStepKey();
         Step.StepKey nextStepKey = randomStepKey();
-        return new CloseFollowerIndexStep(stepKey, nextStepKey, client);
+        return new CloseFollowerIndexStep(stepKey, nextStepKey);
     }
 
     @Override
@@ -136,11 +136,11 @@ public class CloseFollowerIndexStepTests extends AbstractStepMasterTimeoutTestCa
             nextKey = new Step.StepKey(key.getPhase(), key.getAction(), key.getName() + randomAlphaOfLength(5));
         }
 
-        return new CloseFollowerIndexStep(key, nextKey, instance.getClient());
+        return new CloseFollowerIndexStep(key, nextKey);
     }
 
     @Override
     protected CloseFollowerIndexStep copyInstance(CloseFollowerIndexStep instance) {
-        return new CloseFollowerIndexStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new CloseFollowerIndexStep(instance.getKey(), instance.getNextStepKey());
     }
 }

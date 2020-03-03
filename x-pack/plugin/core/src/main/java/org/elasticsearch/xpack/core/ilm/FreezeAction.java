@@ -5,7 +5,6 @@
  */
 package org.elasticsearch.xpack.core.ilm;
 
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -58,9 +57,9 @@ public class FreezeAction implements LifecycleAction {
     }
 
     @Override
-    public List<Step> toSteps(Client client, String phase, StepKey nextStepKey) {
+    public List<Step> toSteps(String phase, StepKey nextStepKey) {
         StepKey freezeStepKey = new StepKey(phase, NAME, FreezeStep.NAME);
-        FreezeStep freezeStep = new FreezeStep(freezeStepKey, nextStepKey, client);
+        FreezeStep freezeStep = new FreezeStep(freezeStepKey, nextStepKey);
         return Arrays.asList(freezeStep);
     }
 

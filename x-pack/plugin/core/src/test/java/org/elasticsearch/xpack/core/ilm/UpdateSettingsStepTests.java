@@ -27,7 +27,7 @@ public class UpdateSettingsStepTests extends AbstractStepMasterTimeoutTestCase<U
         StepKey nextStepKey = randomStepKey();
         Settings settings = Settings.builder().put(randomAlphaOfLength(10), randomAlphaOfLength(10)).build();
 
-        return new UpdateSettingsStep(stepKey, nextStepKey, client, settings);
+        return new UpdateSettingsStep(stepKey, nextStepKey, settings);
     }
 
     @Override
@@ -50,12 +50,12 @@ public class UpdateSettingsStepTests extends AbstractStepMasterTimeoutTestCase<U
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new UpdateSettingsStep(key, nextKey, client, settings);
+        return new UpdateSettingsStep(key, nextKey, settings);
     }
 
     @Override
     public UpdateSettingsStep copyInstance(UpdateSettingsStep instance) {
-        return new UpdateSettingsStep(instance.getKey(), instance.getNextStepKey(), instance.getClient(), instance.getSettings());
+        return new UpdateSettingsStep(instance.getKey(), instance.getNextStepKey(), instance.getSettings());
     }
 
     @Override
@@ -92,7 +92,7 @@ public class UpdateSettingsStepTests extends AbstractStepMasterTimeoutTestCase<U
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         assertEquals(true, actionCompleted.get());
 
@@ -129,7 +129,7 @@ public class UpdateSettingsStepTests extends AbstractStepMasterTimeoutTestCase<U
                 assertSame(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertEquals(true, exceptionThrown.get());
 

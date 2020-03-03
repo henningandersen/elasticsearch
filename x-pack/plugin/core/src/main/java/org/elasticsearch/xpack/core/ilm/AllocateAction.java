@@ -5,7 +5,6 @@
  */
 package org.elasticsearch.xpack.core.ilm;
 
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
@@ -133,7 +132,7 @@ public class AllocateAction implements LifecycleAction {
     }
 
     @Override
-    public List<Step> toSteps(Client client, String phase, StepKey nextStepKey) {
+    public List<Step> toSteps(String phase, StepKey nextStepKey) {
         StepKey allocateKey = new StepKey(phase, NAME, NAME);
         StepKey allocationRoutedKey = new StepKey(phase, NAME, AllocationRoutedStep.NAME);
 
@@ -144,7 +143,7 @@ public class AllocateAction implements LifecycleAction {
         include.forEach((key, value) -> newSettings.put(IndexMetaData.INDEX_ROUTING_INCLUDE_GROUP_SETTING.getKey() + key, value));
         exclude.forEach((key, value) -> newSettings.put(IndexMetaData.INDEX_ROUTING_EXCLUDE_GROUP_SETTING.getKey() + key, value));
         require.forEach((key, value) -> newSettings.put(IndexMetaData.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey() + key, value));
-        UpdateSettingsStep allocateStep = new UpdateSettingsStep(allocateKey, allocationRoutedKey, client, newSettings.build());
+        UpdateSettingsStep allocateStep = new UpdateSettingsStep(allocateKey, allocationRoutedKey, newSettings.build());
         AllocationRoutedStep routedCheckStep = new AllocationRoutedStep(allocationRoutedKey, nextStepKey);
         return Arrays.asList(allocateStep, routedCheckStep);
     }

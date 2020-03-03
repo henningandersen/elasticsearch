@@ -51,8 +51,8 @@ public class SetSingleNodeAllocateStep extends AsyncActionStep {
         new NodeVersionAllocationDecider()
     ));
 
-    public SetSingleNodeAllocateStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    public SetSingleNodeAllocateStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class SetSingleNodeAllocateStep extends AsyncActionStep {
     }
 
     @Override
-    public void performAction(IndexMetaData indexMetaData, ClusterState clusterState, ClusterStateObserver observer, Listener listener) {
+    public void performAction(IndexMetaData indexMetaData, ClusterState clusterState, ClusterStateObserver observer, Listener listener, Client client) {
         final RoutingNodes routingNodes = clusterState.getRoutingNodes();
         RoutingAllocation allocation = new RoutingAllocation(ALLOCATION_DECIDERS, routingNodes, clusterState, null,
                 System.nanoTime());
@@ -92,7 +92,7 @@ public class SetSingleNodeAllocateStep extends AsyncActionStep {
                 UpdateSettingsRequest updateSettingsRequest = new UpdateSettingsRequest(indexName)
                         .masterNodeTimeout(getMasterTimeout(clusterState))
                         .settings(settings);
-                getClient().admin().indices().updateSettings(updateSettingsRequest,
+                client.admin().indices().updateSettings(updateSettingsRequest,
                         ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
             } else {
                 // No nodes currently match the allocation rules, so report this as an error and we'll retry

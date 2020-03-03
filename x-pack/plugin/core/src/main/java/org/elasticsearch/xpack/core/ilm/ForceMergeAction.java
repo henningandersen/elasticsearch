@@ -6,7 +6,6 @@
 package org.elasticsearch.xpack.core.ilm;
 
 import org.elasticsearch.Version;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Nullable;
@@ -113,7 +112,7 @@ public class ForceMergeAction implements LifecycleAction {
     }
 
     @Override
-    public List<Step> toSteps(Client client, String phase, Step.StepKey nextStepKey) {
+    public List<Step> toSteps(String phase, StepKey nextStepKey) {
         Settings readOnlySettings = Settings.builder().put(IndexMetaData.SETTING_BLOCKS_WRITE, true).build();
         Settings bestCompressionSettings = Settings.builder()
             .put(EngineConfig.INDEX_CODEC_SETTING.getKey(), CodecService.BEST_COMPRESSION_CODEC).build();
@@ -131,17 +130,17 @@ public class ForceMergeAction implements LifecycleAction {
         StepKey countKey = new StepKey(phase, NAME, SegmentCountStep.NAME);
 
         UpdateSettingsStep readOnlyStep =
-            new UpdateSettingsStep(readOnlyKey, codecChange ? closeKey : forceMergeKey, client, readOnlySettings);
+            new UpdateSettingsStep(readOnlyKey, codecChange ? closeKey : forceMergeKey, readOnlySettings);
 
-        CloseIndexStep closeIndexStep = new CloseIndexStep(closeKey, updateCompressionKey, client);
+        CloseIndexStep closeIndexStep = new CloseIndexStep(closeKey, updateCompressionKey);
         UpdateSettingsStep updateBestCompressionSettings = new UpdateSettingsStep(updateCompressionKey,
-            openKey, client, bestCompressionSettings);
-        OpenIndexStep openIndexStep = new OpenIndexStep(openKey, waitForGreenIndexKey, client);
+            openKey, bestCompressionSettings);
+        OpenIndexStep openIndexStep = new OpenIndexStep(openKey, waitForGreenIndexKey);
         WaitForIndexColorStep waitForIndexGreenStep = new WaitForIndexColorStep(waitForGreenIndexKey,
             forceMergeKey, ClusterHealthStatus.GREEN);
 
-        ForceMergeStep forceMergeStep = new ForceMergeStep(forceMergeKey, countKey, client, maxNumSegments);
-        SegmentCountStep segmentCountStep = new SegmentCountStep(countKey, nextStepKey, client, maxNumSegments);
+        ForceMergeStep forceMergeStep = new ForceMergeStep(forceMergeKey, countKey, maxNumSegments);
+        SegmentCountStep segmentCountStep = new SegmentCountStep(countKey, nextStepKey, maxNumSegments);
 
         List<Step> mergeSteps = new ArrayList<>();
         mergeSteps.add(readOnlyStep);

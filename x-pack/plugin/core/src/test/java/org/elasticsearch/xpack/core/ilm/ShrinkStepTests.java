@@ -32,7 +32,7 @@ public class ShrinkStepTests extends AbstractStepTestCase<ShrinkStep> {
         StepKey nextStepKey = randomStepKey();
         int numberOfShards = randomIntBetween(1, 20);
         String shrunkIndexPrefix = randomAlphaOfLength(10);
-        return new ShrinkStep(stepKey, nextStepKey, client, numberOfShards, shrunkIndexPrefix);
+        return new ShrinkStep(stepKey, nextStepKey, numberOfShards, shrunkIndexPrefix);
     }
 
     @Override
@@ -59,12 +59,12 @@ public class ShrinkStepTests extends AbstractStepTestCase<ShrinkStep> {
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new ShrinkStep(key, nextKey, instance.getClient(), numberOfShards, shrunkIndexPrefix);
+        return new ShrinkStep(key, nextKey, numberOfShards, shrunkIndexPrefix);
     }
 
     @Override
     public ShrinkStep copyInstance(ShrinkStep instance) {
-        return new ShrinkStep(instance.getKey(), instance.getNextStepKey(), instance.getClient(), instance.getNumberOfShards(),
+        return new ShrinkStep(instance.getKey(), instance.getNextStepKey(), instance.getNumberOfShards(),
                 instance.getShrunkIndexPrefix());
     }
 
@@ -115,7 +115,7 @@ public class ShrinkStepTests extends AbstractStepTestCase<ShrinkStep> {
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         assertEquals(true, actionCompleted.get());
 
@@ -151,7 +151,7 @@ public class ShrinkStepTests extends AbstractStepTestCase<ShrinkStep> {
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         assertEquals(false, actionCompleted.get());
 
@@ -189,7 +189,7 @@ public class ShrinkStepTests extends AbstractStepTestCase<ShrinkStep> {
                 assertSame(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertEquals(true, exceptionThrown.get());
 

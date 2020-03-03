@@ -25,7 +25,7 @@ public class FreezeStepTests extends AbstractStepMasterTimeoutTestCase<FreezeSte
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
 
-        return new FreezeStep(stepKey, nextStepKey, client);
+        return new FreezeStep(stepKey, nextStepKey);
     }
 
     @Override
@@ -44,12 +44,12 @@ public class FreezeStepTests extends AbstractStepMasterTimeoutTestCase<FreezeSte
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new FreezeStep(key, nextKey, instance.getClient());
+        return new FreezeStep(key, nextKey);
     }
 
     @Override
     public FreezeStep copyInstance(FreezeStep instance) {
-        return new FreezeStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new FreezeStep(instance.getKey(), instance.getNextStepKey());
     }
 
     @Override
@@ -90,7 +90,7 @@ public class FreezeStepTests extends AbstractStepMasterTimeoutTestCase<FreezeSte
             public void onFailure(Exception e) {
                 throw new AssertionError(e);
             }
-        });
+        }, client);
 
         assertThat(actionCompleted.get(), equalTo(true));
 
@@ -123,7 +123,7 @@ public class FreezeStepTests extends AbstractStepMasterTimeoutTestCase<FreezeSte
                 assertEquals(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertThat(exceptionThrown.get(), equalTo(true));
     }

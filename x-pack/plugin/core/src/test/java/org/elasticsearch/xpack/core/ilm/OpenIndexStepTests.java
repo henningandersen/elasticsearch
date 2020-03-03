@@ -32,7 +32,7 @@ public class OpenIndexStepTests extends AbstractStepTestCase<OpenIndexStep> {
 
     @Override
     protected OpenIndexStep createRandomInstance() {
-        return new OpenIndexStep(randomStepKey(), randomStepKey(), client);
+        return new OpenIndexStep(randomStepKey(), randomStepKey());
     }
 
     @Override
@@ -51,12 +51,12 @@ public class OpenIndexStepTests extends AbstractStepTestCase<OpenIndexStep> {
                 throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new OpenIndexStep(key, nextKey, client);
+        return new OpenIndexStep(key, nextKey);
     }
 
     @Override
     protected OpenIndexStep copyInstance(OpenIndexStep instance) {
-        return new OpenIndexStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new OpenIndexStep(instance.getKey(), instance.getNextStepKey());
     }
 
     public void testPerformAction() {
@@ -96,7 +96,7 @@ public class OpenIndexStepTests extends AbstractStepTestCase<OpenIndexStep> {
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         assertEquals(true, actionCompleted.get());
         Mockito.verify(client, Mockito.only()).admin();
@@ -143,7 +143,7 @@ public class OpenIndexStepTests extends AbstractStepTestCase<OpenIndexStep> {
                 assertSame(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertEquals(true, exceptionThrown.get());
         Mockito.verify(client, Mockito.only()).admin();

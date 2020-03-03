@@ -18,15 +18,8 @@ import java.util.Objects;
  */
 public abstract class AsyncActionStep extends Step {
 
-    private Client client;
-
-    public AsyncActionStep(StepKey key, StepKey nextStepKey, Client client) {
+    public AsyncActionStep(StepKey key, StepKey nextStepKey) {
         super(key, nextStepKey);
-        this.client = client;
-    }
-
-    protected Client getClient() {
-        return client;
     }
 
     public static TimeValue getMasterTimeout(ClusterState clusterState){
@@ -39,7 +32,7 @@ public abstract class AsyncActionStep extends Step {
     }
 
     public abstract void performAction(IndexMetaData indexMetaData, ClusterState currentClusterState,
-                                       ClusterStateObserver observer, Listener listener);
+                                       ClusterStateObserver observer, Listener listener, Client client);
 
     public interface Listener {
 

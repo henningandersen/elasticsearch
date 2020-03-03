@@ -24,7 +24,7 @@ public class PauseFollowerIndexStepTests extends AbstractUnfollowIndexStepTestCa
 
     @Override
     protected PauseFollowerIndexStep newInstance(Step.StepKey key, Step.StepKey nextKey) {
-        return new PauseFollowerIndexStep(key, nextKey, client);
+        return new PauseFollowerIndexStep(key, nextKey);
     }
 
     public void testPauseFollowingIndex() {
@@ -47,7 +47,7 @@ public class PauseFollowerIndexStepTests extends AbstractUnfollowIndexStepTestCa
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        PauseFollowerIndexStep step = new PauseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        PauseFollowerIndexStep step = new PauseFollowerIndexStep(randomStepKey(), randomStepKey());
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -58,7 +58,7 @@ public class PauseFollowerIndexStepTests extends AbstractUnfollowIndexStepTestCa
             public void onFailure(Exception e) {
                 failure[0] = e;
             }
-        });
+        }, client);
         assertThat(completed[0], is(true));
         assertThat(failure[0], nullValue());
     }
@@ -83,7 +83,7 @@ public class PauseFollowerIndexStepTests extends AbstractUnfollowIndexStepTestCa
 
         Boolean[] completed = new Boolean[1];
         Exception[] failure = new Exception[1];
-        PauseFollowerIndexStep step = new PauseFollowerIndexStep(randomStepKey(), randomStepKey(), client);
+        PauseFollowerIndexStep step = new PauseFollowerIndexStep(randomStepKey(), randomStepKey());
         step.performAction(indexMetadata, null, null, new AsyncActionStep.Listener() {
             @Override
             public void onResponse(boolean complete) {
@@ -94,7 +94,7 @@ public class PauseFollowerIndexStepTests extends AbstractUnfollowIndexStepTestCa
             public void onFailure(Exception e) {
                 failure[0] = e;
             }
-        });
+        }, client);
         assertThat(completed[0], nullValue());
         assertThat(failure[0], sameInstance(error));
         Mockito.verify(client).execute(Mockito.same(PauseFollowAction.INSTANCE), Mockito.any(), Mockito.any());

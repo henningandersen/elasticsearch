@@ -27,8 +27,8 @@ public class RolloverStep extends AsyncActionStep {
 
     public static final String NAME = "attempt-rollover";
 
-    public RolloverStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    public RolloverStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class RolloverStep extends AsyncActionStep {
 
     @Override
     public void performAction(IndexMetaData indexMetaData, ClusterState currentClusterState,
-                              ClusterStateObserver observer, Listener listener) {
+                              ClusterStateObserver observer, Listener listener, Client client) {
         boolean indexingComplete = LifecycleSettings.LIFECYCLE_INDEXING_COMPLETE_SETTING.get(indexMetaData.getSettings());
         if (indexingComplete) {
             logger.trace(indexMetaData.getIndex() + " has lifecycle complete set, skipping " + RolloverStep.NAME);
@@ -75,7 +75,7 @@ public class RolloverStep extends AsyncActionStep {
         // We don't wait for active shards when we perform the rollover because the
         // {@link org.elasticsearch.xpack.core.ilm.WaitForActiveShardsStep} step will do so
         rolloverRequest.setWaitForActiveShards(ActiveShardCount.NONE);
-        getClient().admin().indices().rolloverIndex(rolloverRequest,
+        client.admin().indices().rolloverIndex(rolloverRequest,
             ActionListener.wrap(response -> {
                 assert response.isRolledOver() : "the only way this rollover call should fail is with an exception";
                 listener.onResponse(response.isRolledOver());

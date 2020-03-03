@@ -5,7 +5,6 @@
  */
 package org.elasticsearch.xpack.core.ilm;
 
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -53,7 +52,7 @@ public class WaitForSnapshotAction implements LifecycleAction {
     }
 
     @Override
-    public List<Step> toSteps(Client client, String phase, StepKey nextStepKey) {
+    public List<Step> toSteps(String phase, StepKey nextStepKey) {
         StepKey waitForSnapshotKey = new StepKey(phase, NAME, WaitForSnapshotStep.NAME);
         return Collections.singletonList(new WaitForSnapshotStep(waitForSnapshotKey, nextStepKey, policy));
     }

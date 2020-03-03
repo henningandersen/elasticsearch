@@ -21,16 +21,16 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 public class CloseIndexStep extends AsyncActionStep {
     public static final String NAME = "close-index";
 
-    CloseIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    CloseIndexStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
     public void performAction(IndexMetaData indexMetaData, ClusterState currentClusterState,
-                              ClusterStateObserver observer, Listener listener) {
+                              ClusterStateObserver observer, Listener listener, Client client) {
         if (indexMetaData.getState() == IndexMetaData.State.OPEN) {
             CloseIndexRequest request = new CloseIndexRequest(indexMetaData.getIndex().getName());
-            getClient().admin().indices()
+            client.admin().indices()
                 .close(request, ActionListener.wrap(closeIndexResponse -> {
                     if (closeIndexResponse.isAcknowledged() == false) {
                         throw new ElasticsearchException("close index request failed to be acknowledged");

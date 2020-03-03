@@ -31,7 +31,7 @@ public class RolloverStepTests extends AbstractStepMasterTimeoutTestCase<Rollove
         StepKey stepKey = randomStepKey();
         StepKey nextStepKey = randomStepKey();
 
-        return new RolloverStep(stepKey, nextStepKey, client);
+        return new RolloverStep(stepKey, nextStepKey);
     }
 
     @Override
@@ -51,12 +51,12 @@ public class RolloverStepTests extends AbstractStepMasterTimeoutTestCase<Rollove
             throw new AssertionError("Illegal randomisation branch");
         }
 
-        return new RolloverStep(key, nextKey, instance.getClient());
+        return new RolloverStep(key, nextKey);
     }
 
     @Override
     public RolloverStep copyInstance(RolloverStep instance) {
-        return new RolloverStep(instance.getKey(), instance.getNextStepKey(), instance.getClient());
+        return new RolloverStep(instance.getKey(), instance.getNextStepKey());
     }
 
     private IndexMetaData getIndexMetaData(String alias) {
@@ -107,7 +107,7 @@ public class RolloverStepTests extends AbstractStepMasterTimeoutTestCase<Rollove
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         assertEquals(true, actionCompleted.get());
 
@@ -139,7 +139,7 @@ public class RolloverStepTests extends AbstractStepMasterTimeoutTestCase<Rollove
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         assertEquals(true, actionCompleted.get());
     }
@@ -168,7 +168,7 @@ public class RolloverStepTests extends AbstractStepMasterTimeoutTestCase<Rollove
             public void onFailure(Exception e) {
                 throw new AssertionError("Unexpected method call", e);
             }
-        });
+        }, client);
 
         Mockito.verify(indicesClient, Mockito.never()).rolloverIndex(Mockito.any(), Mockito.any());
     }
@@ -201,7 +201,7 @@ public class RolloverStepTests extends AbstractStepMasterTimeoutTestCase<Rollove
                 assertSame(exception, e);
                 exceptionThrown.set(true);
             }
-        });
+        }, client);
 
         assertEquals(true, exceptionThrown.get());
 
@@ -228,7 +228,7 @@ public class RolloverStepTests extends AbstractStepMasterTimeoutTestCase<Rollove
             public void onFailure(Exception e) {
                 exceptionThrown.set(e);
             }
-        });
+        }, client);
         assertThat(exceptionThrown.get().getClass(), equalTo(IllegalArgumentException.class));
         assertThat(exceptionThrown.get().getMessage(), equalTo(String.format(Locale.ROOT,
             "setting [%s] for index [%s] is empty or not defined", RolloverAction.LIFECYCLE_ROLLOVER_ALIAS,
@@ -253,7 +253,7 @@ public class RolloverStepTests extends AbstractStepMasterTimeoutTestCase<Rollove
             public void onFailure(Exception e) {
                 exceptionThrown.set(e);
             }
-        });
+        }, client);
         assertThat(exceptionThrown.get().getClass(), equalTo(IllegalArgumentException.class));
         assertThat(exceptionThrown.get().getMessage(), equalTo(String.format(Locale.ROOT,
             "%s [%s] does not point to index [%s]", RolloverAction.LIFECYCLE_ROLLOVER_ALIAS, alias,

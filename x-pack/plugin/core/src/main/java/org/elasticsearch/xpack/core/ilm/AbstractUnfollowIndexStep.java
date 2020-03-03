@@ -16,13 +16,13 @@ import static org.elasticsearch.xpack.core.ilm.UnfollowAction.CCR_METADATA_KEY;
 
 abstract class AbstractUnfollowIndexStep extends AsyncActionStep {
 
-    AbstractUnfollowIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    AbstractUnfollowIndexStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
     public final void performAction(IndexMetaData indexMetaData, ClusterState currentClusterState,
-                                    ClusterStateObserver observer, Listener listener) {
+                                    ClusterStateObserver observer, Listener listener, Client client) {
         String followerIndex = indexMetaData.getIndex().getName();
         Map<String, String> customIndexMetadata = indexMetaData.getCustomData(CCR_METADATA_KEY);
         if (customIndexMetadata == null) {
@@ -30,8 +30,8 @@ abstract class AbstractUnfollowIndexStep extends AsyncActionStep {
             return;
         }
 
-        innerPerformAction(followerIndex, listener);
+        innerPerformAction(followerIndex, listener, client);
     }
 
-    abstract void innerPerformAction(String followerIndex, Listener listener);
+    abstract void innerPerformAction(String followerIndex, Listener listener, Client client);
 }

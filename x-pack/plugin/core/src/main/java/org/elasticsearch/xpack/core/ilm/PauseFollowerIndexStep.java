@@ -13,14 +13,14 @@ final class PauseFollowerIndexStep extends AbstractUnfollowIndexStep {
 
     static final String NAME = "pause-follower-index";
 
-    PauseFollowerIndexStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    PauseFollowerIndexStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
-    void innerPerformAction(String followerIndex, Listener listener) {
+    void innerPerformAction(String followerIndex, Listener listener, Client client) {
         PauseFollowAction.Request request = new PauseFollowAction.Request(followerIndex);
-        getClient().execute(PauseFollowAction.INSTANCE, request, ActionListener.wrap(
+        client.execute(PauseFollowAction.INSTANCE, request, ActionListener.wrap(
             r -> {
                 assert r.isAcknowledged() : "pause follow response is not acknowledged";
                 listener.onResponse(true);

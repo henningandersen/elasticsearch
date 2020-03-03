@@ -38,17 +38,17 @@ public class WaitForNoFollowersStep extends AsyncWaitStep {
     static final String NAME = "wait-for-shard-history-leases";
     static final String CCR_LEASE_KEY = "ccr";
 
-    WaitForNoFollowersStep(StepKey key, StepKey nextStepKey, Client client) {
-        super(key, nextStepKey, client);
+    WaitForNoFollowersStep(StepKey key, StepKey nextStepKey) {
+        super(key, nextStepKey);
     }
 
     @Override
-    public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout) {
+    public void evaluateCondition(IndexMetaData indexMetaData, Listener listener, TimeValue masterTimeout, Client client) {
         IndicesStatsRequest request = new IndicesStatsRequest();
         request.clear();
         String indexName = indexMetaData.getIndex().getName();
         request.indices(indexName);
-        getClient().admin().indices().stats(request, ActionListener.wrap((response) -> {
+        client.admin().indices().stats(request, ActionListener.wrap((response) -> {
             IndexStats indexStats = response.getIndex(indexName);
             if (indexStats == null) {
                 // Index was probably deleted
