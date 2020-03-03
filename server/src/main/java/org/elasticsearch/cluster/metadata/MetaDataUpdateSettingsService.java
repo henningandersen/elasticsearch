@@ -19,8 +19,8 @@
 
 package org.elasticsearch.cluster.metadata;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
@@ -28,6 +28,7 @@ import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsCluster
 import org.elasticsearch.action.admin.indices.upgrade.post.UpgradeSettingsClusterStateUpdateRequest;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.ClusterStateUpdateTask;
 import org.elasticsearch.cluster.ack.ClusterStateUpdateResponse;
 import org.elasticsearch.cluster.block.ClusterBlock;
 import org.elasticsearch.cluster.block.ClusterBlocks;
@@ -64,16 +65,29 @@ import static org.elasticsearch.index.IndexSettings.same;
 public class MetaDataUpdateSettingsService {
     private static final Logger logger = LogManager.getLogger(MetaDataUpdateSettingsService.class);
 
-    private final ClusterService clusterService;
+    private final ClusterStateUpdater clusterService;
 
-    private final AllocationService allocationService;
+    private final Rerouter allocationService;
 
     private final IndexScopedSettings indexScopedSettings;
     private final IndicesService indicesService;
     private final ThreadPool threadPool;
 
+    public interface ClusterStateUpdater {
+        void submitStateUpdateTask(String reason, ClusterStateUpdateTask task);
+    }
+
+    public interface Rerouter {
+        ClusterState reroute(ClusterState state, String reason);
+    }
+
     @Inject
     public MetaDataUpdateSettingsService(ClusterService clusterService, AllocationService allocationService,
+                                         IndexScopedSettings indexScopedSettings, IndicesService indicesService, ThreadPool threadPool) {
+        this(clusterService::submitStateUpdateTask, allocationService::reroute, indexScopedSettings, indicesService, threadPool);
+    }
+
+    public MetaDataUpdateSettingsService(ClusterStateUpdater clusterService, Rerouter allocationService,
                                          IndexScopedSettings indexScopedSettings, IndicesService indicesService, ThreadPool threadPool) {
         this.clusterService = clusterService;
         this.threadPool = threadPool;

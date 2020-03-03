@@ -9,7 +9,10 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.indices.IndicesService;
+import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.Objects;
 
@@ -33,6 +36,22 @@ public abstract class AsyncActionStep extends Step {
 
     public abstract void performAction(IndexMetaData indexMetaData, ClusterState currentClusterState,
                                        ClusterStateObserver observer, Listener listener, Client client);
+
+    public interface DryRunContext {
+        ClusterState reroute(ClusterState state, String reason);
+
+        IndexScopedSettings getIndexScopedSettings();
+
+        IndicesService getIndicesService();
+
+        ThreadPool getThreadPool();
+    }
+    // todo: should we have ActionListener<ClusterState> instead?
+    public ClusterState performDryRun(IndexMetaData indexMetaData, ClusterState currentClusterState, DryRunContext context)
+    {
+        assert false;
+        return currentClusterState;
+    }
 
     public interface Listener {
 

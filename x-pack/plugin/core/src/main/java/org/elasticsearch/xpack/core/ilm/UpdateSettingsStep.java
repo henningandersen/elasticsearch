@@ -5,13 +5,21 @@
  */
 package org.elasticsearch.xpack.core.ilm;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsClusterStateUpdateRequest;
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
+import org.elasticsearch.action.support.PlainActionFuture;
+import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
+import org.elasticsearch.cluster.ClusterStateUpdateTask;
+import org.elasticsearch.cluster.ack.ClusterStateUpdateResponse;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.MetaDataUpdateSettingsService;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.Index;
 
 import java.util.Objects;
 
@@ -40,6 +48,52 @@ public class UpdateSettingsStep extends AsyncActionStep {
             .settings(settings);
         client.admin().indices().updateSettings(updateSettingsRequest,
                 ActionListener.wrap(response -> listener.onResponse(true), listener::onFailure));
+    }
+
+    @Override
+    public ClusterState performDryRun(IndexMetaData indexMetaData, ClusterState currentClusterState, DryRunContext context) {
+        // todo: decide on async or sync.
+        class MyClustateStateUpdater implements MetaDataUpdateSettingsService.ClusterStateUpdater {
+            final ClusterState input;
+            ClusterState result;
+
+            MyClustateStateUpdater(ClusterState input) {
+                this.input = input;
+            }
+
+            @Override
+            public void submitStateUpdateTask(String reason, ClusterStateUpdateTask task) {
+                assert result == null;
+                try {
+                    result = task.execute(input);
+                    // notify
+                } catch (Exception e) {
+                    throw new ElasticsearchException(e);
+                }
+            }
+
+            public ClusterState getResult() {
+                assert result != null;
+                return result;
+            }
+        }
+
+
+        MyClustateStateUpdater updater = new MyClustateStateUpdater(currentClusterState);
+        MetaDataUpdateSettingsService updateSettingsService = new MetaDataUpdateSettingsService(updater::submitStateUpdateTask,
+            context::reroute, context.getIndexScopedSettings(),
+            context.getIndicesService(), context.getThreadPool());
+        UpdateSettingsClusterStateUpdateRequest clusterStateUpdateRequest = new UpdateSettingsClusterStateUpdateRequest()
+            .indices(new Index[] { indexMetaData.getIndex() })
+            .settings(settings)
+            .setPreserveExisting(false)
+            .ackTimeout(AcknowledgedRequest.DEFAULT_ACK_TIMEOUT)
+            .masterNodeTimeout(getMasterTimeout(currentClusterState));
+
+        PlainActionFuture<ClusterStateUpdateResponse> future = new PlainActionFuture<>();
+        updateSettingsService.updateSettings(clusterStateUpdateRequest, future);
+        return updater.getResult();
+
     }
 
     public Settings getSettings() {
