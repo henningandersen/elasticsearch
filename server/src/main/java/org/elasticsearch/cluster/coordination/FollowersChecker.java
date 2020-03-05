@@ -354,6 +354,11 @@ public class FollowersChecker {
             transportService.getThreadPool().generic().execute(new Runnable() {
                 @Override
                 public void run() {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     synchronized (mutex) {
                         if (running() == false) {
                             logger.trace("{} no longer running, not marking faulty", FollowerChecker.this);
