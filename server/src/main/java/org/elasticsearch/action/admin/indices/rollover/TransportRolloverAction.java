@@ -188,7 +188,7 @@ public class TransportRolloverAction extends TransportMasterNodeAction<RolloverR
         public final String sourceIndexName;
         public final ClusterState clusterState;
 
-        public RolloverResult(String rolloverIndexName, String sourceIndexName, ClusterState clusterState) {
+        private RolloverResult(String rolloverIndexName, String sourceIndexName, ClusterState clusterState) {
             this.rolloverIndexName = rolloverIndexName;
             this.sourceIndexName = sourceIndexName;
             this.clusterState = clusterState;
