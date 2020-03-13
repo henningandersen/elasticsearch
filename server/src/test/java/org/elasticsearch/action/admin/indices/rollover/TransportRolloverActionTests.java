@@ -485,6 +485,9 @@ public class TransportRolloverActionTests extends ESTestCase {
         final ClusterState stateBefore = ClusterState.builder(ClusterName.DEFAULT)
                 .metaData(MetaData.builder().put(indexMetaData).put(indexMetaData2)).build();
 
+        when(mockCreateIndexService.applyCreateIndexRequest(any(), any())).thenReturn(stateBefore);
+        when(mdIndexAliasesService.applyAliasActions(any(), any())).thenReturn(stateBefore);
+
         final TransportRolloverAction transportRolloverAction = new TransportRolloverAction(mockTransportService, mockClusterService,
                 mockThreadPool, mockCreateIndexService, mockActionFilters, mockIndexNameExpressionResolver, mdIndexAliasesService,
                 mockClient);
