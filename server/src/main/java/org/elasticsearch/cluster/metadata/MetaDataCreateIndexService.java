@@ -386,6 +386,8 @@ public class MetaDataCreateIndexService {
                 request.index(), request.cause(), templates.stream().map(IndexTemplateMetaData::getName).collect(toList()),
                 indexMetaData.getNumberOfShards(), indexMetaData.getNumberOfReplicas(), mappings.keySet());
 
+            indexService.getIndexEventListener().beforeIndexAddedToCluster(indexMetaData.getIndex(),
+                indexMetaData.getSettings());
             return clusterStateCreateIndex(currentState, request.blocks(), indexMetaData,
                 allocationService::reroute);
         });
