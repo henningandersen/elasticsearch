@@ -88,6 +88,7 @@ import org.elasticsearch.env.TestEnvironment;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.mapper.MapperService;
+import org.elasticsearch.index.shard.IndexEventListener;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.test.gateway.TestGatewayAllocator;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -169,6 +170,7 @@ public class ClusterStateChanges {
                     MapperService mapperService = mock(MapperService.class);
                     when(indexService.mapperService()).thenReturn(mapperService);
                     when(mapperService.documentMapper()).thenReturn(null);
+                    when(indexService.getIndexEventListener()).thenReturn(new IndexEventListener() {});
                     when(indexService.getIndexSortSupplier()).thenReturn(() -> null);
                     //noinspection unchecked
                     return ((CheckedFunction) invocationOnMock.getArguments()[1]).apply(indexService);
