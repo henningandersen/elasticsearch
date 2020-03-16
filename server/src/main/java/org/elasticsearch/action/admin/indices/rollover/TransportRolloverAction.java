@@ -142,7 +142,7 @@ public class TransportRolloverAction extends TransportMasterNodeAction<RolloverR
                             @Override
                             public ClusterState execute(ClusterState currentState) throws Exception {
                                 RolloverResult rolloverResult = rolloverClusterState(currentState, rolloverRequest, metConditions);
-                                if (rolloverResult.sourceIndexName.equals(preResult.sourceIndexName)) {
+                                if (rolloverResult.sourceIndexName.equals(preResult.sourceIndexName) == false) {
                                     throw new ElasticsearchException("Concurrent modification of alias [{}] during rollover",
                                         rolloverRequest.getAlias());
                                 }
