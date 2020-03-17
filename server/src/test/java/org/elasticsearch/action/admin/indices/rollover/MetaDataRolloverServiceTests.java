@@ -31,9 +31,8 @@ public class MetaDataRolloverServiceTests extends ESTestCase {
         String sourceAlias = randomAlphaOfLength(10);
         String sourceIndex = randomAlphaOfLength(10);
         String targetIndex = randomAlphaOfLength(10);
-        final RolloverRequest rolloverRequest = new RolloverRequest(sourceAlias, targetIndex);
 
-        List<AliasAction> actions = MetaDataRolloverService.rolloverAliasToNewIndex(sourceIndex, targetIndex, rolloverRequest, false, null);
+        List<AliasAction> actions = MetaDataRolloverService.rolloverAliasToNewIndex(sourceIndex, targetIndex, false, null, sourceAlias);
         assertThat(actions, hasSize(2));
         boolean foundAdd = false;
         boolean foundRemove = false;
@@ -56,8 +55,7 @@ public class MetaDataRolloverServiceTests extends ESTestCase {
         String sourceAlias = randomAlphaOfLength(10);
         String sourceIndex = randomAlphaOfLength(10);
         String targetIndex = randomAlphaOfLength(10);
-        final RolloverRequest rolloverRequest = new RolloverRequest(sourceAlias, targetIndex);
-        List<AliasAction> actions = MetaDataRolloverService.rolloverAliasToNewIndex(sourceIndex, targetIndex, rolloverRequest, true, null);
+        List<AliasAction> actions = MetaDataRolloverService.rolloverAliasToNewIndex(sourceIndex, targetIndex, true, null, sourceAlias);
 
         assertThat(actions, hasSize(2));
         boolean foundAddWrite = false;
@@ -84,8 +82,7 @@ public class MetaDataRolloverServiceTests extends ESTestCase {
         String sourceAlias = randomAlphaOfLength(10);
         String sourceIndex = randomAlphaOfLength(10);
         String targetIndex = randomAlphaOfLength(10);
-        final RolloverRequest rolloverRequest = new RolloverRequest(sourceAlias, targetIndex);
-        List<AliasAction> actions = MetaDataRolloverService.rolloverAliasToNewIndex(sourceIndex, targetIndex, rolloverRequest, true, true);
+        List<AliasAction> actions = MetaDataRolloverService.rolloverAliasToNewIndex(sourceIndex, targetIndex, true, true, sourceAlias);
 
         assertThat(actions, hasSize(2));
         boolean foundAddWrite = false;
@@ -115,8 +112,7 @@ public class MetaDataRolloverServiceTests extends ESTestCase {
         String sourceAlias = randomAlphaOfLength(10);
         String sourceIndex = randomAlphaOfLength(10);
         String targetIndex = randomAlphaOfLength(10);
-        final RolloverRequest rolloverRequest = new RolloverRequest(sourceAlias, targetIndex);
-        List<AliasAction> actions = MetaDataRolloverService.rolloverAliasToNewIndex(sourceIndex, targetIndex, rolloverRequest, false, true);
+        List<AliasAction> actions = MetaDataRolloverService.rolloverAliasToNewIndex(sourceIndex, targetIndex, false, true, sourceAlias);
 
         assertThat(actions, hasSize(2));
         boolean foundAddWrite = false;
@@ -168,19 +164,16 @@ public class MetaDataRolloverServiceTests extends ESTestCase {
         MetaData metaData = metaDataBuilder.build();
 
         IllegalArgumentException exception = expectThrows(IllegalArgumentException.class, () ->
-            MetaDataRolloverService.validate(metaData, new RolloverRequest(aliasWithNoWriteIndex,
-                randomAlphaOfLength(10))));
+            MetaDataRolloverService.validate(metaData, aliasWithNoWriteIndex));
         assertThat(exception.getMessage(), equalTo("source alias [" + aliasWithNoWriteIndex + "] does not point to a write index"));
         exception = expectThrows(IllegalArgumentException.class, () ->
-            MetaDataRolloverService.validate(metaData, new RolloverRequest(randomFrom(index1, index2),
-                randomAlphaOfLength(10))));
+            MetaDataRolloverService.validate(metaData, randomFrom(index1, index2)));
         assertThat(exception.getMessage(), equalTo("source alias is a concrete index"));
         exception = expectThrows(IllegalArgumentException.class, () ->
-            MetaDataRolloverService.validate(metaData, new RolloverRequest(randomAlphaOfLength(5),
-                randomAlphaOfLength(10)))
+            MetaDataRolloverService.validate(metaData, randomAlphaOfLength(5))
         );
         assertThat(exception.getMessage(), equalTo("source alias does not exist"));
-        MetaDataRolloverService.validate(metaData, new RolloverRequest(aliasWithWriteIndex, randomAlphaOfLength(10)));
+        MetaDataRolloverService.validate(metaData, aliasWithWriteIndex);
     }
 
     public void testGenerateRolloverIndexName() {
@@ -215,7 +208,7 @@ public class MetaDataRolloverServiceTests extends ESTestCase {
             .build();
         rolloverRequest.getCreateIndexRequest().settings(settings);
         final CreateIndexClusterStateUpdateRequest createIndexRequest =
-            MetaDataRolloverService.prepareCreateIndexRequest(rolloverIndex, rolloverIndex, rolloverRequest);
+            MetaDataRolloverService.prepareCreateIndexRequest(rolloverIndex, rolloverIndex, rolloverRequest.getCreateIndexRequest());
         assertThat(createIndexRequest.settings(), equalTo(settings));
         assertThat(createIndexRequest.index(), equalTo(rolloverIndex));
         assertThat(createIndexRequest.cause(), equalTo("rollover_index"));

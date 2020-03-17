@@ -97,7 +97,9 @@ public class TransportRolloverAction extends TransportMasterNodeAction<RolloverR
     protected void masterOperation(Task task, final RolloverRequest rolloverRequest, final ClusterState state,
                                    final ActionListener<RolloverResponse> listener) throws Exception {
         MetaDataRolloverService.RolloverResult preResult =
-            rolloverService.rolloverClusterState(state, rolloverRequest, Collections.emptyList());
+            rolloverService.rolloverClusterState(state,
+                rolloverRequest.getAlias(), rolloverRequest.getNewIndexName(), rolloverRequest.getCreateIndexRequest(),
+                Collections.emptyList());
         MetaData metaData = state.metaData();
         String sourceIndexName = preResult.sourceIndexName;
         String rolloverIndexName = preResult.rolloverIndexName;
@@ -125,8 +127,9 @@ public class TransportRolloverAction extends TransportMasterNodeAction<RolloverR
                             + rolloverIndexName + "]", new ClusterStateUpdateTask() {
                             @Override
                             public ClusterState execute(ClusterState currentState) throws Exception {
-                                MetaDataRolloverService.RolloverResult rolloverResult =
-                                    rolloverService.rolloverClusterState(currentState, rolloverRequest,  metConditions);
+                                MetaDataRolloverService.RolloverResult rolloverResult = rolloverService.rolloverClusterState(currentState,
+                                    rolloverRequest.getAlias(), rolloverRequest.getNewIndexName(), rolloverRequest.getCreateIndexRequest(),
+                                    metConditions);
                                 if (rolloverResult.sourceIndexName.equals(preResult.sourceIndexName) == false) {
                                     throw new ElasticsearchException("Concurrent modification of alias [{}] during rollover",
                                         rolloverRequest.getAlias());

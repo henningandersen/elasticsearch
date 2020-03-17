@@ -49,34 +49,34 @@ public class MetaDataRolloverService {
         }
     }
 
-    public RolloverResult rolloverClusterState(ClusterState currentState, RolloverRequest rolloverRequest,
-                                               List<Condition<?>> metConditions) throws Exception {
+    public RolloverResult rolloverClusterState(ClusterState currentState,
+                                               String aliasName, String newIndexName, CreateIndexRequest createIndexRequest, List<Condition<?>> metConditions) throws Exception {
         final MetaData metaData = currentState.metaData();
-        validate(metaData, rolloverRequest);
-        final AliasOrIndex.Alias alias = (AliasOrIndex.Alias) metaData.getAliasAndIndexLookup().get(rolloverRequest.getAlias());
+        validate(metaData, aliasName);
+        final AliasOrIndex.Alias alias = (AliasOrIndex.Alias) metaData.getAliasAndIndexLookup().get(aliasName);
         final IndexMetaData indexMetaData = alias.getWriteIndex();
         final AliasMetaData aliasMetaData = indexMetaData.getAliases().get(alias.getAliasName());
         final String sourceProvidedName = indexMetaData.getSettings().get(IndexMetaData.SETTING_INDEX_PROVIDED_NAME,
             indexMetaData.getIndex().getName());
         final String sourceIndexName = indexMetaData.getIndex().getName();
-        final String unresolvedName = (rolloverRequest.getNewIndexName() != null)
-            ? rolloverRequest.getNewIndexName()
+        final String unresolvedName = (newIndexName != null)
+            ? newIndexName
             : generateRolloverIndexName(sourceProvidedName, indexNameExpressionResolver);
         final String rolloverIndexName = indexNameExpressionResolver.resolveDateMathExpression(unresolvedName);
         final boolean explicitWriteIndex = Boolean.TRUE.equals(aliasMetaData.writeIndex());
-        final Boolean isHidden = IndexMetaData.INDEX_HIDDEN_SETTING.exists(rolloverRequest.getCreateIndexRequest().settings()) ?
-            IndexMetaData.INDEX_HIDDEN_SETTING.get(rolloverRequest.getCreateIndexRequest().settings()) : null;
+        final Boolean isHidden = IndexMetaData.INDEX_HIDDEN_SETTING.exists(createIndexRequest.settings()) ?
+            IndexMetaData.INDEX_HIDDEN_SETTING.get(createIndexRequest.settings()) : null;
         createIndexService.validateIndexName(rolloverIndexName, currentState); // fails if the index already exists
-        checkNoDuplicatedAliasInIndexTemplate(metaData, rolloverIndexName, rolloverRequest.getAlias(), isHidden);
+        checkNoDuplicatedAliasInIndexTemplate(metaData, rolloverIndexName, aliasName, isHidden);
 
-        CreateIndexClusterStateUpdateRequest createIndexRequest = prepareCreateIndexRequest(unresolvedName,
-            rolloverIndexName, rolloverRequest);
-        ClusterState newState = createIndexService.applyCreateIndexRequest(currentState, createIndexRequest);
+        CreateIndexClusterStateUpdateRequest createIndexClusterStateRequest = prepareCreateIndexRequest(unresolvedName,
+            rolloverIndexName, createIndexRequest);
+        ClusterState newState = createIndexService.applyCreateIndexRequest(currentState, createIndexClusterStateRequest);
         newState = indexAliasesService.applyAliasActions(newState,
-            rolloverAliasToNewIndex(sourceIndexName, rolloverIndexName, rolloverRequest, explicitWriteIndex,
-                aliasMetaData.isHidden()));
+            rolloverAliasToNewIndex(sourceIndexName, rolloverIndexName, explicitWriteIndex,
+                aliasMetaData.isHidden(), aliasName));
 
-        RolloverInfo rolloverInfo = new RolloverInfo(rolloverRequest.getAlias(), metConditions,
+        RolloverInfo rolloverInfo = new RolloverInfo(aliasName, metConditions,
             threadPool.absoluteTimeInMillis());
         newState = ClusterState.builder(newState)
             .metaData(MetaData.builder(newState.metaData())
@@ -102,10 +102,8 @@ public class MetaDataRolloverService {
         }
     }
 
-    static CreateIndexClusterStateUpdateRequest prepareCreateIndexRequest(final String providedIndexName, final String targetIndexName,
-                                                                          final RolloverRequest rolloverRequest) {
+    static CreateIndexClusterStateUpdateRequest prepareCreateIndexRequest(final String providedIndexName, final String targetIndexName, CreateIndexRequest createIndexRequest) {
 
-        final CreateIndexRequest createIndexRequest = rolloverRequest.getCreateIndexRequest();
         createIndexRequest.cause("rollover_index");
         createIndexRequest.index(targetIndexName);
         return new CreateIndexClusterStateUpdateRequest(
@@ -123,16 +121,16 @@ public class MetaDataRolloverService {
      * alias pointing to multiple indices will have to be an explicit write index (ie. the old index alias has is_write_index set to true)
      * in which case, after the rollover, the new index will need to be the explicit write index.
      */
-    static List<AliasAction> rolloverAliasToNewIndex(String oldIndex, String newIndex, RolloverRequest request, boolean explicitWriteIndex,
-                                                     @Nullable Boolean isHidden) {
+    static List<AliasAction> rolloverAliasToNewIndex(String oldIndex, String newIndex, boolean explicitWriteIndex,
+                                                     @Nullable Boolean isHidden, String alias) {
         if (explicitWriteIndex) {
             return List.of(
-                new AliasAction.Add(newIndex, request.getAlias(), null, null, null, true, isHidden),
-                new AliasAction.Add(oldIndex, request.getAlias(), null, null, null, false, isHidden));
+                new AliasAction.Add(newIndex, alias, null, null, null, true, isHidden),
+                new AliasAction.Add(oldIndex, alias, null, null, null, false, isHidden));
         } else {
             return List.of(
-                new AliasAction.Add(newIndex, request.getAlias(), null, null, null, null, isHidden),
-                new AliasAction.Remove(oldIndex, request.getAlias()));
+                new AliasAction.Add(newIndex, alias, null, null, null, null, isHidden),
+                new AliasAction.Remove(oldIndex, alias));
         }
     }
 
@@ -153,8 +151,8 @@ public class MetaDataRolloverService {
         }
     }
 
-    static void validate(MetaData metaData, RolloverRequest request) {
-        final AliasOrIndex aliasOrIndex = metaData.getAliasAndIndexLookup().get(request.getAlias());
+    static void validate(MetaData metaData, String aliasName) {
+        final AliasOrIndex aliasOrIndex = metaData.getAliasAndIndexLookup().get(aliasName);
         if (aliasOrIndex == null) {
             throw new IllegalArgumentException("source alias does not exist");
         }
