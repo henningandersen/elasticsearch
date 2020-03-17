@@ -3,6 +3,8 @@ package org.elasticsearch.action.admin.indices.rollover;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.create.CreateIndexClusterStateUpdateRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
+import org.elasticsearch.cluster.ClusterName;
+import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.AliasAction;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -242,6 +244,28 @@ public class MetaDataRolloverServiceTests extends ESTestCase {
         final IllegalArgumentException ex = expectThrows(IllegalArgumentException.class, () ->
             MetaDataRolloverService.checkNoDuplicatedAliasInIndexTemplate(metaData, indexName, aliasName, randomFrom(Boolean.FALSE, null)));
         assertThat(ex.getMessage(), containsString("index template [test-template]"));
+    }
+
+    public void testRolloverClusterState() {
+        final IndexMetaData.Builder indexMetaData = IndexMetaData.builder("logs-index-000001")
+            .putAlias(AliasMetaData.builder("logs-alias").writeIndex(false).build()).settings(settings(Version.CURRENT))
+            .numberOfShards(1).numberOfReplicas(1);
+
+        ClusterState clusterState = ClusterState.builder(new ClusterName("test"))
+            .metaData(MetaData.builder().put(indexMetaData)).build();
+        String alias = "logs-alias";
+        String rolloverIndex = randomAlphaOfLength(10);
+        final RolloverRequest rolloverRequest = new RolloverRequest(alias, randomAlphaOfLength(10));
+        final ActiveShardCount activeShardCount = randomBoolean() ? ActiveShardCount.ALL : ActiveShardCount.ONE;
+        rolloverRequest.getCreateIndexRequest().waitForActiveShards(activeShardCount);
+        final Settings settings = Settings.builder()
+            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+            .put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())
+            .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
+            .build();
+        rolloverRequest.getCreateIndexRequest().settings(settings);
+
     }
 
     private static IndexMetaData createMetaData(String indexName) {
