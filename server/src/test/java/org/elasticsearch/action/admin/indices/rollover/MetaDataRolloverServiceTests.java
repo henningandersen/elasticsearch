@@ -2,30 +2,53 @@ package org.elasticsearch.action.admin.indices.rollover;
 
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.create.CreateIndexClusterStateUpdateRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.AliasAction;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.metadata.AliasOrIndex;
+import org.elasticsearch.cluster.metadata.AliasValidator;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.metadata.MetaDataCreateIndexService;
+import org.elasticsearch.cluster.metadata.MetaDataIndexAliasesService;
+import org.elasticsearch.cluster.routing.allocation.AllocationService;
+import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.index.IndexService;
+import org.elasticsearch.index.mapper.MapperService;
+import org.elasticsearch.index.shard.IndexEventListener;
+import org.elasticsearch.indices.IndicesService;
+import org.elasticsearch.test.ClusterServiceUtils;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.threadpool.TestThreadPool;
+import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MetaDataRolloverServiceTests extends ESTestCase {
 
@@ -246,26 +269,90 @@ public class MetaDataRolloverServiceTests extends ESTestCase {
         assertThat(ex.getMessage(), containsString("index template [test-template]"));
     }
 
-    public void testRolloverClusterState() {
-        final IndexMetaData.Builder indexMetaData = IndexMetaData.builder("logs-index-000001")
-            .putAlias(AliasMetaData.builder("logs-alias").writeIndex(false).build()).settings(settings(Version.CURRENT))
+    /**
+     * Test the main rolloverClusterState method. This does not validate every detail to depth, rather focuses on observing that each
+     * parameter is used for the purpose intended.
+     */
+    public void testRolloverClusterState() throws Exception {
+        final String aliasName = "logs-alias";
+        final String indexPrefix = "logs-index-00000";
+        String sourceIndexName = indexPrefix + "1";
+        final IndexMetaData.Builder indexMetaData = IndexMetaData.builder(sourceIndexName)
+            .putAlias(AliasMetaData.builder(aliasName).writeIndex(true).build()).settings(settings(Version.CURRENT))
             .numberOfShards(1).numberOfReplicas(1);
+        final ClusterState clusterState =
+            ClusterState.builder(new ClusterName("test")).metaData(MetaData.builder().put(indexMetaData)).build();
 
-        ClusterState clusterState = ClusterState.builder(new ClusterName("test"))
-            .metaData(MetaData.builder().put(indexMetaData)).build();
-        String alias = "logs-alias";
-        String rolloverIndex = randomAlphaOfLength(10);
-        final RolloverRequest rolloverRequest = new RolloverRequest(alias, randomAlphaOfLength(10));
-        final ActiveShardCount activeShardCount = randomBoolean() ? ActiveShardCount.ALL : ActiveShardCount.ONE;
-        rolloverRequest.getCreateIndexRequest().waitForActiveShards(activeShardCount);
-        final Settings settings = Settings.builder()
-            .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())
-            .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
-            .build();
-        rolloverRequest.getCreateIndexRequest().settings(settings);
+        ThreadPool testThreadPool = new TestThreadPool(getTestName());
+        try {
+            ClusterService clusterService = ClusterServiceUtils.createClusterService(testThreadPool);
+            Environment env = mock(Environment.class);
+            when(env.sharedDataFile()).thenReturn(null);
+            AllocationService allocationService = mock(AllocationService.class);
+            when(allocationService.reroute(any(ClusterState.class), any(String.class))).then(i -> i.getArguments()[0]);
+            IndicesService indicesService = mockIndicesServices();
+            IndexNameExpressionResolver mockIndexNameExpressionResolver = mock(IndexNameExpressionResolver.class);
+            when(mockIndexNameExpressionResolver.resolveDateMathExpression(any())).then(returnsFirstArg());
 
+            MetaDataCreateIndexService createIndexService = new MetaDataCreateIndexService(Settings.EMPTY,
+                clusterService, indicesService, allocationService, null, env, null, testThreadPool, null, Collections.emptyList(), false);
+            MetaDataIndexAliasesService indexAliasesService = new MetaDataIndexAliasesService(clusterService, indicesService,
+                new AliasValidator(), null, xContentRegistry());
+            MetaDataRolloverService rolloverService = new MetaDataRolloverService(testThreadPool, createIndexService, indexAliasesService,
+                mockIndexNameExpressionResolver);
+
+            MaxDocsCondition condition = new MaxDocsCondition(randomNonNegativeLong());
+            List<Condition<?>> metConditions = Collections.singletonList(condition);
+            String newIndexName = randomBoolean() ? "logs-index-9" : null;
+            int numberOfShards = randomIntBetween(1, 5);
+            CreateIndexRequest createIndexRequest = new CreateIndexRequest("_na_");
+            createIndexRequest.settings(Settings.builder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, numberOfShards));
+
+            long before = testThreadPool.absoluteTimeInMillis();
+            MetaDataRolloverService.RolloverResult rolloverResult =
+                rolloverService.rolloverClusterState(clusterState,aliasName, newIndexName, createIndexRequest, metConditions);
+            long after = testThreadPool.absoluteTimeInMillis();
+
+            newIndexName = newIndexName == null ? indexPrefix + "2" : newIndexName;
+            assertEquals(sourceIndexName, rolloverResult.sourceIndexName);
+            assertEquals(newIndexName, rolloverResult.rolloverIndexName);
+            MetaData rolloverMetaData = rolloverResult.clusterState.metaData();
+            assertEquals(2, rolloverMetaData.indices().size());
+            IndexMetaData rolloverIndexMetaData = rolloverMetaData.index(newIndexName);
+            assertThat(rolloverIndexMetaData.getNumberOfShards(), equalTo(numberOfShards));
+
+            AliasOrIndex.Alias alias = (AliasOrIndex.Alias) rolloverMetaData.getAliasAndIndexLookup().get(aliasName);
+            assertThat(alias.getIndices(), hasSize(2));
+            assertThat(alias.getIndices(), contains(rolloverMetaData.index(sourceIndexName)));
+            assertThat(alias.getIndices(), contains(rolloverIndexMetaData));
+            assertThat(alias.getWriteIndex(), equalTo(rolloverIndexMetaData));
+
+            RolloverInfo info = rolloverMetaData.index(sourceIndexName).getRolloverInfos().get(aliasName);
+            assertThat(info.getTime(), lessThanOrEqualTo(after));
+            assertThat(info.getTime(), greaterThanOrEqualTo(before));
+            assertThat(info.getMetConditions(), hasSize(1));
+            assertThat(info.getMetConditions().get(0).value(), equalTo(condition.value()));
+        } finally {
+            testThreadPool.shutdown();
+        }
+    }
+
+    private IndicesService mockIndicesServices() throws java.io.IOException {
+        IndicesService indicesService = mock(IndicesService.class);
+        when(indicesService.withTempIndexService(any(IndexMetaData.class), any(CheckedFunction.class)))
+            .then(invocationOnMock -> {
+                IndexService indexService = mock(IndexService.class);
+                IndexMetaData indexMetaData = (IndexMetaData) invocationOnMock.getArguments()[0];
+                when(indexService.index()).thenReturn(indexMetaData.getIndex());
+                MapperService mapperService = mock(MapperService.class);
+                when(indexService.mapperService()).thenReturn(mapperService);
+                when(mapperService.documentMapper()).thenReturn(null);
+                when(indexService.getIndexEventListener()).thenReturn(new IndexEventListener() {});
+                when(indexService.getIndexSortSupplier()).thenReturn(() -> null);
+                //noinspection unchecked
+                return ((CheckedFunction) invocationOnMock.getArguments()[1]).apply(indexService);
+            });
+        return indicesService;
     }
 
     private static IndexMetaData createMetaData(String indexName) {

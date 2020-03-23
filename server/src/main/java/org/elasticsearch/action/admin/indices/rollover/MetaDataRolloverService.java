@@ -49,8 +49,8 @@ public class MetaDataRolloverService {
         }
     }
 
-    public RolloverResult rolloverClusterState(ClusterState currentState,
-                                               String aliasName, String newIndexName, CreateIndexRequest createIndexRequest, List<Condition<?>> metConditions) throws Exception {
+    public RolloverResult rolloverClusterState(ClusterState currentState, String aliasName, String newIndexName,
+                                               CreateIndexRequest createIndexRequest, List<Condition<?>> metConditions) throws Exception {
         final MetaData metaData = currentState.metaData();
         validate(metaData, aliasName);
         final AliasOrIndex.Alias alias = (AliasOrIndex.Alias) metaData.getAliasAndIndexLookup().get(aliasName);
