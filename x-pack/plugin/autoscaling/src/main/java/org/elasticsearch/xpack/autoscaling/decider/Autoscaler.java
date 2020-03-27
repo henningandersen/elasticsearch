@@ -7,17 +7,12 @@ package org.elasticsearch.xpack.autoscaling.decider;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.Version;
-import org.elasticsearch.action.admin.indices.rollover.RolloverInfo;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.rollover.MetaDataRolloverService;
 import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.metadata.AliasOrIndex;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
-import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
-import org.elasticsearch.cluster.metadata.MetaDataIndexTemplateService;
-import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
@@ -26,28 +21,14 @@ import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
-import org.elasticsearch.common.UUIDs;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.xpack.core.ilm.RolloverAction;
 
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS;
-import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_CREATION_DATE;
-import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_INDEX_UUID;
-import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS;
-import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_SHARDS;
 
 /**
  * Autoscaler predicts whether a scale out is necessary by forecasting the current cluster state and checking if allocation deciders
@@ -56,25 +37,14 @@ import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF
 // todo: a service or decider using refactored shared rollover functionality
 public class Autoscaler {
     private static final Logger logger = LogManager.getLogger(Autoscaler.class);
-    private static final Pattern INDEX_NAME_PATTERN = Pattern.compile("^.*-\\d+$"); // copied from rollover
+    private final MetaDataRolloverService rolloverService;
     private final AllocationDeciders allocationDeciders;
     private final ShardsAllocator shardsAllocator;
-    private final IndexNameExpressionResolver indexNameExpressionResolver;
-    private final Settings settings;
-    private NamedXContentRegistry xContentRegistry;
 
-    public Autoscaler(
-        AllocationDeciders allocationDeciders,
-        ShardsAllocator shardsAllocator,
-        IndexNameExpressionResolver indexNameExpressionResolver,
-        Settings settings,
-        NamedXContentRegistry xContentRegistry
-    ) {
+    public Autoscaler(MetaDataRolloverService rolloverService, AllocationDeciders allocationDeciders, ShardsAllocator shardsAllocator) {
+        this.rolloverService = rolloverService;
         this.allocationDeciders = allocationDeciders;
         this.shardsAllocator = shardsAllocator;
-        this.indexNameExpressionResolver = indexNameExpressionResolver;
-        this.settings = settings;
-        this.xContentRegistry = xContentRegistry;
     }
 
     /**
@@ -181,87 +151,20 @@ public class Autoscaler {
         }
         // todo: include anything that looks like a stream.
 
-        MetaData newMetaData = state.metaData();
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(state.routingTable());
         for (String alias : aliases) {
-            newMetaData = simulateRollover(alias, newMetaData, state.nodes(), routingTableBuilder);
+            try {
+                state = rolloverService.rolloverClusterState(
+                    state,
+                    alias,
+                    null,
+                    new CreateIndexRequest("_na"),
+                    Collections.emptyList(),
+                    true
+                ).clusterState;
+            } catch (Exception e) {
+                logger.warn("Unable to rollover [{}]", alias);
+            }
         }
-        return ClusterState.builder(state).metaData(newMetaData).routingTable(routingTableBuilder.build()).build();
-    }
-
-    // todo: share code with real rollover.
-    private MetaData simulateRollover(String aliasName, MetaData metaData, DiscoveryNodes nodes, RoutingTable.Builder routingTableBuilder) {
-        SortedMap<String, AliasOrIndex> lookup = metaData.getAliasAndIndexLookup();
-        final AliasOrIndex.Alias alias = (AliasOrIndex.Alias) lookup.get(aliasName);
-        IndexMetaData indexMetaData = alias.getWriteIndex();
-        final String sourceProvidedName = indexMetaData.getSettings()
-            .get(IndexMetaData.SETTING_INDEX_PROVIDED_NAME, indexMetaData.getIndex().getName());
-
-        String unresolvedName = generateRolloverIndexName(sourceProvidedName, indexNameExpressionResolver);
-        final String rolloverIndexName = indexNameExpressionResolver.resolveDateMathExpression(unresolvedName);
-        RolloverInfo rolloverInfo = new RolloverInfo(aliasName, Collections.emptyList(), System.currentTimeMillis()); // todo: time.
-
-        MetaData.Builder builder = MetaData.builder(metaData);
-        IndexMetaData newIndexMetaData = createIndexMetaData(rolloverIndexName, rolloverInfo, nodes, metaData);
-        builder.put(newIndexMetaData, false);
-        builder.put(IndexMetaData.builder(indexMetaData).putRolloverInfo(rolloverInfo));
-        routingTableBuilder.addAsNew(newIndexMetaData);
-        return builder.build();
-    }
-
-    private IndexMetaData createIndexMetaData(String indexName, RolloverInfo rolloverInfo, DiscoveryNodes nodes, MetaData metaData) {
-        List<IndexTemplateMetaData> templates = Collections.unmodifiableList(
-            MetaDataIndexTemplateService.findTemplates(metaData, indexName, null)
-        );
-
-        Settings.Builder indexSettingsBuilder = Settings.builder();
-        // apply templates, here, in reverse order, since first ones are better matching
-        for (int i = templates.size() - 1; i >= 0; i--) {
-            indexSettingsBuilder.put(templates.get(i).settings());
-        }
-        if (indexSettingsBuilder.get(IndexMetaData.SETTING_INDEX_VERSION_CREATED.getKey()) == null) {
-            final Version createdVersion = Version.min(Version.CURRENT, nodes.getSmallestNonClientNodeVersion());
-            indexSettingsBuilder.put(IndexMetaData.SETTING_INDEX_VERSION_CREATED.getKey(), createdVersion);
-        }
-        if (indexSettingsBuilder.get(SETTING_NUMBER_OF_SHARDS) == null) {
-            indexSettingsBuilder.put(SETTING_NUMBER_OF_SHARDS, settings.getAsInt(SETTING_NUMBER_OF_SHARDS, 1));
-        }
-        if (indexSettingsBuilder.get(SETTING_NUMBER_OF_REPLICAS) == null) {
-            indexSettingsBuilder.put(SETTING_NUMBER_OF_REPLICAS, settings.getAsInt(SETTING_NUMBER_OF_REPLICAS, 1));
-        }
-        if (settings.get(SETTING_AUTO_EXPAND_REPLICAS) != null && indexSettingsBuilder.get(SETTING_AUTO_EXPAND_REPLICAS) == null) {
-            indexSettingsBuilder.put(SETTING_AUTO_EXPAND_REPLICAS, settings.get(SETTING_AUTO_EXPAND_REPLICAS));
-        }
-
-        if (indexSettingsBuilder.get(SETTING_CREATION_DATE) == null) {
-            indexSettingsBuilder.put(SETTING_CREATION_DATE, Instant.now().toEpochMilli());
-        }
-        indexSettingsBuilder.put(SETTING_INDEX_UUID, UUIDs.randomBase64UUID());
-
-        IndexMetaData.Builder settings = IndexMetaData.builder(indexName).settings(indexSettingsBuilder);
-        if (rolloverInfo != null) {
-            settings.putRolloverInfo(rolloverInfo);
-        }
-        return settings.build();
-    }
-
-    // copied from rollover
-    static String generateRolloverIndexName(String sourceIndexName, IndexNameExpressionResolver indexNameExpressionResolver) {
-        String resolvedName = indexNameExpressionResolver.resolveDateMathExpression(sourceIndexName);
-        final boolean isDateMath = sourceIndexName.equals(resolvedName) == false;
-        if (INDEX_NAME_PATTERN.matcher(resolvedName).matches()) {
-            int numberIndex = sourceIndexName.lastIndexOf("-");
-            assert numberIndex != -1 : "no separator '-' found";
-            int counter = Integer.parseInt(
-                sourceIndexName.substring(numberIndex + 1, isDateMath ? sourceIndexName.length() - 1 : sourceIndexName.length())
-            );
-            String newName = sourceIndexName.substring(0, numberIndex)
-                + "-"
-                + String.format(Locale.ROOT, "%06d", ++counter)
-                + (isDateMath ? ">" : "");
-            return newName;
-        } else {
-            throw new IllegalArgumentException("index name [" + sourceIndexName + "] does not match pattern '^.*-\\d+$'");
-        }
+        return state;
     }
 }
