@@ -36,6 +36,7 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 public class CreateDataStreamRequestTests extends AbstractWireSerializingTestCase<Request> {
 
@@ -75,6 +76,7 @@ public class CreateDataStreamRequestTests extends AbstractWireSerializingTestCas
         ClusterState newState = CreateDataStreamAction.TransportAction.createDataStream(metaDataCreateIndexService, cs, req);
         assertThat(newState.metaData().dataStreams().size(), equalTo(1));
         assertThat(newState.metaData().dataStreams().get(dataStreamName).getName(), equalTo(dataStreamName));
+        assertThat(newState.metaData().index(dataStreamName + "-000000"), notNullValue());
     }
 
     public void testCreateDuplicateDataStream() {
