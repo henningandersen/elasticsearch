@@ -6,17 +6,17 @@
 package org.elasticsearch.xpack.autoscaling.decider;
 
 import org.elasticsearch.Version;
-import org.elasticsearch.action.admin.indices.rollover.MetaDataRolloverService;
+import org.elasticsearch.action.admin.indices.rollover.MetadataRolloverService;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.EmptyClusterInfoService;
-import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.metadata.AliasMetadata;
 import org.elasticsearch.cluster.metadata.AliasValidator;
-import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.cluster.metadata.MetaData;
-import org.elasticsearch.cluster.metadata.MetaDataCreateIndexService;
-import org.elasticsearch.cluster.metadata.MetaDataIndexAliasesService;
+import org.elasticsearch.cluster.metadata.Metadata;
+import org.elasticsearch.cluster.metadata.MetadataCreateIndexService;
+import org.elasticsearch.cluster.metadata.MetadataIndexAliasesService;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
@@ -66,9 +66,9 @@ public class AutoscalerTests extends ESTestCase {
     public void test() {
         ThreadPool testThreadPool = new TestThreadPool(getTestName());
         try {
-            IndexMetaData indexMetadata = IndexMetaData.builder("test-1")
+            IndexMetadata indexMetadata = IndexMetadata.builder("test-1")
                 .settings(settings(Version.CURRENT).put(RolloverAction.LIFECYCLE_ROLLOVER_ALIAS, "test"))
-                .putAlias(AliasMetaData.builder("test"))
+                .putAlias(AliasMetadata.builder("test"))
                 .numberOfShards(randomIntBetween(1, 5))
                 .numberOfReplicas(1)
                 .build();
@@ -142,7 +142,7 @@ public class AutoscalerTests extends ESTestCase {
         }
     }
 
-    private MetaDataRolloverService createRolloverService(ThreadPool testThreadPool, AllocationService allocationService) {
+    private MetadataRolloverService createRolloverService(ThreadPool testThreadPool, AllocationService allocationService) {
         ClusterService clusterService = ClusterServiceUtils.createClusterService(testThreadPool);
         Environment env = mock(Environment.class);
         when(env.sharedDataFile()).thenReturn(null);
@@ -155,7 +155,7 @@ public class AutoscalerTests extends ESTestCase {
         IndexNameExpressionResolver mockIndexNameExpressionResolver = mock(IndexNameExpressionResolver.class);
         when(mockIndexNameExpressionResolver.resolveDateMathExpression(any())).then(returnsFirstArg());
 
-        MetaDataCreateIndexService createIndexService = new MetaDataCreateIndexService(
+        MetadataCreateIndexService createIndexService = new MetadataCreateIndexService(
             Settings.EMPTY,
             clusterService,
             indicesService,
@@ -168,14 +168,14 @@ public class AutoscalerTests extends ESTestCase {
             Collections.emptyList(),
             false
         );
-        MetaDataIndexAliasesService indexAliasesService = new MetaDataIndexAliasesService(
+        MetadataIndexAliasesService indexAliasesService = new MetadataIndexAliasesService(
             clusterService,
             indicesService,
             new AliasValidator(),
             null,
             xContentRegistry()
         );
-        return new MetaDataRolloverService(testThreadPool, createIndexService, indexAliasesService, mockIndexNameExpressionResolver);
+        return new MetadataRolloverService(testThreadPool, createIndexService, indexAliasesService, mockIndexNameExpressionResolver);
     }
 
     private AllocationDeciders getAllocationDeciders(
@@ -204,7 +204,7 @@ public class AutoscalerTests extends ESTestCase {
             }
 
             @Override
-            public Decision canAllocate(IndexMetaData indexMetaData, RoutingNode node, RoutingAllocation allocation) {
+            public Decision canAllocate(IndexMetadata indexMetadata, RoutingNode node, RoutingAllocation allocation) {
                 return Decision.YES;
             }
 
@@ -220,7 +220,7 @@ public class AutoscalerTests extends ESTestCase {
         }));
     }
 
-    private ClusterState twoNodesWithIndex(IndexMetaData indexMetadata) {
+    private ClusterState twoNodesWithIndex(IndexMetadata indexMetadata) {
         String nodeId = randomAlphaOfLength(10);
         DiscoveryNode masterNode = new DiscoveryNode(
             "node1",
@@ -242,7 +242,7 @@ public class AutoscalerTests extends ESTestCase {
         );
 
         return ClusterState.builder(ClusterName.DEFAULT)
-            .metaData(MetaData.builder().put(indexMetadata, false))
+            .metadata(Metadata.builder().put(indexMetadata, false))
             .nodes(DiscoveryNodes.builder().localNodeId(nodeId).masterNodeId(nodeId).add(masterNode).add(node2).build())
             .routingTable(RoutingTable.builder().addAsNew(indexMetadata).build())
             .build();
@@ -257,10 +257,10 @@ public class AutoscalerTests extends ESTestCase {
          * else.
          */
         IndicesService indicesService = mock(IndicesService.class);
-        when(indicesService.withTempIndexService(any(IndexMetaData.class), any(CheckedFunction.class))).then(invocationOnMock -> {
+        when(indicesService.withTempIndexService(any(IndexMetadata.class), any(CheckedFunction.class))).then(invocationOnMock -> {
             IndexService indexService = mock(IndexService.class);
-            IndexMetaData indexMetaData = (IndexMetaData) invocationOnMock.getArguments()[0];
-            when(indexService.index()).thenReturn(indexMetaData.getIndex());
+            IndexMetadata indexMetadata = (IndexMetadata) invocationOnMock.getArguments()[0];
+            when(indexService.index()).thenReturn(indexMetadata.getIndex());
             MapperService mapperService = mock(MapperService.class);
             when(indexService.mapperService()).thenReturn(mapperService);
             when(mapperService.documentMapper()).thenReturn(null);

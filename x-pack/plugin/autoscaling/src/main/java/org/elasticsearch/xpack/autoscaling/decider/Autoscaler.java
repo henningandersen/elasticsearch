@@ -8,11 +8,11 @@ package org.elasticsearch.xpack.autoscaling.decider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.rollover.MetaDataRolloverService;
+import org.elasticsearch.action.admin.indices.rollover.MetadataRolloverService;
 import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.metadata.IndexMetaData;
-import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.metadata.IndexMetadata;
+import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
@@ -37,11 +37,11 @@ import java.util.stream.StreamSupport;
 // todo: a service or decider using refactored shared rollover functionality
 public class Autoscaler {
     private static final Logger logger = LogManager.getLogger(Autoscaler.class);
-    private final MetaDataRolloverService rolloverService;
+    private final MetadataRolloverService rolloverService;
     private final AllocationDeciders allocationDeciders;
     private final ShardsAllocator shardsAllocator;
 
-    public Autoscaler(MetaDataRolloverService rolloverService, AllocationDeciders allocationDeciders, ShardsAllocator shardsAllocator) {
+    public Autoscaler(MetadataRolloverService rolloverService, AllocationDeciders allocationDeciders, ShardsAllocator shardsAllocator) {
         this.rolloverService = rolloverService;
         this.allocationDeciders = allocationDeciders;
         this.shardsAllocator = shardsAllocator;
@@ -53,7 +53,7 @@ public class Autoscaler {
      * @param clusterInfo current cluster info
      * @return true if scale up/out is necessary.
      */
-    public boolean scaleHot(ClusterState state, ClusterInfo clusterInfo, Predicate<IndexMetaData> hotPredicate) {
+    public boolean scaleHot(ClusterState state, ClusterInfo clusterInfo, Predicate<IndexMetadata> hotPredicate) {
         state = simulateScaleHot(state, clusterInfo);
 
         return hasUnassigned(state, hotPredicate) || shardsCannotMoveToTier(state, clusterInfo, hotPredicate);
@@ -62,19 +62,19 @@ public class Autoscaler {
     /**
      * Reactive scale, used for all tiers but hot.
      */
-    public boolean reactiveScaleTier(ClusterState state, ClusterInfo clusterInfo, Predicate<IndexMetaData> tierPredicate) {
+    public boolean reactiveScaleTier(ClusterState state, ClusterInfo clusterInfo, Predicate<IndexMetadata> tierPredicate) {
         state = simulateAllocationOfState(state, clusterInfo);
         return hasUnassigned(state, tierPredicate) || shardsCannotMoveToTier(state, clusterInfo, tierPredicate);
     }
 
-    private boolean shardsCannotMoveToTier(ClusterState state, ClusterInfo clusterInfo, Predicate<IndexMetaData> tierPredicate) {
+    private boolean shardsCannotMoveToTier(ClusterState state, ClusterInfo clusterInfo, Predicate<IndexMetadata> tierPredicate) {
         RoutingNodes routingNodes = new RoutingNodes(state, false);
         RoutingAllocation allocation = new RoutingAllocation(allocationDeciders, routingNodes, state, clusterInfo, System.nanoTime());
-        MetaData metaData = state.metaData();
+        Metadata Metadata = state.metadata();
         return state.getRoutingNodes()
             .shards(s -> true)
             .stream()
-            .filter(shard -> tierPredicate.test(metaData.getIndexSafe(shard.index())))
+            .filter(shard -> tierPredicate.test(Metadata.getIndexSafe(shard.index())))
             .filter(shard -> allocationDeciders.canRemain(shard, routingNodes.node(shard.currentNodeId()), allocation) == Decision.NO)
             .filter(shard -> canAllocate(shard, allocation) == false)
             .findAny()
@@ -88,10 +88,10 @@ public class Autoscaler {
     }
 
     // todo: verify only reason is disk
-    private boolean hasUnassigned(ClusterState state, Predicate<IndexMetaData> predicate) {
-        MetaData metaData = state.metaData();
+    private boolean hasUnassigned(ClusterState state, Predicate<IndexMetadata> predicate) {
+        Metadata Metadata = state.metadata();
         return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
-            .map(u -> metaData.getIndexSafe(u.index()))
+            .map(u -> Metadata.getIndexSafe(u.index()))
             .anyMatch(predicate);
     }
 
@@ -121,10 +121,10 @@ public class Autoscaler {
         final RoutingTable oldRoutingTable = oldState.routingTable();
         final RoutingNodes newRoutingNodes = allocation.routingNodes();
         final RoutingTable newRoutingTable = new RoutingTable.Builder().updateNodes(oldRoutingTable.version(), newRoutingNodes).build();
-        final MetaData newMetaData = allocation.updateMetaDataWithRoutingChanges(newRoutingTable);
-        assert newRoutingTable.validate(newMetaData); // validates the routing table is coherent with the cluster state metadata
+        final Metadata newMetadata = allocation.updateMetadataWithRoutingChanges(newRoutingTable);
+        assert newRoutingTable.validate(newMetadata); // validates the routing table is coherent with the cluster state metadata
 
-        final ClusterState.Builder newStateBuilder = ClusterState.builder(oldState).routingTable(newRoutingTable).metaData(newMetaData);
+        final ClusterState.Builder newStateBuilder = ClusterState.builder(oldState).routingTable(newRoutingTable).metadata(newMetadata);
 
         return newStateBuilder.build();
     }
@@ -143,7 +143,7 @@ public class Autoscaler {
      */
     private ClusterState futureHotState(ClusterState state) {
         Set<String> aliases = new HashSet<>();
-        for (IndexMetaData imd : state.metaData()) {
+        for (IndexMetadata imd : state.metadata()) {
             String rolloverAlias = RolloverAction.LIFECYCLE_ROLLOVER_ALIAS_SETTING.get(imd.getSettings());
             if (rolloverAlias != null) {
                 aliases.add(rolloverAlias);
