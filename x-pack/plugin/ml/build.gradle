@@ -54,6 +54,8 @@ dependencies {
   // This should not be here
   testCompile project(path: xpackModule('security'), configuration: 'testArtifacts')
 
+  compile project(path: xpackModule('autoscaling'), configuration: 'default')
+
   // ml deps
   compile project(':libs:elasticsearch-grok')
   compile "com.ibm.icu:icu4j:${versions.icu4j}"
