@@ -17,10 +17,8 @@ import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
-import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
@@ -77,10 +75,11 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         ClusterInfo underAllocated = createClusterInfo(state, 1L, 0L, Map.of());
         ClusterInfo overAllocated = createClusterInfo(state, 0L, 1L, Map.of());
 
+        AutoscalingDeciderContextFactory contextFactory = (s, i) -> new TestAutoscalingDeciderContext(s, i, allocator, allocationDeciders);
         TestAutoscalingDeciderContext context = new TestAutoscalingDeciderContext(state, underAllocated, allocator, allocationDeciders);
         // todo: verify name+reason
-        assertThat(decider.scale(context.withInfo(underAllocated)), decisionType(AutoscalingDecisionType.NO_SCALE, state));
-        assertThat(decider.scale(context.withInfo(overAllocated)), decisionType(AutoscalingDecisionType.SCALE_UP, state));
+        verifyDecision(state, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
+        verifyDecision(state, overAllocated, decider, contextFactory, AutoscalingDecisionType.SCALE_UP);
 
         ClusterState lastState = null;
         int count = 0;
@@ -89,9 +88,8 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             // allocate some primaries and on later iterations replicas
             state = ReactiveStorageDecider.simulateStartAndAllocate(state, context);
 
-            assertThat(decider.scale(context.withInfo(underAllocated).withState(state)).type(), equalTo(AutoscalingDecisionType.NO_SCALE));
-            assertThat(decider.scale(context.withInfo(overAllocated).withState(state)), decisionType(AutoscalingDecisionType.SCALE_UP,
-                state));
+            verifyDecision(state, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
+            verifyDecision(state, overAllocated, decider, contextFactory, AutoscalingDecisionType.SCALE_UP);
         }
 
         assertThat(lastState, sameInstance(state));
@@ -103,21 +101,25 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
 
         ClusterInfo overAllocatedWithEmptyExtra = createClusterInfo(extraNodeState, 0L, 1L, Map.of("extra-node", Long.MAX_VALUE));
 
-        assertThat(decider.scale(context.withInfo(underAllocated).withState(extraNodeState)).type(), equalTo(AutoscalingDecisionType.NO_SCALE));
-        assertThat(decider.scale(context.withInfo(overAllocatedWithEmptyExtra).withState(extraNodeState)),
-            decisionType(AutoscalingDecisionType.NO_SCALE, state));
+        verifyDecision(extraNodeState, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
+        verifyDecision(extraNodeState, overAllocatedWithEmptyExtra, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
 
         state = addRandomIndices("additional", 1, hotNodes - 2, state);
 
-        assertThat(decider.scale(context.withInfo(underAllocated).withState(state)).type(), equalTo(AutoscalingDecisionType.NO_SCALE));
-        assertThat(decider.scale(context.withInfo(overAllocated).withState(state)).type(), equalTo(AutoscalingDecisionType.SCALE_UP));
+        verifyDecision(state, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
+        verifyDecision(state, overAllocated, decider, contextFactory, AutoscalingDecisionType.SCALE_UP);
 
         extraNodeState = addExtraNodes(hotNodes, state);
 
         overAllocatedWithEmptyExtra = createClusterInfo(extraNodeState, 0L, 1L, Map.of("extra-node", Long.MAX_VALUE));
-        assertThat(decider.scale(context.withInfo(underAllocated).withState(extraNodeState)).type(), equalTo(AutoscalingDecisionType.NO_SCALE));
-        assertThat(decider.scale(context.withInfo(overAllocatedWithEmptyExtra).withState(extraNodeState)).type(),
-            equalTo(AutoscalingDecisionType.NO_SCALE));
+        verifyDecision(extraNodeState, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
+        verifyDecision(extraNodeState, overAllocatedWithEmptyExtra, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
+    }
+
+    private void verifyDecision(ClusterState state, ClusterInfo info, ReactiveStorageDecider decider,
+                                AutoscalingDeciderContextFactory contextFactory,
+                                AutoscalingDecisionType expectedDecision) {
+        assertThat(decider.scale(contextFactory.create(state, info)), decisionType(expectedDecision, state));
     }
 
     private ClusterState addExtraNodes(int hotNodes, ClusterState state) {
@@ -148,6 +150,9 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         return info;
     }
 
+    private static interface AutoscalingDeciderContextFactory {
+        AutoscalingDeciderContext create(ClusterState state, ClusterInfo info);
+    }
     private static class TestAutoscalingDeciderContext implements AutoscalingDeciderContext {
         private ClusterState state;
         private ClusterInfo info;
