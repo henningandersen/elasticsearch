@@ -6,7 +6,6 @@
 
 package org.elasticsearch.xpack.autoscaling.storage;
 
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.cluster.ClusterState;
@@ -22,6 +21,7 @@ import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
 import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
@@ -33,8 +33,11 @@ import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecision;
 import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecisionType;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -48,14 +51,14 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
 
     static {
         PARSER = new ConstructingObjectParser<>(NAME, a -> new ReactiveStorageDecider((String) a[0], (String) a[1]));
-        PARSER.declareString(ConstructingObjectParser.optionalConstructorArg(), TIER_ATTRIBUTE_FIELD);
-        PARSER.declareString(ConstructingObjectParser.optionalConstructorArg(), TIER_FIELD);
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), TIER_ATTRIBUTE_FIELD);
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), TIER_FIELD);
     }
     private final String tierAttribute;
     private final String tier;
 
     public ReactiveStorageDecider(String tierAttribute, String tier) {
-        if ((tier == null) != (tierAttribute == null)) {
+        if ((tier == null || tierAttribute == null)) {
             throw new IllegalArgumentException("must specify both [tier_attribute] [" + tierAttribute + "] and [tier] [" + tier + "]");
         }
         this.tierAttribute = tierAttribute;
@@ -63,7 +66,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
     }
 
     public ReactiveStorageDecider(StreamInput in) throws IOException {
-        this(in.readOptionalString(), in.readOptionalString());
+        this(in.readString(), in.readString());
     }
 
     public static ReactiveStorageDecider parse(XContentParser parser) throws IOException {
@@ -80,20 +83,39 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         return NAME;
     }
 
+    public String getTierAttribute() {
+        return tierAttribute;
+    }
+
+    public String getTier() {
+        return tier;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReactiveStorageDecider that = (ReactiveStorageDecider) o;
+        return tierAttribute.equals(that.tierAttribute) && tier.equals(that.tier);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tierAttribute, tier);
+    }
+
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        out.writeOptionalString(tierAttribute);
-        out.writeOptionalString(tier);
+        out.writeString(tierAttribute);
+        out.writeString(tier);
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
         {
-            if (tierAttribute != null) {
-                builder.field(TIER_ATTRIBUTE_FIELD.getPreferredName(), tierAttribute);
-                builder.field(TIER_FIELD.getPreferredName(), tier);
-            }
+            builder.field(TIER_ATTRIBUTE_FIELD.getPreferredName(), tierAttribute);
+            builder.field(TIER_FIELD.getPreferredName(), tier);
         }
         builder.endObject();
         return builder;
@@ -102,93 +124,144 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
     @Override
     public AutoscalingDecision scale(AutoscalingDeciderContext context) {
         ClusterState state = simulateAllocationOfState(context.state(), context);
-        Predicate<IndexMetadata> indexTierPredicate = tierAttribute == null
-            ? i -> true
+        Predicate<IndexMetadata> indexTierPredicate =
             // we check the specific attribute to not match indices with no tier spec.
-            : i -> tier.equals(i.getSettings().get(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey() + tierAttribute));
-        Predicate<DiscoveryNode> nodeTierPredicate = tierAttribute == null
-            ? n -> true
-            : n -> tier.equals(n.getAttributes().get(tierAttribute));
+            imd -> tier.equals(imd.getSettings().get(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey() + tierAttribute));
+        Predicate<DiscoveryNode> nodeTierPredicate = n -> tier.equals(n.getAttributes().get(tierAttribute));
 
         if (diskDeciderPreventsAllocation(state, context, indexTierPredicate, nodeTierPredicate)) {
             return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for unassigned shards");
         } else if (diskDeciderPreventsMove(state, context, indexTierPredicate, nodeTierPredicate)) {
             return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for moving shards");
         } else {
-            return new AutoscalingDecision(NAME, AutoscalingDecisionType.NO_SCALE, null);
+            return new AutoscalingDecision(NAME, AutoscalingDecisionType.NO_SCALE, "enough storage available");
         }
     }
 
-    private boolean diskDeciderPreventsAllocation(ClusterState state, AutoscalingDeciderContext context, Predicate<IndexMetadata> indexTierPredicate, Predicate<DiscoveryNode> nodeTierPredicate) {
+    private boolean diskDeciderPreventsAllocation(
+        ClusterState state,
+        AutoscalingDeciderContext context,
+        Predicate<IndexMetadata> indexTierPredicate,
+        Predicate<DiscoveryNode> nodeTierPredicate
+    ) {
         RoutingNodes routingNodes = new RoutingNodes(state, false);
-        RoutingAllocation allocation = new RoutingAllocation(context.allocationDeciders(), routingNodes, state, context.info(),
-            System.nanoTime());
+        RoutingAllocation allocation = new RoutingAllocation(
+            context.allocationDeciders(),
+            routingNodes,
+            state,
+            context.info(),
+            System.nanoTime()
+        );
         Metadata metadata = state.metadata();
         return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
             .filter(u -> indexTierPredicate.test(metadata.getIndexSafe(u.index())))
             .anyMatch(shard -> diskDeciderPreventsAllocationOfShard(shard, allocation, context, nodeTierPredicate));
     }
 
-    private boolean diskDeciderPreventsMove(ClusterState state, AutoscalingDeciderContext context, Predicate<IndexMetadata> tierPredicate, Predicate<DiscoveryNode> nodeTierPredicate) {
+    private boolean diskDeciderPreventsMove(
+        ClusterState state,
+        AutoscalingDeciderContext context,
+        Predicate<IndexMetadata> tierPredicate,
+        Predicate<DiscoveryNode> nodeTierPredicate
+    ) {
         RoutingNodes routingNodes = new RoutingNodes(state, false);
-        RoutingAllocation allocation = new RoutingAllocation(context.allocationDeciders(), routingNodes, state, context.info(),
-            System.nanoTime());
+        RoutingAllocation allocation = new RoutingAllocation(
+            context.allocationDeciders(),
+            routingNodes,
+            state,
+            context.info(),
+            System.nanoTime()
+        );
         Metadata metadata = state.metadata();
         return state.getRoutingNodes()
             .shards(s -> true)
             .stream()
             .filter(shard -> tierPredicate.test(metadata.getIndexSafe(shard.index())))
-            .filter(shard -> context.allocationDeciders().canRemain(shard, routingNodes.node(shard.currentNodeId()), allocation) == Decision.NO)
+            .filter(
+                shard -> context.allocationDeciders().canRemain(shard, routingNodes.node(shard.currentNodeId()), allocation) == Decision.NO
+            )
             .filter(shard -> canAllocate(shard, allocation, context, nodeTierPredicate) == false)
             .anyMatch(shard -> diskDeciderPreventsAllocationOfShard(shard, allocation, context, nodeTierPredicate));
     }
 
-    private boolean canAllocate(ShardRouting shard, RoutingAllocation allocation, AutoscalingDeciderContext context, Predicate<DiscoveryNode> nodeTierPredicate) {
-        return nodesInTier(allocation, nodeTierPredicate)
-            .anyMatch(node -> context.allocationDeciders().canAllocate(shard, node, allocation) != Decision.NO);
+    private boolean canAllocate(
+        ShardRouting shard,
+        RoutingAllocation allocation,
+        AutoscalingDeciderContext context,
+        Predicate<DiscoveryNode> nodeTierPredicate
+    ) {
+        return nodesInTier(allocation, nodeTierPredicate).anyMatch(
+            node -> context.allocationDeciders().canAllocate(shard, node, allocation) != Decision.NO
+        );
     }
 
     /**
      * Check that disk decider is only decider for a node preventing allocation of the shard.
      * @return true iff a node exists in the tier where only disk decider prevents allocation
      */
-    private boolean diskDeciderPreventsAllocationOfShard(ShardRouting shard, RoutingAllocation allocation,
-                                                         AutoscalingDeciderContext context, Predicate<DiscoveryNode> nodeTierPredicate) {
+    private boolean diskDeciderPreventsAllocationOfShard(
+        ShardRouting shard,
+        RoutingAllocation allocation,
+        AutoscalingDeciderContext context,
+        Predicate<DiscoveryNode> nodeTierPredicate
+    ) {
+        assert allocation.debugDecision() == false;
         allocation.debugDecision(true);
         try {
-            return nodesInTier(allocation, nodeTierPredicate)
-                .map(node -> context.allocationDeciders().canAllocate(shard, node, allocation))
-                .anyMatch(decision ->
-                    decision.getDecisions().size() == 1 && decision.getDecisions().get(0).label().equals(DiskThresholdDecider.NAME));
+            return nodesInTier(allocation, nodeTierPredicate).map(node -> context.allocationDeciders().canAllocate(shard, node, allocation))
+                .anyMatch(this::isDiskOnlyNoDecision);
         } finally {
             allocation.debugDecision(false);
         }
     }
 
+    private boolean isDiskOnlyNoDecision(Decision decision) {
+        List<Decision> nonYes = decision.getDecisions().stream().filter(single -> single.type() != Decision.Type.YES).collect(Collectors.toList());
+        return nonYes.size() == 1 && nonYes.get(0).label().equals(DiskThresholdDecider.NAME) && nonYes.get(0).type() == Decision.Type.NO;
+
+    }
     private Stream<RoutingNode> nodesInTier(RoutingAllocation allocation, Predicate<DiscoveryNode> nodeTierPredicate) {
         Predicate<RoutingNode> routingNodePredicate = rn -> nodeTierPredicate.test(rn.node());
         return StreamSupport.stream(allocation.routingNodes().spliterator(), false).filter(routingNodePredicate);
     }
 
-    private ClusterState simulateAllocationOfState(ClusterState state, AutoscalingDeciderContext context) {
-        state = allocate(state, context, a -> {});
-        state = allocate(state, context, this::startShards);
-        return state;
+    static ClusterState simulateAllocationOfState(ClusterState state, AutoscalingDeciderContext context) {
+        while (true) {
+            ClusterState nextState = simulateStartAndAllocate(state, context);
+            if (nextState == state) {
+                return state;
+            } else {
+                state = nextState;
+            }
+        }
     }
 
+    // todo: need to track sizes of moving shards.
+    static ClusterState simulateStartAndAllocate(
+        ClusterState state,
+        AutoscalingDeciderContext context) {
 
-    private ClusterState allocate(ClusterState state, AutoscalingDeciderContext context,
-                                  Consumer<RoutingAllocation> allocationManipulator) {
         RoutingNodes routingNodes = new RoutingNodes(state, false);
-        RoutingAllocation allocation = new RoutingAllocation(context.allocationDeciders(), routingNodes, state, context.info(),
-            System.nanoTime());
+        RoutingAllocation allocation = new RoutingAllocation(
+            context.allocationDeciders(),
+            routingNodes,
+            state,
+            context.info(),
+            System.nanoTime()
+        );
 
-        allocationManipulator.accept(allocation);
+        // have to start primaries and replicas in separate rounds when we have relocating shards in play, since a replica can be
+        // reinit'ed, resulting in a new ShardRouting instance.
+        startShards(allocation, true);
+        startShards(allocation, false);
         context.shardsAllocator().allocate(allocation);
         return updateClusterState(state, allocation);
     }
 
-    private ClusterState updateClusterState(ClusterState oldState, RoutingAllocation allocation) {
+    static ClusterState updateClusterState(ClusterState oldState, RoutingAllocation allocation) {
+        if (allocation.routingNodesChanged() == false) {
+            return oldState;
+        }
         final RoutingTable oldRoutingTable = oldState.routingTable();
         final RoutingNodes newRoutingNodes = allocation.routingNodes();
         final RoutingTable newRoutingTable = new RoutingTable.Builder().updateNodes(oldRoutingTable.version(), newRoutingNodes).build();
@@ -200,12 +273,14 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         return newStateBuilder.build();
     }
 
-    private void startShards(RoutingAllocation allocation) {
-        // simulate that all shards are started so replicas can recover and replicas to get to green.
+    static void startShards(RoutingAllocation allocation, boolean primary) {
+        // simulate that all shards are started such that replicas can recover and the index become green.
         // also starts initializing relocated shards, which removes the relocation source too.
         allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING).forEach(s -> {
-            logger.info("Starting [{}]", s);
-            allocation.routingNodes().startShard(logger, s, allocation.changes());
+            if (s.primary() == primary) {
+                logger.info("Starting [{}]", s);
+                allocation.routingNodes().startShard(logger, s, allocation.changes());
+            }
         });
     }
 }
