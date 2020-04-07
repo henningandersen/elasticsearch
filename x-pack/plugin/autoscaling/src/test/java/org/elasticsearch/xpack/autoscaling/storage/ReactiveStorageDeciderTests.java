@@ -201,6 +201,8 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             .nodes(nodes)
             .build();
 
+        // -2 to ensure we have one less shard copy than #nodes - since otherwise a copy may not be able to be allocated anywhere
+        // else due to same shard allocator.
         state = addRandomIndices("initial", hotNodes, hotNodes - 2, state);
 
         return state;
