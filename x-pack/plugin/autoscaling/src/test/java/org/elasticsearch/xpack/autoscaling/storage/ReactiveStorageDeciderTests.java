@@ -38,6 +38,7 @@ import org.hamcrest.TypeSafeMatcher;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
@@ -63,8 +64,18 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
 
 
     public void testScale() {
-        int hotNodes = randomIntBetween(2, 10);
-        ClusterState state = randomClusterStateAndInfo(hotNodes);
+        // todo: ensure this works as long as we have at least 2 data nodes, but only one hot node.
+        // so far, we need at least 2 hot nodes, reactive storage decider cannot handle just one node yet.
+        int hotNodes = randomIntBetween(2, 8);
+        int warmNodes = randomIntBetween(0, 3);
+        ClusterState state = ClusterState.builder(new ClusterName("test")).build();
+
+        // -2 to ensure we have one less shard copy than #nodes - since otherwise a copy may not be able to be allocated anywhere
+        // else due to same shard allocator.
+        state = addRandomIndices("initial", hotNodes, hotNodes - 2, state);
+
+        state = addDataNodes("hot", "hot", state, hotNodes);
+        state = addDataNodes("warm", "warm", state, warmNodes);
 
         ReactiveStorageDecider decider = new ReactiveStorageDecider("tier", "hot");
 
@@ -72,8 +83,8 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         AllocationDeciders allocationDeciders = new AllocationDeciders(ClusterModule.createAllocationDeciders(Settings.EMPTY,
             new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS), Collections.emptyList()));
 
-        ClusterInfo underAllocated = createClusterInfo(state, 1L, 0L, Map.of());
-        ClusterInfo overAllocated = createClusterInfo(state, 0L, 1L, Map.of());
+        ClusterInfo underAllocated = createClusterInfo(state, 1L, 0L);
+        ClusterInfo overAllocated = createClusterInfo(state, 0L, 1L);
 
         AutoscalingDeciderContextFactory contextFactory = (s, i) -> new TestAutoscalingDeciderContext(s, i, allocator, allocationDeciders);
         TestAutoscalingDeciderContext context = new TestAutoscalingDeciderContext(state, underAllocated, allocator, allocationDeciders);
@@ -97,9 +108,10 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         assertThat(state.getRoutingNodes().shardsWithState(ShardRoutingState.STARTED).size(),
             equalTo(state.getRoutingNodes().shards(s -> true).size()));
 
-        ClusterState extraNodeState = addExtraNodes(hotNodes, state);
+        ClusterState extraNodeState = addDataNodes("hot", "extra", state, hotNodes);
 
-        ClusterInfo overAllocatedWithEmptyExtra = createClusterInfo(extraNodeState, 0L, 1L, Map.of("extra-node", Long.MAX_VALUE));
+        ToLongFunction<String> overrideExtraNodeFree = n -> n.startsWith("extra") ? Long.MAX_VALUE : 0L;
+        ClusterInfo overAllocatedWithEmptyExtra = createClusterInfo(extraNodeState, overrideExtraNodeFree, 1L);
 
         verifyDecision(extraNodeState, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
         verifyDecision(extraNodeState, overAllocatedWithEmptyExtra, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
@@ -109,9 +121,9 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         verifyDecision(state, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
         verifyDecision(state, overAllocated, decider, contextFactory, AutoscalingDecisionType.SCALE_UP);
 
-        extraNodeState = addExtraNodes(hotNodes, state);
+        extraNodeState = addDataNodes("hot", "extra", state, hotNodes);
 
-        overAllocatedWithEmptyExtra = createClusterInfo(extraNodeState, 0L, 1L, Map.of("extra-node", Long.MAX_VALUE));
+        overAllocatedWithEmptyExtra = createClusterInfo(extraNodeState, overrideExtraNodeFree, 1L);
         verifyDecision(extraNodeState, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
         verifyDecision(extraNodeState, overAllocatedWithEmptyExtra, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
     }
@@ -122,20 +134,16 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         assertThat(decider.scale(contextFactory.create(state, info)), decisionType(expectedDecision, state));
     }
 
-    private ClusterState addExtraNodes(int hotNodes, ClusterState state) {
-        ClusterState extraNodeState = state;
-        for (int i = 0; i < hotNodes; ++i) {
-            extraNodeState = addDataNode(extraNodeState, "hot", "extra-node");
-        }
-        return extraNodeState;
-    }
+    private ClusterInfo createClusterInfo(ClusterState state, long defaultFreeBytes, long shardSizes) {
+        return createClusterInfo(state, s -> defaultFreeBytes, shardSizes);
 
-    private ClusterInfo createClusterInfo(ClusterState state, long defaultFreeBytes, long shardSizes, Map<String, Long> override) {
+    }
+    private ClusterInfo createClusterInfo(ClusterState state, ToLongFunction<String> freeBytesFunction, long shardSizes) {
         ClusterInfo info = mock(ClusterInfo.class);
         Map<String, DiskUsage> diskUsages =
             StreamSupport.stream(state.nodes().spliterator(), false).collect(Collectors.toMap(DiscoveryNode::getId,
             node -> {
-                long free = override.getOrDefault(node.getName(), defaultFreeBytes);
+                long free = freeBytesFunction.applyAsLong(node.getName());
                 return new DiskUsage(node.getId(), null, "the_path", Math.max(1L, free), free);
             }));
 
@@ -195,19 +203,6 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         }
     }
 
-    private ClusterState randomClusterStateAndInfo(int hotNodes) {
-        DiscoveryNodes nodes = randomDataNodes(hotNodes, randomIntBetween(1, 10));
-        ClusterState state = ClusterState.builder(new ClusterName("test"))
-            .nodes(nodes)
-            .build();
-
-        // -2 to ensure we have one less shard copy than #nodes - since otherwise a copy may not be able to be allocated anywhere
-        // else due to same shard allocator.
-        state = addRandomIndices("initial", hotNodes, hotNodes - 2, state);
-
-        return state;
-    }
-
     private ClusterState addRandomIndices(String prefix, int minShards, int maxReplicas, ClusterState state) {
         int shards = randomIntBetween(minShards, 100);
         Metadata.Builder builder = Metadata.builder();
@@ -228,24 +223,15 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         return ClusterState.builder(state).metadata(builder).routingTable(routingTableBuilder.build()).build();
     }
 
-    private DiscoveryNodes randomDataNodes(int hotNodes, int warmNodes) {
-        DiscoveryNodes.Builder builder = DiscoveryNodes.builder();
-        addataNodes("hot", builder, hotNodes);
-        addataNodes("warm", builder, warmNodes);
-        return builder.build();
-    }
-
-    private void addataNodes(String tier, DiscoveryNodes.Builder builder, int nodes) {
-        IntStream.range(0, nodes).mapToObj(i -> newDataNode(tier, "node_" + i)).forEach(builder::add);
+    private ClusterState addDataNodes(String tier, String prefix, ClusterState state, int nodes) {
+        DiscoveryNodes.Builder builder = DiscoveryNodes.builder(state.nodes());
+        IntStream.range(0, nodes).mapToObj(i -> newDataNode(tier, prefix + "_" + i)).forEach(builder::add);
+        return ClusterState.builder(state).nodes(builder).build();
     }
 
     private DiscoveryNode newDataNode(String tier, String nodeName) {
         return new DiscoveryNode(nodeName, UUIDs.randomBase64UUID(), buildNewFakeTransportAddress(),
             Map.of("tier", tier), Set.of(DiscoveryNodeRole.DATA_ROLE), Version.CURRENT);
-    }
-
-    private ClusterState addDataNode(ClusterState state, String tier, String name) {
-        return ClusterState.builder(state).nodes(DiscoveryNodes.builder(state.nodes()).add(newDataNode(tier, name))).build();
     }
 
     Matcher<AutoscalingDecision> decisionType(AutoscalingDecisionType type, ClusterState state) {
