@@ -22,6 +22,11 @@ import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
+import org.elasticsearch.cluster.routing.allocation.decider.AwarenessAllocationDecider;
+import org.elasticsearch.cluster.routing.allocation.decider.Decision;
+import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
+import org.elasticsearch.cluster.routing.allocation.decider.EnableAllocationDecider;
+import org.elasticsearch.cluster.routing.allocation.decider.SameShardAllocationDecider;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
@@ -35,7 +40,9 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.ToLongFunction;
@@ -43,7 +50,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
+import static org.hamcrest.Matchers.describedAs;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
@@ -51,6 +60,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class ReactiveStorageDeciderTests extends ESTestCase {
+
+    public static final List<String> SOME_ALLOCATION_DECIDERS = Arrays.asList(SameShardAllocationDecider.NAME, AwarenessAllocationDecider.NAME, EnableAllocationDecider.NAME);
 
     public void testNoTierSpecified() {
         String attribute = randomBoolean() ? null : randomAlphaOfLength(8);
@@ -63,6 +74,41 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
     }
 
 
+    public void testIsDiskOnlyDecision() {
+        Decision.Multi decision = new Decision.Multi();
+        if (randomBoolean()) {
+            decision.add(randomFrom(Decision.YES, Decision.ALWAYS, Decision.THROTTLE));
+        }
+        decision.add(new Decision.Single(Decision.Type.NO, DiskThresholdDecider.NAME, "test"));
+        randomSubsetOf(SOME_ALLOCATION_DECIDERS).stream()
+            .map(label -> new Decision.Single(randomValueOtherThan(Decision.Type.NO,
+                () -> randomFrom(Decision.Type.values())), label, "test " + label))
+            .forEach(decision::add);
+        assertThat(ReactiveStorageDecider.isDiskOnlyNoDecision(decision), is(true));
+    }
+
+    public void testIsNotDiskOnlyDecision() {
+        Decision.Multi decision = new Decision.Multi();
+        if (randomBoolean()) {
+            decision.add(randomFrom(Decision.YES, Decision.ALWAYS, Decision.THROTTLE, Decision.NO));
+        }
+
+        if (randomBoolean()) {
+            decision.add(new Decision.Single(Decision.Type.NO, DiskThresholdDecider.NAME, "test"));
+            if (randomBoolean()) {
+                decision.add(Decision.NO);
+            } else {
+                decision.add(new Decision.Single(Decision.Type.NO, randomFrom(SOME_ALLOCATION_DECIDERS), "test"));
+            }
+        } else if (randomBoolean()) {
+            decision.add(new Decision.Single(Decision.Type.YES, DiskThresholdDecider.NAME, "test"));
+        }
+        randomSubsetOf(SOME_ALLOCATION_DECIDERS).stream()
+            .map(label -> new Decision.Single(randomFrom(Decision.Type.values()), label, "test " + label))
+            .forEach(decision::add);
+
+        assertThat(ReactiveStorageDecider.isDiskOnlyNoDecision(decision), is(false));
+    }
     public void testScale() {
         // todo: ensure this works as long as we have at least 2 data nodes, but only one hot node.
         // so far, we need at least 2 hot nodes, reactive storage decider cannot handle just one node yet.

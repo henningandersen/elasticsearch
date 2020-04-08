@@ -209,7 +209,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         allocation.debugDecision(true);
         try {
             return nodesInTier(allocation, nodeTierPredicate).map(node -> context.allocationDeciders().canAllocate(shard, node, allocation))
-                .anyMatch(this::isDiskOnlyNoDecision);
+                .anyMatch(ReactiveStorageDecider::isDiskOnlyNoDecision);
         } finally {
             allocation.debugDecision(false);
         }
@@ -229,12 +229,14 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         }
     }
 
-    private boolean isDiskOnlyNoDecision(Decision decision) {
-        List<Decision> nonYes = decision.getDecisions().stream().filter(single -> single.type() != Decision.Type.YES).collect(Collectors.toList());
-        return nonYes.size() == 1 && nonYes.get(0).label().equals(DiskThresholdDecider.NAME) && nonYes.get(0).type() == Decision.Type.NO;
+    static boolean isDiskOnlyNoDecision(Decision decision) {
+        // we consider throttling==yes, throttling should be temporary.
+        List<Decision> nos =
+            decision.getDecisions().stream().filter(single -> single.type() == Decision.Type.NO).collect(Collectors.toList());
+        return nos.size() == 1 && DiskThresholdDecider.NAME.equals(nos.get(0).label()) && nos.get(0).type() == Decision.Type.NO;
 
     }
-    private Stream<RoutingNode> nodesInTier(RoutingAllocation allocation, Predicate<DiscoveryNode> nodeTierPredicate) {
+    static Stream<RoutingNode> nodesInTier(RoutingAllocation allocation, Predicate<DiscoveryNode> nodeTierPredicate) {
         Predicate<RoutingNode> routingNodePredicate = rn -> nodeTierPredicate.test(rn.node());
         return StreamSupport.stream(allocation.routingNodes().spliterator(), false).filter(routingNodePredicate);
     }
