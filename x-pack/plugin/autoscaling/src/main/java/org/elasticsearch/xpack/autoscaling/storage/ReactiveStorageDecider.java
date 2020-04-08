@@ -181,8 +181,10 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
                 shard -> context.allocationDeciders().canRemain(shard, routingNodes.node(shard.currentNodeId()), allocation) == Decision.NO
             )
             .filter(shard -> canAllocate(shard, allocation, context, nodeTierPredicate) == false)
-            .anyMatch(shard -> diskDeciderPreventsAllocationOfShard(shard, allocation, context, nodeTierPredicate));
+            .anyMatch(shard -> diskDeciderPreventsAllocationOfShard(shard, allocation, context, nodeTierPredicate)
+                || diskDeciderPreventsShardRemain(shard, allocation, context));
     }
+
 
     private boolean canAllocate(
         ShardRouting shard,
@@ -210,6 +212,16 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         try {
             return nodesInTier(allocation, nodeTierPredicate).map(node -> context.allocationDeciders().canAllocate(shard, node, allocation))
                 .anyMatch(this::isDiskOnlyNoDecision);
+        } finally {
+            allocation.debugDecision(false);
+        }
+    }
+
+    private boolean diskDeciderPreventsShardRemain(ShardRouting shard, RoutingAllocation allocation, AutoscalingDeciderContext context) {
+        assert allocation.debugDecision() == false;
+        allocation.debugDecision(true);
+        try {
+            return isDiskOnlyNoDecision(context.allocationDeciders().canRemain(shard, allocation.routingNodes().node(shard.currentNodeId()), allocation));
         } finally {
             allocation.debugDecision(false);
         }

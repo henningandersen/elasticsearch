@@ -66,13 +66,13 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
     public void testScale() {
         // todo: ensure this works as long as we have at least 2 data nodes, but only one hot node.
         // so far, we need at least 2 hot nodes, reactive storage decider cannot handle just one node yet.
-        int hotNodes = randomIntBetween(2, 8);
-        int warmNodes = randomIntBetween(0, 3);
+        int hotNodes = randomIntBetween(1, 8);
+        int warmNodes = randomIntBetween(1, 3);
         ClusterState state = ClusterState.builder(new ClusterName("test")).build();
 
-        // -2 to ensure we have one less shard copy than #nodes - since otherwise a copy may not be able to be allocated anywhere
+        // -1 to ensure we have one less shard copy than #nodes - since otherwise a copy may not be able to be allocated anywhere
         // else due to same shard allocator.
-        state = addRandomIndices("initial", hotNodes, hotNodes - 2, state);
+        state = addRandomIndices("initial", hotNodes, hotNodes - 1, state);
 
         state = addDataNodes("hot", "hot", state, hotNodes);
         state = addDataNodes("warm", "warm", state, warmNodes);
@@ -84,6 +84,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS), Collections.emptyList()));
 
         ClusterInfo underAllocated = createClusterInfo(state, 1L, 0L);
+        // todo: warm has plenty space.
         ClusterInfo overAllocated = createClusterInfo(state, 0L, 1L);
 
         AutoscalingDeciderContextFactory contextFactory = (s, i) -> new TestAutoscalingDeciderContext(s, i, allocator, allocationDeciders);
@@ -116,7 +117,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         verifyDecision(extraNodeState, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
         verifyDecision(extraNodeState, overAllocatedWithEmptyExtra, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
 
-        state = addRandomIndices("additional", 1, hotNodes - 2, state);
+        state = addRandomIndices("additional", 1, hotNodes - 1, state);
 
         verifyDecision(state, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
         verifyDecision(state, overAllocated, decider, contextFactory, AutoscalingDecisionType.SCALE_UP);
