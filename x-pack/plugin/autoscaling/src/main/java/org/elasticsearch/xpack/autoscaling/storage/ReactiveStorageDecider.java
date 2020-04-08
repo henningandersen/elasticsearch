@@ -21,7 +21,6 @@ import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
@@ -35,7 +34,6 @@ import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecisionType;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -129,16 +127,16 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
             imd -> tier.equals(imd.getSettings().get(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey() + tierAttribute));
         Predicate<DiscoveryNode> nodeTierPredicate = n -> tier.equals(n.getAttributes().get(tierAttribute));
 
-        if (diskDeciderPreventsAllocation(state, context, indexTierPredicate, nodeTierPredicate)) {
+        if (storagePreventsAllocation(state, context, indexTierPredicate, nodeTierPredicate)) {
             return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for unassigned shards");
-        } else if (diskDeciderPreventsMove(state, context, indexTierPredicate, nodeTierPredicate)) {
+        } else if (storagePreventsMove(state, context, indexTierPredicate, nodeTierPredicate)) {
             return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for moving shards");
         } else {
             return new AutoscalingDecision(NAME, AutoscalingDecisionType.NO_SCALE, "enough storage available");
         }
     }
 
-    private boolean diskDeciderPreventsAllocation(
+    private boolean storagePreventsAllocation(
         ClusterState state,
         AutoscalingDeciderContext context,
         Predicate<IndexMetadata> indexTierPredicate,
@@ -155,10 +153,10 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         Metadata metadata = state.metadata();
         return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
             .filter(u -> indexTierPredicate.test(metadata.getIndexSafe(u.index())))
-            .anyMatch(shard -> diskDeciderPreventsAllocationOfShard(shard, allocation, context, nodeTierPredicate));
+            .anyMatch(shard -> cannotAllocateDueToStorage(shard, allocation, context, nodeTierPredicate));
     }
 
-    private boolean diskDeciderPreventsMove(
+    private boolean storagePreventsMove(
         ClusterState state,
         AutoscalingDeciderContext context,
         Predicate<IndexMetadata> tierPredicate,
@@ -181,8 +179,8 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
                 shard -> context.allocationDeciders().canRemain(shard, routingNodes.node(shard.currentNodeId()), allocation) == Decision.NO
             )
             .filter(shard -> canAllocate(shard, allocation, context, nodeTierPredicate) == false)
-            .anyMatch(shard -> diskDeciderPreventsAllocationOfShard(shard, allocation, context, nodeTierPredicate)
-                || diskDeciderPreventsShardRemain(shard, allocation, context));
+            .anyMatch(shard -> cannotAllocateDueToStorage(shard, allocation, context, nodeTierPredicate)
+                || cannotRemainDueToStorage(shard, allocation, context));
     }
 
 
@@ -201,7 +199,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
      * Check that disk decider is only decider for a node preventing allocation of the shard.
      * @return true iff a node exists in the tier where only disk decider prevents allocation
      */
-    private boolean diskDeciderPreventsAllocationOfShard(
+    private boolean cannotAllocateDueToStorage(
         ShardRouting shard,
         RoutingAllocation allocation,
         AutoscalingDeciderContext context,
@@ -217,7 +215,11 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         }
     }
 
-    private boolean diskDeciderPreventsShardRemain(ShardRouting shard, RoutingAllocation allocation, AutoscalingDeciderContext context) {
+    /**
+     * Check that the disk decider is only decider that says NO to let shard remain on current node.
+     * @return true iff disk decider is only decider that says NO to canRemain.
+     */
+    private boolean cannotRemainDueToStorage(ShardRouting shard, RoutingAllocation allocation, AutoscalingDeciderContext context) {
         assert allocation.debugDecision() == false;
         allocation.debugDecision(true);
         try {
