@@ -266,10 +266,20 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
             System.nanoTime()
         );
 
-        // have to start primaries and replicas in separate rounds when we have relocating shards in play, since a replica can be
-        // reinit'ed, resulting in a new ShardRouting instance.
-        startShards(allocation, true);
-        startShards(allocation, false);
+        List<ShardRouting> shards = allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING);
+
+        // replicas before primaries, since replicas can be reinit'ed, resulting in a new ShardRouting instance.
+        shards.stream()
+            .filter(s -> s.primary() == false)
+            .forEach(s -> {
+                allocation.routingNodes().startShard(logger, s, allocation.changes());
+            });
+
+        shards.stream()
+            .filter(s -> s.primary() == true)
+            .forEach(s -> {
+                allocation.routingNodes().startShard(logger, s, allocation.changes());
+            });
         context.shardsAllocator().allocate(allocation);
         return updateClusterState(state, allocation);
     }
@@ -287,16 +297,5 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         final ClusterState.Builder newStateBuilder = ClusterState.builder(oldState).routingTable(newRoutingTable).metadata(newMetadata);
 
         return newStateBuilder.build();
-    }
-
-    static void startShards(RoutingAllocation allocation, boolean primary) {
-        // simulate that all shards are started such that replicas can recover and the index become green.
-        // also starts initializing relocated shards, which removes the relocation source too.
-        allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING).forEach(s -> {
-            if (s.primary() == primary) {
-                logger.info("Starting [{}]", s);
-                allocation.routingNodes().startShard(logger, s, allocation.changes());
-            }
-        });
     }
 }

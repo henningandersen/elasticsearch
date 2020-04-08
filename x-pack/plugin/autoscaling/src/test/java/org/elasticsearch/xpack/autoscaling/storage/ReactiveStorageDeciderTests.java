@@ -17,8 +17,11 @@ import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
+import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
+import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
+import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
@@ -143,8 +146,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         int count = 0;
         while (lastState != state && count++ < 1000) {
             lastState = state;
-            // allocate some primaries and on later iterations replicas
-            state = ReactiveStorageDecider.simulateStartAndAllocate(state, context);
+            state = startRandomShards(state, context);
 
             verifyDecision(state, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
             verifyDecision(state, overAllocated, decider, contextFactory, AutoscalingDecisionType.SCALE_UP);
@@ -173,6 +175,37 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         overAllocatedWithEmptyExtra = createClusterInfo(extraNodeState, overrideExtraNodeFree, 1L);
         verifyDecision(extraNodeState, underAllocated, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
         verifyDecision(extraNodeState, overAllocatedWithEmptyExtra, decider, contextFactory, AutoscalingDecisionType.NO_SCALE);
+    }
+
+    private ClusterState startRandomShards(ClusterState state, TestAutoscalingDeciderContext context) {
+        RoutingNodes routingNodes = new RoutingNodes(state, false);
+        RoutingAllocation allocation = new RoutingAllocation(
+            context.allocationDeciders(),
+            routingNodes,
+            state,
+            context.info(),
+            System.nanoTime()
+        );
+
+        List<ShardRouting> initializingShards = allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING);
+        List<ShardRouting> shards = randomSubsetOf(Math.min(randomIntBetween(1, 100), initializingShards.size()), initializingShards);
+
+        // replicas before primaries, since replicas can be reinit'ed, resulting in a new ShardRouting instance.
+        shards.stream()
+            .filter(s -> s.primary() == false)
+            .forEach(s -> {
+                allocation.routingNodes().startShard(logger, s, allocation.changes());
+            });
+
+        shards.stream()
+            .filter(s -> s.primary() == true)
+            .forEach(s -> {
+                allocation.routingNodes().startShard(logger, s, allocation.changes());
+            });
+
+        context.shardsAllocator().allocate(allocation);
+        return ReactiveStorageDecider.updateClusterState(state, allocation);
+
     }
 
     private void verifyDecision(ClusterState state, ClusterInfo info, ReactiveStorageDecider decider,
