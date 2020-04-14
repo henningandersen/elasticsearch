@@ -121,7 +121,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
 
     @Override
     public AutoscalingDecision scale(AutoscalingDeciderContext context) {
-        ClusterState state = simulateAllocationOfState(context.state(), context);
+        ClusterState state = simulateStartAndAllocate(context.state(), context);
         Predicate<IndexMetadata> indexTierPredicate =
             // we check the specific attribute to not match indices with no tier spec.
             imd -> tier.equals(imd.getSettings().get(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey() + tierAttribute));
@@ -129,14 +129,14 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
 
         if (storagePreventsAllocation(state, context, indexTierPredicate, nodeTierPredicate)) {
             return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for unassigned shards");
-        } else if (storagePreventsMove(state, context, indexTierPredicate, nodeTierPredicate)) {
+        } else if (storagePreventsRemainOrMove(state, context, indexTierPredicate, nodeTierPredicate)) {
             return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for moving shards");
         } else {
             return new AutoscalingDecision(NAME, AutoscalingDecisionType.NO_SCALE, "enough storage available");
         }
     }
 
-    private boolean storagePreventsAllocation(
+    static boolean storagePreventsAllocation(
         ClusterState state,
         AutoscalingDeciderContext context,
         Predicate<IndexMetadata> indexTierPredicate,
@@ -156,7 +156,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
             .anyMatch(shard -> cannotAllocateDueToStorage(shard, allocation, context, nodeTierPredicate));
     }
 
-    private boolean storagePreventsMove(
+    static boolean storagePreventsRemainOrMove(
         ClusterState state,
         AutoscalingDeciderContext context,
         Predicate<IndexMetadata> tierPredicate,
@@ -184,13 +184,13 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
     }
 
 
-    private boolean canAllocate(
+    private static boolean canAllocate(
         ShardRouting shard,
         RoutingAllocation allocation,
         AutoscalingDeciderContext context,
         Predicate<DiscoveryNode> nodeTierPredicate
     ) {
-        return nodesInTier(allocation, nodeTierPredicate).anyMatch(
+        return nodesInTier(allocation.routingNodes(), nodeTierPredicate).anyMatch(
             node -> context.allocationDeciders().canAllocate(shard, node, allocation) != Decision.NO
         );
     }
@@ -199,7 +199,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
      * Check that disk decider is only decider for a node preventing allocation of the shard.
      * @return true iff a node exists in the tier where only disk decider prevents allocation
      */
-    private boolean cannotAllocateDueToStorage(
+    private static boolean cannotAllocateDueToStorage(
         ShardRouting shard,
         RoutingAllocation allocation,
         AutoscalingDeciderContext context,
@@ -208,7 +208,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         assert allocation.debugDecision() == false;
         allocation.debugDecision(true);
         try {
-            return nodesInTier(allocation, nodeTierPredicate).map(node -> context.allocationDeciders().canAllocate(shard, node, allocation))
+            return nodesInTier(allocation.routingNodes(), nodeTierPredicate).map(node -> context.allocationDeciders().canAllocate(shard, node, allocation))
                 .anyMatch(ReactiveStorageDecider::isDiskOnlyNoDecision);
         } finally {
             allocation.debugDecision(false);
@@ -219,7 +219,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
      * Check that the disk decider is only decider that says NO to let shard remain on current node.
      * @return true iff disk decider is only decider that says NO to canRemain.
      */
-    private boolean cannotRemainDueToStorage(ShardRouting shard, RoutingAllocation allocation, AutoscalingDeciderContext context) {
+    private static boolean cannotRemainDueToStorage(ShardRouting shard, RoutingAllocation allocation, AutoscalingDeciderContext context) {
         assert allocation.debugDecision() == false;
         allocation.debugDecision(true);
         try {
@@ -236,52 +236,43 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         return nos.size() == 1 && DiskThresholdDecider.NAME.equals(nos.get(0).label()) && nos.get(0).type() == Decision.Type.NO;
 
     }
-    static Stream<RoutingNode> nodesInTier(RoutingAllocation allocation, Predicate<DiscoveryNode> nodeTierPredicate) {
+    static Stream<RoutingNode> nodesInTier(RoutingNodes routingNodes, Predicate<DiscoveryNode> nodeTierPredicate) {
         Predicate<RoutingNode> routingNodePredicate = rn -> nodeTierPredicate.test(rn.node());
-        return StreamSupport.stream(allocation.routingNodes().spliterator(), false).filter(routingNodePredicate);
+        return StreamSupport.stream(routingNodes.spliterator(), false).filter(routingNodePredicate);
     }
 
-    static ClusterState simulateAllocationOfState(ClusterState state, AutoscalingDeciderContext context) {
+    static ClusterState simulateStartAndAllocate(ClusterState state, AutoscalingDeciderContext context) {
         while (true) {
-            ClusterState nextState = simulateStartAndAllocate(state, context);
+            RoutingNodes routingNodes = new RoutingNodes(state, false);
+            RoutingAllocation allocation = new RoutingAllocation(
+                context.allocationDeciders(),
+                routingNodes,
+                state,
+                context.info(),
+                System.nanoTime()
+            );
+
+            List<ShardRouting> shards = allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING);
+            // replicas before primaries, since replicas can be reinit'ed, resulting in a new ShardRouting instance.
+            shards.stream()
+                .filter(s -> s.primary() == false)
+                .forEach(s -> {
+                    allocation.routingNodes().startShard(logger, s, allocation.changes());
+                });
+            shards.stream()
+                .filter(s -> s.primary() == true)
+                .forEach(s -> {
+                    allocation.routingNodes().startShard(logger, s, allocation.changes());
+                });
+            context.shardsAllocator().allocate(allocation);
+            ClusterState nextState = updateClusterState(state, allocation);
+
             if (nextState == state) {
                 return state;
             } else {
                 state = nextState;
             }
         }
-    }
-
-    // todo: need to track sizes of moving shards.
-    static ClusterState simulateStartAndAllocate(
-        ClusterState state,
-        AutoscalingDeciderContext context) {
-
-        RoutingNodes routingNodes = new RoutingNodes(state, false);
-        RoutingAllocation allocation = new RoutingAllocation(
-            context.allocationDeciders(),
-            routingNodes,
-            state,
-            context.info(),
-            System.nanoTime()
-        );
-
-        List<ShardRouting> shards = allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING);
-
-        // replicas before primaries, since replicas can be reinit'ed, resulting in a new ShardRouting instance.
-        shards.stream()
-            .filter(s -> s.primary() == false)
-            .forEach(s -> {
-                allocation.routingNodes().startShard(logger, s, allocation.changes());
-            });
-
-        shards.stream()
-            .filter(s -> s.primary() == true)
-            .forEach(s -> {
-                allocation.routingNodes().startShard(logger, s, allocation.changes());
-            });
-        context.shardsAllocator().allocate(allocation);
-        return updateClusterState(state, allocation);
     }
 
     static ClusterState updateClusterState(ClusterState oldState, RoutingAllocation allocation) {
