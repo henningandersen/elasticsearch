@@ -243,7 +243,6 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
 
     public void testStoragePreventsMove() {
         int hotNodes = randomIntBetween(1, 8);
-        // todo: work around DiskThresholdDecider single node early termination (no watermarks observed).
         int warmNodes = randomIntBetween(1, 3);
         ClusterState state = ClusterState.builder(new ClusterName("test")).build();
 
@@ -306,6 +305,15 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, diskAndOtherContext, i -> true, hotNodePredicate), equalTo(false));
     }
 
+    public void testStoragePreventsRemain() {
+        int hotNodes = randomIntBetween(1, 8);
+        ClusterState state = ClusterState.builder(new ClusterName("test")).build();
+
+        state = addRandomIndices("initial", hotNodes, hotNodes - 1, state);
+        state = addDataNodes("hot", "hot", state, hotNodes);
+
+//        state = startRandomShards()
+    }
 
     private String randomWarmNodeId(RoutingNodes routingNodes) {
         return randomFrom(ReactiveStorageDecider.nodesInTier(routingNodes, n -> n.getName().startsWith("warm")).collect(Collectors.toSet())).nodeId();
