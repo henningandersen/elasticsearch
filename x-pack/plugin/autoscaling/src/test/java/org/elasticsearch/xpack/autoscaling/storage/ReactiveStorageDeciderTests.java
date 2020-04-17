@@ -205,7 +205,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         AllocationDecider bigShardDiskDecider = new AllocationDecider() {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-                if (bigShards.contains(shardRouting.shardId()))
+                if (bigShards.contains(shardRouting.shardId()) && node.node().getName().startsWith("hot"))
                     return allocation.decision(Decision.NO, DiskThresholdDecider.NAME, "test");
                 return super.canAllocate(shardRouting, node, allocation);
             }
@@ -237,10 +237,13 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             verifyScaleDecision(state, diskContext, AutoscalingDecisionType.SCALE_UP, "not enough storage available for unassigned shards");
             verifyScaleDecision(state, noDiskContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
             verifyScaleDecision(state, diskAndOtherContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
+            verifyScaleDecision(addDataNodes("hot", "additional", state, hotNodes), diskContext,
+                AutoscalingDecisionType.NO_SCALE, "storage ok");
 
             lastState = state;
             state = startRandomShards(state, diskContext);
         }
+        assert count > 0;
         assertThat(state, sameInstance(lastState));
         assertThat(ReactiveStorageDecider.simulateStartAndAllocate(state, diskContext), sameInstance(state));
     }
@@ -292,10 +295,10 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         RoutingNodes routingNodes = new RoutingNodes(state, false);
         RoutingAllocation allocation = new RoutingAllocation(createAllocationDeciders(), routingNodes, state, underAllocated,
             System.nanoTime());
-        Set<ShardRouting> shardRoutings = new HashSet<>(randomSubsetOf(randomIntBetween(1, bigShardRoutings.size()), bigShardRoutings));
+        Set<ShardId> warmShardIds = new HashSet<>(randomSubsetOf(randomIntBetween(1, bigShards.size()), bigShards));
         for (RoutingNodes.UnassignedShards.UnassignedIterator iterator = routingNodes.unassigned().iterator(); iterator.hasNext(); ) {
-            ShardRouting next = iterator.next();
-            if (shardRoutings.contains(next)) {
+            ShardRouting shardRouting = iterator.next();
+            if (shardRouting.primary() && warmShardIds.contains(shardRouting.shardId())) {
                 ShardRouting initialized = iterator.initialize(randomWarmNodeId(routingNodes), null, 0L, allocation.changes());
                 routingNodes.startShard(logger, initialized, allocation.changes());
             }
