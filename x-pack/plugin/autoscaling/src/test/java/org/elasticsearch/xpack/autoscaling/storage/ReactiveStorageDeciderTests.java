@@ -46,6 +46,7 @@ import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecisionType;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -312,7 +313,64 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         state = addRandomIndices("initial", hotNodes, hotNodes - 1, state);
         state = addDataNodes("hot", "hot", state, hotNodes);
 
-//        state = startRandomShards()
+        // todo: can we reuse?
+        List<ShardRouting> unassignedPrimaries = StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
+            .filter(ShardRouting::primary)
+            .collect(Collectors.toList());
+        List<ShardRouting> bigShardRoutings =
+            randomSubsetOf(randomIntBetween(1, unassignedPrimaries.size()), unassignedPrimaries);
+        Set<ShardId> bigShards =
+            bigShardRoutings.stream().map(ShardRouting::shardId).collect(Collectors.toSet());
+        AllocationDecider bigShardDiskDecider = new AllocationDecider() {
+            @Override
+            public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+                if (bigShards.contains(shardRouting.shardId()))
+                    return allocation.decision(Decision.NO, DiskThresholdDecider.NAME, "test");
+                return super.canAllocate(shardRouting, node, allocation);
+            }
+
+            @Override
+            public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+                if (bigShards.contains(shardRouting.shardId()))
+                    return allocation.decision(Decision.NO, DiskThresholdDecider.NAME, "test");
+                return super.canRemain(shardRouting, node, allocation);
+            }
+        };
+
+        AllocationDecider noDecider = new AllocationDecider() {
+            @Override
+            public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+                return Decision.NO;
+            }
+
+            @Override
+            public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+                return Decision.NO;
+            }
+        };
+        ClusterInfo underAllocated = createClusterInfo(state, 1L, 0L);
+        BalancedShardsAllocator allocator = new BalancedShardsAllocator(Settings.EMPTY);
+        TestAutoscalingDeciderContext diskContext = new TestAutoscalingDeciderContext(state, underAllocated, allocator, createAllocationDeciders(bigShardDiskDecider));
+        TestAutoscalingDeciderContext diskAndOtherContext = new TestAutoscalingDeciderContext(state, underAllocated, allocator,
+            createAllocationDeciders(bigShardDiskDecider, noDecider));
+        TestAutoscalingDeciderContext noDiskContext = new TestAutoscalingDeciderContext(state, underAllocated, allocator,
+            createAllocationDeciders());
+
+        // allocate shards
+        RoutingAllocation allocation = createRoutingAllocation(state, noDiskContext);
+        allocator.allocate(allocation);
+        state = ReactiveStorageDecider.updateClusterState(state, allocation);
+
+        // we can only decide on a move for started shards (due to for instance ThrottlingAllocationDecider assertion).
+        for (int i = 0; i < randomIntBetween(1, 4); ++i) {
+            state = startRandomShards(state, noDiskContext);
+        }
+
+        Predicate<DiscoveryNode> hotNodePredicate = n -> n.getName().startsWith("hot");
+        assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, diskContext, i -> true, hotNodePredicate),
+            equalTo(true));
+        assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, noDiskContext, i -> true, hotNodePredicate), equalTo(false));
+        assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, diskAndOtherContext, i -> true, hotNodePredicate), equalTo(false));
     }
 
     private String randomWarmNodeId(RoutingNodes routingNodes) {
@@ -403,14 +461,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
     }
 
     private ClusterState startRandomShards(ClusterState state, TestAutoscalingDeciderContext context) {
-        RoutingNodes routingNodes = new RoutingNodes(state, false);
-        RoutingAllocation allocation = new RoutingAllocation(
-            context.allocationDeciders(),
-            routingNodes,
-            state,
-            context.info(),
-            System.nanoTime()
-        );
+        RoutingAllocation allocation = createRoutingAllocation(state, context);
 
         List<ShardRouting> initializingShards = allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING);
         List<ShardRouting> shards = randomSubsetOf(Math.min(randomIntBetween(1, 100), initializingShards.size()), initializingShards);
@@ -433,7 +484,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             List<ShardRouting> started = allocation.routingNodes().shardsWithState(ShardRoutingState.STARTED);
             if (started.isEmpty() == false) {
                 ShardRouting toMove = randomFrom(started);
-                Set<RoutingNode> candidates = StreamSupport.stream(routingNodes.spliterator(), false)
+                Set<RoutingNode> candidates = StreamSupport.stream(allocation.routingNodes().spliterator(), false)
                     .filter(n -> allocation.deciders().canAllocate(toMove, n, allocation) == Decision.YES)
                     .collect(Collectors.toSet());
                 if (candidates.isEmpty() == false) {
@@ -444,6 +495,17 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
 
         return ReactiveStorageDecider.updateClusterState(state, allocation);
 
+    }
+
+    private RoutingAllocation createRoutingAllocation(ClusterState state, TestAutoscalingDeciderContext context) {
+        RoutingNodes routingNodes = new RoutingNodes(state, false);
+        return new RoutingAllocation(
+            context.allocationDeciders(),
+            routingNodes,
+            state,
+            context.info(),
+            System.nanoTime()
+        );
     }
 
     private void verifyDecision(ClusterState state, ClusterInfo info, ReactiveStorageDecider decider,

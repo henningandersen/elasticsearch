@@ -172,7 +172,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         );
         Metadata metadata = state.metadata();
         return state.getRoutingNodes()
-            .shards(s -> true)
+            .shardsWithState(ShardRoutingState.STARTED)
             .stream()
             .filter(shard -> tierPredicate.test(metadata.getIndexSafe(shard.index())))
             .filter(

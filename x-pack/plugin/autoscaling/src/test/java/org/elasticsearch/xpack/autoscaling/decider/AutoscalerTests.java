@@ -80,7 +80,7 @@ public class AutoscalerTests extends ESTestCase {
             BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY, clusterSettings);
             EmptyClusterInfoService clusterInfoService = EmptyClusterInfoService.INSTANCE;
             GatewayAllocator noopGatewayAllocator = new GatewayAllocator() {
-                @Override
+//                @Override
                 public void allocateUnassigned(RoutingAllocation allocation) {
                     // noop
                 }
