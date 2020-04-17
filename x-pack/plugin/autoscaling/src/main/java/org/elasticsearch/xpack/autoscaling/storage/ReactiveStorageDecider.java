@@ -130,9 +130,11 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         if (storagePreventsAllocation(state, context, indexTierPredicate, nodeTierPredicate)) {
             return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for unassigned shards");
         } else if (storagePreventsRemainOrMove(state, context, indexTierPredicate, nodeTierPredicate)) {
-            return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for moving shards");
+            return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for assigned shards");
         } else {
-            return new AutoscalingDecision(NAME, AutoscalingDecisionType.NO_SCALE, "enough storage available");
+            // the message here is tricky, since storage might not be OK, but in that case, increasing storage alone would not help since
+            // other deciders prevents allocation/moving shards.
+            return new AutoscalingDecision(NAME, AutoscalingDecisionType.NO_SCALE, "storage ok");
         }
     }
 

@@ -46,13 +46,11 @@ import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecisionType;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -198,11 +196,12 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
 
         state = addDataNodes("hot", "hot", state, hotNodes);
 
+        Set<ShardId> shardIds = StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
+            .map(ShardRouting::shardId)
+            .collect(Collectors.toSet());
         Set<ShardId> bigShards =
-            new HashSet<>(randomSubsetOf(randomIntBetween(1, state.getRoutingNodes().unassigned().size()),
-                StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(),
-                false)
-                .map(ShardRouting::shardId).collect(Collectors.toSet())));
+            new HashSet<>(randomSubsetOf(randomIntBetween(1, shardIds.size()),
+                shardIds));
         AllocationDecider bigShardDiskDecider = new AllocationDecider() {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
@@ -234,6 +233,10 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             assertThat(ReactiveStorageDecider.storagePreventsAllocation(state, diskContext, i -> true, n -> true), equalTo(true));
             assertThat(ReactiveStorageDecider.storagePreventsAllocation(state, noDiskContext, i -> true, n -> true), equalTo(false));
             assertThat(ReactiveStorageDecider.storagePreventsAllocation(state, diskAndOtherContext, i -> true, n -> true), equalTo(false));
+
+            verifyScaleDecision(state, diskContext, AutoscalingDecisionType.SCALE_UP, "not enough storage available for unassigned shards");
+            verifyScaleDecision(state, noDiskContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
+            verifyScaleDecision(state, diskAndOtherContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
 
             lastState = state;
             state = startRandomShards(state, diskContext);
@@ -304,6 +307,10 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             equalTo(true));
         assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, noDiskContext, i -> true, hotNodePredicate), equalTo(false));
         assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, diskAndOtherContext, i -> true, hotNodePredicate), equalTo(false));
+
+        verifyScaleDecision(state, diskContext, AutoscalingDecisionType.SCALE_UP, "not enough storage available for assigned shards");
+        verifyScaleDecision(state, noDiskContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
+        verifyScaleDecision(state, diskAndOtherContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
     }
 
     public void testStoragePreventsRemain() {
@@ -371,7 +378,19 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             equalTo(true));
         assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, noDiskContext, i -> true, hotNodePredicate), equalTo(false));
         assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, diskAndOtherContext, i -> true, hotNodePredicate), equalTo(false));
+
+        verifyScaleDecision(state, diskContext, AutoscalingDecisionType.SCALE_UP, "not enough storage available for assigned shards");
+        verifyScaleDecision(state, noDiskContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
+        verifyScaleDecision(state, diskAndOtherContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
     }
+
+    private void verifyScaleDecision(ClusterState state, TestAutoscalingDeciderContext context, AutoscalingDecisionType decisionType, String reason) {
+        ReactiveStorageDecider decider = new ReactiveStorageDecider("tier", "hot");
+        AutoscalingDecision decision = decider.scale(context.withState(state));
+        assertThat(decision, decisionType(decisionType, state));
+        assertThat(decision.reason(), equalTo(reason));
+    }
+
 
     private String randomWarmNodeId(RoutingNodes routingNodes) {
         return randomFrom(ReactiveStorageDecider.nodesInTier(routingNodes, n -> n.getName().startsWith("warm")).collect(Collectors.toSet())).nodeId();
