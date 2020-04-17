@@ -23,7 +23,6 @@ import org.elasticsearch.xpack.core.ml.inference.trainedmodel.RegressionConfigUp
 import org.elasticsearch.xpack.core.ml.utils.ExceptionsHelper;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,7 @@ public class InternalInferModelAction extends ActionType<InternalInferModelActio
 
         private final String modelId;
         private final List<Map<String, Object>> objectsToInfer;
-        private final InferenceConfigUpdate<? extends InferenceConfig> update;
+        private final InferenceConfigUpdate update;
         private final boolean previouslyLicensed;
 
         public Request(String modelId, boolean previouslyLicensed) {
@@ -51,7 +50,7 @@ public class InternalInferModelAction extends ActionType<InternalInferModelActio
 
         public Request(String modelId,
                        List<Map<String, Object>> objectsToInfer,
-                       InferenceConfigUpdate<? extends InferenceConfig> inferenceConfig,
+                       InferenceConfigUpdate inferenceConfig,
                        boolean previouslyLicensed) {
             this.modelId = ExceptionsHelper.requireNonNull(modelId, TrainedModelConfig.MODEL_ID);
             this.objectsToInfer = Collections.unmodifiableList(ExceptionsHelper.requireNonNull(objectsToInfer, "objects_to_infer"));
@@ -61,10 +60,10 @@ public class InternalInferModelAction extends ActionType<InternalInferModelActio
 
         public Request(String modelId,
                        Map<String, Object> objectToInfer,
-                       InferenceConfigUpdate<? extends InferenceConfig> update,
+                       InferenceConfigUpdate update,
                        boolean previouslyLicensed) {
             this(modelId,
-                Arrays.asList(ExceptionsHelper.requireNonNull(objectToInfer, "objects_to_infer")),
+                Collections.singletonList(ExceptionsHelper.requireNonNull(objectToInfer, "objects_to_infer")),
                 update,
                 previouslyLicensed);
         }
@@ -73,8 +72,8 @@ public class InternalInferModelAction extends ActionType<InternalInferModelActio
             super(in);
             this.modelId = in.readString();
             this.objectsToInfer = Collections.unmodifiableList(in.readList(StreamInput::readMap));
-            if (in.getVersion().onOrAfter(Version.V_8_0_0)) {
-                this.update = (InferenceConfigUpdate<? extends InferenceConfig>)in.readNamedWriteable(InferenceConfigUpdate.class);
+            if (in.getVersion().onOrAfter(Version.V_7_8_0)) {
+                this.update = in.readNamedWriteable(InferenceConfigUpdate.class);
             } else {
                 InferenceConfig oldConfig = in.readNamedWriteable(InferenceConfig.class);
                 if (oldConfig instanceof RegressionConfig) {
@@ -114,7 +113,7 @@ public class InternalInferModelAction extends ActionType<InternalInferModelActio
             super.writeTo(out);
             out.writeString(modelId);
             out.writeCollection(objectsToInfer, StreamOutput::writeMap);
-            if (out.getVersion().onOrAfter(Version.V_8_0_0)) {
+            if (out.getVersion().onOrAfter(Version.V_7_8_0)) {
                 out.writeNamedWriteable(update);
             } else {
                 out.writeNamedWriteable(update.toConfig());
