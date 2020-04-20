@@ -6,85 +6,46 @@
 
 package org.elasticsearch.xpack.autoscaling.storage;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
-import org.elasticsearch.cluster.ClusterInfo;
-import org.elasticsearch.cluster.ClusterModule;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.DiskUsage;
-import org.elasticsearch.cluster.metadata.IndexMetadata;
-import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.routing.RoutingNode;
-import org.elasticsearch.cluster.routing.RoutingNodes;
-import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardRouting;
-import org.elasticsearch.cluster.routing.ShardRoutingState;
-import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
-import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
-import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
-import org.elasticsearch.cluster.routing.allocation.decider.AllocationDecider;
-import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.AwarenessAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.EnableAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.SameShardAllocationDecider;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.UUIDs;
-import org.elasticsearch.common.collect.ImmutableOpenMap;
-import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.settings.ClusterSettings;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.util.set.Sets;
-import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDeciderContext;
-import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecision;
-import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecisionType;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.in;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.sameInstance;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class ReactiveStorageDeciderTests extends ESTestCase {
-    private static final List<String> SOME_ALLOCATION_DECIDERS = Arrays.asList(SameShardAllocationDecider.NAME,
-        AwarenessAllocationDecider.NAME, EnableAllocationDecider.NAME);
+    private static final List<String> SOME_ALLOCATION_DECIDERS = Arrays.asList(
+        SameShardAllocationDecider.NAME,
+        AwarenessAllocationDecider.NAME,
+        EnableAllocationDecider.NAME
+    );
 
     public void testNoTierSpecified() {
         String attribute = randomBoolean() ? null : randomAlphaOfLength(8);
         String tier = attribute != null || randomBoolean() ? null : randomAlphaOfLength(8);
 
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
-            () -> new ReactiveStorageDecider(attribute, tier));
+        IllegalArgumentException exception = expectThrows(
+            IllegalArgumentException.class,
+            () -> new ReactiveStorageDecider(attribute, tier)
+        );
 
         assertThat(exception.getMessage(), equalTo("must specify both [tier_attribute] [" + attribute + "] and [tier] [" + tier + "]"));
     }
@@ -96,8 +57,13 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         }
         decision.add(new Decision.Single(Decision.Type.NO, DiskThresholdDecider.NAME, "test"));
         randomSubsetOf(SOME_ALLOCATION_DECIDERS).stream()
-            .map(label -> new Decision.Single(randomValueOtherThan(Decision.Type.NO,
-                () -> randomFrom(Decision.Type.values())), label, "test " + label))
+            .map(
+                label -> new Decision.Single(
+                    randomValueOtherThan(Decision.Type.NO, () -> randomFrom(Decision.Type.values())),
+                    label,
+                    "test " + label
+                )
+            )
             .forEach(decision::add);
         assertThat(ReactiveStorageDecider.isDiskOnlyNoDecision(decision), is(true));
     }
@@ -134,7 +100,8 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         state = addDataNodes("warm", "warm", state, warmNodes);
 
         Set<DiscoveryNode> hotTier = ReactiveStorageDecider.nodesInTier(state.getRoutingNodes(), n -> n.getName().startsWith("hot"))
-            .map(n -> n.node()).collect(Collectors.toSet());
+            .map(n -> n.node())
+            .collect(Collectors.toSet());
         assertThat(hotTier, equalTo(expectedHotNodes));
     }
 
@@ -145,7 +112,13 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
     }
 
     private static DiscoveryNode newDataNode(String tier, String nodeName) {
-        return new DiscoveryNode(nodeName, UUIDs.randomBase64UUID(), buildNewFakeTransportAddress(),
-            Map.of("tier", tier), Set.of(DiscoveryNodeRole.DATA_ROLE), Version.CURRENT);
+        return new DiscoveryNode(
+            nodeName,
+            UUIDs.randomBase64UUID(),
+            buildNewFakeTransportAddress(),
+            Map.of("tier", tier),
+            Set.of(DiscoveryNodeRole.DATA_ROLE),
+            Version.CURRENT
+        );
     }
 }

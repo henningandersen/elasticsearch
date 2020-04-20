@@ -46,10 +46,11 @@ public class ReactiveStorageDeciderSerializationTests extends AbstractSerializin
     @Override
     protected ReactiveStorageDecider mutateInstance(ReactiveStorageDecider instance) throws IOException {
         boolean mutateAttribute = randomBoolean();
-        return new ReactiveStorageDecider(mutateAttribute
-            ? randomValueOtherThan(instance.getTierAttribute(), () -> randomAlphaOfLength(8))
-            : instance.getTierAttribute(), mutateAttribute == false || randomBoolean()
-            ? randomValueOtherThan(instance.getTier(), () -> randomAlphaOfLength(8))
-            : instance.getTier());
+        return new ReactiveStorageDecider(
+            mutateAttribute ? randomValueOtherThan(instance.getTierAttribute(), () -> randomAlphaOfLength(8)) : instance.getTierAttribute(),
+            mutateAttribute == false || randomBoolean()
+                ? randomValueOtherThan(instance.getTier(), () -> randomAlphaOfLength(8))
+                : instance.getTier()
+        );
     }
 }

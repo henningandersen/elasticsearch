@@ -181,10 +181,11 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
                 shard -> context.allocationDeciders().canRemain(shard, routingNodes.node(shard.currentNodeId()), allocation) == Decision.NO
             )
             .filter(shard -> canAllocate(shard, allocation, context, nodeTierPredicate) == false)
-            .anyMatch(shard -> cannotAllocateDueToStorage(shard, allocation, context, nodeTierPredicate)
-                || cannotRemainDueToStorage(shard, allocation, context));
+            .anyMatch(
+                shard -> cannotAllocateDueToStorage(shard, allocation, context, nodeTierPredicate)
+                    || cannotRemainDueToStorage(shard, allocation, context)
+            );
     }
-
 
     private static boolean canAllocate(
         ShardRouting shard,
@@ -210,8 +211,9 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         assert allocation.debugDecision() == false;
         allocation.debugDecision(true);
         try {
-            return nodesInTier(allocation.routingNodes(), nodeTierPredicate).map(node -> context.allocationDeciders().canAllocate(shard, node, allocation))
-                .anyMatch(ReactiveStorageDecider::isDiskOnlyNoDecision);
+            return nodesInTier(allocation.routingNodes(), nodeTierPredicate).map(
+                node -> context.allocationDeciders().canAllocate(shard, node, allocation)
+            ).anyMatch(ReactiveStorageDecider::isDiskOnlyNoDecision);
         } finally {
             allocation.debugDecision(false);
         }
@@ -225,7 +227,9 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         assert allocation.debugDecision() == false;
         allocation.debugDecision(true);
         try {
-            return isDiskOnlyNoDecision(context.allocationDeciders().canRemain(shard, allocation.routingNodes().node(shard.currentNodeId()), allocation));
+            return isDiskOnlyNoDecision(
+                context.allocationDeciders().canRemain(shard, allocation.routingNodes().node(shard.currentNodeId()), allocation)
+            );
         } finally {
             allocation.debugDecision(false);
         }
@@ -233,11 +237,14 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
 
     static boolean isDiskOnlyNoDecision(Decision decision) {
         // we consider throttling==yes, throttling should be temporary.
-        List<Decision> nos =
-            decision.getDecisions().stream().filter(single -> single.type() == Decision.Type.NO).collect(Collectors.toList());
+        List<Decision> nos = decision.getDecisions()
+            .stream()
+            .filter(single -> single.type() == Decision.Type.NO)
+            .collect(Collectors.toList());
         return nos.size() == 1 && DiskThresholdDecider.NAME.equals(nos.get(0).label()) && nos.get(0).type() == Decision.Type.NO;
 
     }
+
     static Stream<RoutingNode> nodesInTier(RoutingNodes routingNodes, Predicate<DiscoveryNode> nodeTierPredicate) {
         Predicate<RoutingNode> routingNodePredicate = rn -> nodeTierPredicate.test(rn.node());
         return StreamSupport.stream(routingNodes.spliterator(), false).filter(routingNodePredicate);
@@ -258,14 +265,10 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
             // replicas before primaries, since replicas can be reinit'ed, resulting in a new ShardRouting instance.
             shards.stream()
                 .filter(s -> s.primary() == false)
-                .forEach(s -> {
-                    allocation.routingNodes().startShard(logger, s, allocation.changes());
-                });
+                .forEach(s -> { allocation.routingNodes().startShard(logger, s, allocation.changes()); });
             shards.stream()
                 .filter(s -> s.primary() == true)
-                .forEach(s -> {
-                    allocation.routingNodes().startShard(logger, s, allocation.changes());
-                });
+                .forEach(s -> { allocation.routingNodes().startShard(logger, s, allocation.changes()); });
             context.shardsAllocator().allocate(allocation);
             ClusterState nextState = updateClusterState(state, allocation);
 
