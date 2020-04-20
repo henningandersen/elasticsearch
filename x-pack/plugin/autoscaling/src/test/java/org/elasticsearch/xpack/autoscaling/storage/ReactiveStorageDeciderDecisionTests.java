@@ -75,10 +75,11 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Test decision parts of ReactiveStorageDecider that all require a similar setup.
+ */
 public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     private static final Logger logger = LogManager.getLogger(ReactiveStorageDeciderDecisionTests.class);
-    private static final List<String> SOME_ALLOCATION_DECIDERS = Arrays.asList(SameShardAllocationDecider.NAME,
-        AwarenessAllocationDecider.NAME, EnableAllocationDecider.NAME);
 
     private static final AllocationDecider CAN_ALLOCATE_NO_DECIDER = new AllocationDecider() {
         @Override
@@ -92,12 +93,12 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             return Decision.NO;
         }
     };
+    private static final BalancedShardsAllocator SHARDS_ALLOCATOR = new BalancedShardsAllocator(Settings.EMPTY);
 
     private ClusterState state;
     private MockDiskDeciderFactory mockDiskDeciderFactory;
     private final int hotNodes = randomIntBetween(1, 8);
     private final int warmNodes = randomIntBetween(1, 3);
-    private static final BalancedShardsAllocator SHARDS_ALLOCATOR = new BalancedShardsAllocator(Settings.EMPTY);
 
     @Before
     public void setup() {
@@ -222,14 +223,6 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok",
             mockDiskDeciderFactory.createCanRemainDecider(), CAN_REMAIN_NO_DECIDER, CAN_ALLOCATE_NO_DECIDER);
         verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok");
-    }
-
-    private static void verifyScaleDecision(ClusterState state, TestAutoscalingDeciderContext context, AutoscalingDecisionType decisionType,
-                                      String reason) {
-        ReactiveStorageDecider decider = new ReactiveStorageDecider("tier", "hot");
-        AutoscalingDecision decision = decider.scale(context.withState(state));
-        assertThat(decision, decisionType(decisionType, state));
-        assertThat(decision.reason(), equalTo(reason));
     }
 
 
@@ -383,10 +376,6 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         public AllocationDeciders allocationDeciders() {
             return allocationDeciders;
         }
-
-        public TestAutoscalingDeciderContext withState(ClusterState state) {
-            return new TestAutoscalingDeciderContext(state, shardsAllocator, allocationDeciders);
-        }
     }
 
     private static ClusterInfo createClusterInfo(ClusterState state) {
@@ -436,21 +425,6 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     private static DiscoveryNode newDataNode(String tier, String nodeName) {
         return new DiscoveryNode(nodeName, UUIDs.randomBase64UUID(), buildNewFakeTransportAddress(),
             Map.of("tier", tier), Set.of(DiscoveryNodeRole.DATA_ROLE), Version.CURRENT);
-    }
-
-    private static Matcher<AutoscalingDecision> decisionType(AutoscalingDecisionType type, ClusterState state) {
-        return new TypeSafeMatcher<AutoscalingDecision>() {
-            @Override
-            protected boolean matchesSafely(AutoscalingDecision item) {
-                return item.type() == type;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("decision of type ").appendValue(type).appendText(" for state\n" + Strings.toString(state, true,
-                    true));
-            }
-        };
     }
 
     /**
@@ -523,7 +497,10 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
 
     public static void verifyScale(ClusterState state, AutoscalingDecisionType type, String reason,
                                   AllocationDecider... allocationDeciders) {
-        verifyScaleDecision(state, createContext(state, allocationDeciders), type, reason);
+        ReactiveStorageDecider decider = new ReactiveStorageDecider("tier", "hot");
+        AutoscalingDecision decision = decider.scale(createContext(state, allocationDeciders));
+        assertThat(decision.type(), equalTo(type));
+        assertThat(decision.reason(), equalTo(reason));
     }
 
     private TestAutoscalingDeciderContext createContext(AllocationDecider... allocationDeciders) {
