@@ -97,6 +97,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     private MockDiskDeciderFactory mockDiskDeciderFactory;
     private final int hotNodes = randomIntBetween(1, 8);
     private final int warmNodes = randomIntBetween(1, 3);
+    private static final BalancedShardsAllocator SHARDS_ALLOCATOR = new BalancedShardsAllocator(Settings.EMPTY);
 
     @Before
     public void setup() {
@@ -172,7 +173,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
                     ));
 
         do {
-            state = startRandomShards(state, createContext());
+            startRandomShards();
             // all of the relevant replicas are assigned too.
         } while (StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false).map(ShardRouting::shardId).anyMatch(warmShards::contains));
 
@@ -208,7 +209,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         allocate();
         // we can only decide on a move for started shards (due to for instance ThrottlingAllocationDecider assertion).
         for (int i = 0; i < randomIntBetween(1, 4); ++i) {
-            state = startRandomShards(state, createContext());
+            startRandomShards();
         }
 
         verify(ReactiveStorageDecider::storagePreventsRemainOrMove, true, mockDiskDeciderFactory.createCanRemainDecider(), CAN_ALLOCATE_NO_DECIDER);
@@ -268,7 +269,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
                 .forEach(s -> validateUnassigned(s, allocation));
 
             lastState = state;
-            state = startRandomShards(state, createContext(mockDecider));
+            startRandomShards(createAllocationDeciders(mockDecider));
             ++round;
         }
         assert round > 0;
@@ -298,8 +299,8 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         state = ReactiveStorageDecider.updateClusterState(state, allocation);
     }
 
-    private static ClusterState startRandomShards(ClusterState state, TestAutoscalingDeciderContext context) {
-        RoutingAllocation allocation = createRoutingAllocation(state, context.allocationDeciders);
+    private void startRandomShards(AllocationDeciders allocationDeciders) {
+        RoutingAllocation allocation = createRoutingAllocation(state, allocationDeciders);
 
         List<ShardRouting> initializingShards = allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING);
         List<ShardRouting> shards = randomSubsetOf(Math.min(randomIntBetween(1, 100), initializingShards.size()), initializingShards);
@@ -315,7 +316,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             .forEach(s -> {
                 allocation.routingNodes().startShard(logger, s, allocation.changes());
             });
-        context.shardsAllocator().allocate(allocation);
+        SHARDS_ALLOCATOR.allocate(allocation);
 
         // ensure progress by only relocating a shard if we started more than one shard.
         if (shards.size() > 1 && randomBoolean()) {
@@ -331,7 +332,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             }
         }
 
-        return ReactiveStorageDecider.updateClusterState(state, allocation);
+        state = ReactiveStorageDecider.updateClusterState(state, allocation);
 
     }
 
@@ -499,15 +500,11 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
 
         public void allocate() {
             // todo: remove the context here?
-            BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
-            withRoutingAllocation(shardsAllocator::allocate);
+            withRoutingAllocation(SHARDS_ALLOCATOR::allocate);
         }
 
         public void startRandomShards() {
-            // todo: remove the context here?
-            BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
-            state = ReactiveStorageDeciderDecisionTests.startRandomShards(state, new TestAutoscalingDeciderContext(state, shardsAllocator,
-                createAllocationDeciders()));
+            startRandomShards(createAllocationDeciders());
         }
 
         public interface BooleanVerificationSubject {
