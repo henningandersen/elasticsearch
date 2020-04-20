@@ -443,10 +443,6 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         return info;
     }
 
-    private String randomNodeId(RoutingNodes routingNodes, String tier) {
-        return randomFrom(ReactiveStorageDecider.nodesInTier(routingNodes, n -> n.getName().startsWith(tier)).collect(Collectors.toSet())).nodeId();
-    }
-
     private static ClusterState addRandomIndices(int minShards, int maxShardCopies, ClusterState state) {
         int shards = randomIntBetween(minShards, 20);
         Metadata.Builder builder = Metadata.builder();
@@ -478,10 +474,13 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             Map.of("tier", tier), Set.of(DiscoveryNodeRole.DATA_ROLE), Version.CURRENT);
     }
 
+    private static String randomNodeId(RoutingNodes routingNodes, String tier) {
+        return randomFrom(ReactiveStorageDecider.nodesInTier(routingNodes, n -> n.getName().startsWith(tier)).collect(Collectors.toSet())).nodeId();
+    }
+
     private static Set<ShardId> shardIds(Iterable<ShardRouting> candidateShards) {
         return StreamSupport.stream(candidateShards.spliterator(), false)
             .map(ShardRouting::shardId)
             .collect(Collectors.toSet());
     }
-
 }
