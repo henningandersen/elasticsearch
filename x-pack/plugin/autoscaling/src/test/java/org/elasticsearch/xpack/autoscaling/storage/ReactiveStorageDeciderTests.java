@@ -62,7 +62,6 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             IllegalArgumentException.class,
             () -> new ReactiveStorageDecider(attribute, tier)
         );
-
         assertThat(exception.getMessage(), equalTo("must specify both [tier_attribute] [" + attribute + "] and [tier] [" + tier + "]"));
     }
 
@@ -81,6 +80,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
                 )
             )
             .forEach(decision::add);
+
         assertThat(ReactiveStorageDecider.isDiskOnlyNoDecision(decision), is(true));
     }
 
@@ -89,7 +89,6 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         if (randomBoolean()) {
             decision.add(randomFrom(Decision.YES, Decision.ALWAYS, Decision.THROTTLE, Decision.NO));
         }
-
         if (randomBoolean()) {
             decision.add(new Decision.Single(Decision.Type.NO, DiskThresholdDecider.NAME, "test"));
             if (randomBoolean()) {
@@ -144,8 +143,8 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             System.nanoTime()
         );
         assertThat(ReactiveStorageDecider.updateClusterState(state, allocation), sameInstance(state));
-        for (RoutingNodes.UnassignedShards.UnassignedIterator iterator = allocation.routingNodes().unassigned().iterator(); iterator
-            .hasNext();) {
+        RoutingNodes routingNodes = allocation.routingNodes();
+        for (RoutingNodes.UnassignedShards.UnassignedIterator iterator = routingNodes.unassigned().iterator(); iterator.hasNext();) {
             ShardRouting candidate = iterator.next();
             if (candidate.primary()) {
                 iterator.initialize(
