@@ -45,7 +45,8 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 
 /**
- * Tests the primitive methods in ReactiveStorageDecider. Tests of higher level methods are in ReactiveStorageDeciderDecisionTests
+ * Tests the primitive methods in {@link ReactiveStorageDecider}. Tests of higher level methods are in
+ * {@link ReactiveStorageDeciderDecisionTests}
  */
 public class ReactiveStorageDeciderTests extends ESTestCase {
     private static final List<String> SOME_ALLOCATION_DECIDERS = Arrays.asList(

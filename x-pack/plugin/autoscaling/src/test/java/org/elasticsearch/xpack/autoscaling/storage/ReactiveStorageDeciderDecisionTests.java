@@ -67,7 +67,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Test decision parts of ReactiveStorageDecider that all require a similar setup.
+ * Test the higher level parts of {@link ReactiveStorageDecider} that all require a similar setup.
  */
 public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     private static final Logger logger = LogManager.getLogger(ReactiveStorageDeciderDecisionTests.class);

@@ -281,6 +281,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
     }
 
     static ClusterState updateClusterState(ClusterState oldState, RoutingAllocation allocation) {
+        assert allocation.metadata() == oldState.metadata();
         if (allocation.routingNodesChanged() == false) {
             return oldState;
         }
@@ -290,8 +291,6 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         final Metadata newMetadata = allocation.updateMetadataWithRoutingChanges(newRoutingTable);
         assert newRoutingTable.validate(newMetadata); // validates the routing table is coherent with the cluster state metadata
 
-        final ClusterState.Builder newStateBuilder = ClusterState.builder(oldState).routingTable(newRoutingTable).metadata(newMetadata);
-
-        return newStateBuilder.build();
+        return ClusterState.builder(oldState).routingTable(newRoutingTable).metadata(newMetadata).build();
     }
 }
