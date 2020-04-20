@@ -101,9 +101,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     @Before
     public void setup() {
         ClusterState state = ClusterState.builder(new ClusterName("test")).build();
-
         state = addRandomIndices("initial", hotNodes, hotNodes, state);
-
         state = addDataNodes("hot", "hot", state, hotNodes);
         state = addDataNodes("warm", "warm", state, warmNodes);
         this.state = state;
@@ -142,7 +140,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
 
     private boolean hasAllocateableShards() {
         AllocationDeciders deciders = createAllocationDeciders();
-        RoutingAllocation allocation = createRoutingAllocation(state, createContext());
+        RoutingAllocation allocation = createRoutingAllocation(state, createAllocationDeciders());
         return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
             .filter(shard -> mockDiskDeciderFactory.shards.contains(shard.shardId()))
             .anyMatch(
@@ -163,6 +161,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         Set<ShardId> warmShards = Sets.union(new HashSet<>(randomSubsetOf(shardIds(state.getRoutingNodes().unassigned()))),
             mockDiskDeciderFactory.getShards());
 
+        // start warm shards
         state = withRoutingAllocation(state,
             allocation ->
                 allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING).stream()
@@ -177,6 +176,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             // all of the relevant replicas are assigned too.
         } while (StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false).map(ShardRouting::shardId).anyMatch(warmShards::contains));
 
+        // relocate warm shards
         state = withRoutingAllocation(state,
             allocation ->
                 allocation.routingNodes().shardsWithState(ShardRoutingState.STARTED).stream()
@@ -237,16 +237,6 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     }
 
     public void testSimulateStartAndAllocate() {
-        int hotNodes = randomIntBetween(1, 8);
-        int warmNodes = randomIntBetween(hotNodes == 1 ? 1 : 0, 3);
-        ClusterState state = ClusterState.builder(new ClusterName("test")).build();
-
-        state = addRandomIndices("initial", hotNodes, hotNodes, state);
-
-        state = addDataNodes("hot", "hot", state, hotNodes);
-        state = addDataNodes("warm", "warm", state, warmNodes);
-
-        BalancedShardsAllocator allocator = new BalancedShardsAllocator(Settings.EMPTY);
         AllocationDecider mockDecider = new AllocationDecider() {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
@@ -261,19 +251,16 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             }
         };
 
-        AllocationDeciders allocationDeciders = createAllocationDeciders(mockDecider);
-        TestAutoscalingDeciderContext context = new TestAutoscalingDeciderContext(state, allocator, allocationDeciders);
-
         ClusterState lastState = null;
         int maxRounds = state.getRoutingNodes().unassigned().size() + 1;
-        int count = 0;
-        while (lastState != state && count++ < maxRounds) {
-            ClusterState simulatedState = ReactiveStorageDecider.simulateStartAndAllocate(state, context);
+        int round = 0;
+        while (lastState != state && round < maxRounds) {
+            ClusterState simulatedState = ReactiveStorageDecider.simulateStartAndAllocate(state, createContext(mockDecider));
             assertThat(simulatedState.nodes(), sameInstance(state.nodes()));
             assertThat(simulatedState.metadata().indices().keys().toArray(), equalTo(state.metadata().indices().keys().toArray()));
             assertThat(simulatedState.getRoutingNodes().shardsWithState(ShardRoutingState.INITIALIZING), empty());
             assertThat(simulatedState.getRoutingNodes().shardsWithState(ShardRoutingState.RELOCATING), empty());
-            RoutingAllocation allocation = createRoutingAllocation(simulatedState, context);
+            RoutingAllocation allocation = createRoutingAllocation(simulatedState, createAllocationDeciders(mockDecider));
             StreamSupport.stream(simulatedState.getRoutingNodes().spliterator(), false)
                 .flatMap(n -> n.shardsWithState(ShardRoutingState.STARTED).stream().map(s -> Tuple.tuple(n, s)))
                 .forEach(t -> validateAllocation(t.v1(), t.v2(), allocation));
@@ -281,10 +268,12 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
                 .forEach(s -> validateUnassigned(s, allocation));
 
             lastState = state;
-            state = startRandomShards(state, context);
+            state = startRandomShards(state, createContext(mockDecider));
+            ++round;
         }
+        assert round > 0;
         assertThat(state, sameInstance(lastState));
-        assertThat(ReactiveStorageDecider.simulateStartAndAllocate(state, context), sameInstance(state));
+        assertThat(ReactiveStorageDecider.simulateStartAndAllocate(state, createContext(mockDecider)), sameInstance(state));
     }
 
     private static AllocationDeciders createAllocationDeciders(AllocationDecider... extraDeciders) {
@@ -305,14 +294,13 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
 
     private ClusterState withRoutingAllocation(ClusterState state,
                                                Consumer<RoutingAllocation> block) {
-        // todo: remove createContext.
-        RoutingAllocation allocation = createRoutingAllocation(state, createContext());
+        RoutingAllocation allocation = createRoutingAllocation(state, createAllocationDeciders());
         block.accept(allocation);
         return ReactiveStorageDecider.updateClusterState(state, allocation);
     }
 
     private static ClusterState startRandomShards(ClusterState state, TestAutoscalingDeciderContext context) {
-        RoutingAllocation allocation = createRoutingAllocation(state, context);
+        RoutingAllocation allocation = createRoutingAllocation(state, context.allocationDeciders);
 
         List<ShardRouting> initializingShards = allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING);
         List<ShardRouting> shards = randomSubsetOf(Math.min(randomIntBetween(1, 100), initializingShards.size()), initializingShards);
@@ -348,13 +336,13 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
 
     }
 
-    private static RoutingAllocation createRoutingAllocation(ClusterState state, TestAutoscalingDeciderContext context) {
+    private static RoutingAllocation createRoutingAllocation(ClusterState state, AllocationDeciders allocationDeciders) {
         RoutingNodes routingNodes = new RoutingNodes(state, false);
         return new RoutingAllocation(
-            context.allocationDeciders(),
+            allocationDeciders,
             routingNodes,
             state,
-            context.info(),
+            createClusterInfo(state),
             System.nanoTime()
         );
     }
@@ -380,28 +368,11 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         @Override
         public ClusterInfo info() {
             if (info == null) {
-                info = createClusterInfo();
+                info = createClusterInfo(state);
             }
             return info;
         }
 
-        private ClusterInfo createClusterInfo() {
-            // testing does not depend on info so just pretend infinite space to let regular disk decider pass
-            ClusterInfo info = mock(ClusterInfo.class);
-            Map<String, DiskUsage> diskUsages =
-                StreamSupport.stream(state.nodes().spliterator(), false).collect(Collectors.toMap(DiscoveryNode::getId,
-                    node -> new DiskUsage(node.getId(), null, "the_path", 1, 1)));
-
-            ImmutableOpenMap<String, DiskUsage> immutableDiskUsages =
-                ImmutableOpenMap.<String, DiskUsage>builder().putAll(diskUsages).build();
-
-            when(info.getNodeLeastAvailableDiskUsages()).thenReturn(immutableDiskUsages);
-            when(info.getNodeMostAvailableDiskUsages()).thenReturn(immutableDiskUsages);
-
-            when(info.getShardSize(any(), anyLong())).thenReturn((long) 0);
-            when(info.getDataPath(any())).thenReturn("the_path");
-            return info;
-        }
 
         @Override
         public ShardsAllocator shardsAllocator() {
@@ -416,6 +387,24 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         public TestAutoscalingDeciderContext withState(ClusterState state) {
             return new TestAutoscalingDeciderContext(state, shardsAllocator, allocationDeciders);
         }
+    }
+
+    private static ClusterInfo createClusterInfo(ClusterState state) {
+        // testing does not depend on info so just pretend infinite space to let regular disk decider pass
+        ClusterInfo info = mock(ClusterInfo.class);
+        Map<String, DiskUsage> diskUsages =
+            StreamSupport.stream(state.nodes().spliterator(), false).collect(Collectors.toMap(DiscoveryNode::getId,
+                node -> new DiskUsage(node.getId(), null, "the_path", 1, 1)));
+
+        ImmutableOpenMap<String, DiskUsage> immutableDiskUsages =
+            ImmutableOpenMap.<String, DiskUsage>builder().putAll(diskUsages).build();
+
+        when(info.getNodeLeastAvailableDiskUsages()).thenReturn(immutableDiskUsages);
+        when(info.getNodeMostAvailableDiskUsages()).thenReturn(immutableDiskUsages);
+
+        when(info.getShardSize(any(), anyLong())).thenReturn((long) 0);
+        when(info.getDataPath(any())).thenReturn("the_path");
+        return info;
     }
 
     private static ClusterState addRandomIndices(String prefix, int minShards, int maxShardCopies, ClusterState state) {
@@ -550,7 +539,4 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             createAllocationDeciders(allocationDeciders));
     }
 
-        public ClusterState state() {
-            return state;
-        }
 }
