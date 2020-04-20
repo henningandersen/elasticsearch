@@ -162,7 +162,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             mockDiskDeciderFactory.getShards());
 
         // start warm shards
-        state = withRoutingAllocation(state,
+        withRoutingAllocation(
             allocation ->
                 allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING).stream()
                     .filter(ShardRouting::primary)
@@ -177,7 +177,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         } while (StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false).map(ShardRouting::shardId).anyMatch(warmShards::contains));
 
         // relocate warm shards
-        state = withRoutingAllocation(state,
+        withRoutingAllocation(
             allocation ->
                 allocation.routingNodes().shardsWithState(ShardRoutingState.STARTED).stream()
                     .filter(ShardRouting::primary)
@@ -292,11 +292,10 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         assertThat(allocation.deciders().canRemain(shard, node, allocation).type(), equalTo(Decision.Type.YES));
     }
 
-    private ClusterState withRoutingAllocation(ClusterState state,
-                                               Consumer<RoutingAllocation> block) {
+    private void withRoutingAllocation(Consumer<RoutingAllocation> block) {
         RoutingAllocation allocation = createRoutingAllocation(state, createAllocationDeciders());
         block.accept(allocation);
-        return ReactiveStorageDecider.updateClusterState(state, allocation);
+        state = ReactiveStorageDecider.updateClusterState(state, allocation);
     }
 
     private static ClusterState startRandomShards(ClusterState state, TestAutoscalingDeciderContext context) {
@@ -501,7 +500,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         public void allocate() {
             // todo: remove the context here?
             BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
-            state = withRoutingAllocation(state, shardsAllocator::allocate);
+            withRoutingAllocation(shardsAllocator::allocate);
         }
 
         public void startRandomShards() {
