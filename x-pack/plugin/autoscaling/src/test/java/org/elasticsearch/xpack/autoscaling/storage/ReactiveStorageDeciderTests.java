@@ -14,12 +14,12 @@ import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
+import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
-import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.AwarenessAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
@@ -27,12 +27,10 @@ import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider
 import org.elasticsearch.cluster.routing.allocation.decider.EnableAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.SameShardAllocationDecider;
 import org.elasticsearch.common.UUIDs;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESTestCase;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -118,7 +116,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         state = addDataNodes("warm", "warm", state, warmNodes);
 
         Set<DiscoveryNode> hotTier = ReactiveStorageDecider.nodesInTier(state.getRoutingNodes(), n -> n.getName().startsWith("hot"))
-            .map(n -> n.node())
+            .map(RoutingNode::node)
             .collect(Collectors.toSet());
         assertThat(hotTier, equalTo(expectedHotNodes));
     }
@@ -132,33 +130,45 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             .numberOfReplicas(randomIntBetween(0, 5))
             .build();
 
-        ClusterState.Builder builder = ClusterState.builder(state)
-            .metadata(Metadata.builder().put(indexMetadata, false));
+        ClusterState.Builder builder = ClusterState.builder(state).metadata(Metadata.builder().put(indexMetadata, false));
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         routingTableBuilder.addAsNew(indexMetadata);
         builder.routingTable(routingTableBuilder.build());
         state = builder.build();
 
-        RoutingAllocation allocation = new RoutingAllocation(new AllocationDeciders(Collections.emptyList()), new RoutingNodes(state, false), state,
+        RoutingAllocation allocation = new RoutingAllocation(
+            new AllocationDeciders(Collections.emptyList()),
+            new RoutingNodes(state, false),
+            state,
             null,
-            System.nanoTime());
+            System.nanoTime()
+        );
         assertThat(ReactiveStorageDecider.updateClusterState(state, allocation), sameInstance(state));
-        for (RoutingNodes.UnassignedShards.UnassignedIterator iterator = allocation.routingNodes().unassigned().iterator(); iterator.hasNext(); ) {
+        for (RoutingNodes.UnassignedShards.UnassignedIterator iterator = allocation.routingNodes().unassigned().iterator(); iterator
+            .hasNext();) {
             ShardRouting candidate = iterator.next();
             if (candidate.primary()) {
                 iterator.initialize(
-                    randomFrom(StreamSupport.stream(state.nodes().spliterator(), false).map(DiscoveryNode::getId).collect(Collectors.toList())),
-                    null, 0L,
-                    allocation.changes());
+                    randomFrom(
+                        StreamSupport.stream(state.nodes().spliterator(), false).map(DiscoveryNode::getId).collect(Collectors.toList())
+                    ),
+                    null,
+                    0L,
+                    allocation.changes()
+                );
             }
         }
 
         ClusterState updatedState = ReactiveStorageDecider.updateClusterState(state, allocation);
         assertThat(updatedState, not(sameInstance(state)));
-        assertThat(updatedState.getRoutingNodes().shardsWithState(ShardRoutingState.UNASSIGNED),
-            hasSize(indexMetadata.getNumberOfShards() * indexMetadata.getNumberOfReplicas()));
-        assertThat(updatedState.getRoutingNodes().shardsWithState(ShardRoutingState.INITIALIZING),
-            hasSize(indexMetadata.getNumberOfShards()));
+        assertThat(
+            updatedState.getRoutingNodes().shardsWithState(ShardRoutingState.UNASSIGNED),
+            hasSize(indexMetadata.getNumberOfShards() * indexMetadata.getNumberOfReplicas())
+        );
+        assertThat(
+            updatedState.getRoutingNodes().shardsWithState(ShardRoutingState.INITIALIZING),
+            hasSize(indexMetadata.getNumberOfShards())
+        );
     }
 
     private static ClusterState addDataNodes(String tier, String prefix, ClusterState state, int nodes) {
