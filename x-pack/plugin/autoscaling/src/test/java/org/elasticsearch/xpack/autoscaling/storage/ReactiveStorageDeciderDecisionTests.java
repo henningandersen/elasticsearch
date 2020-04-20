@@ -49,6 +49,7 @@ import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecisionType;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.Before;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,7 +67,6 @@ import java.util.stream.StreamSupport;
 
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.in;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
@@ -75,8 +75,8 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ReactiveStorageDeciderTests extends ESTestCase {
-    private static final Logger logger = LogManager.getLogger(ReactiveStorageDeciderTests.class);
+public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
+    private static final Logger logger = LogManager.getLogger(ReactiveStorageDeciderDecisionTests.class);
     private static final List<String> SOME_ALLOCATION_DECIDERS = Arrays.asList(SameShardAllocationDecider.NAME,
         AwarenessAllocationDecider.NAME, EnableAllocationDecider.NAME);
 
@@ -93,147 +93,91 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         }
     };
 
-    public void testNoTierSpecified() {
-        String attribute = randomBoolean() ? null : randomAlphaOfLength(8);
-        String tier = attribute != null || randomBoolean() ? null : randomAlphaOfLength(8);
+    private ClusterState state;
+    private MockDiskDeciderFactory mockDiskDeciderFactory;
+    private final int hotNodes = randomIntBetween(1, 8);
+    private final int warmNodes = randomIntBetween(1, 3);
 
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
-            () -> new ReactiveStorageDecider(attribute, tier));
-
-        assertThat(exception.getMessage(), equalTo("must specify both [tier_attribute] [" + attribute + "] and [tier] [" + tier + "]"));
-    }
-
-    public void testIsDiskOnlyDecision() {
-        Decision.Multi decision = new Decision.Multi();
-        if (randomBoolean()) {
-            decision.add(randomFrom(Decision.YES, Decision.ALWAYS, Decision.THROTTLE));
-        }
-        decision.add(new Decision.Single(Decision.Type.NO, DiskThresholdDecider.NAME, "test"));
-        randomSubsetOf(SOME_ALLOCATION_DECIDERS).stream()
-            .map(label -> new Decision.Single(randomValueOtherThan(Decision.Type.NO,
-                () -> randomFrom(Decision.Type.values())), label, "test " + label))
-            .forEach(decision::add);
-        assertThat(ReactiveStorageDecider.isDiskOnlyNoDecision(decision), is(true));
-    }
-
-    public void testIsNotDiskOnlyDecision() {
-        Decision.Multi decision = new Decision.Multi();
-        if (randomBoolean()) {
-            decision.add(randomFrom(Decision.YES, Decision.ALWAYS, Decision.THROTTLE, Decision.NO));
-        }
-
-        if (randomBoolean()) {
-            decision.add(new Decision.Single(Decision.Type.NO, DiskThresholdDecider.NAME, "test"));
-            if (randomBoolean()) {
-                decision.add(Decision.NO);
-            } else {
-                decision.add(new Decision.Single(Decision.Type.NO, randomFrom(SOME_ALLOCATION_DECIDERS), "test"));
-            }
-        } else if (randomBoolean()) {
-            decision.add(new Decision.Single(Decision.Type.YES, DiskThresholdDecider.NAME, "test"));
-        }
-        randomSubsetOf(SOME_ALLOCATION_DECIDERS).stream()
-            .map(label -> new Decision.Single(randomFrom(Decision.Type.values()), label, "test " + label))
-            .forEach(decision::add);
-
-        assertThat(ReactiveStorageDecider.isDiskOnlyNoDecision(decision), is(false));
-    }
-
-
-    public void testStoragePreventsAllocation2() {
-        StorageDecisionTestFixture fixture = new StorageDecisionTestFixture();
-        ClusterState lastState = null;
-        int maxRounds = fixture.state().getRoutingNodes().unassigned().size() + 1;
-        int count = 0;
-        while (lastState != fixture.state() && count++ < maxRounds) {
-        }
-    }
-
-    public void testStoragePreventsAllocation() {
-        int hotNodes = randomIntBetween(1, 8);
-        int warmNodes = randomIntBetween(1, 3);
+    @Before
+    public void setup() {
         ClusterState state = ClusterState.builder(new ClusterName("test")).build();
 
         state = addRandomIndices("initial", hotNodes, hotNodes, state);
 
         state = addDataNodes("hot", "hot", state, hotNodes);
         state = addDataNodes("warm", "warm", state, warmNodes);
+        this.state = state;
+        mockDiskDeciderFactory = new MockDiskDeciderFactory(state.getRoutingNodes().unassigned());
+    }
 
-        MockDiskDeciderFactory mockDiskDeciderFactory = new MockDiskDeciderFactory(state.getRoutingNodes().unassigned());
-        AllocationDecider bigShardDiskDecider = mockDiskDeciderFactory.createCanAllocateDecider();
 
-        BalancedShardsAllocator allocator = new BalancedShardsAllocator(Settings.EMPTY);
-        TestAutoscalingDeciderContext diskContext = new TestAutoscalingDeciderContext(state, allocator, createAllocationDeciders(bigShardDiskDecider));
-        TestAutoscalingDeciderContext diskAndOtherContext = new TestAutoscalingDeciderContext(state, allocator,
-            createAllocationDeciders(bigShardDiskDecider, CAN_ALLOCATE_NO_DECIDER));
-        TestAutoscalingDeciderContext noDiskContext = new TestAutoscalingDeciderContext(state, allocator,
-            createAllocationDeciders());
-
-        Predicate<DiscoveryNode> hotNodePredicate = n -> n.getName().startsWith("hot");
+    public void testStoragePreventsAllocation() {
         ClusterState lastState = null;
         int maxRounds = state.getRoutingNodes().unassigned().size() + 1;
-        int count = 0;
-        while (lastState != state && count++ < maxRounds) {
-            assertThat(ReactiveStorageDecider.storagePreventsAllocation(state, diskContext, i -> true, hotNodePredicate), equalTo(true));
-            assertThat(ReactiveStorageDecider.storagePreventsAllocation(state, noDiskContext, i -> true, hotNodePredicate), equalTo(false));
-            assertThat(ReactiveStorageDecider.storagePreventsAllocation(state, diskAndOtherContext, i -> true, hotNodePredicate), equalTo(false));
-
-            verifyScaleDecision(state, diskContext, AutoscalingDecisionType.SCALE_UP, "not enough storage available for unassigned shards");
-            verifyScaleDecision(state, noDiskContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
-            verifyScaleDecision(state, diskAndOtherContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
-            verifyScaleDecision(addDataNodes("hot", "additional", state, hotNodes), diskContext,
-                AutoscalingDecisionType.NO_SCALE, "storage ok");
-
+        int round = 0;
+        while (lastState != state && round < maxRounds) {
+            boolean prevents = hasAllocateableShards();
+            assert round != 0 || prevents;
+            verify(ReactiveStorageDecider::storagePreventsAllocation, prevents, mockDiskDeciderFactory.createCanAllocateDecider());
+            verify(ReactiveStorageDecider::storagePreventsAllocation, false, mockDiskDeciderFactory.createCanAllocateDecider(), CAN_ALLOCATE_NO_DECIDER);
+            verify(ReactiveStorageDecider::storagePreventsAllocation, false);
+            if (prevents || hasUnassignedBigShards()) {
+                verifyScale(AutoscalingDecisionType.SCALE_UP, "not enough storage available for unassigned shards", mockDiskDeciderFactory.createCanAllocateDecider());
+            } else {
+                verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok", mockDiskDeciderFactory.createCanAllocateDecider());
+            }
+            verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok",
+                mockDiskDeciderFactory.createCanAllocateDecider(), CAN_ALLOCATE_NO_DECIDER);
+            verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok");
+            verifyScale(addDataNodes("hot", "additional", state, hotNodes),
+                AutoscalingDecisionType.NO_SCALE, "storage ok", mockDiskDeciderFactory.createCanAllocateDecider());
             lastState = state;
-            state = startRandomShards(state, diskContext);
+            startRandomShards();
+            ++round;
         }
-        assert count > 0;
+        assert round > 0;
         assertThat(state, sameInstance(lastState));
-        assertThat(ReactiveStorageDecider.simulateStartAndAllocate(state, diskContext), sameInstance(state));
+        assertThat(ReactiveStorageDecider.simulateStartAndAllocate(state, createContext(mockDiskDeciderFactory.createCanAllocateDecider())), sameInstance(state));
+    }
+
+    private boolean hasAllocateableShards() {
+        AllocationDeciders deciders = createAllocationDeciders();
+        RoutingAllocation allocation = createRoutingAllocation(state, createContext());
+        return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
+            .filter(shard -> mockDiskDeciderFactory.shards.contains(shard.shardId()))
+            .anyMatch(
+            shard -> StreamSupport.stream(allocation.routingNodes().spliterator(), false).anyMatch(node -> deciders.canAllocate(shard, node,
+                allocation) != Decision.NO));
+    }
+
+    private boolean hasUnassignedBigShards() {
+        return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
+            .anyMatch(shard -> mockDiskDeciderFactory.shards.contains(shard.shardId()));
     }
 
     public void testStoragePreventsMove() {
-        int hotNodes = randomIntBetween(1, 8);
-        int warmNodes = randomIntBetween(1, 3);
-        ClusterState state = ClusterState.builder(new ClusterName("test")).build();
-
-        state = addRandomIndices("initial", hotNodes, hotNodes, state);
-
-        state = addDataNodes("hot", "hot", state, hotNodes);
-        state = addDataNodes("warm", "warm", state, warmNodes);
-
-        MockDiskDeciderFactory mockDiskDeciderFactory = new MockDiskDeciderFactory(state.getRoutingNodes().unassigned());
-        AllocationDecider bigShardDiskDecider = mockDiskDeciderFactory.createCanAllocateDecider();
-
-        BalancedShardsAllocator allocator = new BalancedShardsAllocator(Settings.EMPTY);
-        TestAutoscalingDeciderContext diskContext = new TestAutoscalingDeciderContext(state, allocator, createAllocationDeciders(bigShardDiskDecider));
-        TestAutoscalingDeciderContext diskAndOtherContext = new TestAutoscalingDeciderContext(state, allocator,
-            createAllocationDeciders(bigShardDiskDecider, CAN_ALLOCATE_NO_DECIDER));
-        TestAutoscalingDeciderContext noDiskContext = new TestAutoscalingDeciderContext(state, allocator,
-            createAllocationDeciders());
-
         // allocate shards (will allocate all primaries)
-        state = withRoutingAllocation(state, noDiskContext, allocator::allocate);
+        allocate();
 
         // force some shards on to the warm nodes. We only use primary shards for simplicity.
         Set<ShardId> warmShards = Sets.union(new HashSet<>(randomSubsetOf(shardIds(state.getRoutingNodes().unassigned()))),
             mockDiskDeciderFactory.getShards());
 
-        state = withRoutingAllocation(state, noDiskContext,
+        state = withRoutingAllocation(state,
             allocation ->
                 allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING).stream()
                     .filter(ShardRouting::primary)
                     .filter(s -> warmShards.contains(s.shardId()))
                     .forEach(shard ->
-                            allocation.routingNodes().startShard(logger, shard, allocation.changes())
+                        allocation.routingNodes().startShard(logger, shard, allocation.changes())
                     ));
 
         do {
-            state = startRandomShards(state, noDiskContext);
+            state = startRandomShards(state, createContext());
             // all of the relevant replicas are assigned too.
         } while (StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false).map(ShardRouting::shardId).anyMatch(warmShards::contains));
 
-        state = withRoutingAllocation(state, noDiskContext,
+        state = withRoutingAllocation(state,
             allocation ->
                 allocation.routingNodes().shardsWithState(ShardRoutingState.STARTED).stream()
                     .filter(ShardRouting::primary)
@@ -243,62 +187,40 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
                             allocation.routingNodes().startShard(logger,
                                 allocation.routingNodes().relocateShard(shard, randomNodeId(allocation.routingNodes(), "warm"), 0L,
                                     allocation.changes()).v2(), allocation.changes())
-            )
+                    )
         );
 
-        Predicate<DiscoveryNode> hotNodePredicate = n -> n.getName().startsWith("hot");
-        assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, diskContext, i -> true, hotNodePredicate),
-            equalTo(true));
-        assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, noDiskContext, i -> true, hotNodePredicate), equalTo(false));
-        assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, diskAndOtherContext, i -> true, hotNodePredicate), equalTo(false));
+        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, true, mockDiskDeciderFactory.createCanAllocateDecider());
+        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, false, mockDiskDeciderFactory.createCanAllocateDecider(),
+            CAN_ALLOCATE_NO_DECIDER);
+        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, false);
 
-        assertThat(ReactiveStorageDecider.storagePreventsAllocation(state, diskContext, i -> true, hotNodePredicate), equalTo(false));
+        verifyScale(AutoscalingDecisionType.SCALE_UP, "not enough storage available for assigned shards", mockDiskDeciderFactory.createCanAllocateDecider());
+        verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok",
+            mockDiskDeciderFactory.createCanAllocateDecider(), CAN_ALLOCATE_NO_DECIDER);
+        verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok");
+        verifyScale(addDataNodes("hot", "additional", state, hotNodes),
+            AutoscalingDecisionType.NO_SCALE, "storage ok", mockDiskDeciderFactory.createCanAllocateDecider());
 
-        verifyScaleDecision(state, diskContext, AutoscalingDecisionType.SCALE_UP, "not enough storage available for assigned shards");
-        verifyScaleDecision(state, noDiskContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
-        verifyScaleDecision(state, diskAndOtherContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
-
-        verifyScaleDecision(addDataNodes("hot", "additional", state, hotNodes), diskContext,
-            AutoscalingDecisionType.NO_SCALE, "storage ok");
     }
 
     public void testStoragePreventsRemain() {
-        int hotNodes = randomIntBetween(1, 8);
-        int warmNodes = randomIntBetween(1, 3);
-        ClusterState state = ClusterState.builder(new ClusterName("test")).build();
-
-        state = addRandomIndices("initial", hotNodes, hotNodes, state);
-        state = addDataNodes("hot", "hot", state, hotNodes);
-        state = addDataNodes("warm", "warm", state, warmNodes);
-
-        MockDiskDeciderFactory mockDiskDeciderFactory = new MockDiskDeciderFactory(state.getRoutingNodes().unassigned());
-        AllocationDecider bigShardDiskDecider = mockDiskDeciderFactory.createCanRemainDecider();
-
-        BalancedShardsAllocator allocator = new BalancedShardsAllocator(Settings.EMPTY);
-        TestAutoscalingDeciderContext diskContext = new TestAutoscalingDeciderContext(state, allocator,
-            createAllocationDeciders(bigShardDiskDecider, CAN_ALLOCATE_NO_DECIDER));
-        TestAutoscalingDeciderContext diskAndOtherContext = new TestAutoscalingDeciderContext(state, allocator,
-            createAllocationDeciders(bigShardDiskDecider, CAN_REMAIN_NO_DECIDER, CAN_ALLOCATE_NO_DECIDER));
-        TestAutoscalingDeciderContext noDiskContext = new TestAutoscalingDeciderContext(state, allocator,
-            createAllocationDeciders());
-
-        // allocate shards
-        state = withRoutingAllocation(state, noDiskContext, allocator::allocate);
-
+        allocate();
         // we can only decide on a move for started shards (due to for instance ThrottlingAllocationDecider assertion).
         for (int i = 0; i < randomIntBetween(1, 4); ++i) {
-            state = startRandomShards(state, noDiskContext);
+            state = startRandomShards(state, createContext());
         }
 
-        Predicate<DiscoveryNode> hotNodePredicate = n -> n.getName().startsWith("hot");
-        assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, diskContext, i -> true, hotNodePredicate),
-            equalTo(true));
-        assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, noDiskContext, i -> true, hotNodePredicate), equalTo(false));
-        assertThat(ReactiveStorageDecider.storagePreventsRemainOrMove(state, diskAndOtherContext, i -> true, hotNodePredicate), equalTo(false));
+        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, true, mockDiskDeciderFactory.createCanRemainDecider(), CAN_ALLOCATE_NO_DECIDER);
+        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, false, mockDiskDeciderFactory.createCanRemainDecider(),
+            CAN_REMAIN_NO_DECIDER, CAN_ALLOCATE_NO_DECIDER);
+        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, false);
 
-        verifyScaleDecision(state, diskContext, AutoscalingDecisionType.SCALE_UP, "not enough storage available for assigned shards");
-        verifyScaleDecision(state, noDiskContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
-        verifyScaleDecision(state, diskAndOtherContext, AutoscalingDecisionType.NO_SCALE, "storage ok");
+        verifyScale(AutoscalingDecisionType.SCALE_UP, "not enough storage available for assigned shards",
+            mockDiskDeciderFactory.createCanRemainDecider(), CAN_ALLOCATE_NO_DECIDER);
+        verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok",
+            mockDiskDeciderFactory.createCanRemainDecider(), CAN_REMAIN_NO_DECIDER, CAN_ALLOCATE_NO_DECIDER);
+        verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok");
     }
 
     private static void verifyScaleDecision(ClusterState state, TestAutoscalingDeciderContext context, AutoscalingDecisionType decisionType,
@@ -312,19 +234,6 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
 
     private String randomNodeId(RoutingNodes routingNodes, String tier) {
         return randomFrom(ReactiveStorageDecider.nodesInTier(routingNodes, n -> n.getName().startsWith(tier)).collect(Collectors.toSet())).nodeId();
-    }
-
-    public void testNodesInTier() {
-        int hotNodes = randomIntBetween(0, 8);
-        int warmNodes = randomIntBetween(0, 8);
-        ClusterState state = ClusterState.builder(new ClusterName("test")).build();
-        state = addDataNodes("hot", "hot", state, hotNodes);
-        Set<DiscoveryNode> expectedHotNodes = StreamSupport.stream(state.nodes().spliterator(), false).collect(Collectors.toSet());
-        state = addDataNodes("warm", "warm", state, warmNodes);
-
-        Set<DiscoveryNode> hotTier = ReactiveStorageDecider.nodesInTier(state.getRoutingNodes(), n -> n.getName().startsWith("hot"))
-            .map(n -> n.node()).collect(Collectors.toSet());
-        assertThat(hotTier, equalTo(expectedHotNodes));
     }
 
     public void testSimulateStartAndAllocate() {
@@ -394,9 +303,10 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         assertThat(allocation.deciders().canRemain(shard, node, allocation).type(), equalTo(Decision.Type.YES));
     }
 
-    private static ClusterState withRoutingAllocation(ClusterState state, TestAutoscalingDeciderContext context,
+    private ClusterState withRoutingAllocation(ClusterState state,
                                                Consumer<RoutingAllocation> block) {
-        RoutingAllocation allocation = createRoutingAllocation(state, context);
+        // todo: remove createContext.
+        RoutingAllocation allocation = createRoutingAllocation(state, createContext());
         block.accept(allocation);
         return ReactiveStorageDecider.updateClusterState(state, allocation);
     }
@@ -599,33 +509,16 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             .collect(Collectors.toSet());
     }
 
-    private static class StorageDecisionTestFixture {
-        private ClusterState state;
-        private final MockDiskDeciderFactory mockDiskDeciderFactory;
-        private final int hotNodes = randomIntBetween(1, 8);
-        private final int warmNodes = randomIntBetween(1, 3);
-        StorageDecisionTestFixture() {
-            ClusterState state = ClusterState.builder(new ClusterName("test")).build();
-
-            state = addRandomIndices("initial", hotNodes, hotNodes, state);
-
-            state = addDataNodes("hot", "hot", state, hotNodes);
-            state = addDataNodes("warm", "warm", state, warmNodes);
-            this.state = state;
-            mockDiskDeciderFactory = new MockDiskDeciderFactory(state.getRoutingNodes().unassigned());
-        }
-
         public void allocate() {
             // todo: remove the context here?
             BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
-            state = withRoutingAllocation(state, new TestAutoscalingDeciderContext(state, shardsAllocator,
-                createAllocationDeciders()), shardsAllocator::allocate);
+            state = withRoutingAllocation(state, shardsAllocator::allocate);
         }
 
         public void startRandomShards() {
             // todo: remove the context here?
             BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
-            state = ReactiveStorageDeciderTests.startRandomShards(state, new TestAutoscalingDeciderContext(state, shardsAllocator,
+            state = ReactiveStorageDeciderDecisionTests.startRandomShards(state, new TestAutoscalingDeciderContext(state, shardsAllocator,
                 createAllocationDeciders()));
         }
 
@@ -639,18 +532,25 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             assertThat(subject.invoke(state, createContext(allocationDeciders), i -> true, hotNodePredicate), equalTo(expected));
         }
 
-        public void verifyScale(AutoscalingDecisionType type, String reason) {
-            verifyScaleDecision(state, createContext(), type, reason);
+        public void verifyScale(AutoscalingDecisionType type, String reason, AllocationDecider... allocationDeciders) {
+            verifyScale(state, type, reason, allocationDeciders);
         }
 
-        private TestAutoscalingDeciderContext createContext(AllocationDecider... allocationDeciders) {
-            BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
-            return new TestAutoscalingDeciderContext(state, shardsAllocator,
-                createAllocationDeciders(allocationDeciders));
-        }
+    public static void verifyScale(ClusterState state, AutoscalingDecisionType type, String reason,
+                                  AllocationDecider... allocationDeciders) {
+        verifyScaleDecision(state, createContext(state, allocationDeciders), type, reason);
+    }
+
+    private TestAutoscalingDeciderContext createContext(AllocationDecider... allocationDeciders) {
+        return createContext(state, allocationDeciders);
+    }
+    private static TestAutoscalingDeciderContext createContext(ClusterState state, AllocationDecider... allocationDeciders) {
+        BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
+        return new TestAutoscalingDeciderContext(state, shardsAllocator,
+            createAllocationDeciders(allocationDeciders));
+    }
 
         public ClusterState state() {
             return state;
         }
-    }
 }
