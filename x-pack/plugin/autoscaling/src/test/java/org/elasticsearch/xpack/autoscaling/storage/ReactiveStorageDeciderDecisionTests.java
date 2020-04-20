@@ -115,7 +115,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     @Before
     public void setup() {
         ClusterState state = ClusterState.builder(new ClusterName("test")).build();
-        state = addRandomIndices("initial", hotNodes, hotNodes, state);
+        state = addRandomIndices(hotNodes, hotNodes, state);
         state = addDataNodes("hot", "hot", state, hotNodes);
         state = addDataNodes("warm", "warm", state, warmNodes);
         this.state = state;
@@ -131,7 +131,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         int maxRounds = state.getRoutingNodes().unassigned().size() + 1;
         int round = 0;
         while (lastState != state && round < maxRounds) {
-            boolean prevents = hasAllocateableSubjectShards();
+            boolean prevents = hasAllocatableSubjectShards();
             assert round != 0 || prevents;
             verify(ReactiveStorageDecider::storagePreventsAllocation, prevents, mockCanAllocateDiskDecider);
             verify(ReactiveStorageDecider::storagePreventsAllocation, false, mockCanAllocateDiskDecider, CAN_ALLOCATE_NO_DECIDER);
@@ -159,11 +159,10 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         // allocate shards (will allocate all primaries)
         allocate();
 
-        // force some shards on to the warm nodes. We only use primary shards for simplicity.
-        Set<ShardId> warmShards = Sets.union(new HashSet<>(randomSubsetOf(shardIds(state.getRoutingNodes().unassigned()))),
-            subjectShards);
+        // pick set of shards to force on to warm nodes.
+        Set<ShardId> warmShards = Sets.union(new HashSet<>(randomSubsetOf(shardIds(state.getRoutingNodes().unassigned()))), subjectShards);
 
-        // start warm shards
+        // start warm shards. Only use primary shards for simplicity.
         withRoutingAllocation(
             allocation ->
                 allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING).stream()
@@ -252,9 +251,9 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             RoutingAllocation allocation = createRoutingAllocation(simulatedState, createAllocationDeciders(mockDecider));
             StreamSupport.stream(simulatedState.getRoutingNodes().spliterator(), false)
                 .flatMap(n -> n.shardsWithState(ShardRoutingState.STARTED).stream().map(s -> Tuple.tuple(n, s)))
-                .forEach(t -> validateAllocation(t.v1(), t.v2(), allocation));
+                .forEach(t -> verifyAllocation(t.v1(), t.v2(), allocation));
             StreamSupport.stream(simulatedState.getRoutingNodes().unassigned().spliterator(), false)
-                .forEach(s -> validateUnassigned(s, allocation));
+                .forEach(s -> verifyUnassigned(s, allocation));
 
             lastState = state;
             startRandomShards(createAllocationDeciders(mockDecider));
@@ -265,11 +264,38 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         assertThat(ReactiveStorageDecider.simulateStartAndAllocate(state, createContext(mockDecider)), sameInstance(state));
     }
 
-    private String randomNodeId(RoutingNodes routingNodes, String tier) {
-        return randomFrom(ReactiveStorageDecider.nodesInTier(routingNodes, n -> n.getName().startsWith(tier)).collect(Collectors.toSet())).nodeId();
+    public interface BooleanVerificationSubject {
+        boolean invoke(ClusterState state, AutoscalingDeciderContext context, Predicate<IndexMetadata> indexMetadataPredicate,
+                       Predicate<DiscoveryNode> nodePredicate);
     }
 
-    private boolean hasAllocateableSubjectShards() {
+    public void verify(BooleanVerificationSubject subject, boolean expected, AllocationDecider... allocationDeciders) {
+        Predicate<DiscoveryNode> hotNodePredicate = n -> n.getName().startsWith("hot");
+        assertThat(subject.invoke(state, createContext(allocationDeciders), i -> true, hotNodePredicate), equalTo(expected));
+    }
+
+    public void verifyScale(AutoscalingDecisionType type, String reason, AllocationDecider... allocationDeciders) {
+        verifyScale(state, type, reason, allocationDeciders);
+    }
+
+    public static void verifyScale(ClusterState state, AutoscalingDecisionType type, String reason, AllocationDecider... allocationDeciders) {
+        ReactiveStorageDecider decider = new ReactiveStorageDecider("tier", "hot");
+        AutoscalingDecision decision = decider.scale(createContext(state, allocationDeciders));
+        assertThat(decision.type(), equalTo(type));
+        assertThat(decision.reason(), equalTo(reason));
+    }
+
+    private void verifyUnassigned(ShardRouting unassigned, RoutingAllocation allocation) {
+        for (RoutingNode routingNode : allocation.routingNodes()) {
+            assertThat(allocation.deciders().canAllocate(unassigned, routingNode, allocation).type(), not(equalTo(Decision.Type.YES)));
+        }
+    }
+
+    private void verifyAllocation(RoutingNode node, ShardRouting shard, RoutingAllocation allocation) {
+        assertThat(allocation.deciders().canRemain(shard, node, allocation).type(), equalTo(Decision.Type.YES));
+    }
+
+    private boolean hasAllocatableSubjectShards() {
         AllocationDeciders deciders = createAllocationDeciders();
         RoutingAllocation allocation = createRoutingAllocation(state, createAllocationDeciders());
         return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
@@ -290,20 +316,29 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         return new AllocationDeciders(Stream.concat(Stream.of(extraDeciders), systemAllocationDeciders.stream()).collect(Collectors.toList()));
     }
 
-    private void validateUnassigned(ShardRouting unassigned, RoutingAllocation allocation) {
-        for (RoutingNode routingNode : allocation.routingNodes()) {
-            assertThat(allocation.deciders().canAllocate(unassigned, routingNode, allocation).type(), not(equalTo(Decision.Type.YES)));
-        }
-    }
-
-    private void validateAllocation(RoutingNode node, ShardRouting shard, RoutingAllocation allocation) {
-        assertThat(allocation.deciders().canRemain(shard, node, allocation).type(), equalTo(Decision.Type.YES));
+    private static RoutingAllocation createRoutingAllocation(ClusterState state, AllocationDeciders allocationDeciders) {
+        RoutingNodes routingNodes = new RoutingNodes(state, false);
+        return new RoutingAllocation(
+            allocationDeciders,
+            routingNodes,
+            state,
+            createClusterInfo(state),
+            System.nanoTime()
+        );
     }
 
     private void withRoutingAllocation(Consumer<RoutingAllocation> block) {
         RoutingAllocation allocation = createRoutingAllocation(state, createAllocationDeciders());
         block.accept(allocation);
         state = ReactiveStorageDecider.updateClusterState(state, allocation);
+    }
+
+    public void allocate() {
+        withRoutingAllocation(SHARDS_ALLOCATOR::allocate);
+    }
+
+    public void startRandomShards() {
+        startRandomShards(createAllocationDeciders());
     }
 
     private void startRandomShards(AllocationDeciders allocationDeciders) {
@@ -343,22 +378,20 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
 
     }
 
-    private static RoutingAllocation createRoutingAllocation(ClusterState state, AllocationDeciders allocationDeciders) {
-        RoutingNodes routingNodes = new RoutingNodes(state, false);
-        return new RoutingAllocation(
-            allocationDeciders,
-            routingNodes,
-            state,
-            createClusterInfo(state),
-            System.nanoTime()
-        );
+    private TestAutoscalingDeciderContext createContext(AllocationDecider... allocationDeciders) {
+        return createContext(state, allocationDeciders);
+    }
+
+    private static TestAutoscalingDeciderContext createContext(ClusterState state, AllocationDecider... allocationDeciders) {
+        final BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
+        return new TestAutoscalingDeciderContext(state, shardsAllocator,
+            createAllocationDeciders(allocationDeciders));
     }
 
     private static class TestAutoscalingDeciderContext implements AutoscalingDeciderContext {
         private final ClusterState state;
         private final ShardsAllocator shardsAllocator;
         private final AllocationDeciders allocationDeciders;
-
         private ClusterInfo info;
 
         public TestAutoscalingDeciderContext(ClusterState state, ShardsAllocator shardsAllocator, AllocationDeciders allocationDeciders) {
@@ -410,12 +443,16 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         return info;
     }
 
-    private static ClusterState addRandomIndices(String prefix, int minShards, int maxShardCopies, ClusterState state) {
+    private String randomNodeId(RoutingNodes routingNodes, String tier) {
+        return randomFrom(ReactiveStorageDecider.nodesInTier(routingNodes, n -> n.getName().startsWith(tier)).collect(Collectors.toSet())).nodeId();
+    }
+
+    private static ClusterState addRandomIndices(int minShards, int maxShardCopies, ClusterState state) {
         int shards = randomIntBetween(minShards, 20);
         Metadata.Builder builder = Metadata.builder();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         while (shards > 0) {
-            IndexMetadata indexMetadata = IndexMetadata.builder(prefix + "-" + shards)
+            IndexMetadata indexMetadata = IndexMetadata.builder("test" + "-" + shards)
                 .settings(settings(Version.CURRENT)
                 .put(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_PREFIX + ".tier", "hot"))
                 .numberOfShards(randomIntBetween(1, 5))
@@ -445,45 +482,6 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         return StreamSupport.stream(candidateShards.spliterator(), false)
             .map(ShardRouting::shardId)
             .collect(Collectors.toSet());
-    }
-
-        public void allocate() {
-            withRoutingAllocation(SHARDS_ALLOCATOR::allocate);
-        }
-
-        public void startRandomShards() {
-            startRandomShards(createAllocationDeciders());
-        }
-
-        public interface BooleanVerificationSubject {
-            boolean invoke(ClusterState state, AutoscalingDeciderContext context, Predicate<IndexMetadata> indexMetadataPredicate,
-                           Predicate<DiscoveryNode> nodePredicate);
-        }
-
-        public void verify(BooleanVerificationSubject subject, boolean expected, AllocationDecider... allocationDeciders) {
-            Predicate<DiscoveryNode> hotNodePredicate = n -> n.getName().startsWith("hot");
-            assertThat(subject.invoke(state, createContext(allocationDeciders), i -> true, hotNodePredicate), equalTo(expected));
-        }
-
-        public void verifyScale(AutoscalingDecisionType type, String reason, AllocationDecider... allocationDeciders) {
-            verifyScale(state, type, reason, allocationDeciders);
-        }
-
-    public static void verifyScale(ClusterState state, AutoscalingDecisionType type, String reason,
-                                  AllocationDecider... allocationDeciders) {
-        ReactiveStorageDecider decider = new ReactiveStorageDecider("tier", "hot");
-        AutoscalingDecision decision = decider.scale(createContext(state, allocationDeciders));
-        assertThat(decision.type(), equalTo(type));
-        assertThat(decision.reason(), equalTo(reason));
-    }
-
-    private TestAutoscalingDeciderContext createContext(AllocationDecider... allocationDeciders) {
-        return createContext(state, allocationDeciders);
-    }
-    private static TestAutoscalingDeciderContext createContext(ClusterState state, AllocationDecider... allocationDeciders) {
-        BalancedShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
-        return new TestAutoscalingDeciderContext(state, shardsAllocator,
-            createAllocationDeciders(allocationDeciders));
     }
 
 }
