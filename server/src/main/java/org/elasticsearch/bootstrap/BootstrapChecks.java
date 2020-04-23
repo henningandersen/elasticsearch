@@ -7,7 +7,7 @@
  * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -24,9 +24,12 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.lucene.util.Constants;
 import org.elasticsearch.cluster.coordination.ClusterBootstrapService;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.io.PathUtils;
+import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.BoundTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.discovery.DiscoveryModule;
@@ -34,9 +37,11 @@ import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.monitor.jvm.JvmInfo;
 import org.elasticsearch.monitor.process.ProcessProbe;
 import org.elasticsearch.node.NodeValidationException;
+import org.elasticsearch.transport.TcpTransport;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.AllPermission;
@@ -45,6 +50,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,11 +68,16 @@ import static org.elasticsearch.discovery.SettingsBasedSeedHostsProvider.DISCOVE
  * pass.
  */
 final class BootstrapChecks {
+    private static final Logger logger = LogManager.getLogger(BootstrapChecks.class);
+    private static final Predicate<TransportAddress> IS_LOOPBACK_ADDRESS = t -> t.address().getAddress().isLoopbackAddress();
 
     private BootstrapChecks() {
     }
 
     static final String ES_ENFORCE_BOOTSTRAP_CHECKS = "es.enforce.bootstrap.checks";
+
+    // unregistered, not user modifiable.
+    private static final Setting<Boolean> PRODUCTION_MODE = Setting.boolSetting("node.production.internal", false, Setting.Property.NodeScope);
 
     /**
      * Executes the bootstrap checks if the node has the transport protocol bound to a non-loopback interface. If the system property
@@ -119,21 +131,7 @@ final class BootstrapChecks {
         final List<String> errors = new ArrayList<>();
         final List<String> ignoredErrors = new ArrayList<>();
 
-        final String esEnforceBootstrapChecks = System.getProperty(ES_ENFORCE_BOOTSTRAP_CHECKS);
-        final boolean enforceBootstrapChecks;
-        if (esEnforceBootstrapChecks == null) {
-            enforceBootstrapChecks = false;
-        } else if (Boolean.TRUE.toString().equals(esEnforceBootstrapChecks)) {
-            enforceBootstrapChecks = true;
-        } else {
-            final String message =
-                    String.format(
-                            Locale.ROOT,
-                            "[%s] must be [true] but was [%s]",
-                            ES_ENFORCE_BOOTSTRAP_CHECKS,
-                            esEnforceBootstrapChecks);
-            throw new IllegalArgumentException(message);
-        }
+        final boolean enforceBootstrapChecks = parseEnforceBootstrapChecks();
 
         if (enforceLimits) {
             logger.info("bound or publishing to a non-loopback address, enforcing bootstrap checks");
@@ -168,6 +166,25 @@ final class BootstrapChecks {
         }
     }
 
+    private static boolean parseEnforceBootstrapChecks() {
+        final String esEnforceBootstrapChecks = System.getProperty(ES_ENFORCE_BOOTSTRAP_CHECKS);
+        final boolean enforceBootstrapChecks;
+        if (esEnforceBootstrapChecks == null) {
+            enforceBootstrapChecks = false;
+        } else if (Boolean.TRUE.toString().equals(esEnforceBootstrapChecks)) {
+            enforceBootstrapChecks = true;
+        } else {
+            final String message =
+                    String.format(
+                            Locale.ROOT,
+                            "[%s] must be [true] but was [%s]",
+                            ES_ENFORCE_BOOTSTRAP_CHECKS,
+                            esEnforceBootstrapChecks);
+            throw new IllegalArgumentException(message);
+        }
+        return enforceBootstrapChecks;
+    }
+
     static void log(final Logger logger, final String error) {
         logger.warn(error);
     }
@@ -180,10 +197,9 @@ final class BootstrapChecks {
      * @return {@code true} if the checks should be enforced
      */
     static boolean enforceLimits(final BoundTransportAddress boundTransportAddress, final String discoveryType) {
-        final Predicate<TransportAddress> isLoopbackAddress = t -> t.address().getAddress().isLoopbackAddress();
         final boolean bound =
-                !(Arrays.stream(boundTransportAddress.boundAddresses()).allMatch(isLoopbackAddress) &&
-                isLoopbackAddress.test(boundTransportAddress.publishAddress()));
+                !(Arrays.stream(boundTransportAddress.boundAddresses()).allMatch(IS_LOOPBACK_ADDRESS) &&
+                IS_LOOPBACK_ADDRESS.test(boundTransportAddress.publishAddress()));
         return bound && !"single-node".equals(discoveryType);
     }
 
@@ -218,6 +234,52 @@ final class BootstrapChecks {
         checks.add(new DiscoveryConfiguredCheck());
         return Collections.unmodifiableList(checks);
     }
+
+    public static Settings addProductionModeSetting(Settings settings, NetworkService networkService) {
+        // mimick TcpTransport boot to be able to enable production mode early in boot sequence.
+        if (NetworkService.NETWORK_SERVER.get(settings)) {
+            Set<TcpTransport.ProfileSettings> profileSettings = TcpTransport.getProfileSettings(settings);
+            Optional<String> message =
+                profileSettings.stream().flatMap(profile -> needsProductionModeBind(profile, networkService).stream()).findFirst().or(
+                    () -> profileSettings.stream().flatMap(profile -> needsProductionModePublish(profile, networkService, settings).stream()).findFirst()
+                ).or(
+                    () -> BootstrapChecks.parseEnforceBootstrapChecks() ? Optional.of("explicitly enforcing production mode") :
+                        Optional.empty()
+                );
+
+            message.ifPresent(logger::info);
+            return message.map(m -> Settings.builder().put(settings).put(PRODUCTION_MODE.getKey(), true).build()).orElse(settings);
+        }
+        return settings;
+    }
+
+    private static Optional<String> needsProductionModeBind(TcpTransport.ProfileSettings profile, NetworkService networkService) {
+        try {
+            InetAddress[] bindAddresses = networkService.resolveBindHostAddresses(profile.bindHosts.toArray(Strings.EMPTY_ARRAY));
+            return Stream.of(bindAddresses).filter(Predicate.not(InetAddress::isLoopbackAddress))
+                .map(i -> "bound to non-loopback address, enforcing production mode").findFirst();
+        } catch (IOException e) {
+            logger.debug("unable to resolve bind address for " + profile.bindHosts, e);
+            return Optional.of("unable to resolve bind address for " + profile.bindHosts);
+        }
+    }
+
+    private static Optional<String> needsProductionModePublish(TcpTransport.ProfileSettings profile, NetworkService networkService,
+                                                               Settings settings) {
+        List<String> publishHosts = profile.publishHosts;
+        if (publishHosts.isEmpty() && profile.isDefaultProfile) {
+            publishHosts = NetworkService.GLOBAL_NETWORK_PUBLISH_HOST_SETTING.get(settings);
+        }
+        try {
+            InetAddress bindAddresses = networkService.resolvePublishHostAddresses(publishHosts.toArray(Strings.EMPTY_ARRAY));
+            return Stream.of(bindAddresses).filter(Predicate.not(InetAddress::isLoopbackAddress))
+                .map(i -> "publishing to non-loopback address, enforcing production mode").findFirst();
+        } catch (IOException e) {
+            logger.debug("unable to resolve publish address for " + profile.bindHosts, e);
+            return Optional.of("unable to resolve publish address for" + profile.bindHosts);
+        }
+    }
+
 
     static class HeapSizeCheck implements BootstrapCheck {
 

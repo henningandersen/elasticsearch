@@ -7,7 +7,7 @@
  * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -305,7 +305,12 @@ public class Node implements Closeable {
 
             this.pluginsService = new PluginsService(tmpSettings, initialEnvironment.configFile(), initialEnvironment.modulesFile(),
                 initialEnvironment.pluginsFile(), classpathPlugins);
-            final Settings settings = pluginsService.updatedSettings();
+            final Settings pluginUpdatedSettings = pluginsService.updatedSettings();
+
+            final NetworkService networkService = new NetworkService(
+                getCustomNameResolvers(pluginsService.filterPlugins(DiscoveryPlugin.class), pluginUpdatedSettings));
+
+            final Settings settings = finalizeSettings(pluginUpdatedSettings);
 
             final Set<DiscoveryNodeRole> possibleRoles = Stream.concat(
                     DiscoveryNodeRole.BUILT_IN_ROLES.stream(),
@@ -360,8 +365,6 @@ public class Node implements Closeable {
             final SettingsModule settingsModule =
                     new SettingsModule(settings, additionalSettings, additionalSettingsFilter, settingsUpgraders);
             scriptModule.registerClusterSettingsListeners(scriptService, settingsModule.getClusterSettings());
-            final NetworkService networkService = new NetworkService(
-                getCustomNameResolvers(pluginsService.filterPlugins(DiscoveryPlugin.class)));
 
             List<ClusterPlugin> clusterPlugins = pluginsService.filterPlugins(ClusterPlugin.class);
             final ClusterService clusterService = new ClusterService(settings, settingsModule.getClusterSettings(), threadPool);
@@ -972,6 +975,17 @@ public class Node implements Closeable {
         final BoundTransportAddress boundTransportAddress, List<BootstrapCheck> bootstrapChecks) throws NodeValidationException {
     }
 
+    /**
+     * Hook for finalizing settings before creating the environment.
+     * @param settings the base settings to finalize
+     * @param networkService the networkService to use if needed
+     * @return finalized settings
+     */
+    protected Settings finalizeSettings(Settings settings, NetworkService networkService) {
+        return settings;
+    }
+
+
     /** Writes a file to the logs dir containing the ports for the given transport type */
     private void writePortsFile(String type, BoundTransportAddress boundAddress) {
         Path tmpPortsFile = environment.logsFile().resolve(type + ".ports.tmp");
@@ -1050,11 +1064,12 @@ public class Node implements Closeable {
     /**
      * Get Custom Name Resolvers list based on a Discovery Plugins list
      * @param discoveryPlugins Discovery plugins list
+     * @param settings
      */
-    private List<NetworkService.CustomNameResolver> getCustomNameResolvers(List<DiscoveryPlugin> discoveryPlugins) {
+    private List<NetworkService.CustomNameResolver> getCustomNameResolvers(List<DiscoveryPlugin> discoveryPlugins, Settings settings) {
         List<NetworkService.CustomNameResolver> customNameResolvers = new ArrayList<>();
         for (DiscoveryPlugin discoveryPlugin : discoveryPlugins) {
-            NetworkService.CustomNameResolver customNameResolver = discoveryPlugin.getCustomNameResolver(settings());
+            NetworkService.CustomNameResolver customNameResolver = discoveryPlugin.getCustomNameResolver(settings);
             if (customNameResolver != null) {
                 customNameResolvers.add(customNameResolver);
             }
