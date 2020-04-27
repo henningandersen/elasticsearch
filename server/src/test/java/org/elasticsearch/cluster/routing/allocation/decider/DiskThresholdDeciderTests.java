@@ -957,17 +957,10 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         diskThresholdDecider.canRemain(firstRouting, firstRoutingNode, routingAllocation);
         routingAllocation.debugDecision(true);
         Decision decision = diskThresholdDecider.canRemain(firstRouting, firstRoutingNode, routingAllocation);
-        assertWarnings("water mark checks are skipped for single data node, this will be removed in the future. " +
-            "Set [cluster.routing.allocation.disk.watermark.enable_for_single_data_node=true] to enable water mark checks");
 
         // Two shards should start happily
         assertThat(decision.type(), equalTo(Decision.Type.YES));
         assertThat(decision.getExplanation(), containsString("there is only a single data node present"));
-
-        // check that warnings are only emitted when debug is enabled.
-        routingAllocation.debugDecision(false);
-        assertThat(diskThresholdDecider.canRemain(firstRouting, firstRoutingNode, routingAllocation).type(), equalTo(Decision.Type.YES));
-
         ClusterInfoService cis = () -> {
             logger.info("--> calling fake getClusterInfo");
             return clusterInfo;

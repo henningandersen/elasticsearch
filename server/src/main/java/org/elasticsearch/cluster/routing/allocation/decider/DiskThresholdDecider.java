@@ -76,7 +76,6 @@ import static org.elasticsearch.cluster.routing.allocation.DiskThresholdSettings
 public class DiskThresholdDecider extends AllocationDecider {
 
     private static final Logger logger = LogManager.getLogger(DiskThresholdDecider.class);
-    private static final DeprecationLogger deprecationLogger = new DeprecationLogger(logger);
 
     public static final String NAME = "disk_threshold";
 
@@ -428,10 +427,6 @@ public class DiskThresholdDecider extends AllocationDecider {
         if (enableForSingleDataNode == false && allocation.nodes().getDataNodes().size() <= 1) {
             if (logger.isTraceEnabled()) {
                 logger.trace("only a single data node is present, allowing allocation");
-            }
-            if (allocation.debugDecision()) {
-                deprecationLogger.deprecatedAndMaybeLog("disk_single_data_node", "water mark checks are skipped for single data node, " +
-                    "this will be removed in the future. Set [{}=true] to enable water mark checks", ENABLE_FOR_SINGLE_DATA_NODE.getKey());
             }
             return allocation.decision(Decision.YES, NAME, "there is only a single data node present");
         }
