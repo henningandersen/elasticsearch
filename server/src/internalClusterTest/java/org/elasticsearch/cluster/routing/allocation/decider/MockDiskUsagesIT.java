@@ -7,7 +7,7 @@
  * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -34,6 +34,7 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.monitor.fs.FsInfo;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESIntegTestCase;
+import org.elasticsearch.test.InternalTestCluster;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import static org.elasticsearch.cluster.routing.allocation.DiskThresholdSettings.CLUSTER_ROUTING_ALLOCATION_DISK_FLOOD_STAGE_WATERMARK_SETTING;
@@ -409,6 +411,47 @@ public class MockDiskUsagesIT extends ESIntegTestCase {
             Arrays.stream(client().admin().indices().prepareStats("test").get().getShards())
             .filter(shardStats -> shardStats.getShardRouting().currentNodeId().equals(nodeWithTwoPaths)
                 && shardStats.getDataPath().startsWith(pathOverWatermark.toString()) == false).count(), equalTo(shardsOnGoodPath));
+    }
+
+    public void testDiskThresholdPreventsAllocation() throws Exception {
+        internalCluster().startMasterOnlyNodes(3);
+        List<String> nodes = internalCluster().startDataOnlyNodes(2);
+        String indexName = "test";
+        assertAcked(client().admin().indices().prepareCreate(indexName).setSettings(Settings.builder()
+            .put(IndexMetadata.SETTING_NUMBER_OF_SHARDS, 1).put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 1)));
+
+        indexRandom(randomBoolean(), randomBoolean(), randomBoolean(), IntStream.range(0, randomIntBetween(1, 100))
+            .mapToObj(n -> client().prepareIndex(indexName).setSource("num", n)).collect(Collectors.toList()));
+
+        ensureGreen(indexName);
+
+        assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(Settings.builder()
+            .put(CLUSTER_ROUTING_ALLOCATION_LOW_DISK_WATERMARK_SETTING.getKey(), "200b")
+            .put(CLUSTER_ROUTING_ALLOCATION_HIGH_DISK_WATERMARK_SETTING.getKey(), "100b")
+            .put(CLUSTER_ROUTING_ALLOCATION_DISK_FLOOD_STAGE_WATERMARK_SETTING.getKey(), "1b")
+        ));
+
+        ensureGreen(indexName);
+
+        MockInternalClusterInfoService clusterInfoService =
+            ((MockInternalClusterInfoService) internalCluster().getMasterNodeInstance(ClusterInfoService.class));
+
+        String subject = randomFrom(nodes);
+        clusterInfoService.diskUsageFunction = (discoveryNode, fsInfoPath) -> {
+            if (discoveryNode.getName().equals(subject)) {
+                return setDiskUsage(fsInfoPath, fsInfoPath.getTotal().getBytes(), randomLongBetween(198, 199));
+            } else {
+                return fsInfoPath;
+            }
+        };
+
+        clusterInfoService.refresh();
+        internalCluster().restartNode(subject, new InternalTestCluster.RestartCallback());
+        internalCluster().startDataOnlyNode();
+
+        // test fails here, since when the disk is above low threshold, we cannot allocate a replica here.
+        // is also not allocated on new node due to delayed allocation.
+        ensureGreen(indexName);
     }
 
     private Map<String, Integer> getShardCountByNodeId() {
