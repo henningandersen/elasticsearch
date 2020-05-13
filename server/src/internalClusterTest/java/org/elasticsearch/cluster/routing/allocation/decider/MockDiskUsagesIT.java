@@ -26,6 +26,7 @@ import org.elasticsearch.cluster.MockInternalClusterInfoService;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.routing.RoutingNode;
+import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.settings.Settings;
@@ -414,11 +415,16 @@ public class MockDiskUsagesIT extends ESIntegTestCase {
     }
 
     public void testDiskThresholdPreventsAllocation() throws Exception {
+        boolean delayedAllocation = randomBoolean();
+        logger.info("delayed: " + delayedAllocation);
         internalCluster().startMasterOnlyNodes(3);
         List<String> nodes = internalCluster().startDataOnlyNodes(2);
         String indexName = "test";
         assertAcked(client().admin().indices().prepareCreate(indexName).setSettings(Settings.builder()
-            .put(IndexMetadata.SETTING_NUMBER_OF_SHARDS, 1).put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 1)));
+            .put(IndexMetadata.SETTING_NUMBER_OF_SHARDS, 1).put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 1)
+            .put(UnassignedInfo.INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING.getKey(),
+                delayedAllocation ? "1m" : "0")
+        ));
 
         indexRandom(randomBoolean(), randomBoolean(), randomBoolean(), IntStream.range(0, randomIntBetween(1, 100))
             .mapToObj(n -> client().prepareIndex(indexName).setSource("num", n)).collect(Collectors.toList()));
@@ -434,20 +440,27 @@ public class MockDiskUsagesIT extends ESIntegTestCase {
         ensureGreen(indexName);
 
         MockInternalClusterInfoService clusterInfoService =
-            ((MockInternalClusterInfoService) internalCluster().getMasterNodeInstance(ClusterInfoService.class));
+            ((MockInternalClusterInfoService) internalCluster().getCurrentMasterNodeInstance(ClusterInfoService.class));
 
         String subject = randomFrom(nodes);
         clusterInfoService.diskUsageFunction = (discoveryNode, fsInfoPath) -> {
-            if (discoveryNode.getName().equals(subject)) {
-                return setDiskUsage(fsInfoPath, fsInfoPath.getTotal().getBytes(), randomLongBetween(198, 199));
+            // have to pretned all old nodes are full, because right after the node starts, we have no cluster info and therefore,
+            // the disk decider uses average of all nodes.
+            if (nodes.contains(discoveryNode.getName())) {
+                return setDiskUsage(fsInfoPath, fsInfoPath.getTotal().getBytes(), randomLongBetween(0, 199));
             } else {
                 return fsInfoPath;
             }
         };
+        clusterInfoService.shardSizeFunction = routing -> 0L;
 
         clusterInfoService.refresh();
         internalCluster().restartNode(subject, new InternalTestCluster.RestartCallback());
-        internalCluster().startDataOnlyNode();
+        clusterInfoService.refresh();
+
+        if (delayedAllocation) {
+            internalCluster().startDataOnlyNode();
+        }
 
         // test fails here, since when the disk is above low threshold, we cannot allocate a replica here.
         // is also not allocated on new node due to delayed allocation.
