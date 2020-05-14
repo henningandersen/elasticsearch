@@ -9,9 +9,11 @@ package org.elasticsearch.xpack.autoscaling;
 import org.elasticsearch.Build;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.admin.indices.rollover.MetadataRolloverService;
 import org.elasticsearch.cluster.NamedDiff;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.metadata.Metadata;
+import org.elasticsearch.cluster.metadata.MetadataCreateIndexService;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
@@ -36,6 +38,7 @@ import org.elasticsearch.xpack.autoscaling.action.TransportGetAutoscalingPolicyA
 import org.elasticsearch.xpack.autoscaling.action.TransportPutAutoscalingPolicyAction;
 import org.elasticsearch.xpack.autoscaling.decision.AlwaysAutoscalingDecider;
 import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecider;
+import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecisions;
 import org.elasticsearch.xpack.autoscaling.rest.RestDeleteAutoscalingPolicyHandler;
 import org.elasticsearch.xpack.autoscaling.rest.RestGetAutoscalingDecisionHandler;
 import org.elasticsearch.xpack.autoscaling.rest.RestGetAutoscalingPolicyHandler;
@@ -43,6 +46,7 @@ import org.elasticsearch.xpack.autoscaling.rest.RestPutAutoscalingPolicyHandler;
 import org.elasticsearch.xpack.core.XPackPlugin;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -80,6 +84,27 @@ public class Autoscaling extends Plugin implements ActionPlugin {
 
     public Autoscaling(final Settings settings) {
         this.enabled = AUTOSCALING_ENABLED_SETTING.get(settings);
+    }
+
+    @Override
+    public void addServices(ServiceSink sink) {
+        sink.add(DummyService::new);
+    }
+
+    private static class DummyService implements Service<DummyService.Input> {
+        private final MetadataRolloverService rolloverServer;
+        private final MetadataCreateIndexService createIndexService;
+
+        private static class Input {
+            // by convention this can only contain public service fields, verified by the plugin framework and optionally build.
+            public MetadataRolloverService rolloverService;
+            public MetadataCreateIndexService createIndexService;
+        }
+
+        public DummyService(Input input) {
+            this.rolloverServer = input.rolloverService;
+            this.createIndexService = input.createIndexService;
+        }
     }
 
     /**
