@@ -89,19 +89,29 @@ public class Autoscaling extends Plugin implements ActionPlugin {
         sink.add(DummyService::new);
     }
 
+    private static class AutoscalingDeciders implements PlugableList<AutoscalingDecider> {
+        public AutoscalingDeciders(PlugableList<AutoscalingDecider> copyFrom) {
+
+        }
+    }
+
+
     private static class DummyService implements Service<DummyService.Input> {
         private final MetadataRolloverService rolloverServer;
         private final MetadataCreateIndexService createIndexService;
+        private final PlugableList<AutoscalingDecider> deciders;
 
         private static class Input {
             // by convention this can only contain public service fields, verified by the plugin framework and optionally build.
             public MetadataRolloverService rolloverService;
             public MetadataCreateIndexService createIndexService;
+            public PlugableList<AutoscalingDecider> deciders;
         }
 
         public DummyService(Input input) {
             this.rolloverServer = input.rolloverService;
             this.createIndexService = input.createIndexService;
+            this.deciders = input.deciders;
         }
     }
 

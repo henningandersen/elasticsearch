@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * An extension point allowing to plug in custom functionality. This class has a number of extension points that are available to all
@@ -83,6 +84,9 @@ public abstract class Plugin implements Closeable {
 
     public void addServices(ServiceSink sink) {}
 
+    public interface PlugableList<T> {
+        public Stream<T> stream();
+    }
     /**
      * Returns components added by this plugin.
      *
