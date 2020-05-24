@@ -25,7 +25,7 @@ package org.elasticsearch.plugins;
  * This class provides a callback for extensible plugins to be informed of other plugins
  * which extend them.
  */
-public interface ExtensiblePlugin {
+public interface ExtensiblePlugin<T> {
 
     /**
      * Reload any SPI implementations from the given classloader.
@@ -36,5 +36,5 @@ public interface ExtensiblePlugin {
      * Be notified of an extension plugin, will be called once per plugin having extendedPlugins pointing to this plugin.
      * @param plugin the extending plugin
      */
-    default void extensionPlugin(Plugin plugin) {}
+    default void extendingPlugin(T plugin) {}
 }

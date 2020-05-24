@@ -86,7 +86,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class XPackPlugin extends XPackClientPlugin implements ExtensiblePlugin, RepositoryPlugin, EnginePlugin {
+public class XPackPlugin extends XPackClientPlugin implements ExtensiblePlugin<XPackSharedPlugin>, RepositoryPlugin, EnginePlugin {
 
     private static final Logger logger = LogManager.getLogger(XPackPlugin.class);
     private static final DeprecationLogger deprecationLogger = new DeprecationLogger(logger);
@@ -208,10 +208,8 @@ public class XPackPlugin extends XPackClientPlugin implements ExtensiblePlugin, 
     }
 
     @Override
-    public void extensionPlugin(Plugin plugin) {
-        if (plugin instanceof XPackSharedPlugin) {
-            sharedPlugins.add((XPackSharedPlugin) plugin);
-        }
+    public void extendingPlugin(XPackSharedPlugin plugin) {
+        sharedPlugins.add(plugin);
     }
 
     @Override

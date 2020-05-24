@@ -63,7 +63,7 @@ import java.util.stream.Collectors;
 /**
  * Container class for autoscaling functionality.
  */
-public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugin, AutoscalingPlugin {
+public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugin<AutoscalingPlugin>, AutoscalingPlugin {
     private static final Logger logger = LogManager.getLogger(AutoscalingPlugin.class);
     private static final Boolean AUTOSCALING_FEATURE_FLAG_REGISTERED;
 
@@ -196,10 +196,8 @@ public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugi
     }
 
     @Override
-    public void extensionPlugin(Plugin plugin) {
-        if (plugin instanceof AutoscalingPlugin) {
-            autoscalingPlugins.add((AutoscalingPlugin) plugin);
-        }
+    public void extendingPlugin(AutoscalingPlugin plugin) {
+        autoscalingPlugins.add((AutoscalingPlugin) plugin);
     }
 
     @Override

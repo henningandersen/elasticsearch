@@ -34,6 +34,7 @@ import org.elasticsearch.bootstrap.JarHell;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.FileSystemUtils;
+import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
@@ -43,12 +44,16 @@ import org.elasticsearch.threadpool.ExecutorBuilder;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,6 +64,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -527,9 +533,33 @@ public class PluginsService implements ReportingService<PluginsAndModules> {
         Plugin plugin = loadPlugin(pluginClass, settings, configPath);
         // need to do this transitively - to some extent because of the jarhell check, to be discussed.
         transitivePlugins(bundle.plugin.getExtendedPlugins(), lookup).map(loaded::get).map(ExtensiblePlugin.class::cast)
-            .forEach(extensiblePlugin -> extensiblePlugin.extensionPlugin(plugin));
+            .forEach(extensiblePlugin -> invokeExtendingPlugin(extensiblePlugin, plugin));
         loaded.put(name, plugin);
         return plugin;
+    }
+
+    private <T> void invokeExtendingPlugin(ExtensiblePlugin<T> extensiblePlugin, Plugin extendingPlugin) {
+        //noinspection unchecked
+        Arrays.stream(extensiblePlugin.getClass().getGenericInterfaces()).filter(t -> t instanceof ParameterizedType)
+            .map(ParameterizedType.class::cast).map(ParameterizedType::getActualTypeArguments).map(types -> types[0])
+            .findAny()
+            .map(type -> proxy((Class<T>) type, (T) extendingPlugin))
+            .ifPresentOrElse(extensiblePlugin::extendingPlugin,
+                () -> {
+                    // throw instead, at least in master.
+                    new DeprecationLogger(logger).deprecatedAndMaybeLog("extensible-plugin-missing-type",
+                        "Plugin [{}] lacks a specification of its extensible type", extendingPlugin);
+            });
+    }
+
+    private <T> T proxy(Class<T> c, T extendingPlugin) {
+        assert c.isInstance(extendingPlugin);
+
+        @SuppressWarnings("unchecked")
+        T proxy = (T) Proxy.newProxyInstance(c.getClassLoader(), new Class<?>[] { c },
+            (p, method, args) -> method.invoke(extendingPlugin, args));
+
+        return proxy;
     }
 
     private Stream<String> transitivePlugins(List<String> extendedPlugins, Map<String, Bundle> lookup) {

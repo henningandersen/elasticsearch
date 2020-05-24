@@ -117,10 +117,10 @@ public class LocalStateCompositeXPackPlugin extends XPackPlugin implements Scrip
         for (int i = 0; i < plugins.size(); ++i) {
             if (plugins.get(i) instanceof ExtensiblePlugin) {
                 ExtensiblePlugin extensiblePlugin = (ExtensiblePlugin) plugins.get(i);
-                plugins.subList(0, i).forEach(maybeExtension -> extensiblePlugin.extensionPlugin(maybeExtension));
+                plugins.subList(0, i).forEach(maybeExtension -> extensiblePlugin.extendingPlugin(maybeExtension));
             }
         }
-        plugins.forEach(maybeExtension -> extensionPlugin(maybeExtension));
+        plugins.forEach(maybeExtension -> extendingPlugin(maybeExtension));
         List<Object> components = new ArrayList<>();
         filterPlugins(Plugin.class).stream().forEach(p ->
             components.addAll(p.createComponents(client, clusterService, threadPool, resourceWatcherService, scriptService,
