@@ -8,9 +8,10 @@ package org.elasticsearch.xpack.autoscaling;
 
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.plugins.ExtensiblePlugin;
 import org.elasticsearch.xpack.core.LocalStateCompositeXPackPlugin;
 
-public class LocalStateAutoscaling extends LocalStateCompositeXPackPlugin {
+public class LocalStateAutoscaling extends LocalStateCompositeXPackPlugin implements ExtensiblePlugin {
 
     public LocalStateAutoscaling(final Settings settings) {
         super(settings, null);

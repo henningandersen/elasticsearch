@@ -5,6 +5,7 @@
  */
 package org.elasticsearch.xpack.core;
 
+import org.apache.lucene.util.SPIClassIterator;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.RequestValidators;
@@ -52,6 +53,7 @@ import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.ClusterPlugin;
 import org.elasticsearch.plugins.DiscoveryPlugin;
 import org.elasticsearch.plugins.EnginePlugin;
+import org.elasticsearch.plugins.ExtensiblePlugin;
 import org.elasticsearch.plugins.IngestPlugin;
 import org.elasticsearch.plugins.MapperPlugin;
 import org.elasticsearch.plugins.NetworkPlugin;
@@ -84,6 +86,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.ServiceConfigurationError;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -91,6 +94,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -464,9 +468,65 @@ public class LocalStateCompositeXPackPlugin extends XPackPlugin implements Scrip
                 .collect(Collectors.toList());
     }
 
-    private <T> List<T> filterPlugins(Class<T> type) {
+    protected <T> List<T> filterPlugins(Class<T> type) {
         return plugins.stream().filter(x -> type.isAssignableFrom(x.getClass())).map(p -> ((T)p))
                 .collect(Collectors.toList());
     }
 
+    /**
+     * To be called by sub plugins after initializing all plugins.
+     * @param extensiblePlugin the plugin holding the extension point
+     * @param extenders the plugins that extends the extensiblePlugin.
+     */
+    protected void loadExtensions(ExtensiblePlugin extensiblePlugin, Plugin... extenders) {
+        // we are in a flat class-loader.
+        for (Plugin extender : extenders) {
+            assert plugins.contains(extender);
+            assert extender.getClass().getClassLoader() == getClass().getClassLoader();
+        }
+        //noinspection SuspiciousMethodCalls
+        assert plugins.contains(extensiblePlugin);
+        assert extensiblePlugin.getClass().getClassLoader() == getClass().getClassLoader();
+        ExtensionLoader extensionLoader = new ExtensionLoader() {
+            @Override
+            public <T> Stream<T> loadExtensions(Class<T> extensionPointType) {
+                SPIClassIterator<T> classIterator = SPIClassIterator.get(extensionPointType, getClass().getClassLoader());
+                List<T> extensions = new ArrayList<>();
+                while (classIterator.hasNext()) {
+                    Class<? extends T> extensionClass = classIterator.next();
+                    extensions.add(createExtension(extensionClass, extenders, extensionPointType));
+                }
+                return extensions.stream();
+            }
+
+            private <T> T createExtension(Class<? extends T> extensionClass, Plugin[] extenders, Class<T> extensionPointType) {
+                try {
+                    List<NoSuchMethodException> suppressed = new ArrayList<>();
+                    for (Plugin extender : extenders) {
+                        try {
+                            Class<? extends Plugin> constructorArgType = extender.getClass();
+                            if (constructorArgType.isAnonymousClass()) {
+                                //noinspection unchecked
+                                constructorArgType = (Class<? extends Plugin>) constructorArgType.getSuperclass();
+                            }
+                            return extensionClass.getConstructor(constructorArgType).newInstance(extender);
+                        } catch (NoSuchMethodException e) {
+                            suppressed.add(e);
+                        }
+                    }
+                    try {
+                        return extensionClass.getConstructor().newInstance();
+                    } catch (NoSuchMethodException e) {
+                        suppressed.forEach(e::addSuppressed);
+                        throw e;
+                    }
+                } catch (Exception e) {
+                    throw new ServiceConfigurationError(
+                        "failed to load [" + extensionPointType.getName() + "] extension [" + extensionClass.getName() + "]", e
+                    );
+                }
+            }
+        };
+        extensiblePlugin.loadExtensions(extensionLoader);
+    }
 }

@@ -6,7 +6,6 @@
 package org.elasticsearch.xpack.ml;
 
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.monitor.os.OsStats;
 import org.elasticsearch.test.ESTestCase;
 
@@ -132,13 +131,6 @@ public class MachineLearningTests extends ESTestCase {
     }
 
     private MachineLearning createMachineLearning(Settings settings) {
-        XPackLicenseState licenseState = mock(XPackLicenseState.class);
-
-        return new MachineLearning(settings, null){
-            @Override
-            protected XPackLicenseState getLicenseState() {
-                return licenseState;
-            }
-        };
+        return new MachineLearning(settings, null);
     }
 }

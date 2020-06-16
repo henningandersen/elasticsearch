@@ -19,6 +19,7 @@ import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.autoscaling.Autoscaling;
 import org.elasticsearch.xpack.core.LocalStateCompositeXPackPlugin;
 import org.elasticsearch.xpack.core.rollup.action.GetRollupIndexCapsAction;
 import org.elasticsearch.xpack.core.ssl.SSLService;
@@ -37,6 +38,9 @@ public class LocalStateMachineLearning extends LocalStateCompositeXPackPlugin {
     public LocalStateMachineLearning(final Settings settings, final Path configPath) throws Exception {
         super(settings, configPath);
         LocalStateMachineLearning thisVar = this;
+
+        Autoscaling autoscaling = new Autoscaling(settings);
+        plugins.add(autoscaling);
         MachineLearning plugin = new MachineLearning(settings, configPath){
 
             @Override
@@ -70,6 +74,7 @@ public class LocalStateMachineLearning extends LocalStateCompositeXPackPlugin {
             protected XPackLicenseState getLicenseState() { return thisVar.getLicenseState(); }
         });
         plugins.add(new MockedRollupPlugin());
+        loadExtensions(autoscaling, plugins.get(1));
     }
 
     /**

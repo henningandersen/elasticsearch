@@ -6,13 +6,10 @@
 
 package org.elasticsearch.xpack.autoscaling.decision;
 
-import org.elasticsearch.common.io.stream.NamedWriteable;
-import org.elasticsearch.common.xcontent.ToXContentObject;
-
 /**
- * Represents an autoscaling decider, a component that determines whether or not to scale.
+ * A service to decide for a specific decider.
  */
-public interface AutoscalingDecider extends ToXContentObject, NamedWriteable {
+public interface AutoscalingDeciderService<D extends AutoscalingDecider> {
 
     /**
      * The name of the autoscaling decider.
@@ -20,4 +17,13 @@ public interface AutoscalingDecider extends ToXContentObject, NamedWriteable {
      * @return the name
      */
     String name();
+
+    /**
+     * Whether or not to scale based on the current state.
+     *
+     * @param context provides access to information about current state
+     * @return the autoscaling decision
+     */
+    AutoscalingDecision scale(D decider, AutoscalingDeciderContext context);
+
 }
