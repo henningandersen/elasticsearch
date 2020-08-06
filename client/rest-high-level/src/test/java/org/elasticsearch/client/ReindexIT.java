@@ -488,7 +488,8 @@ public class ReindexIT extends ESRestHighLevelClientTestCase {
             list.rethrowFailures("Finding tasks to rethrottle");
             List<TaskGroup> taskGroups =
                 list.getTaskGroups().stream()
-                    .filter(taskGroup -> taskGroup.getTaskInfo().getDescription().equals(description)).collect(Collectors.toList());
+                    .filter(taskGroup -> taskGroup.getTaskInfo().getDescription().equals(description))
+                    .collect(Collectors.toList());
             assertThat("tasks are left over from the last execution of this test",
                 taskGroups, hasSize(lessThan(2)));
             if (0 == taskGroups.size()) {
