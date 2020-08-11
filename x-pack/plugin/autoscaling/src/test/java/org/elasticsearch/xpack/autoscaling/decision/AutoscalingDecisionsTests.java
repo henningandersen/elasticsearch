@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class AutoscalingDecisionsTests extends AutoscalingTestCase {
 
     public void testAutoscalingDecisionsRejectsEmptyDecisions() {
-        final IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> new AutoscalingDecisions(List.of()));
+        final IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> new AutoscalingDecisions(tier, currentClusterCapacities, currentNodeCapacities, List.of()));
         assertThat(e.getMessage(), equalTo("decisions can not be empty"));
     }
 

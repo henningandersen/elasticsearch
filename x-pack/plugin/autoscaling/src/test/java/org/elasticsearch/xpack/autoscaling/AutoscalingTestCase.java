@@ -65,7 +65,7 @@ public abstract class AutoscalingTestCase extends ESTestCase {
             decisions.add(randomAutoscalingDecisionOfType(AutoscalingDecisionType.SCALE_UP));
         }
         Randomness.shuffle(decisions);
-        return new AutoscalingDecisions(decisions);
+        return new AutoscalingDecisions(tier, currentClusterCapacities, currentNodeCapacities, decisions);
     }
 
     public static SortedMap<String, AutoscalingDeciderConfiguration> randomAutoscalingDeciders() {

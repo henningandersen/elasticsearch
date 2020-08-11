@@ -7,7 +7,10 @@
 package org.elasticsearch.xpack.autoscaling.decision;
 
 import org.apache.lucene.util.SetOnce;
+import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.xpack.autoscaling.Autoscaling;
 import org.elasticsearch.xpack.autoscaling.AutoscalingMetadata;
@@ -15,11 +18,13 @@ import org.elasticsearch.xpack.autoscaling.policy.AutoscalingPolicy;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class AutoscalingDecisionService {
     private Map<String, AutoscalingDeciderService<? extends AutoscalingDeciderConfiguration>> deciderByName;
@@ -50,7 +55,6 @@ public class AutoscalingDecisionService {
     }
 
     public SortedMap<String, AutoscalingDecisions> decide(ClusterState state) {
-        AutoscalingDeciderContext context = () -> state;
 
         AutoscalingMetadata autoscalingMetadata = state.metadata().custom(AutoscalingMetadata.NAME);
         if (autoscalingMetadata != null) {
@@ -58,7 +62,7 @@ public class AutoscalingDecisionService {
                 autoscalingMetadata.policies()
                     .entrySet()
                     .stream()
-                    .map(e -> Tuple.tuple(e.getKey(), getDecision(e.getValue().policy(), context)))
+                    .map(e -> Tuple.tuple(e.getKey(), getDecision(e.getValue().policy(), state)))
                     .collect(Collectors.toMap(Tuple::v1, Tuple::v2))
             );
         } else {
@@ -66,13 +70,14 @@ public class AutoscalingDecisionService {
         }
     }
 
-    private AutoscalingDecisions getDecision(AutoscalingPolicy policy, AutoscalingDeciderContext context) {
+    private AutoscalingDecisions getDecision(AutoscalingPolicy policy, ClusterState state) {
+        AutoscalingDeciderContext context = () -> state;
         Collection<AutoscalingDecision> decisions = policy.deciders()
             .values()
             .stream()
             .map(decider -> getDecision(decider, context))
             .collect(Collectors.toList());
-        return new AutoscalingDecisions(decisions);
+        return new AutoscalingDecisions(tier, currentClusterCapacities, currentNodeCapacities, decisions);
     }
 
     private <T extends AutoscalingDeciderConfiguration> AutoscalingDecision getDecision(T decider, AutoscalingDeciderContext context) {
@@ -80,5 +85,49 @@ public class AutoscalingDecisionService {
         @SuppressWarnings("unchecked")
         AutoscalingDeciderService<T> service = (AutoscalingDeciderService<T>) deciderByName.get(decider.name());
         return service.scale(decider, context);
+    }
+
+    private static class DecisionAutoscalingDeciderContext implements AutoscalingDeciderContext {
+
+        private final String tier;
+        private final ClusterState state;
+        private final ClusterInfo clusterInfo;
+        private AutoscalingCapacity currentCapacity;
+        private boolean usedDirtyNumber;
+
+        public DecisionAutoscalingDeciderContext(String tier, ClusterState state, ClusterInfo clusterInfo) {
+            this.tier = tier;
+            Objects.requireNonNull(state);
+            Objects.requireNonNull(clusterInfo);
+            this.state = state;
+            this.clusterInfo = clusterInfo;
+        }
+
+        @Override
+        public ClusterState state() {
+            return state;
+        }
+
+        @Override
+        public AutoscalingCapacity currentCapacity() {
+            if (currentCapacity == null) {
+                currentCapacity = calculateCurrentCapacity();
+            }
+            return currentCapacity;
+        }
+
+        private AutoscalingCapacity calculateCurrentCapacity() {
+            StreamSupport.stream(state.nodes().spliterator(), false).filter(this::informalTierFilter)
+            return null;
+        }
+
+        private boolean informalTierFilter(DiscoveryNode discoveryNode) {
+            return discoveryNode.getRoles().stream().map(DiscoveryNodeRole::roleName).anyMatch(tier::equals)
+                || tier.equals(discoveryNode.getAttributes().get("data"));
+        }
+    }
+
+    private static String informalTier(DiscoveryNode discoveryNode) {
+        if
     }
 }

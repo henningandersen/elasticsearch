@@ -10,4 +10,5 @@ import org.elasticsearch.cluster.ClusterState;
 
 public interface AutoscalingDeciderContext {
     ClusterState state();
+    AutoscalingCapacity currentCapacity();
 }

@@ -48,7 +48,7 @@ public class AutoscalingDecisionServiceTests extends AutoscalingTestCase {
                     s -> Tuple.tuple(
                         s,
                         new AutoscalingDecisions(
-                            List.of(
+                                tier, currentClusterCapacities, currentNodeCapacities, List.of(
                                 new AutoscalingDecision(
                                     AlwaysAutoscalingDeciderConfiguration.NAME,
                                     AutoscalingDecisionType.SCALE_UP,

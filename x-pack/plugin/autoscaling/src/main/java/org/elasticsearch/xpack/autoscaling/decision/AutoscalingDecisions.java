@@ -15,19 +15,27 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Represents a collection of individual autoscaling decisions that can be aggregated into a single autoscaling decision.
+ * Represents a collection of individual autoscaling decisions that can be aggregated into a single autoscaling decision for a tier
  */
 public class AutoscalingDecisions implements ToXContent, Writeable {
 
+    private final String tier;
+    private final AutoscalingCapacity currentCapacity;
     private final Collection<AutoscalingDecision> decisions;
 
     public Collection<AutoscalingDecision> decisions() {
         return decisions;
     }
 
-    public AutoscalingDecisions(final Collection<AutoscalingDecision> decisions) {
+    public AutoscalingDecisions(final String tier, final AutoscalingCapacity currentCapacity,
+                                final Collection<AutoscalingDecision> decisions) {
+        Objects.requireNonNull(tier);
+        Objects.requireNonNull(currentCapacity);
+        this.tier = tier;
+        this.currentCapacity = currentCapacity;
         Objects.requireNonNull(decisions);
         if (decisions.isEmpty()) {
             throw new IllegalArgumentException("decisions can not be empty");
@@ -36,47 +44,56 @@ public class AutoscalingDecisions implements ToXContent, Writeable {
     }
 
     public AutoscalingDecisions(final StreamInput in) throws IOException {
+        this.tier = in.readString();
+        this.currentCapacity = new AutoscalingCapacity(in);
         this.decisions = in.readList(AutoscalingDecision::new);
     }
 
     @Override
     public void writeTo(final StreamOutput out) throws IOException {
+        out.writeString(tier);
+        currentCapacity.writeTo(out);
         out.writeCollection(decisions);
     }
 
     @Override
     public XContentBuilder toXContent(final XContentBuilder builder, final Params params) throws IOException {
         builder.startObject();
-        builder.field("decision", type());
+        builder.field("tier", tier);
+        AutoscalingCapacity requiredCapacity = requiredCapacity();
+        if (requiredCapacity != null) {
+            builder.field("required_capacity", requiredCapacity);
+        }
+        builder.field("current_capacity", currentCapacity);
         builder.array("decisions", decisions.toArray());
         builder.endObject();
         return builder;
     }
 
-    public AutoscalingDecisionType type() {
-        if (decisions.stream().anyMatch(p -> p.type() == AutoscalingDecisionType.SCALE_UP)) {
-            // if any deciders say to scale up
-            return AutoscalingDecisionType.SCALE_UP;
-        } else if (decisions.stream().allMatch(p -> p.type() == AutoscalingDecisionType.SCALE_DOWN)) {
-            // if all deciders say to scale down
-            return AutoscalingDecisionType.SCALE_DOWN;
-        } else {
-            // otherwise, do not scale
-            return AutoscalingDecisionType.NO_SCALE;
+    private AutoscalingCapacity requiredCapacity() {
+        if (decisions.isEmpty() || decisions.stream().map(AutoscalingDecision::requiredCapacity).anyMatch(Objects::isNull)) {
+            // any undetermined decider cancels out any decision making.
+            return null;
         }
+        Optional<AutoscalingCapacity> result = decisions.stream()
+            .map(AutoscalingDecision::requiredCapacity)
+            .reduce(AutoscalingCapacity::upperBound);
+        assert result.isPresent();
+        return result.get();
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final AutoscalingDecisions that = (AutoscalingDecisions) o;
-        return decisions.equals(that.decisions);
+        AutoscalingDecisions that = (AutoscalingDecisions) o;
+        return tier.equals(that.tier) &&
+            currentCapacity.equals(that.currentCapacity) &&
+            decisions.equals(that.decisions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(decisions);
+        return Objects.hash(tier, currentCapacity, decisions);
     }
-
 }

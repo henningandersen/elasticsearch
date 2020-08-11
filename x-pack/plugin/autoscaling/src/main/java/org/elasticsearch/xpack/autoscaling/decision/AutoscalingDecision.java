@@ -6,6 +6,7 @@
 
 package org.elasticsearch.xpack.autoscaling.decision;
 
+import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -16,70 +17,67 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * Represents an autoscaling decision.
+ * Represents an autoscaling decision from a single decider
  */
 public class AutoscalingDecision implements ToXContent, Writeable {
 
-    private final String name;
+    private final AutoscalingCapacity requiredCapacity;
+    private final Details details;
 
-    public String name() {
-        return name;
+    public interface Details extends ToXContent, NamedWriteable {
+        String getSummary();
     }
 
-    private final AutoscalingDecisionType type;
-
-    public AutoscalingDecisionType type() {
-        return type;
+    public AutoscalingDecision(AutoscalingCapacity requiredCapacity,
+                               AutoscalingCapacity.StorageAndMemory node,
+                               Details details) {
+        this.requiredCapacity = requiredCapacity;
+        this.details = details;
     }
 
-    private final String reason;
-
-    public String reason() {
-        return reason;
-    }
-
-    public AutoscalingDecision(final String name, final AutoscalingDecisionType type, final String reason) {
-        this.name = Objects.requireNonNull(name);
-        this.type = Objects.requireNonNull(type);
-        this.reason = Objects.requireNonNull(reason);
-    }
-
-    public AutoscalingDecision(final StreamInput in) throws IOException {
-        this.name = in.readString();
-        this.type = AutoscalingDecisionType.readFrom(in);
-        this.reason = in.readString();
+    public AutoscalingDecision(StreamInput in) throws IOException {
+        this.requiredCapacity = in.readOptionalWriteable(AutoscalingCapacity::new);
+        this.details = in.readOptionalNamedWriteable(Details.class);
     }
 
     @Override
-    public void writeTo(final StreamOutput out) throws IOException {
-        out.writeString(name);
-        type.writeTo(out);
-        out.writeString(reason);
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeOptionalWriteable(requiredCapacity);
+        out.writeOptionalNamedWriteable(details);
+    }
+
+    public AutoscalingCapacity requiredCapacity() {
+        return requiredCapacity;
     }
 
     @Override
-    public XContentBuilder toXContent(final XContentBuilder builder, final ToXContent.Params params) throws IOException {
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
         {
-            builder.field("name", name);
-            builder.field("type", type);
-            builder.field("reason", reason);
+            if (requiredCapacity != null) {
+                builder.field("required_capacity", requiredCapacity);
+            }
+
+            if (details != null) {
+                builder.field("summary", details.getSummary());
+                builder.field("details", details);
+            }
         }
         builder.endObject();
         return builder;
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final AutoscalingDecision that = (AutoscalingDecision) o;
-        return name.equals(that.name) && type == that.type && reason.equals(that.reason);
+        AutoscalingDecision that = (AutoscalingDecision) o;
+        return Objects.equals(requiredCapacity, that.requiredCapacity) &&
+            Objects.equals(details, that.details);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, type, reason);
+        return Objects.hash(requiredCapacity, details);
     }
-
 }
