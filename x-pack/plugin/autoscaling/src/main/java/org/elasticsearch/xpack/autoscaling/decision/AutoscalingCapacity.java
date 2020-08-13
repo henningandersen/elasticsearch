@@ -24,8 +24,8 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
     private final StorageAndMemory node;
 
     public static class StorageAndMemory implements ToXContent, Writeable {
-        public final ByteSizeValue storage;
-        public final ByteSizeValue memory;
+        private final ByteSizeValue storage;
+        private final ByteSizeValue memory;
 
         public StorageAndMemory(ByteSizeValue storage, ByteSizeValue memory) {
             this.storage = storage;
@@ -35,6 +35,14 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
         public StorageAndMemory(StreamInput in) throws IOException {
             this.storage = in.readOptionalWriteable(ByteSizeValue::new);
             this.memory = in.readOptionalWriteable(ByteSizeValue::new);
+        }
+
+        public ByteSizeValue storage() {
+            return storage;
+        }
+
+        public ByteSizeValue memory() {
+            return memory;
         }
 
         @Override
@@ -61,6 +69,17 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
             }
 
             return new StorageAndMemory(max(sm1.memory, sm2.memory), max(sm1.storage, sm2.storage));
+        }
+
+        public static StorageAndMemory sum(StorageAndMemory sm1, StorageAndMemory sm2) {
+            if (sm1 == null) {
+                return sm2;
+            }
+            if (sm2 == null) {
+                return sm1;
+            }
+
+            return new StorageAndMemory(sm1.storage + sm2.storage, sm1.memory + sm2.memory, );
         }
 
         private static ByteSizeValue max(ByteSizeValue v1, ByteSizeValue v2) {

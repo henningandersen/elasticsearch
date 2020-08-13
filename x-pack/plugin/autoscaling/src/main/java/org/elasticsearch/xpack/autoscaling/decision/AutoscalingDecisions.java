@@ -64,7 +64,8 @@ public class AutoscalingDecisions implements ToXContent, Writeable {
         if (requiredCapacity != null) {
             builder.field("required_capacity", requiredCapacity);
         }
-        builder.field("current_capacity", currentCapacity);
+        // todo: output current_capacity when it is populated correctly.
+        // builder.field("current_capacity", currentCapacity);
         builder.array("decisions", decisions.toArray());
         builder.endObject();
         return builder;

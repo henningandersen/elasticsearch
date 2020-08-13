@@ -9,9 +9,12 @@ package org.elasticsearch.xpack.autoscaling.decision;
 import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.DiskUsage;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.xpack.autoscaling.Autoscaling;
 import org.elasticsearch.xpack.autoscaling.AutoscalingMetadata;
 import org.elasticsearch.xpack.autoscaling.policy.AutoscalingPolicy;
@@ -54,7 +57,7 @@ public class AutoscalingDecisionService {
         }
     }
 
-    public SortedMap<String, AutoscalingDecisions> decide(ClusterState state) {
+    public SortedMap<String, AutoscalingDecisions> decide(ClusterState state, ClusterInfo clusterInfo) {
 
         AutoscalingMetadata autoscalingMetadata = state.metadata().custom(AutoscalingMetadata.NAME);
         if (autoscalingMetadata != null) {
@@ -62,7 +65,7 @@ public class AutoscalingDecisionService {
                 autoscalingMetadata.policies()
                     .entrySet()
                     .stream()
-                    .map(e -> Tuple.tuple(e.getKey(), getDecision(e.getValue().policy(), state)))
+                    .map(e -> Tuple.tuple(e.getKey(), getDecision(e.getValue().policy(), state, clusterInfo)))
                     .collect(Collectors.toMap(Tuple::v1, Tuple::v2))
             );
         } else {
@@ -70,14 +73,14 @@ public class AutoscalingDecisionService {
         }
     }
 
-    private AutoscalingDecisions getDecision(AutoscalingPolicy policy, ClusterState state) {
-        AutoscalingDeciderContext context = () -> state;
+    private AutoscalingDecisions getDecision(AutoscalingPolicy policy, ClusterState state, ClusterInfo clusterInfo) {
+        DecisionAutoscalingDeciderContext context = new DecisionAutoscalingDeciderContext(policy.name(), state, clusterInfo);
         Collection<AutoscalingDecision> decisions = policy.deciders()
             .values()
             .stream()
             .map(decider -> getDecision(decider, context))
             .collect(Collectors.toList());
-        return new AutoscalingDecisions(tier, currentClusterCapacities, currentNodeCapacities, decisions);
+        return new AutoscalingDecisions(context.tier, context.calculateCurrentCapacity(), decisions);
     }
 
     private <T extends AutoscalingDeciderConfiguration> AutoscalingDecision getDecision(T decider, AutoscalingDeciderContext context) {
@@ -108,26 +111,46 @@ public class AutoscalingDecisionService {
             return state;
         }
 
-        @Override
-        public AutoscalingCapacity currentCapacity() {
-            if (currentCapacity == null) {
-                currentCapacity = calculateCurrentCapacity();
-            }
-            return currentCapacity;
-        }
-
         private AutoscalingCapacity calculateCurrentCapacity() {
             StreamSupport.stream(state.nodes().spliterator(), false).filter(this::informalTierFilter)
+                .map(n -> storageAndMemoryFor(n))
+                .map(c -> Tuple.tuple(c, c))
+                .reduce((t1, t2) -> Tuple.tuple(AutoscalingCapacity.StorageAndMemory.max(t1.v1(), t2.v1(),
+                    ))
             return null;
+        }
+
+        private AutoscalingCapacity.StorageAndMemory storageAndMemoryFor(DiscoveryNode node) {
+            long storage = Math.max(totalStorage(clusterInfo.getNodeLeastAvailableDiskUsages(), node),
+                totalStorage(clusterInfo.getNodeMostAvailableDiskUsages(), node));
+
+            // todo: also capture memory across cluster.
+            return new AutoscalingCapacity.StorageAndMemory(storage == -1 ? ByteSizeValue.ZERO : new ByteSizeValue(storage),
+                ByteSizeValue.ZERO) {
+                @Override
+                public ByteSizeValue storage() {
+                    if (storage == -1) {
+                        usedDirtyNumber = true;
+                    }
+                    return super.storage();
+                }
+
+                @Override
+                public ByteSizeValue memory() {
+                    usedDirtyNumber = true;
+                    return super.memory();
+                }
+            };
+        }
+
+        private long totalStorage(ImmutableOpenMap<String, DiskUsage> diskUsages, DiscoveryNode node) {
+            DiskUsage diskUsage = diskUsages.get(node.getId());
+            return diskUsage != null ? diskUsage.getTotalBytes() : -1;
         }
 
         private boolean informalTierFilter(DiscoveryNode discoveryNode) {
             return discoveryNode.getRoles().stream().map(DiscoveryNodeRole::roleName).anyMatch(tier::equals)
                 || tier.equals(discoveryNode.getAttributes().get("data"));
         }
-    }
-
-    private static String informalTier(DiscoveryNode discoveryNode) {
-        if
     }
 }
