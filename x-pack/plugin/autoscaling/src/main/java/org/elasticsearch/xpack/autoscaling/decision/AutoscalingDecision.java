@@ -22,32 +22,40 @@ import java.util.Objects;
 public class AutoscalingDecision implements ToXContent, Writeable {
 
     private final AutoscalingCapacity requiredCapacity;
-    private final Details details;
+    private final Reason reason;
 
-    public interface Details extends ToXContent, NamedWriteable {
+    public interface Reason extends ToXContent, NamedWriteable {
         String getSummary();
     }
 
+    /**
+     * Create a new decision with required capacity.
+     * @param requiredCapacity required capacity or null if no decision can be made due to insufficient information.
+     * @param reason details/data behind the decision
+     */
     public AutoscalingDecision(AutoscalingCapacity requiredCapacity,
-                               AutoscalingCapacity.StorageAndMemory node,
-                               Details details) {
+                               Reason reason) {
         this.requiredCapacity = requiredCapacity;
-        this.details = details;
+        this.reason = reason;
     }
 
     public AutoscalingDecision(StreamInput in) throws IOException {
         this.requiredCapacity = in.readOptionalWriteable(AutoscalingCapacity::new);
-        this.details = in.readOptionalNamedWriteable(Details.class);
+        this.reason = in.readOptionalNamedWriteable(Reason.class);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeOptionalWriteable(requiredCapacity);
-        out.writeOptionalNamedWriteable(details);
+        out.writeOptionalNamedWriteable(reason);
     }
 
     public AutoscalingCapacity requiredCapacity() {
         return requiredCapacity;
+    }
+
+    public Reason reason() {
+        return reason;
     }
 
     @Override
@@ -58,9 +66,9 @@ public class AutoscalingDecision implements ToXContent, Writeable {
                 builder.field("required_capacity", requiredCapacity);
             }
 
-            if (details != null) {
-                builder.field("summary", details.getSummary());
-                builder.field("details", details);
+            if (reason != null) {
+                builder.field("reason_summary", reason.getSummary());
+                builder.field("reason_details", reason);
             }
         }
         builder.endObject();
@@ -73,11 +81,11 @@ public class AutoscalingDecision implements ToXContent, Writeable {
         if (o == null || getClass() != o.getClass()) return false;
         AutoscalingDecision that = (AutoscalingDecision) o;
         return Objects.equals(requiredCapacity, that.requiredCapacity) &&
-            Objects.equals(details, that.details);
+            Objects.equals(reason, that.reason);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(requiredCapacity, details);
+        return Objects.hash(requiredCapacity, reason);
     }
 }

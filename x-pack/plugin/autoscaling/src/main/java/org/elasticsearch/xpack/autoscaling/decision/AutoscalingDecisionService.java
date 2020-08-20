@@ -33,7 +33,7 @@ public class AutoscalingDecisionService {
     private Map<String, AutoscalingDeciderService<? extends AutoscalingDeciderConfiguration>> deciderByName;
 
     public AutoscalingDecisionService(Set<AutoscalingDeciderService<? extends AutoscalingDeciderConfiguration>> deciders) {
-        assert deciders.size() >= 1; // always have always
+        assert deciders.size() >= 1; // always have fixed
         this.deciderByName = deciders.stream().collect(Collectors.toMap(AutoscalingDeciderService::name, Function.identity()));
     }
 
@@ -80,7 +80,7 @@ public class AutoscalingDecisionService {
             .stream()
             .map(decider -> getDecision(decider, context))
             .collect(Collectors.toList());
-        return new AutoscalingDecisions(context.tier, context.calculateCurrentCapacity(), decisions);
+        return new AutoscalingDecisions(context.tier, context.currentCapacity, decisions);
     }
 
     private <T extends AutoscalingDeciderConfiguration> AutoscalingDecision getDecision(T decider, AutoscalingDeciderContext context) {
@@ -95,8 +95,8 @@ public class AutoscalingDecisionService {
         private final String tier;
         private final ClusterState state;
         private final ClusterInfo clusterInfo;
-        private AutoscalingCapacity currentCapacity;
-        private boolean usedDirtyNumber;
+        private final AutoscalingCapacity currentCapacity;
+        private final boolean currentCapacityAccurate;
 
         public DecisionAutoscalingDeciderContext(String tier, ClusterState state, ClusterInfo clusterInfo) {
             this.tier = tier;
@@ -104,6 +104,8 @@ public class AutoscalingDecisionService {
             Objects.requireNonNull(clusterInfo);
             this.state = state;
             this.clusterInfo = clusterInfo;
+            this.currentCapacity = calculateCurrentCapacity();
+            this.currentCapacityAccurate = calculateCurrentCapacityAccurate();
         }
 
         @Override
@@ -111,13 +113,33 @@ public class AutoscalingDecisionService {
             return state;
         }
 
+        @Override
+        public AutoscalingCapacity currentCapacity() {
+            if (currentCapacityAccurate) {
+                return currentCapacity;
+            } else {
+                return null;
+            }
+        }
+
+        private boolean calculateCurrentCapacityAccurate() {
+            return StreamSupport.stream(state.nodes().spliterator(), false)
+                .filter(this::informalTierFilter)
+                .allMatch(this::nodeHasAccurateCapacity);
+        }
+
+        private boolean nodeHasAccurateCapacity(DiscoveryNode node) {
+            return totalStorage(clusterInfo.getNodeLeastAvailableDiskUsages(), node) >= 0
+                && totalStorage(clusterInfo.getNodeMostAvailableDiskUsages(), node) >= 0;
+        }
+
         private AutoscalingCapacity calculateCurrentCapacity() {
-            StreamSupport.stream(state.nodes().spliterator(), false).filter(this::informalTierFilter)
-                .map(n -> storageAndMemoryFor(n))
-                .map(c -> Tuple.tuple(c, c))
-                .reduce((t1, t2) -> Tuple.tuple(AutoscalingCapacity.StorageAndMemory.max(t1.v1(), t2.v1(),
-                    ))
-            return null;
+            return StreamSupport.stream(state.nodes().spliterator(), false).filter(this::informalTierFilter)
+                .map(this::storageAndMemoryFor)
+                .map(c -> new AutoscalingCapacity(c, c))
+                .reduce((c1, c2) -> new AutoscalingCapacity(AutoscalingCapacity.StorageAndMemory.sum(c1.tier(), c2.tier()),
+                    AutoscalingCapacity.StorageAndMemory.max(c1.node(), c2.node())
+                )).orElse(AutoscalingCapacity.ZERO);
         }
 
         private AutoscalingCapacity.StorageAndMemory storageAndMemoryFor(DiscoveryNode node) {
@@ -126,21 +148,7 @@ public class AutoscalingDecisionService {
 
             // todo: also capture memory across cluster.
             return new AutoscalingCapacity.StorageAndMemory(storage == -1 ? ByteSizeValue.ZERO : new ByteSizeValue(storage),
-                ByteSizeValue.ZERO) {
-                @Override
-                public ByteSizeValue storage() {
-                    if (storage == -1) {
-                        usedDirtyNumber = true;
-                    }
-                    return super.storage();
-                }
-
-                @Override
-                public ByteSizeValue memory() {
-                    usedDirtyNumber = true;
-                    return super.memory();
-                }
-            };
+                ByteSizeValue.ZERO);
         }
 
         private long totalStorage(ImmutableOpenMap<String, DiskUsage> diskUsages, DiscoveryNode node) {

@@ -64,14 +64,13 @@ public class AutoscalingDecisions implements ToXContent, Writeable {
         if (requiredCapacity != null) {
             builder.field("required_capacity", requiredCapacity);
         }
-        // todo: output current_capacity when it is populated correctly.
-        // builder.field("current_capacity", currentCapacity);
+        builder.field("current_capacity", currentCapacity);
         builder.array("decisions", decisions.toArray());
         builder.endObject();
         return builder;
     }
 
-    private AutoscalingCapacity requiredCapacity() {
+    public AutoscalingCapacity requiredCapacity() {
         if (decisions.isEmpty() || decisions.stream().map(AutoscalingDecision::requiredCapacity).anyMatch(Objects::isNull)) {
             // any undetermined decider cancels out any decision making.
             return null;
@@ -81,6 +80,14 @@ public class AutoscalingDecisions implements ToXContent, Writeable {
             .reduce(AutoscalingCapacity::upperBound);
         assert result.isPresent();
         return result.get();
+    }
+
+    public AutoscalingCapacity currentCapacity() {
+        return currentCapacity;
+    }
+
+    public String tier() {
+        return tier;
     }
 
     @Override

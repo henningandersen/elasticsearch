@@ -6,6 +6,7 @@
 
 package org.elasticsearch.xpack.autoscaling.decision;
 
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -14,20 +15,25 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.function.BiFunction;
 
 /**
  * Represents current/required capacity of a single tier.
  */
 public class AutoscalingCapacity implements ToXContent, Writeable {
 
-    private final StorageAndMemory cluster;
+    private final StorageAndMemory tier;
     private final StorageAndMemory node;
 
     public static class StorageAndMemory implements ToXContent, Writeable {
         private final ByteSizeValue storage;
         private final ByteSizeValue memory;
 
+        public static final StorageAndMemory ZERO = new StorageAndMemory(new ByteSizeValue(0), new ByteSizeValue(0));
+
         public StorageAndMemory(ByteSizeValue storage, ByteSizeValue memory) {
+            assert storage != null || memory != null;
             this.storage = storage;
             this.memory = memory;
         }
@@ -48,10 +54,15 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
-            builder.field("storage", storage.getBytes());
-            builder.field("memory", memory.getBytes());
+            builder.field("storage", storage);
+            builder.field("memory", memory);
             builder.endObject();
             return builder;
+        }
+
+        @Override
+        public boolean isFragment() {
+            return false;
         }
 
         @Override
@@ -68,7 +79,7 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
                 return sm1;
             }
 
-            return new StorageAndMemory(max(sm1.memory, sm2.memory), max(sm1.storage, sm2.storage));
+            return new StorageAndMemory(max(sm1.storage, sm2.storage), max(sm1.memory, sm2.memory));
         }
 
         public static StorageAndMemory sum(StorageAndMemory sm1, StorageAndMemory sm2) {
@@ -79,7 +90,7 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
                 return sm1;
             }
 
-            return new StorageAndMemory(sm1.storage + sm2.storage, sm1.memory + sm2.memory, );
+            return new StorageAndMemory(add(sm1.storage, sm2.storage), add(sm1.memory,sm2.memory));
         }
 
         private static ByteSizeValue max(ByteSizeValue v1, ByteSizeValue v2) {
@@ -92,29 +103,81 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
 
             return v1.compareTo(v2) < 0 ? v2 : v1;
         }
+
+        private static ByteSizeValue add(ByteSizeValue v1, ByteSizeValue v2) {
+            if (v1 == null) {
+                return v2;
+            }
+            if (v2 == null) {
+                return v1;
+            }
+
+            return new ByteSizeValue(v1.getBytes() + v2.getBytes());
+        }
+
+        /**
+         * Add the amount of storage and return a new {@code StorageAndMemory}, preserving whether storage
+         * was filled in.
+         */
+        public StorageAndMemory addStorage(ByteSizeValue amount) {
+            assert amount != null;
+            if (storage == null) {
+                return this;
+            }
+            return new StorageAndMemory(add(storage, amount), memory);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            StorageAndMemory that = (StorageAndMemory) o;
+            return Objects.equals(storage, that.storage) &&
+                Objects.equals(memory, that.memory);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(storage, memory);
+        }
+
+        @Override
+        public String toString() {
+            return Strings.toString(this);
+        }
     }
 
-    public AutoscalingCapacity(StorageAndMemory cluster, StorageAndMemory node) {
-        assert cluster != null : "Cannot provide capacity without specifying cluster level capacity";
+    public static final AutoscalingCapacity ZERO = new AutoscalingCapacity(StorageAndMemory.ZERO, StorageAndMemory.ZERO);
+
+    public AutoscalingCapacity(StorageAndMemory tier, StorageAndMemory node) {
+        assert tier != null : "Cannot provide capacity without specifying cluster level capacity";
         assert node == null || node.memory == null
             // implies
-            || cluster.memory != null : "Cannot provide node memory without cluster memory";
+            || tier.memory != null : "Cannot provide node memory without cluster memory";
         assert node == null || node.storage == null
             // implies
-            || cluster.storage != null : "Cannot provide node memory without cluster memory";
+            || tier.storage != null : "Cannot provide node memory without cluster memory";
 
-        this.cluster = cluster;
+        this.tier = tier;
         this.node = node;
     }
 
     public AutoscalingCapacity(StreamInput in) throws IOException {
-        this.cluster = new StorageAndMemory(in);
+        this.tier = new StorageAndMemory(in);
         this.node = in.readOptionalWriteable(StorageAndMemory::new);
+    }
+
+    public StorageAndMemory tier() {
+        return tier;
+    }
+
+    public StorageAndMemory node() {
+        return node;
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        cluster.writeTo(out);
+        tier.writeTo(out);
         out.writeOptionalWriteable(node);
     }
 
@@ -124,12 +187,72 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
         if (node != null) {
             builder.field("node", node);
         }
-        builder.field("cluster", cluster);
+        builder.field("tier", tier);
         builder.endObject();
         return builder;
     }
 
+    @Override
+    public boolean isFragment() {
+        return false;
+    }
+
     public static AutoscalingCapacity upperBound(AutoscalingCapacity c1, AutoscalingCapacity c2) {
-        return new AutoscalingCapacity(StorageAndMemory.max(c1.cluster, c2.cluster), StorageAndMemory.max(c1.node, c2.node));
+        return new AutoscalingCapacity(StorageAndMemory.max(c1.tier, c2.tier), StorageAndMemory.max(c1.node, c2.node));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AutoscalingCapacity capacity = (AutoscalingCapacity) o;
+        return tier.equals(capacity.tier) &&
+            Objects.equals(node, capacity.node);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tier, node);
+    }
+
+    @Override
+    public String toString() {
+        return Strings.toString(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private StorageAndMemory tier;
+        private StorageAndMemory node;
+        public Builder() {
+        }
+
+        public Builder tier(Long storage, Long memory) {
+            return tier(byteSizeValue(storage), byteSizeValue(memory));
+        }
+
+        public Builder tier(ByteSizeValue storage, ByteSizeValue memory) {
+            this.tier = new StorageAndMemory(storage, memory);
+            return this;
+        }
+
+        public Builder node(Long storage, Long memory) {
+            return node(byteSizeValue(storage), byteSizeValue(memory));
+        }
+        public Builder node(ByteSizeValue storage, ByteSizeValue memory) {
+            this.node = new StorageAndMemory(storage, memory);
+            return this;
+        }
+
+        public AutoscalingCapacity build() {
+            return new AutoscalingCapacity(tier, node);
+        }
+
+        private ByteSizeValue byteSizeValue(Long memory) {
+            return memory == null ? null : new ByteSizeValue(memory);
+        }
     }
 }

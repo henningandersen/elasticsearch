@@ -89,12 +89,8 @@ public class GetAutoscalingDecisionAction extends ActionType<GetAutoscalingDecis
             {
                 builder.startArray("decisions");
                 {
-                    for (final Map.Entry<String, AutoscalingDecisions> decision : decisions.entrySet()) {
-                        builder.startObject();
-                        {
-                            builder.field(decision.getKey(), decision.getValue());
-                        }
-                        builder.endObject();
+                    for (final AutoscalingDecisions decision : decisions.values()) {
+                        decision.toXContent(builder, params);
                     }
                 }
                 builder.endArray();
