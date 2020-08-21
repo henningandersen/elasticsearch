@@ -13,7 +13,10 @@
         body:
           policy:
             deciders:
-              always: {}
+              fixed:
+                storage: 1337
+                memory: 7331
+                nodes: true
 
   - match: { "acknowledged": true }
 
@@ -21,9 +24,16 @@
       autoscaling.get_autoscaling_decision: {}
 
   - match: { tiers.0.tier: my_autoscaling_policy }
-  - match: { decisions.0.my_autoscaling_policy.decisions.0.name: always }
-  - match: { decisions.0.my_autoscaling_policy.decisions.0.type: scale_up }
-  - match: { decisions.0.my_autoscaling_policy.decisions.0.reason: always }
+  - match: { tiers.0.required_capacity.tier.storage: 1337 }
+  - match: { tiers.0.required_capacity.tier.storage: 7331 }
+  - match: { tiers.0.required_capacity.node.storage: 1337 }
+  - match: { tiers.0.required_capacity.node.storage: 7331 }
+  - match: { decisions.0.my_autoscaling_policy.decisions.0.name: fixed }
+  - match: { decisions.0.my_autoscaling_policy.decisions.0.required_capacity.tier.storage: 1337 }
+  - match: { decisions.0.my_autoscaling_policy.decisions.0.required_capacity.tier.memory: 7331 }
+  - match: { decisions.0.my_autoscaling_policy.decisions.0.required_capacity.node.storage: 1337 }
+  - match: { decisions.0.my_autoscaling_policy.decisions.0.required_capacity.node.memory: 7331 }
+  - match: { decisions.0.my_autoscaling_policy.decisions.0.reason_summary: fixed }
 
   # test cleanup
   - do:

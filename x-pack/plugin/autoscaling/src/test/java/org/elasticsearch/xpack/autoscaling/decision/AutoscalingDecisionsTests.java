@@ -26,8 +26,6 @@ public class AutoscalingDecisionsTests extends AutoscalingTestCase {
         assertThat(e.getMessage(), equalTo("decisions can not be empty"));
     }
 
-    // todo: add summation tests.
-
     public void testRequiredCapacity() {
         AutoscalingCapacity single = randomBoolean() ? randomAutoscalingCapacity() : null;
         verifyRequiredCapacity(single, single);
@@ -48,14 +46,22 @@ public class AutoscalingDecisionsTests extends AutoscalingTestCase {
         Randomness.shuffle(autoscalingCapacities);
         verifyRequiredCapacity(large, autoscalingCapacities.toArray(AutoscalingCapacity[]::new));
 
-        for (Consumer<>)
         AutoscalingCapacity largerStorage = randomCapacity(node, true, false, 2000, 3000);
-        autoscalingCapacities.add(largerStorage);
+        verifySingleMetricLarger(node, largerStorage, large, autoscalingCapacities, largerStorage);
+
+        AutoscalingCapacity largerMemory = randomCapacity(node, false, true, 2000, 3000);
+        verifySingleMetricLarger(node, large, largerMemory, autoscalingCapacities, largerMemory);
+    }
+
+    private void verifySingleMetricLarger(boolean node, AutoscalingCapacity expectedStorage, AutoscalingCapacity expectedMemory,
+                                          List<AutoscalingCapacity> other, AutoscalingCapacity larger) {
+        List<AutoscalingCapacity> autoscalingCapacities = new ArrayList<>(other);
+        autoscalingCapacities.add(larger);
         Randomness.shuffle(autoscalingCapacities);
-        AutoscalingCapacity.Builder expectedBuilder = AutoscalingCapacity.builder().tier(largerStorage.tier().storage(),
-            large.tier().memory());
+        AutoscalingCapacity.Builder expectedBuilder = AutoscalingCapacity.builder().tier(expectedStorage.tier().storage(),
+            expectedMemory.tier().memory());
         if (node) {
-            expectedBuilder.node(largerStorage.tier().storage(), large.tier().memory());
+            expectedBuilder.node(expectedStorage.node().storage(), expectedMemory.node().memory());
         }
         verifyRequiredCapacity(expectedBuilder.build(), autoscalingCapacities.toArray(AutoscalingCapacity[]::new));
     }
