@@ -33,8 +33,7 @@ public class AutoscalingDecision implements ToXContent, Writeable {
      * @param requiredCapacity required capacity or null if no decision can be made due to insufficient information.
      * @param reason details/data behind the decision
      */
-    public AutoscalingDecision(AutoscalingCapacity requiredCapacity,
-                               Reason reason) {
+    public AutoscalingDecision(AutoscalingCapacity requiredCapacity, Reason reason) {
         this.requiredCapacity = requiredCapacity;
         this.reason = reason;
     }
@@ -80,8 +79,7 @@ public class AutoscalingDecision implements ToXContent, Writeable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AutoscalingDecision that = (AutoscalingDecision) o;
-        return Objects.equals(requiredCapacity, that.requiredCapacity) &&
-            Objects.equals(reason, that.reason);
+        return Objects.equals(requiredCapacity, that.requiredCapacity) && Objects.equals(reason, that.reason);
     }
 
     @Override

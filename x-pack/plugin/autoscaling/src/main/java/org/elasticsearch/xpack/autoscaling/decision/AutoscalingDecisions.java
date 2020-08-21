@@ -30,8 +30,11 @@ public class AutoscalingDecisions implements ToXContent, Writeable {
         return decisions;
     }
 
-    public AutoscalingDecisions(final String tier, final AutoscalingCapacity currentCapacity,
-                                final Collection<AutoscalingDecision> decisions) {
+    public AutoscalingDecisions(
+        final String tier,
+        final AutoscalingCapacity currentCapacity,
+        final Collection<AutoscalingDecision> decisions
+    ) {
         Objects.requireNonNull(tier);
         Objects.requireNonNull(currentCapacity);
         this.tier = tier;
@@ -95,9 +98,7 @@ public class AutoscalingDecisions implements ToXContent, Writeable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AutoscalingDecisions that = (AutoscalingDecisions) o;
-        return tier.equals(that.tier) &&
-            currentCapacity.equals(that.currentCapacity) &&
-            decisions.equals(that.decisions);
+        return tier.equals(that.tier) && currentCapacity.equals(that.currentCapacity) && decisions.equals(that.decisions);
     }
 
     @Override

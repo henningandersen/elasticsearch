@@ -185,8 +185,11 @@ public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugi
                 FixedAutoscalingDeciderConfiguration.NAME,
                 FixedAutoscalingDeciderConfiguration::new
             ),
-            new NamedWriteableRegistry.Entry(AutoscalingDecision.Reason.class,
-                FixedAutoscalingDeciderConfiguration.NAME, FixedAutoscalingDeciderService.FixedReason::new)
+            new NamedWriteableRegistry.Entry(
+                AutoscalingDecision.Reason.class,
+                FixedAutoscalingDeciderConfiguration.NAME,
+                FixedAutoscalingDeciderService.FixedReason::new
+            )
         );
     }
 

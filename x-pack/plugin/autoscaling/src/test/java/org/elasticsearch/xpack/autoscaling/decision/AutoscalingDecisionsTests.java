@@ -20,9 +20,14 @@ import static org.hamcrest.Matchers.equalTo;
 public class AutoscalingDecisionsTests extends AutoscalingTestCase {
 
     public void testAutoscalingDecisionsRejectsEmptyDecisions() {
-        final IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-            () -> new AutoscalingDecisions(randomAlphaOfLength(10),
-            new AutoscalingCapacity(randomStorageAndMemory(), randomStorageAndMemory()), List.of()));
+        final IllegalArgumentException e = expectThrows(
+            IllegalArgumentException.class,
+            () -> new AutoscalingDecisions(
+                randomAlphaOfLength(10),
+                new AutoscalingCapacity(randomStorageAndMemory(), randomStorageAndMemory()),
+                List.of()
+            )
+        );
         assertThat(e.getMessage(), equalTo("decisions can not be empty"));
     }
 
@@ -53,33 +58,40 @@ public class AutoscalingDecisionsTests extends AutoscalingTestCase {
         verifySingleMetricLarger(node, large, largerMemory, autoscalingCapacities, largerMemory);
     }
 
-    private void verifySingleMetricLarger(boolean node, AutoscalingCapacity expectedStorage, AutoscalingCapacity expectedMemory,
-                                          List<AutoscalingCapacity> other, AutoscalingCapacity larger) {
+    private void verifySingleMetricLarger(
+        boolean node,
+        AutoscalingCapacity expectedStorage,
+        AutoscalingCapacity expectedMemory,
+        List<AutoscalingCapacity> other,
+        AutoscalingCapacity larger
+    ) {
         List<AutoscalingCapacity> autoscalingCapacities = new ArrayList<>(other);
         autoscalingCapacities.add(larger);
         Randomness.shuffle(autoscalingCapacities);
-        AutoscalingCapacity.Builder expectedBuilder = AutoscalingCapacity.builder().tier(expectedStorage.tier().storage(),
-            expectedMemory.tier().memory());
+        AutoscalingCapacity.Builder expectedBuilder = AutoscalingCapacity.builder()
+            .tier(expectedStorage.tier().storage(), expectedMemory.tier().memory());
         if (node) {
             expectedBuilder.node(expectedStorage.node().storage(), expectedMemory.node().memory());
         }
         verifyRequiredCapacity(expectedBuilder.build(), autoscalingCapacities.toArray(AutoscalingCapacity[]::new));
     }
 
-    private AutoscalingCapacity randomCapacity(boolean node, boolean storage, boolean memory, int lower, int upper) {
-        AutoscalingCapacity.Builder builder = AutoscalingCapacity.builder();
-        builder.tier(storage ? randomLongBetween(lower, upper) : null,
-            memory ? randomLongBetween(lower, upper) : null);
-        if (node) {
-            builder.node(storage ? randomLongBetween(lower, upper) : null,
-                memory ? randomLongBetween(lower, upper) : null);
-        }
-        return builder.build();
+    private void verifyRequiredCapacity(AutoscalingCapacity expected, AutoscalingCapacity... capacities) {
+        List<AutoscalingDecision> decisions = Arrays.stream(capacities)
+            .map(AutoscalingDecisionsTests::randomAutoscalingDecisionWithCapacity)
+            .collect(Collectors.toList());
+        assertThat(
+            new AutoscalingDecisions(randomAlphaOfLength(10), randomAutoscalingCapacity(), decisions).requiredCapacity(),
+            equalTo(expected)
+        );
     }
 
-    private void verifyRequiredCapacity(AutoscalingCapacity expected, AutoscalingCapacity... capacities) {
-        List<AutoscalingDecision> decisions = Arrays.stream(capacities).map(AutoscalingDecisionsTests::randomAutoscalingDecisionWithCapacity).collect(Collectors.toList());
-        assertThat(new AutoscalingDecisions(randomAlphaOfLength(10), randomAutoscalingCapacity(), decisions).requiredCapacity(),
-            equalTo(expected));
+    private AutoscalingCapacity randomCapacity(boolean node, boolean storage, boolean memory, int lower, int upper) {
+        AutoscalingCapacity.Builder builder = AutoscalingCapacity.builder();
+        builder.tier(storage ? randomLongBetween(lower, upper) : null, memory ? randomLongBetween(lower, upper) : null);
+        if (node) {
+            builder.node(storage ? randomLongBetween(lower, upper) : null, memory ? randomLongBetween(lower, upper) : null);
+        }
+        return builder.build();
     }
 }

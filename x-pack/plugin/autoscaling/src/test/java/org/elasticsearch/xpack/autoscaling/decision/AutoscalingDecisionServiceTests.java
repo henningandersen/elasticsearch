@@ -18,7 +18,6 @@ import org.elasticsearch.xpack.autoscaling.policy.AutoscalingPolicy;
 import org.elasticsearch.xpack.autoscaling.policy.AutoscalingPolicyMetadata;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -43,7 +42,8 @@ public class AutoscalingDecisionServiceTests extends AutoscalingTestCase {
         ClusterState state = ClusterState.builder(ClusterName.DEFAULT)
             .metadata(Metadata.builder().putCustom(AutoscalingMetadata.NAME, new AutoscalingMetadata(policies)))
             .build();
-        SortedMap<String, AutoscalingDecisions> decisions = service.decide(state, new ClusterInfo() {});
+        SortedMap<String, AutoscalingDecisions> decisions = service.decide(state, new ClusterInfo() {
+        });
         assertThat(decisions.keySet(), equalTo(policyNames));
         for (Map.Entry<String, AutoscalingDecisions> entry : decisions.entrySet()) {
             AutoscalingDecisions decision = entry.getValue();
@@ -59,11 +59,11 @@ public class AutoscalingDecisionServiceTests extends AutoscalingTestCase {
             ByteSizeValue storage = configuration.storage();
             ByteSizeValue memory = configuration.memory();
             int nodes = configuration.nodes();
-            assertThat(deciderDecision.reason(),
-                equalTo(new FixedAutoscalingDeciderService.FixedReason(storage, memory,
-                    nodes)));
-            assertThat(deciderDecision.reason().getSummary(),
-                equalTo("fixed storage [" + storage + "] memory [" + memory + "] nodes [" + nodes + "]"));
+            assertThat(deciderDecision.reason(), equalTo(new FixedAutoscalingDeciderService.FixedReason(storage, memory, nodes)));
+            assertThat(
+                deciderDecision.reason().getSummary(),
+                equalTo("fixed storage [" + storage + "] memory [" + memory + "] nodes [" + nodes + "]")
+            );
 
             // there is no nodes in any tier.
             assertThat(decision.currentCapacity(), equalTo(AutoscalingCapacity.ZERO));
@@ -72,23 +72,32 @@ public class AutoscalingDecisionServiceTests extends AutoscalingTestCase {
 
     private SortedMap<String, AutoscalingDeciderConfiguration> randomFixedDeciders() {
         return new TreeMap<>(
-            Map.of(FixedAutoscalingDeciderConfiguration.NAME,
-                new FixedAutoscalingDeciderConfiguration(randomNullableByteSizeValue(), randomNullableByteSizeValue(),
-                    randomIntBetween(1, 10)))
+            Map.of(
+                FixedAutoscalingDeciderConfiguration.NAME,
+                new FixedAutoscalingDeciderConfiguration(
+                    randomNullableByteSizeValue(),
+                    randomNullableByteSizeValue(),
+                    randomIntBetween(1, 10)
+                )
+            )
         );
     }
 
     private AutoscalingCapacity calculateFixedDecisionCapacity(FixedAutoscalingDeciderConfiguration configuration) {
-        ByteSizeValue totalStorage = configuration.storage() != null ?
-            new ByteSizeValue(configuration.storage().getBytes() * configuration.nodes()) : null;
-        ByteSizeValue totalMemory = configuration.memory() != null ?
-            new ByteSizeValue(configuration.memory().getBytes() * configuration.nodes()) : null;
+        ByteSizeValue totalStorage = configuration.storage() != null
+            ? new ByteSizeValue(configuration.storage().getBytes() * configuration.nodes())
+            : null;
+        ByteSizeValue totalMemory = configuration.memory() != null
+            ? new ByteSizeValue(configuration.memory().getBytes() * configuration.nodes())
+            : null;
 
         if (totalStorage == null && totalMemory == null) {
             return null;
         } else {
-            return new AutoscalingCapacity(new AutoscalingCapacity.StorageAndMemory(totalStorage, totalMemory),
-                new AutoscalingCapacity.StorageAndMemory(configuration.storage(), configuration.memory()));
+            return new AutoscalingCapacity(
+                new AutoscalingCapacity.StorageAndMemory(totalStorage, totalMemory),
+                new AutoscalingCapacity.StorageAndMemory(configuration.storage(), configuration.memory())
+            );
         }
     }
 }

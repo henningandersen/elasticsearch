@@ -36,21 +36,26 @@ public abstract class AutoscalingTestCase extends ESTestCase {
     }
 
     protected static AutoscalingDecision randomAutoscalingDecisionWithCapacity(AutoscalingCapacity capacity) {
-        return new AutoscalingDecision(capacity,
-            new FixedAutoscalingDeciderService.FixedReason(randomNullableByteSizeValue(), randomNullableByteSizeValue(), randomInt(1000)));
+        return new AutoscalingDecision(
+            capacity,
+            new FixedAutoscalingDeciderService.FixedReason(randomNullableByteSizeValue(), randomNullableByteSizeValue(), randomInt(1000))
+        );
     }
 
     public static AutoscalingDecisions randomAutoscalingDecisions() {
-        final List<AutoscalingDecision> decisions =
-            IntStream.range(0, randomIntBetween(1, 10)).mapToObj(i -> randomAutoscalingDecision()).collect(Collectors.toList());
+        final List<AutoscalingDecision> decisions = IntStream.range(0, randomIntBetween(1, 10))
+            .mapToObj(i -> randomAutoscalingDecision())
+            .collect(Collectors.toList());
         AutoscalingCapacity capacity = new AutoscalingCapacity(randomStorageAndMemory(), randomStorageAndMemory());
         return new AutoscalingDecisions(randomAlphaOfLength(10), capacity, decisions);
     }
 
     protected static AutoscalingCapacity randomAutoscalingCapacity() {
         AutoscalingCapacity.StorageAndMemory tier = randomNullValueStorageAndMemory();
-        return new AutoscalingCapacity(tier, randomBoolean() ?
-            randomNullValueStorageAndMemory(tier.storage() != null, tier.memory() != null) : null);
+        return new AutoscalingCapacity(
+            tier,
+            randomBoolean() ? randomNullValueStorageAndMemory(tier.storage() != null, tier.memory() != null) : null
+        );
     }
 
     protected static AutoscalingCapacity randomNullableAutoscalingCapacity() {
@@ -78,9 +83,11 @@ public abstract class AutoscalingTestCase extends ESTestCase {
         assert allowMemory || allowStorage;
         boolean addStorage = (allowStorage && randomBoolean()) || allowMemory == false;
         boolean addMemory = (allowMemory && randomBoolean()) || addStorage == false;
-        return new AutoscalingCapacity.StorageAndMemory(addStorage ? randomByteSizeValue() : null, addMemory ? randomByteSizeValue() : null);
+        return new AutoscalingCapacity.StorageAndMemory(
+            addStorage ? randomByteSizeValue() : null,
+            addMemory ? randomByteSizeValue() : null
+        );
     }
-
 
     public static SortedMap<String, AutoscalingDeciderConfiguration> randomAutoscalingDeciders() {
         return new TreeMap<>(

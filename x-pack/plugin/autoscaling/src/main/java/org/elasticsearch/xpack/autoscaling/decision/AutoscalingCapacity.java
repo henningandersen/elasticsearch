@@ -16,7 +16,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.function.BiFunction;
 
 /**
  * Represents current/required capacity of a single tier.
@@ -90,7 +89,7 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
                 return sm1;
             }
 
-            return new StorageAndMemory(add(sm1.storage, sm2.storage), add(sm1.memory,sm2.memory));
+            return new StorageAndMemory(add(sm1.storage, sm2.storage), add(sm1.memory, sm2.memory));
         }
 
         private static ByteSizeValue max(ByteSizeValue v1, ByteSizeValue v2) {
@@ -132,8 +131,7 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             StorageAndMemory that = (StorageAndMemory) o;
-            return Objects.equals(storage, that.storage) &&
-                Objects.equals(memory, that.memory);
+            return Objects.equals(storage, that.storage) && Objects.equals(memory, that.memory);
         }
 
         @Override
@@ -152,10 +150,10 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
     public AutoscalingCapacity(StorageAndMemory tier, StorageAndMemory node) {
         assert tier != null : "Cannot provide capacity without specifying cluster level capacity";
         assert node == null || node.memory == null
-            // implies
+        // implies
             || tier.memory != null : "Cannot provide node memory without cluster memory";
         assert node == null || node.storage == null
-            // implies
+        // implies
             || tier.storage != null : "Cannot provide node memory without cluster memory";
 
         this.tier = tier;
@@ -206,8 +204,7 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AutoscalingCapacity capacity = (AutoscalingCapacity) o;
-        return tier.equals(capacity.tier) &&
-            Objects.equals(node, capacity.node);
+        return tier.equals(capacity.tier) && Objects.equals(node, capacity.node);
     }
 
     @Override
@@ -227,8 +224,8 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
     public static class Builder {
         private StorageAndMemory tier;
         private StorageAndMemory node;
-        public Builder() {
-        }
+
+        public Builder() {}
 
         public Builder tier(Long storage, Long memory) {
             return tier(byteSizeValue(storage), byteSizeValue(memory));
@@ -242,6 +239,7 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
         public Builder node(Long storage, Long memory) {
             return node(byteSizeValue(storage), byteSizeValue(memory));
         }
+
         public Builder node(ByteSizeValue storage, ByteSizeValue memory) {
             this.node = new StorageAndMemory(storage, memory);
             return this;

@@ -28,12 +28,18 @@ public class FixedAutoscalingDeciderService implements AutoscalingDeciderService
     @Override
     public AutoscalingDecision scale(FixedAutoscalingDeciderConfiguration configuration, AutoscalingDeciderContext context) {
         AutoscalingCapacity requiredCapacity = configuration.storage() != null || configuration.memory() != null
-            ? new AutoscalingCapacity(new AutoscalingCapacity.StorageAndMemory(tierCapacity(configuration.storage(),configuration.nodes()),
-            tierCapacity(configuration.memory(), configuration.nodes())),
-            new AutoscalingCapacity.StorageAndMemory(configuration.storage(), configuration.memory()))
+            ? new AutoscalingCapacity(
+                new AutoscalingCapacity.StorageAndMemory(
+                    tierCapacity(configuration.storage(), configuration.nodes()),
+                    tierCapacity(configuration.memory(), configuration.nodes())
+                ),
+                new AutoscalingCapacity.StorageAndMemory(configuration.storage(), configuration.memory())
+            )
             : null;
-        return new AutoscalingDecision(requiredCapacity,
-            new FixedReason(configuration.storage(), configuration.memory(), configuration.nodes()));
+        return new AutoscalingDecision(
+            requiredCapacity,
+            new FixedReason(configuration.storage(), configuration.memory(), configuration.nodes())
+        );
     }
 
     private static ByteSizeValue tierCapacity(ByteSizeValue nodeCapacity, int nodes) {
@@ -94,9 +100,7 @@ public class FixedAutoscalingDeciderService implements AutoscalingDeciderService
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             FixedReason that = (FixedReason) o;
-            return nodes == that.nodes &&
-                Objects.equals(storage, that.storage) &&
-                Objects.equals(memory, that.memory);
+            return nodes == that.nodes && Objects.equals(storage, that.storage) && Objects.equals(memory, that.memory);
         }
 
         @Override

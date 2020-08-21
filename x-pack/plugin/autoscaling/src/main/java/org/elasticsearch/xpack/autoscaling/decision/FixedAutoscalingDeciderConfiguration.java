@@ -31,12 +31,18 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
     private static final ParseField MEMORY = new ParseField("memory");
     private static final ParseField NODES = new ParseField("nodes");
     static {
-        PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(),
-            (p, c) -> ByteSizeValue.parseBytesSizeValue(p.text(),
-                STORAGE.getPreferredName()), STORAGE, ObjectParser.ValueType.VALUE);
-        PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(),
-            (p, c) -> ByteSizeValue.parseBytesSizeValue(p.text(),
-                MEMORY.getPreferredName()), MEMORY, ObjectParser.ValueType.VALUE);
+        PARSER.declareField(
+            ConstructingObjectParser.optionalConstructorArg(),
+            (p, c) -> ByteSizeValue.parseBytesSizeValue(p.text(), STORAGE.getPreferredName()),
+            STORAGE,
+            ObjectParser.ValueType.VALUE
+        );
+        PARSER.declareField(
+            ConstructingObjectParser.optionalConstructorArg(),
+            (p, c) -> ByteSizeValue.parseBytesSizeValue(p.text(), MEMORY.getPreferredName()),
+            MEMORY,
+            ObjectParser.ValueType.VALUE
+        );
         PARSER.declareInt(ConstructingObjectParser.constructorArg(), NODES);
     }
 
@@ -111,9 +117,7 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FixedAutoscalingDeciderConfiguration that = (FixedAutoscalingDeciderConfiguration) o;
-        return nodes == that.nodes &&
-            Objects.equals(storage, that.storage) &&
-            Objects.equals(memory, that.memory);
+        return nodes == that.nodes && Objects.equals(storage, that.storage) && Objects.equals(memory, that.memory);
     }
 
     @Override

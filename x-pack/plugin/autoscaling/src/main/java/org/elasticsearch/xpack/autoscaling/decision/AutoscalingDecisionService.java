@@ -98,7 +98,7 @@ public class AutoscalingDecisionService {
         private final AutoscalingCapacity currentCapacity;
         private final boolean currentCapacityAccurate;
 
-        public DecisionAutoscalingDeciderContext(String tier, ClusterState state, ClusterInfo clusterInfo) {
+        private DecisionAutoscalingDeciderContext(String tier, ClusterState state, ClusterInfo clusterInfo) {
             this.tier = tier;
             Objects.requireNonNull(state);
             Objects.requireNonNull(clusterInfo);
@@ -134,21 +134,30 @@ public class AutoscalingDecisionService {
         }
 
         private AutoscalingCapacity calculateCurrentCapacity() {
-            return StreamSupport.stream(state.nodes().spliterator(), false).filter(this::informalTierFilter)
+            return StreamSupport.stream(state.nodes().spliterator(), false)
+                .filter(this::informalTierFilter)
                 .map(this::storageAndMemoryFor)
                 .map(c -> new AutoscalingCapacity(c, c))
-                .reduce((c1, c2) -> new AutoscalingCapacity(AutoscalingCapacity.StorageAndMemory.sum(c1.tier(), c2.tier()),
-                    AutoscalingCapacity.StorageAndMemory.max(c1.node(), c2.node())
-                )).orElse(AutoscalingCapacity.ZERO);
+                .reduce(
+                    (c1, c2) -> new AutoscalingCapacity(
+                        AutoscalingCapacity.StorageAndMemory.sum(c1.tier(), c2.tier()),
+                        AutoscalingCapacity.StorageAndMemory.max(c1.node(), c2.node())
+                    )
+                )
+                .orElse(AutoscalingCapacity.ZERO);
         }
 
         private AutoscalingCapacity.StorageAndMemory storageAndMemoryFor(DiscoveryNode node) {
-            long storage = Math.max(totalStorage(clusterInfo.getNodeLeastAvailableDiskUsages(), node),
-                totalStorage(clusterInfo.getNodeMostAvailableDiskUsages(), node));
+            long storage = Math.max(
+                totalStorage(clusterInfo.getNodeLeastAvailableDiskUsages(), node),
+                totalStorage(clusterInfo.getNodeMostAvailableDiskUsages(), node)
+            );
 
             // todo: also capture memory across cluster.
-            return new AutoscalingCapacity.StorageAndMemory(storage == -1 ? ByteSizeValue.ZERO : new ByteSizeValue(storage),
-                ByteSizeValue.ZERO);
+            return new AutoscalingCapacity.StorageAndMemory(
+                storage == -1 ? ByteSizeValue.ZERO : new ByteSizeValue(storage),
+                ByteSizeValue.ZERO
+            );
         }
 
         private long totalStorage(ImmutableOpenMap<String, DiskUsage> diskUsages, DiscoveryNode node) {

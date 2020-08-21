@@ -38,7 +38,8 @@ public class TransportGetAutoscalingDecisionAction extends TransportMasterNodeAc
         final ActionFilters actionFilters,
         final IndexNameExpressionResolver indexNameExpressionResolver,
         final AutoscalingDecisionService.Holder decisionServiceHolder,
-        final ClusterInfoService clusterInfoService) {
+        final ClusterInfoService clusterInfoService
+    ) {
         super(
             GetAutoscalingDecisionAction.NAME,
             transportService,
