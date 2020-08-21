@@ -33,13 +33,13 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
     static {
         PARSER.declareField(
             ConstructingObjectParser.optionalConstructorArg(),
-            (p, c) -> ByteSizeValue.parseBytesSizeValue(p.text(), STORAGE.getPreferredName()),
+            (p, c) -> ByteSizeValue.parseBytesSizeValue(p.textOrNull(), STORAGE.getPreferredName()),
             STORAGE,
             ObjectParser.ValueType.VALUE
         );
         PARSER.declareField(
             ConstructingObjectParser.optionalConstructorArg(),
-            (p, c) -> ByteSizeValue.parseBytesSizeValue(p.text(), MEMORY.getPreferredName()),
+            (p, c) -> ByteSizeValue.parseBytesSizeValue(p.textOrNull(), MEMORY.getPreferredName()),
             MEMORY,
             ObjectParser.ValueType.VALUE
         );
