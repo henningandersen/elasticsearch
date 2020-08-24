@@ -6,7 +6,7 @@
   - match: { "decisions": [] }
 
 ---
-"Test get always autoscaling decision":
+"Test get fixed autoscaling decision":
   - do:
       autoscaling.put_autoscaling_policy:
         name: my_autoscaling_policy

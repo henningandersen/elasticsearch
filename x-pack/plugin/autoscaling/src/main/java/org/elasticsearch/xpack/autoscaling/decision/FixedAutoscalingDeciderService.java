@@ -27,18 +27,19 @@ public class FixedAutoscalingDeciderService implements AutoscalingDeciderService
 
     @Override
     public AutoscalingDecision scale(FixedAutoscalingDeciderConfiguration configuration, AutoscalingDeciderContext context) {
+        int nodes = configuration.nodes() != null ? configuration.nodes() : 1;
         AutoscalingCapacity requiredCapacity = configuration.storage() != null || configuration.memory() != null
             ? new AutoscalingCapacity(
                 new AutoscalingCapacity.StorageAndMemory(
-                    tierCapacity(configuration.storage(), configuration.nodes()),
-                    tierCapacity(configuration.memory(), configuration.nodes())
+                    tierCapacity(configuration.storage(), nodes),
+                    tierCapacity(configuration.memory(), nodes)
                 ),
                 new AutoscalingCapacity.StorageAndMemory(configuration.storage(), configuration.memory())
             )
             : null;
         return new AutoscalingDecision(
             requiredCapacity,
-            new FixedReason(configuration.storage(), configuration.memory(), configuration.nodes())
+            new FixedReason(configuration.storage(), configuration.memory(), nodes)
         );
     }
 

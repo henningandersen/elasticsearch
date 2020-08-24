@@ -24,7 +24,7 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
 
     private static final ConstructingObjectParser<FixedAutoscalingDeciderConfiguration, Void> PARSER = new ConstructingObjectParser<>(
         NAME,
-        c -> new FixedAutoscalingDeciderConfiguration((ByteSizeValue) c[0], (ByteSizeValue) c[1], (int) c[2])
+        c -> new FixedAutoscalingDeciderConfiguration((ByteSizeValue) c[0], (ByteSizeValue) c[1], (Integer) c[2])
     );
 
     private static final ParseField STORAGE = new ParseField("storage");
@@ -43,7 +43,7 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
             MEMORY,
             ObjectParser.ValueType.VALUE
         );
-        PARSER.declareInt(ConstructingObjectParser.constructorArg(), NODES);
+        PARSER.declareInt(ConstructingObjectParser.optionalConstructorArg(), NODES);
     }
 
     public static FixedAutoscalingDeciderConfiguration parse(final XContentParser parser) {
@@ -52,13 +52,13 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
 
     private final ByteSizeValue storage;
     private final ByteSizeValue memory;
-    private final int nodes;
+    private final Integer nodes;
 
     public FixedAutoscalingDeciderConfiguration() {
         this(null, null, 1);
     }
 
-    public FixedAutoscalingDeciderConfiguration(ByteSizeValue storage, ByteSizeValue memory, int nodes) {
+    public FixedAutoscalingDeciderConfiguration(ByteSizeValue storage, ByteSizeValue memory, Integer nodes) {
         this.storage = storage;
         this.memory = memory;
         this.nodes = nodes;
@@ -79,7 +79,7 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
         return memory;
     }
 
-    public int nodes() {
+    public Integer nodes() {
         return nodes;
     }
 

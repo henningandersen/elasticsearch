@@ -66,7 +66,7 @@ public abstract class AutoscalingTestCase extends ESTestCase {
         return new AutoscalingCapacity.StorageAndMemory(randomByteSizeValue(), randomByteSizeValue());
     }
 
-    private static ByteSizeValue randomByteSizeValue() {
+    protected static ByteSizeValue randomByteSizeValue() {
         // do not want to test any overflow.
         return new ByteSizeValue(randomLongBetween(0, Long.MAX_VALUE >> 16));
     }
@@ -91,10 +91,15 @@ public abstract class AutoscalingTestCase extends ESTestCase {
 
     public static SortedMap<String, AutoscalingDeciderConfiguration> randomAutoscalingDeciders() {
         return new TreeMap<>(
-            List.of(new FixedAutoscalingDeciderConfiguration())
+            List.of(randomFixedDecider())
                 .stream()
                 .collect(Collectors.toMap(AutoscalingDeciderConfiguration::name, Function.identity()))
         );
+    }
+
+    private static FixedAutoscalingDeciderConfiguration randomFixedDecider() {
+        return new FixedAutoscalingDeciderConfiguration(randomNullableByteSizeValue(), randomNullableByteSizeValue(),
+            randomFrom(randomInt(1000), null));
     }
 
     public static AutoscalingPolicy randomAutoscalingPolicy() {
