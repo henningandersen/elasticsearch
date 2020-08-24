@@ -91,15 +91,16 @@ public abstract class AutoscalingTestCase extends ESTestCase {
 
     public static SortedMap<String, AutoscalingDeciderConfiguration> randomAutoscalingDeciders() {
         return new TreeMap<>(
-            List.of(randomFixedDecider())
-                .stream()
-                .collect(Collectors.toMap(AutoscalingDeciderConfiguration::name, Function.identity()))
+            List.of(randomFixedDecider()).stream().collect(Collectors.toMap(AutoscalingDeciderConfiguration::name, Function.identity()))
         );
     }
 
     private static FixedAutoscalingDeciderConfiguration randomFixedDecider() {
-        return new FixedAutoscalingDeciderConfiguration(randomNullableByteSizeValue(), randomNullableByteSizeValue(),
-            randomFrom(randomInt(1000), null));
+        return new FixedAutoscalingDeciderConfiguration(
+            randomNullableByteSizeValue(),
+            randomNullableByteSizeValue(),
+            randomFrom(randomInt(1000), null)
+        );
     }
 
     public static AutoscalingPolicy randomAutoscalingPolicy() {

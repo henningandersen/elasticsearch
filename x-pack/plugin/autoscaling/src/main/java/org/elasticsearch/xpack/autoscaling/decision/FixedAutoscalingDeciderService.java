@@ -37,10 +37,7 @@ public class FixedAutoscalingDeciderService implements AutoscalingDeciderService
                 new AutoscalingCapacity.StorageAndMemory(configuration.storage(), configuration.memory())
             )
             : null;
-        return new AutoscalingDecision(
-            requiredCapacity,
-            new FixedReason(configuration.storage(), configuration.memory(), nodes)
-        );
+        return new AutoscalingDecision(requiredCapacity, new FixedReason(configuration.storage(), configuration.memory(), nodes));
     }
 
     private static ByteSizeValue tierCapacity(ByteSizeValue nodeCapacity, int nodes) {

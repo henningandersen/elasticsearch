@@ -12,19 +12,25 @@ import org.hamcrest.Matchers;
 
 public class FixedAutoscalingDeciderServiceTests extends AutoscalingTestCase {
     public void testScale() {
-        FixedAutoscalingDeciderConfiguration configuration = new FixedAutoscalingDeciderConfiguration(null, null,
-            randomFrom(randomIntBetween(1, 1000), null));
+        FixedAutoscalingDeciderConfiguration configuration = new FixedAutoscalingDeciderConfiguration(
+            null,
+            null,
+            randomFrom(randomIntBetween(1, 1000), null)
+        );
         verify(configuration, null);
 
         ByteSizeValue storage = randomNullableByteSizeValue();
         ByteSizeValue memory = storage != null ? randomNullableByteSizeValue() : randomByteSizeValue();
-        verify(new FixedAutoscalingDeciderConfiguration(storage, memory, null),
-            AutoscalingCapacity.builder().node(storage, memory).tier(storage, memory).build());
+        verify(
+            new FixedAutoscalingDeciderConfiguration(storage, memory, null),
+            AutoscalingCapacity.builder().node(storage, memory).tier(storage, memory).build()
+        );
 
         int nodes = randomIntBetween(1, 1000);
-        verify(new FixedAutoscalingDeciderConfiguration(storage, memory, nodes),
-            AutoscalingCapacity.builder().node(storage, memory)
-                .tier(multiply(storage, nodes), multiply(memory, nodes)).build());
+        verify(
+            new FixedAutoscalingDeciderConfiguration(storage, memory, nodes),
+            AutoscalingCapacity.builder().node(storage, memory).tier(multiply(storage, nodes), multiply(memory, nodes)).build()
+        );
     }
 
     private void verify(FixedAutoscalingDeciderConfiguration configuration, AutoscalingCapacity expected) {
