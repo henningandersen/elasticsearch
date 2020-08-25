@@ -53,8 +53,12 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
-            builder.field("storage", storage);
-            builder.field("memory", memory);
+            if (storage != null) {
+                builder.field("storage", storage.getStringRep());
+            }
+            if (memory != null) {
+                builder.field("memory", memory.getStringRep());
+            }
             builder.endObject();
             return builder;
         }
@@ -148,13 +152,13 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
     public static final AutoscalingCapacity ZERO = new AutoscalingCapacity(StorageAndMemory.ZERO, StorageAndMemory.ZERO);
 
     public AutoscalingCapacity(StorageAndMemory tier, StorageAndMemory node) {
-        assert tier != null : "Cannot provide capacity without specifying cluster level capacity";
+        assert tier != null : "Cannot provide capacity without specifying tier level capacity";
         assert node == null || node.memory == null
         // implies
-            || tier.memory != null : "Cannot provide node memory without cluster memory";
+            || tier.memory != null : "Cannot provide node memory without tier memory";
         assert node == null || node.storage == null
         // implies
-            || tier.storage != null : "Cannot provide node memory without cluster memory";
+            || tier.storage != null : "Cannot provide node storage without tier memory";
 
         this.tier = tier;
         this.node = node;
@@ -227,12 +231,22 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
 
         public Builder() {}
 
+        public Builder capacity(AutoscalingCapacity capacity) {
+            this.tier = capacity.tier;
+            this.node = capacity.node;
+            return this;
+        }
+
         public Builder tier(Long storage, Long memory) {
             return tier(byteSizeValue(storage), byteSizeValue(memory));
         }
 
         public Builder tier(ByteSizeValue storage, ByteSizeValue memory) {
-            this.tier = new StorageAndMemory(storage, memory);
+            return tier(new StorageAndMemory(storage, memory));
+        }
+
+        public Builder tier(StorageAndMemory tier) {
+            this.tier = tier;
             return this;
         }
 
@@ -241,7 +255,11 @@ public class AutoscalingCapacity implements ToXContent, Writeable {
         }
 
         public Builder node(ByteSizeValue storage, ByteSizeValue memory) {
-            this.node = new StorageAndMemory(storage, memory);
+            return node(new StorageAndMemory(storage, memory));
+        }
+
+        public Builder node(StorageAndMemory node) {
+            this.node = node;
             return this;
         }
 

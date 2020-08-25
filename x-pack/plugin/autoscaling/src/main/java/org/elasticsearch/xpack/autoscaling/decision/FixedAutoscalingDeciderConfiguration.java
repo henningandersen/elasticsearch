@@ -68,7 +68,7 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
     public FixedAutoscalingDeciderConfiguration(final StreamInput in) throws IOException {
         this.storage = in.readOptionalWriteable(ByteSizeValue::new);
         this.memory = in.readOptionalWriteable(ByteSizeValue::new);
-        this.nodes = in.readInt();
+        this.nodes = in.readOptionalInt();
     }
 
     public ByteSizeValue storage() {
@@ -97,16 +97,22 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
     public void writeTo(final StreamOutput out) throws IOException {
         out.writeOptionalWriteable(storage);
         out.writeOptionalWriteable(memory);
-        out.writeInt(nodes);
+        out.writeOptionalInt(nodes);
     }
 
     @Override
     public XContentBuilder toXContent(final XContentBuilder builder, final Params params) throws IOException {
         builder.startObject();
         {
-            builder.field("storage", storage);
-            builder.field("memory", memory);
-            builder.field("nodes", nodes);
+            if (storage != null) {
+                builder.field("storage", storage.getStringRep());
+            }
+            if (memory != null) {
+                builder.field("memory", memory.getStringRep());
+            }
+            if (nodes != null) {
+                builder.field("nodes", nodes);
+            }
         }
         builder.endObject();
         return builder;
@@ -117,7 +123,7 @@ public class FixedAutoscalingDeciderConfiguration implements AutoscalingDeciderC
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FixedAutoscalingDeciderConfiguration that = (FixedAutoscalingDeciderConfiguration) o;
-        return nodes == that.nodes && Objects.equals(storage, that.storage) && Objects.equals(memory, that.memory);
+        return Objects.equals(storage, that.storage) && Objects.equals(memory, that.memory) && Objects.equals(nodes, that.nodes);
     }
 
     @Override

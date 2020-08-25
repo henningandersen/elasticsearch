@@ -6,6 +6,7 @@
 
 package org.elasticsearch.xpack.autoscaling;
 
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -43,14 +44,14 @@ public abstract class AutoscalingTestCase extends ESTestCase {
     }
 
     public static AutoscalingDecisions randomAutoscalingDecisions() {
-        final List<AutoscalingDecision> decisions = IntStream.range(0, randomIntBetween(1, 10))
-            .mapToObj(i -> randomAutoscalingDecision())
-            .collect(Collectors.toList());
+        final SortedMap<String, AutoscalingDecision> decisions = IntStream.range(0, randomIntBetween(1, 10))
+            .mapToObj(i -> Tuple.tuple(Integer.toString(i), randomAutoscalingDecision()))
+            .collect(Collectors.toMap(Tuple::v1, Tuple::v2, (a, b) -> { throw new IllegalStateException(); }, TreeMap::new));
         AutoscalingCapacity capacity = new AutoscalingCapacity(randomStorageAndMemory(), randomStorageAndMemory());
         return new AutoscalingDecisions(randomAlphaOfLength(10), capacity, decisions);
     }
 
-    protected static AutoscalingCapacity randomAutoscalingCapacity() {
+    public static AutoscalingCapacity randomAutoscalingCapacity() {
         AutoscalingCapacity.StorageAndMemory tier = randomNullValueStorageAndMemory();
         return new AutoscalingCapacity(
             tier,
@@ -66,12 +67,12 @@ public abstract class AutoscalingTestCase extends ESTestCase {
         return new AutoscalingCapacity.StorageAndMemory(randomByteSizeValue(), randomByteSizeValue());
     }
 
-    protected static ByteSizeValue randomByteSizeValue() {
+    public static ByteSizeValue randomByteSizeValue() {
         // do not want to test any overflow.
         return new ByteSizeValue(randomLongBetween(0, Long.MAX_VALUE >> 16));
     }
 
-    protected static ByteSizeValue randomNullableByteSizeValue() {
+    public static ByteSizeValue randomNullableByteSizeValue() {
         return randomBoolean() ? randomByteSizeValue() : null;
     }
 
@@ -79,7 +80,7 @@ public abstract class AutoscalingTestCase extends ESTestCase {
         return randomNullValueStorageAndMemory(true, true);
     }
 
-    private static AutoscalingCapacity.StorageAndMemory randomNullValueStorageAndMemory(boolean allowStorage, boolean allowMemory) {
+    public static AutoscalingCapacity.StorageAndMemory randomNullValueStorageAndMemory(boolean allowStorage, boolean allowMemory) {
         assert allowMemory || allowStorage;
         boolean addStorage = (allowStorage && randomBoolean()) || allowMemory == false;
         boolean addMemory = (allowMemory && randomBoolean()) || addStorage == false;
@@ -95,7 +96,7 @@ public abstract class AutoscalingTestCase extends ESTestCase {
         );
     }
 
-    private static FixedAutoscalingDeciderConfiguration randomFixedDecider() {
+    public static FixedAutoscalingDeciderConfiguration randomFixedDecider() {
         return new FixedAutoscalingDeciderConfiguration(
             randomNullableByteSizeValue(),
             randomNullableByteSizeValue(),

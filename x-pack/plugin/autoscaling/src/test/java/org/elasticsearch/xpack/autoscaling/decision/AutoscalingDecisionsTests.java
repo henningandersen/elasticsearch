@@ -12,6 +12,10 @@ import org.elasticsearch.xpack.autoscaling.AutoscalingTestCase;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -25,7 +29,7 @@ public class AutoscalingDecisionsTests extends AutoscalingTestCase {
             () -> new AutoscalingDecisions(
                 randomAlphaOfLength(10),
                 new AutoscalingCapacity(randomStorageAndMemory(), randomStorageAndMemory()),
-                List.of()
+                new TreeMap<>()
             )
         );
         assertThat(e.getMessage(), equalTo("decisions can not be empty"));
@@ -77,9 +81,17 @@ public class AutoscalingDecisionsTests extends AutoscalingTestCase {
     }
 
     private void verifyRequiredCapacity(AutoscalingCapacity expected, AutoscalingCapacity... capacities) {
-        List<AutoscalingDecision> decisions = Arrays.stream(capacities)
+        AtomicInteger uniqueGenerator = new AtomicInteger();
+        SortedMap<String, AutoscalingDecision> decisions = Arrays.stream(capacities)
             .map(AutoscalingDecisionsTests::randomAutoscalingDecisionWithCapacity)
-            .collect(Collectors.toList());
+            .collect(
+                Collectors.toMap(
+                    k -> randomAlphaOfLength(10) + "-" + uniqueGenerator.incrementAndGet(),
+                    Function.identity(),
+                    (a, b) -> { throw new UnsupportedOperationException(); },
+                    TreeMap::new
+                )
+            );
         assertThat(
             new AutoscalingDecisions(randomAlphaOfLength(10), randomAutoscalingCapacity(), decisions).requiredCapacity(),
             equalTo(expected)

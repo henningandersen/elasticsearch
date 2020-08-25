@@ -17,7 +17,6 @@ import org.elasticsearch.xpack.autoscaling.AutoscalingTestCase;
 import org.elasticsearch.xpack.autoscaling.policy.AutoscalingPolicy;
 import org.elasticsearch.xpack.autoscaling.policy.AutoscalingPolicyMetadata;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -48,13 +47,14 @@ public class AutoscalingDecisionServiceTests extends AutoscalingTestCase {
         for (Map.Entry<String, AutoscalingDecisions> entry : decisions.entrySet()) {
             AutoscalingDecisions decision = entry.getValue();
             assertThat(decision.tier(), equalTo(entry.getKey()));
-            Collection<AutoscalingDeciderConfiguration> deciders = policies.get(decision.tier()).policy().deciders().values();
+            SortedMap<String, AutoscalingDeciderConfiguration> deciders = policies.get(decision.tier()).policy().deciders();
             assertThat(deciders.size(), equalTo(1));
-            FixedAutoscalingDeciderConfiguration configuration = (FixedAutoscalingDeciderConfiguration) deciders.iterator().next();
+            FixedAutoscalingDeciderConfiguration configuration = (FixedAutoscalingDeciderConfiguration) deciders.values().iterator().next();
             AutoscalingCapacity requiredCapacity = calculateFixedDecisionCapacity(configuration);
             assertThat(decision.requiredCapacity(), equalTo(requiredCapacity));
             assertThat(decision.decisions().size(), equalTo(1));
-            AutoscalingDecision deciderDecision = decision.decisions().iterator().next();
+            AutoscalingDecision deciderDecision = decision.decisions().get(deciders.firstKey());
+            assertNotNull(deciderDecision);
             assertThat(deciderDecision.requiredCapacity(), equalTo(requiredCapacity));
             ByteSizeValue storage = configuration.storage();
             ByteSizeValue memory = configuration.memory();

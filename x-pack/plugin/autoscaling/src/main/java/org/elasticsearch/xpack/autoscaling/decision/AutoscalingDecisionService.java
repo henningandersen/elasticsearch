@@ -19,7 +19,6 @@ import org.elasticsearch.xpack.autoscaling.Autoscaling;
 import org.elasticsearch.xpack.autoscaling.AutoscalingMetadata;
 import org.elasticsearch.xpack.autoscaling.policy.AutoscalingPolicy;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -75,11 +74,11 @@ public class AutoscalingDecisionService {
 
     private AutoscalingDecisions getDecision(AutoscalingPolicy policy, ClusterState state, ClusterInfo clusterInfo) {
         DecisionAutoscalingDeciderContext context = new DecisionAutoscalingDeciderContext(policy.name(), state, clusterInfo);
-        Collection<AutoscalingDecision> decisions = policy.deciders()
-            .values()
+        SortedMap<String, AutoscalingDecision> decisions = policy.deciders()
+            .entrySet()
             .stream()
-            .map(decider -> getDecision(decider, context))
-            .collect(Collectors.toList());
+            .map(entry -> Tuple.tuple(entry.getKey(), getDecision(entry.getValue(), context)))
+            .collect(Collectors.toMap(Tuple::v1, Tuple::v2, (a, b) -> { throw new UnsupportedOperationException(); }, TreeMap::new));
         return new AutoscalingDecisions(context.tier, context.currentCapacity, decisions);
     }
 
