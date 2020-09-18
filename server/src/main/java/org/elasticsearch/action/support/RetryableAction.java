@@ -31,6 +31,7 @@ import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A action that will be retried on failure if {@link RetryableAction#shouldRetry(Exception)} returns true.
@@ -42,7 +43,10 @@ public abstract class RetryableAction<Response> {
 
     private final Logger logger;
 
-    private final AtomicBoolean isDone = new AtomicBoolean(false);
+    private static enum State {
+        init, waiting, need_retry, running, cancelled, done
+    }
+    private final AtomicReference<State> state = new AtomicReference<>(State.init);
     private final ThreadPool threadPool;
     private final long initialDelayMillis;
     private final long timeoutMillis;
@@ -51,6 +55,7 @@ public abstract class RetryableAction<Response> {
     private final String executor;
 
     private volatile Scheduler.ScheduledCancellable retryTask;
+    private Exception cancellationException;
 
     public RetryableAction(Logger logger, ThreadPool threadPool, TimeValue initialDelay, TimeValue timeoutValue,
                            ActionListener<Response> listener) {
@@ -72,13 +77,16 @@ public abstract class RetryableAction<Response> {
     }
 
     public void run() {
+        boolean wasInit = state.compareAndSet(State.init, State.need_retry);
+        assert wasInit : state.get();
         final RetryingListener retryingListener = new RetryingListener(initialDelayMillis, null);
         final Runnable runnable = createRunnable(retryingListener);
         threadPool.executor(executor).execute(runnable);
     }
 
     public void cancel(Exception e) {
-        if (isDone.compareAndSet(false, true)) {
+        cancellationException = e;
+        if (state.getAndSet(State.cancelled) == State.waiting) {
             Scheduler.ScheduledCancellable localRetryTask = this.retryTask;
             if (localRetryTask != null) {
                 localRetryTask.cancel();
@@ -95,7 +103,7 @@ public abstract class RetryableAction<Response> {
             protected void doRun() {
                 retryTask = null;
                 // It is possible that the task was cancelled in between the retry being dispatched and now
-                if (isDone.get() == false) {
+                if (state.compareAndSet(State.need_retry, State.running)) {
                     tryAction(listener);
                 }
             }
