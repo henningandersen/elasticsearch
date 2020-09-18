@@ -44,6 +44,8 @@ import org.elasticsearch.cluster.routing.allocation.StaleShard;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Priority;
+import org.elasticsearch.common.Randomness;
+import org.elasticsearch.common.breaker.CircuitBreakingException;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -106,13 +108,18 @@ public class ShardStateAction {
 
     private void sendShardAction(final String actionName, final ClusterState currentState,
                                  final TransportRequest request, final ActionListener<Void> listener) {
+        sendShardAction(actionName, currentState, request, 100, listener);
+    }
+
+    private void sendShardAction(final String actionName, final ClusterState currentState,
+        final TransportRequest request, long delayMillisBound, final ActionListener<Void> listener) {
         ClusterStateObserver observer =
             new ClusterStateObserver(currentState, clusterService, null, logger, threadPool.getThreadContext());
         DiscoveryNode masterNode = currentState.nodes().getMasterNode();
         Predicate<ClusterState> changePredicate = MasterNodeChangePredicate.build(currentState);
         if (masterNode == null) {
             logger.warn("no master known for action [{}] for shard entry [{}]", actionName, request);
-            waitForNewMasterAndRetry(actionName, observer, request, listener, changePredicate);
+            waitForNewMasterAndRetry(actionName, observer, request, 100, false, listener, changePredicate);
         } else {
             logger.debug("sending [{}] to [{}] for shard entry [{}]", actionName, masterNode.getId(), request);
             transportService.sendRequest(masterNode,
@@ -124,8 +131,11 @@ public class ShardStateAction {
 
                     @Override
                     public void handleException(TransportException exp) {
-                        if (isMasterChannelException(exp)) {
-                            waitForNewMasterAndRetry(actionName, observer, request, listener, changePredicate);
+                        Throwable cause = ExceptionsHelper.unwrap(exp, MASTER_CHANNEL_EXCEPTIONS);
+                        if (cause != null) {
+                            boolean enableRetryOnTimeout = cause instanceof CircuitBreakingException;
+                            waitForNewMasterAndRetry(actionName, observer, request, delayMillisBound, enableRetryOnTimeout, listener,
+                                changePredicate);
                         } else {
                             logger.warn(new ParameterizedMessage("unexpected failure while sending request [{}]" +
                                 " to [{}] for shard entry [{}]", actionName, masterNode, request), exp);
@@ -141,12 +151,9 @@ public class ShardStateAction {
     private static Class[] MASTER_CHANNEL_EXCEPTIONS = new Class[]{
         NotMasterException.class,
         ConnectTransportException.class,
-        FailedToCommitClusterStateException.class
+        FailedToCommitClusterStateException.class,
+        CircuitBreakingException.class
     };
-
-    private static boolean isMasterChannelException(TransportException exp) {
-        return ExceptionsHelper.unwrap(exp, MASTER_CHANNEL_EXCEPTIONS) != null;
-    }
 
     /**
      * Send a shard failed request to the master node to update the cluster state with the failure of a shard on another node. This means
@@ -193,15 +200,18 @@ public class ShardStateAction {
 
     // visible for testing
     protected void waitForNewMasterAndRetry(String actionName, ClusterStateObserver observer,
-                                            TransportRequest request, ActionListener<Void> listener,
+                                            TransportRequest request, long delayMillisBound,
+                                            boolean enableRetryAfterDelay, ActionListener<Void> listener,
                                             Predicate<ClusterState> changePredicate) {
+        final TimeValue delay = enableRetryAfterDelay ?
+            TimeValue.timeValueMillis(Randomness.get().nextInt(Math.toIntExact(delayMillisBound)) + 1) : null;
         observer.waitForNextChange(new ClusterStateObserver.Listener() {
             @Override
             public void onNewClusterState(ClusterState state) {
                 if (logger.isTraceEnabled()) {
                     logger.trace("new cluster state [{}] after waiting for master election for shard entry [{}]", state, request);
                 }
-                sendShardAction(actionName, state, request, listener);
+                sendShardAction(actionName, state, request, delayMillisBound, listener);
             }
 
             @Override
@@ -212,10 +222,19 @@ public class ShardStateAction {
 
             @Override
             public void onTimeout(TimeValue timeout) {
-                // we wait indefinitely for a new master
-                assert false;
+                if (enableRetryAfterDelay) {
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("timed out after [{}] while waiting for master to recover for shard entry [{}]",
+                            timeout, request);
+                    }
+
+                    sendShardAction(actionName, observer.setAndGetObservedState(), request, delayMillisBound, listener);
+                } else {
+                    // we wait indefinitely for a new master
+                    assert false;
+                }
             }
-        }, changePredicate);
+        }, changePredicate, delay);
     }
 
     private static class ShardFailedTransportHandler implements TransportRequestHandler<FailedShardEntry> {

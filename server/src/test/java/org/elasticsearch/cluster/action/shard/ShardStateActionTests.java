@@ -109,9 +109,10 @@ public class ShardStateActionTests extends ESTestCase {
 
         @Override
         protected void waitForNewMasterAndRetry(String actionName, ClusterStateObserver observer, TransportRequest request,
+                                                long delayMillisBound, boolean retryOnTimeout,
                                                 ActionListener<Void> listener, Predicate<ClusterState> changePredicate) {
             onBeforeWaitForNewMasterAndRetry.run();
-            super.waitForNewMasterAndRetry(actionName, observer, request, listener, changePredicate);
+            super.waitForNewMasterAndRetry(actionName, observer, request, delayMillisBound, retryOnTimeout, listener, changePredicate);
             onAfterWaitForNewMasterAndRetry.run();
         }
     }
