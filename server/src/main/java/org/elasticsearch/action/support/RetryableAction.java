@@ -30,7 +30,6 @@ import org.elasticsearch.threadpool.Scheduler;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.ArrayDeque;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -43,10 +42,10 @@ public abstract class RetryableAction<Response> {
 
     private final Logger logger;
 
-    private static enum State {
-        waiting, running, cancelled, done
+    private enum State {
+        init, waiting, running, cancelled, done
     }
-    private final AtomicReference<State> state = new AtomicReference<>(State.waiting);
+    private final AtomicReference<State> state = new AtomicReference<>(State.init);
     private final ThreadPool threadPool;
     private final long initialDelayMillis;
     private final long timeoutMillis;
@@ -77,15 +76,17 @@ public abstract class RetryableAction<Response> {
     }
 
     public void run() {
-        assert state.get() == State.waiting;
-        state.set(State.running);
-        final RetryingListener retryingListener = new RetryingListener(initialDelayMillis, null);
-        final Runnable runnable = createRunnable(retryingListener);
-        threadPool.executor(executor).execute(runnable);
+        if (state.compareAndSet(State.init, State.running)) {
+            final RetryingListener retryingListener = new RetryingListener(initialDelayMillis, null);
+            final Runnable runnable = createRunnable(retryingListener);
+            threadPool.executor(executor).execute(runnable);
+        }
     }
 
     public void cancel(Exception e) {
-        cancellationException = e;
+        if (state.get() != State.cancelled) {
+            cancellationException = e;
+        }
         if (state.getAndUpdate(s -> s != State.done ? State.cancelled : s) == State.waiting) {
             Scheduler.ScheduledCancellable localRetryTask = this.retryTask;
             if (localRetryTask != null) {
