@@ -82,6 +82,9 @@ public class TransportPutAutoscalingPolicyAction extends AcknowledgedTransportMa
     }
 
     static ClusterState putAutoscalingPolicy(final ClusterState currentState, final AutoscalingPolicy policy, final Logger logger) {
+        // we allow putting policies with roles that not all nodes in the cluster may understand currently (but the current master must
+        // know it). The expectation is that the mixed cluster situation will be healed soon. See also
+        // AutoscalingCalculateCapacityService#hasUnknownRoles where we shortcut decision making if master node does not know all roles.
         final ClusterState.Builder builder = ClusterState.builder(currentState);
         final AutoscalingMetadata currentMetadata;
         if (currentState.metadata().custom(AutoscalingMetadata.NAME) != null) {

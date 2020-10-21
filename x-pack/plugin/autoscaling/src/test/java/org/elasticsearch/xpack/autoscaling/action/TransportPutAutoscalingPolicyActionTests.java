@@ -118,7 +118,7 @@ public class TransportPutAutoscalingPolicyActionTests extends AutoscalingTestCas
         // add to the existing deciders, to ensure the policy has changed
         final AutoscalingPolicy policy = new AutoscalingPolicy(
             name,
-            mutateAutoscalingDeciders(currentMetadata.policies().get(name).policy().deciders())
+                randomRoles(), mutateAutoscalingDeciders(currentMetadata.policies().get(name).policy().deciders())
         );
         final Logger mockLogger = mock(Logger.class);
         final ClusterState state = TransportPutAutoscalingPolicyAction.putAutoscalingPolicy(currentState, policy, mockLogger);

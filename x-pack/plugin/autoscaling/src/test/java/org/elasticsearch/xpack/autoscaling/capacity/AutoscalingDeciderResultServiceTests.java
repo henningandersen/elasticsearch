@@ -40,7 +40,7 @@ public class AutoscalingDeciderResultServiceTests extends AutoscalingTestCase {
 
         SortedMap<String, AutoscalingPolicyMetadata> policies = new TreeMap<>(
             policyNames.stream()
-                .map(s -> Tuple.tuple(s, new AutoscalingPolicyMetadata(new AutoscalingPolicy(s, randomFixedDeciders()))))
+                .map(s -> Tuple.tuple(s, new AutoscalingPolicyMetadata(new AutoscalingPolicy(s, randomRoles(), randomFixedDeciders()))))
                 .collect(Collectors.toMap(Tuple::v1, Tuple::v2))
         );
         ClusterState state = ClusterState.builder(ClusterName.DEFAULT)
@@ -106,11 +106,10 @@ public class AutoscalingDeciderResultServiceTests extends AutoscalingTestCase {
     }
 
     public void testContext() {
-        String tier = randomAlphaOfLength(5);
         ClusterState state = ClusterState.builder(ClusterName.DEFAULT).build();
         ClusterInfo info = ClusterInfo.EMPTY;
         AutoscalingCalculateCapacityService.DefaultAutoscalingDeciderContext context =
-            new AutoscalingCalculateCapacityService.DefaultAutoscalingDeciderContext(tier, state, info);
+            new AutoscalingCalculateCapacityService.DefaultAutoscalingDeciderContext(randomRoles(), state, info);
 
         assertSame(state, context.state());
         // there is no nodes in any tier.

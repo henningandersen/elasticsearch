@@ -10,6 +10,8 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
+import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -18,7 +20,10 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.autoscaling.policy.AutoscalingPolicy;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class PutAutoscalingPolicyAction extends ActionType<AcknowledgedResponse> {
 
@@ -70,6 +75,12 @@ public class PutAutoscalingPolicyAction extends ActionType<AcknowledgedResponse>
 
         @Override
         public ActionRequestValidationException validate() {
+            List<String> errors = policy.roles().stream().filter(Predicate.not(DiscoveryNode.getPossibleRoleNames()::contains)).collect(Collectors.toList());
+            if (errors.isEmpty() == false) {
+                ActionRequestValidationException exception = new ActionRequestValidationException();
+                exception.addValidationErrors(errors);
+            }
+
             // TODO: validate that the policy deciders are non-empty
             return null;
         }
