@@ -55,6 +55,7 @@ import org.elasticsearch.xpack.autoscaling.rest.RestDeleteAutoscalingPolicyHandl
 import org.elasticsearch.xpack.autoscaling.rest.RestGetAutoscalingCapacityHandler;
 import org.elasticsearch.xpack.autoscaling.rest.RestGetAutoscalingPolicyHandler;
 import org.elasticsearch.xpack.autoscaling.rest.RestPutAutoscalingPolicyHandler;
+import org.elasticsearch.xpack.autoscaling.storage.ReactiveStorageDecider;
 import org.elasticsearch.xpack.core.XPackPlugin;
 
 import java.util.ArrayList;
@@ -189,7 +190,8 @@ public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugi
                 AutoscalingDeciderResult.Reason.class,
                 FixedAutoscalingDeciderConfiguration.NAME,
                 FixedAutoscalingDeciderService.FixedReason::new
-            )
+            ),
+            new NamedWriteableRegistry.Entry(AutoscalingDecider.class, ReactiveStorageDecider.NAME, ReactiveStorageDecider::new)
         );
     }
 
@@ -201,6 +203,11 @@ public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugi
                 AutoscalingDeciderConfiguration.class,
                 new ParseField(FixedAutoscalingDeciderConfiguration.NAME),
                 FixedAutoscalingDeciderConfiguration::parse
+            ),
+            new NamedXContentRegistry.Entry(
+                AutoscalingDecider.class,
+                new ParseField(ReactiveStorageDecider.NAME),
+                ReactiveStorageDecider::parse
             )
         );
     }

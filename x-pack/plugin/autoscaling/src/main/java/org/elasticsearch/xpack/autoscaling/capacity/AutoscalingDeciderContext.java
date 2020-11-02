@@ -4,24 +4,19 @@
  * you may not use this file except in compliance with the Elastic License.
  */
 
-package org.elasticsearch.xpack.autoscaling.capacity;
+package org.elasticsearch.xpack.autoscaling.decision;
 
+import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.node.DiscoveryNode;
-
-import java.util.Set;
+import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
+import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 
 public interface AutoscalingDeciderContext {
     ClusterState state();
 
-    /**
-     * Return current capacity of nodes governed by the policy. Can be null if the capacity of some nodes is unavailable. If a decider
-     * relies on this value and gets a null current capacity, it should return a result with a null requiredCapacity (undecided).
-     */
-    AutoscalingCapacity currentCapacity();
+    ClusterInfo info();
 
-    /**
-     * Return the nodes governed by the policy.
-     */
-    Set<DiscoveryNode> nodes();
+    ShardsAllocator shardsAllocator();
+
+    AllocationDeciders allocationDeciders();
 }
