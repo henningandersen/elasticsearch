@@ -69,7 +69,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Test the higher level parts of {@link ReactiveStorageDecider} that all require a similar setup.
+ * Test the higher level parts of {@link ReactiveStorageDeciderService} that all require a similar setup.
  */
 public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     private static final Logger logger = LogManager.getLogger(ReactiveStorageDeciderDecisionTests.class);
@@ -137,9 +137,9 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         while (lastState != state && round < maxRounds) {
             boolean prevents = hasAllocatableSubjectShards();
             assert round != 0 || prevents;
-            verify(ReactiveStorageDecider::storagePreventsAllocation, prevents, mockCanAllocateDiskDecider);
-            verify(ReactiveStorageDecider::storagePreventsAllocation, false, mockCanAllocateDiskDecider, CAN_ALLOCATE_NO_DECIDER);
-            verify(ReactiveStorageDecider::storagePreventsAllocation, false);
+            verify(ReactiveStorageDeciderService::storagePreventsAllocation, prevents, mockCanAllocateDiskDecider);
+            verify(ReactiveStorageDeciderService::storagePreventsAllocation, false, mockCanAllocateDiskDecider, CAN_ALLOCATE_NO_DECIDER);
+            verify(ReactiveStorageDeciderService::storagePreventsAllocation, false);
             if (hasUnassignedSubjectShards()) {
                 verifyScale(
                     AutoscalingDecisionType.SCALE_UP,
@@ -164,7 +164,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         }
         assert round > 0;
         assertThat(state, sameInstance(lastState));
-        assertThat(ReactiveStorageDecider.simulateStartAndAllocate(state, createContext(mockCanAllocateDiskDecider)), sameInstance(state));
+        assertThat(ReactiveStorageDeciderService.simulateStartAndAllocate(state, createContext(mockCanAllocateDiskDecider)), sameInstance(state));
     }
 
     public void testStoragePreventsMove() {
@@ -210,9 +210,9 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
                 )
         );
 
-        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, true, mockCanAllocateDiskDecider);
-        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, false, mockCanAllocateDiskDecider, CAN_ALLOCATE_NO_DECIDER);
-        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, false);
+        verify(ReactiveStorageDeciderService::storagePreventsRemainOrMove, true, mockCanAllocateDiskDecider);
+        verify(ReactiveStorageDeciderService::storagePreventsRemainOrMove, false, mockCanAllocateDiskDecider, CAN_ALLOCATE_NO_DECIDER);
+        verify(ReactiveStorageDeciderService::storagePreventsRemainOrMove, false);
 
         verifyScale(AutoscalingDecisionType.SCALE_UP, "not enough storage available for assigned shards", mockCanAllocateDiskDecider);
         verifyScale(AutoscalingDecisionType.NO_SCALE, "storage ok", mockCanAllocateDiskDecider, CAN_ALLOCATE_NO_DECIDER);
@@ -232,15 +232,15 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             startRandomShards();
         }
 
-        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, true, mockCanRemainDiskDecider, CAN_ALLOCATE_NO_DECIDER);
+        verify(ReactiveStorageDeciderService::storagePreventsRemainOrMove, true, mockCanRemainDiskDecider, CAN_ALLOCATE_NO_DECIDER);
         verify(
-            ReactiveStorageDecider::storagePreventsRemainOrMove,
+            ReactiveStorageDeciderService::storagePreventsRemainOrMove,
             false,
             mockCanRemainDiskDecider,
             CAN_REMAIN_NO_DECIDER,
             CAN_ALLOCATE_NO_DECIDER
         );
-        verify(ReactiveStorageDecider::storagePreventsRemainOrMove, false);
+        verify(ReactiveStorageDeciderService::storagePreventsRemainOrMove, false);
 
         // maybe relocate, which means no longer started. This is OK for scale, since it simulates start.
         startRandomShards();
@@ -280,7 +280,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         int maxRounds = state.getRoutingNodes().unassigned().size() + 3; // (allocate + start + detect-same)
         int round = 0;
         while (lastState != state && round < maxRounds) {
-            ClusterState simulatedState = ReactiveStorageDecider.simulateStartAndAllocate(state, createContext(mockDecider));
+            ClusterState simulatedState = ReactiveStorageDeciderService.simulateStartAndAllocate(state, createContext(mockDecider));
             assertThat(simulatedState.nodes(), sameInstance(state.nodes()));
             assertThat(simulatedState.metadata().indices().keys().toArray(), equalTo(state.metadata().indices().keys().toArray()));
             assertThat(simulatedState.getRoutingNodes().shardsWithState(ShardRoutingState.INITIALIZING), empty());
@@ -298,7 +298,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         }
         assert round > 0;
         assertThat(state, sameInstance(lastState));
-        assertThat(ReactiveStorageDecider.simulateStartAndAllocate(state, createContext(mockDecider)), sameInstance(state));
+        assertThat(ReactiveStorageDeciderService.simulateStartAndAllocate(state, createContext(mockDecider)), sameInstance(state));
     }
 
     public interface BooleanVerificationSubject {
@@ -325,7 +325,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
         String reason,
         AllocationDecider... allocationDeciders
     ) {
-        ReactiveStorageDecider decider = new ReactiveStorageDecider("tier", "hot");
+        ReactiveStorageDeciderService decider = new ReactiveStorageDeciderService("tier", "hot");
         AutoscalingDecision decision = decider.scale(createContext(state, allocationDeciders));
         assertThat(decision.type(), equalTo(type));
         assertThat(decision.reason(), equalTo(reason));
@@ -390,7 +390,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     private void withRoutingAllocation(Consumer<RoutingAllocation> block) {
         RoutingAllocation allocation = createRoutingAllocation(state, createAllocationDeciders());
         block.accept(allocation);
-        state = ReactiveStorageDecider.updateClusterState(state, allocation);
+        state = ReactiveStorageDeciderService.updateClusterState(state, allocation);
     }
 
     private void allocate() {
@@ -431,7 +431,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
             }
         }
 
-        state = ReactiveStorageDecider.updateClusterState(state, allocation);
+        state = ReactiveStorageDeciderService.updateClusterState(state, allocation);
 
     }
 
@@ -533,7 +533,7 @@ public class ReactiveStorageDeciderDecisionTests extends ESTestCase {
     }
 
     private static String randomNodeId(RoutingNodes routingNodes, String tier) {
-        return randomFrom(ReactiveStorageDecider.nodesInTier(routingNodes, n -> n.getName().startsWith(tier)).collect(Collectors.toSet()))
+        return randomFrom(ReactiveStorageDeciderService.nodesInTier(routingNodes, n -> n.getName().startsWith(tier)).collect(Collectors.toSet()))
             .nodeId();
     }
 

@@ -26,6 +26,10 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingCapacity;
+import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderContext;
+import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderResult;
+import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
 import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecider;
 import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDeciderContext;
 import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecision;
@@ -39,104 +43,51 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class ReactiveStorageDecider implements AutoscalingDecider {
+public class ReactiveStorageDeciderService implements AutoscalingDeciderService<ReactiveStorageDeciderConfiguration> {
     public static final String NAME = "reactive_storage";
 
-    private static final Logger logger = LogManager.getLogger(ReactiveStorageDecider.class);
+    private static final Logger logger = LogManager.getLogger(ReactiveStorageDeciderService.class);
 
-    private static final ConstructingObjectParser<ReactiveStorageDecider, Void> PARSER;
+    private static final ConstructingObjectParser<ReactiveStorageDeciderService, Void> PARSER;
     private static final ParseField TIER_ATTRIBUTE_FIELD = new ParseField("tier_attribute");
     private static final ParseField TIER_FIELD = new ParseField("tier");
 
     static {
-        PARSER = new ConstructingObjectParser<>(NAME, a -> new ReactiveStorageDecider((String) a[0], (String) a[1]));
+        PARSER = new ConstructingObjectParser<>(NAME, a -> new ReactiveStorageDeciderService((String) a[0], (String) a[1]));
         PARSER.declareString(ConstructingObjectParser.constructorArg(), TIER_ATTRIBUTE_FIELD);
         PARSER.declareString(ConstructingObjectParser.constructorArg(), TIER_FIELD);
     }
 
-    private final String tierAttribute;
-    private final String tier;
 
-    public ReactiveStorageDecider(String tierAttribute, String tier) {
-        if ((tier == null || tierAttribute == null)) {
-            throw new IllegalArgumentException("must specify both [tier_attribute] [" + tierAttribute + "] and [tier] [" + tier + "]");
-        }
-        this.tierAttribute = tierAttribute;
-        this.tier = tier;
+    public ReactiveStorageDeciderService() {
     }
 
-    public ReactiveStorageDecider(StreamInput in) throws IOException {
-        this(in.readString(), in.readString());
-    }
-
-    public static ReactiveStorageDecider parse(XContentParser parser) throws IOException {
-        return PARSER.parse(parser, null);
-    }
 
     @Override
     public String name() {
         return NAME;
     }
 
-    @Override
-    public String getWriteableName() {
-        return NAME;
-    }
-
-    public String getTierAttribute() {
-        return tierAttribute;
-    }
-
-    public String getTier() {
-        return tier;
-    }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ReactiveStorageDecider that = (ReactiveStorageDecider) o;
-        return tierAttribute.equals(that.tierAttribute) && tier.equals(that.tier);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(tierAttribute, tier);
-    }
-
-    @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        out.writeString(tierAttribute);
-        out.writeString(tier);
-    }
-
-    @Override
-    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
-        {
-            builder.field(TIER_ATTRIBUTE_FIELD.getPreferredName(), tierAttribute);
-            builder.field(TIER_FIELD.getPreferredName(), tier);
-        }
-        builder.endObject();
-        return builder;
-    }
-
-    @Override
-    public AutoscalingDecision scale(AutoscalingDeciderContext context) {
+    public AutoscalingDeciderResult scale(ReactiveStorageDeciderConfiguration decider, AutoscalingDeciderContext context) {
         ClusterState state = simulateStartAndAllocate(context.state(), context);
         Predicate<IndexMetadata> indexTierPredicate =
             // we check the specific attribute to not match indices with no tier spec.
             imd -> tier.equals(imd.getSettings().get(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey() + tierAttribute));
-        Predicate<DiscoveryNode> nodeTierPredicate = n -> tier.equals(n.getAttributes().get(tierAttribute));
+        Predicate<DiscoveryNode> nodeTierPredicate = context.nodes()::contains;
 
+        AutoscalingCapacity plusOne = AutoscalingCapacity.builder().total(context.currentCapacity().tier().storage().getBytes() + 1, null).build();
         if (storagePreventsAllocation(state, context, indexTierPredicate, nodeTierPredicate)) {
-            return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for unassigned shards");
+            return new AutoscalingDeciderResult(plusOne, new ReactiveReason("not enough storage available for unassigned shards"));
         } else if (storagePreventsRemainOrMove(state, context, indexTierPredicate, nodeTierPredicate)) {
-            return new AutoscalingDecision(NAME, AutoscalingDecisionType.SCALE_UP, "not enough storage available for assigned shards");
+            return new AutoscalingDeciderResult(plusOne, new ReactiveReason("not enough storage available for assigned shards");
         } else {
             // the message here is tricky, since storage might not be OK, but in that case, increasing storage alone would not help since
             // other deciders prevents allocation/moving shards.
-            return new AutoscalingDecision(NAME, AutoscalingDecisionType.NO_SCALE, "storage ok");
+            AutoscalingCapacity ok =
+                AutoscalingCapacity.builder().total(context.currentCapacity().tier().storage(), null).build();
+            return new AutoscalingDeciderResult(ok, new ReactiveReason("storage ok"));
         }
     }
 
@@ -152,6 +103,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
             routingNodes,
             state,
             context.info(),
+            context.snapshotShardSizeInfo(),
             System.nanoTime()
         );
         Metadata metadata = state.metadata();
@@ -172,6 +124,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
             routingNodes,
             state,
             context.info(),
+            context.snapshotShardSizeInfo(),
             System.nanoTime()
         );
         Metadata metadata = state.metadata();
@@ -215,7 +168,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         try {
             return nodesInTier(allocation.routingNodes(), nodeTierPredicate).map(
                 node -> context.allocationDeciders().canAllocate(shard, node, allocation)
-            ).anyMatch(ReactiveStorageDecider::isDiskOnlyNoDecision);
+            ).anyMatch(ReactiveStorageDeciderService::isDiskOnlyNoDecision);
         } finally {
             allocation.debugDecision(false);
         }
@@ -260,6 +213,7 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
                 routingNodes,
                 state,
                 context.info(),
+                context.snapshotShardSizeInfo(),
                 System.nanoTime()
             );
 
@@ -294,5 +248,41 @@ public class ReactiveStorageDecider implements AutoscalingDecider {
         assert newRoutingTable.validate(newMetadata); // validates the routing table is coherent with the cluster state metadata
 
         return ClusterState.builder(oldState).routingTable(newRoutingTable).metadata(newMetadata).build();
+    }
+
+
+    public static class ReactiveReason implements AutoscalingDeciderResult.Reason {
+        private String reason;
+
+        public ReactiveReason(String reason) {
+            this.reason = reason;
+        }
+
+        public ReactiveReason(StreamInput in) {
+            this.reason = in.readString();
+        }
+
+        @Override
+        public String summary() {
+            return reason;
+        }
+
+        @Override
+        public String getWriteableName() {
+            return ReactiveStorageDeciderService.NAME;
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            out.writeString(reason);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
+            builder.field("reason", reason);
+            builder.endObject();
+            return builder;
+        }
     }
 }

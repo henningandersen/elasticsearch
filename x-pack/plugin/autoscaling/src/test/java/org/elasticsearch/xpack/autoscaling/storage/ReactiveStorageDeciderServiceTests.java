@@ -45,10 +45,10 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 
 /**
- * Tests the primitive methods in {@link ReactiveStorageDecider}. Tests of higher level methods are in
+ * Tests the primitive methods in {@link ReactiveStorageDeciderService}. Tests of higher level methods are in
  * {@link ReactiveStorageDeciderDecisionTests}
  */
-public class ReactiveStorageDeciderTests extends ESTestCase {
+public class ReactiveStorageDeciderServiceTests extends ESTestCase {
     private static final List<String> SOME_ALLOCATION_DECIDERS = Arrays.asList(
         SameShardAllocationDecider.NAME,
         AwarenessAllocationDecider.NAME,
@@ -61,7 +61,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
 
         IllegalArgumentException exception = expectThrows(
             IllegalArgumentException.class,
-            () -> new ReactiveStorageDecider(attribute, tier)
+            () -> new ReactiveStorageDeciderService(attribute, tier)
         );
         assertThat(exception.getMessage(), equalTo("must specify both [tier_attribute] [" + attribute + "] and [tier] [" + tier + "]"));
     }
@@ -82,7 +82,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             )
             .forEach(decision::add);
 
-        assertThat(ReactiveStorageDecider.isDiskOnlyNoDecision(decision), is(true));
+        assertThat(ReactiveStorageDeciderService.isDiskOnlyNoDecision(decision), is(true));
     }
 
     public void testIsNotDiskOnlyDecision() {
@@ -104,7 +104,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             .map(label -> new Decision.Single(randomFrom(Decision.Type.values()), label, "test " + label))
             .forEach(decision::add);
 
-        assertThat(ReactiveStorageDecider.isDiskOnlyNoDecision(decision), is(false));
+        assertThat(ReactiveStorageDeciderService.isDiskOnlyNoDecision(decision), is(false));
     }
 
     public void testNodesInTier() {
@@ -115,7 +115,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
         Set<DiscoveryNode> expectedHotNodes = StreamSupport.stream(state.nodes().spliterator(), false).collect(Collectors.toSet());
         state = addDataNodes("warm", "warm", state, warmNodes);
 
-        Set<DiscoveryNode> hotTier = ReactiveStorageDecider.nodesInTier(state.getRoutingNodes(), n -> n.getName().startsWith("hot"))
+        Set<DiscoveryNode> hotTier = ReactiveStorageDeciderService.nodesInTier(state.getRoutingNodes(), n -> n.getName().startsWith("hot"))
             .map(RoutingNode::node)
             .collect(Collectors.toSet());
         assertThat(hotTier, equalTo(expectedHotNodes));
@@ -142,7 +142,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
             null,
             System.nanoTime()
         );
-        assertThat(ReactiveStorageDecider.updateClusterState(state, allocation), sameInstance(state));
+        assertThat(ReactiveStorageDeciderService.updateClusterState(state, allocation), sameInstance(state));
 
         RoutingNodes routingNodes = allocation.routingNodes();
         for (RoutingNodes.UnassignedShards.UnassignedIterator iterator = routingNodes.unassigned().iterator(); iterator.hasNext();) {
@@ -158,7 +158,7 @@ public class ReactiveStorageDeciderTests extends ESTestCase {
                 );
             }
         }
-        ClusterState updatedState = ReactiveStorageDecider.updateClusterState(state, allocation);
+        ClusterState updatedState = ReactiveStorageDeciderService.updateClusterState(state, allocation);
         assertThat(updatedState, not(sameInstance(state)));
         assertThat(
             updatedState.getRoutingNodes().shardsWithState(ShardRoutingState.UNASSIGNED),

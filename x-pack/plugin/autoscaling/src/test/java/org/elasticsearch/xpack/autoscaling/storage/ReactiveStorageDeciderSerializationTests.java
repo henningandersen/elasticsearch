@@ -16,7 +16,7 @@ import org.elasticsearch.xpack.autoscaling.Autoscaling;
 
 import java.io.IOException;
 
-public class ReactiveStorageDeciderSerializationTests extends AbstractSerializingTestCase<ReactiveStorageDecider> {
+public class ReactiveStorageDeciderSerializationTests extends AbstractSerializingTestCase<ReactiveStorageDeciderService> {
 
     @Override
     protected NamedWriteableRegistry getNamedWriteableRegistry() {
@@ -29,24 +29,24 @@ public class ReactiveStorageDeciderSerializationTests extends AbstractSerializin
     }
 
     @Override
-    protected ReactiveStorageDecider doParseInstance(XContentParser parser) throws IOException {
-        return ReactiveStorageDecider.parse(parser);
+    protected ReactiveStorageDeciderService doParseInstance(XContentParser parser) throws IOException {
+        return ReactiveStorageDeciderService.parse(parser);
     }
 
     @Override
-    protected Writeable.Reader<ReactiveStorageDecider> instanceReader() {
-        return ReactiveStorageDecider::new;
+    protected Writeable.Reader<ReactiveStorageDeciderService> instanceReader() {
+        return ReactiveStorageDeciderService::new;
     }
 
     @Override
-    protected ReactiveStorageDecider createTestInstance() {
-        return new ReactiveStorageDecider(randomAlphaOfLength(8), randomAlphaOfLength(8));
+    protected ReactiveStorageDeciderService createTestInstance() {
+        return new ReactiveStorageDeciderService(randomAlphaOfLength(8), randomAlphaOfLength(8));
     }
 
     @Override
-    protected ReactiveStorageDecider mutateInstance(ReactiveStorageDecider instance) throws IOException {
+    protected ReactiveStorageDeciderService mutateInstance(ReactiveStorageDeciderService instance) throws IOException {
         boolean mutateAttribute = randomBoolean();
-        return new ReactiveStorageDecider(
+        return new ReactiveStorageDeciderService(
             mutateAttribute ? randomValueOtherThan(instance.getTierAttribute(), () -> randomAlphaOfLength(8)) : instance.getTierAttribute(),
             mutateAttribute == false || randomBoolean()
                 ? randomValueOtherThan(instance.getTier(), () -> randomAlphaOfLength(8))
