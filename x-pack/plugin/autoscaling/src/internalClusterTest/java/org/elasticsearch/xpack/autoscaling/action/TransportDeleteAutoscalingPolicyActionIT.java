@@ -7,6 +7,7 @@
 package org.elasticsearch.xpack.autoscaling.action;
 
 import org.elasticsearch.ResourceNotFoundException;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.xpack.autoscaling.AutoscalingIntegTestCase;
 import org.elasticsearch.xpack.autoscaling.AutoscalingMetadata;
@@ -30,7 +31,8 @@ public class TransportDeleteAutoscalingPolicyActionIT extends AutoscalingIntegTe
         );
         assertAcked(client().execute(PutAutoscalingPolicyAction.INSTANCE, putRequest).actionGet());
         // we trust that the policy is in the cluster state since we have tests for putting policies
-        final DeleteAutoscalingPolicyAction.Request deleteRequest = new DeleteAutoscalingPolicyAction.Request(policy.name());
+        String deleteName = randomFrom("*", policy.name(), policy.name().substring(0, between(0, policy.name().length())) + "*");
+        final DeleteAutoscalingPolicyAction.Request deleteRequest = new DeleteAutoscalingPolicyAction.Request(deleteName);
         assertAcked(client().execute(DeleteAutoscalingPolicyAction.INSTANCE, deleteRequest).actionGet());
         // now verify that the policy is not in the cluster state
         final ClusterState state = client().admin().cluster().prepareState().get().getState();
@@ -56,4 +58,9 @@ public class TransportDeleteAutoscalingPolicyActionIT extends AutoscalingIntegTe
         assertThat(e.getMessage(), containsString("autoscaling policy with name [" + name + "] does not exist"));
     }
 
+    public void testDeleteNonExistentPolicyByWildcard() {
+        final String name = randomFrom("*", randomAlphaOfLength(8) + "*");
+        final DeleteAutoscalingPolicyAction.Request deleteRequest = new DeleteAutoscalingPolicyAction.Request(name);
+        assertAcked(client().execute(DeleteAutoscalingPolicyAction.INSTANCE, deleteRequest).actionGet());
+    }
 }

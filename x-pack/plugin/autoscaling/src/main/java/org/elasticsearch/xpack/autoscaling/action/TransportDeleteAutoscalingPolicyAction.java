@@ -20,7 +20,9 @@ import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.regex.Regex;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -83,9 +85,11 @@ public class TransportDeleteAutoscalingPolicyAction extends AcknowledgedTranspor
             // we will reject the request below when we try to look up the policy by name
             currentMetadata = AutoscalingMetadata.EMPTY;
         }
-        if (currentMetadata.policies().containsKey(name) == false) {
+
+        if (Regex.isSimpleMatchPattern(name) == false && currentMetadata.policies().containsKey(name) == false) {
             throw new ResourceNotFoundException("autoscaling policy with name [" + name + "] does not exist");
         }
+
         final SortedMap<String, AutoscalingPolicyMetadata> newPolicies = new TreeMap<>(currentMetadata.policies());
         final AutoscalingPolicyMetadata policy = newPolicies.remove(name);
         assert policy != null : name;
