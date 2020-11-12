@@ -9,6 +9,7 @@ package org.elasticsearch.xpack.autoscaling.capacity;
 import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.snapshots.SnapshotShardSizeInfo;
@@ -32,7 +33,7 @@ public interface AutoscalingDeciderContext {
     /**
      * Return the roles of the policy
      */
-    Set<String> roles();
+    Set<DiscoveryNodeRole> roles();
 
     ClusterInfo info();
 

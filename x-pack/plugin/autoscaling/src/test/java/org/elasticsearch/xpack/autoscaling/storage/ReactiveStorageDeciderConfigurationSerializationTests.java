@@ -16,7 +16,8 @@ import org.elasticsearch.xpack.autoscaling.Autoscaling;
 
 import java.io.IOException;
 
-public class ReactiveStorageDeciderSerializationTests extends AbstractSerializingTestCase<ReactiveStorageDeciderService> {
+public class ReactiveStorageDeciderConfigurationSerializationTests extends AbstractSerializingTestCase<
+    ReactiveStorageDeciderConfiguration> {
 
     @Override
     protected NamedWriteableRegistry getNamedWriteableRegistry() {
@@ -29,28 +30,22 @@ public class ReactiveStorageDeciderSerializationTests extends AbstractSerializin
     }
 
     @Override
-    protected ReactiveStorageDeciderService doParseInstance(XContentParser parser) throws IOException {
-        return ReactiveStorageDeciderService.parse(parser);
+    protected ReactiveStorageDeciderConfiguration doParseInstance(XContentParser parser) throws IOException {
+        return ReactiveStorageDeciderConfiguration.parse(parser);
     }
 
     @Override
-    protected Writeable.Reader<ReactiveStorageDeciderService> instanceReader() {
-        return ReactiveStorageDeciderService::new;
+    protected Writeable.Reader<ReactiveStorageDeciderConfiguration> instanceReader() {
+        return ReactiveStorageDeciderConfiguration::new;
     }
 
     @Override
-    protected ReactiveStorageDeciderService createTestInstance() {
-        return new ReactiveStorageDeciderService(randomAlphaOfLength(8), randomAlphaOfLength(8));
+    protected ReactiveStorageDeciderConfiguration createTestInstance() {
+        return new ReactiveStorageDeciderConfiguration();
     }
 
     @Override
-    protected ReactiveStorageDeciderService mutateInstance(ReactiveStorageDeciderService instance) throws IOException {
-        boolean mutateAttribute = randomBoolean();
-        return new ReactiveStorageDeciderService(
-            mutateAttribute ? randomValueOtherThan(instance.getTierAttribute(), () -> randomAlphaOfLength(8)) : instance.getTierAttribute(),
-            mutateAttribute == false || randomBoolean()
-                ? randomValueOtherThan(instance.getTier(), () -> randomAlphaOfLength(8))
-                : instance.getTier()
-        );
+    protected ReactiveStorageDeciderConfiguration mutateInstance(ReactiveStorageDeciderConfiguration instance) throws IOException {
+        return null;
     }
 }

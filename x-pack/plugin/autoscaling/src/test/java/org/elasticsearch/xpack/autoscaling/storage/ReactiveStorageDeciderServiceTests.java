@@ -55,17 +55,6 @@ public class ReactiveStorageDeciderServiceTests extends ESTestCase {
         EnableAllocationDecider.NAME
     );
 
-    public void testNoTierSpecified() {
-        String attribute = randomBoolean() ? null : randomAlphaOfLength(8);
-        String tier = attribute != null || randomBoolean() ? null : randomAlphaOfLength(8);
-
-        IllegalArgumentException exception = expectThrows(
-            IllegalArgumentException.class,
-            () -> new ReactiveStorageDeciderService(attribute, tier)
-        );
-        assertThat(exception.getMessage(), equalTo("must specify both [tier_attribute] [" + attribute + "] and [tier] [" + tier + "]"));
-    }
-
     public void testIsDiskOnlyDecision() {
         Decision.Multi decision = new Decision.Multi();
         if (randomBoolean()) {
@@ -139,6 +128,7 @@ public class ReactiveStorageDeciderServiceTests extends ESTestCase {
             new AllocationDeciders(Collections.emptyList()),
             new RoutingNodes(state, false),
             state,
+            null,
             null,
             System.nanoTime()
         );

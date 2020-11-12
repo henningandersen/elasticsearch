@@ -6,10 +6,9 @@
 
 package org.elasticsearch.xpack.autoscaling.storage;
 
-import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ConstructingObjectParser;
+import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderConfiguration;
@@ -17,18 +16,17 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderConfigurat
 import java.io.IOException;
 
 public class ReactiveStorageDeciderConfiguration implements AutoscalingDeciderConfiguration {
-    private static final ConstructingObjectParser<ReactiveStorageDeciderService, Void> PARSER;
+    private static final ObjectParser<ReactiveStorageDeciderConfiguration, Void> PARSER;
 
     static {
-        PARSER = new ConstructingObjectParser<>(ReactiveStorageDeciderService.NAME, a -> new ReactiveStorageDeciderService());
+        PARSER = new ObjectParser<>(ReactiveStorageDeciderService.NAME, ReactiveStorageDeciderConfiguration::new);
     }
 
-    public static ReactiveStorageDeciderService parse(XContentParser parser) throws IOException {
+    public static ReactiveStorageDeciderConfiguration parse(XContentParser parser) throws IOException {
         return PARSER.parse(parser, null);
     }
 
-    public ReactiveStorageDeciderConfiguration() {
-    }
+    public ReactiveStorageDeciderConfiguration() {}
 
     public ReactiveStorageDeciderConfiguration(StreamInput in) throws IOException {
         this();
@@ -55,8 +53,7 @@ public class ReactiveStorageDeciderConfiguration implements AutoscalingDeciderCo
     }
 
     @Override
-    public void writeTo(StreamOutput out) throws IOException {
-    }
+    public void writeTo(StreamOutput out) throws IOException {}
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {

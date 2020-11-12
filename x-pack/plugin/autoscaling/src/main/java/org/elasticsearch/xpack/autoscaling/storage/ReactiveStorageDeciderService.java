@@ -12,6 +12,7 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
@@ -20,73 +21,67 @@ import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
-import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ConstructingObjectParser;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingCapacity;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderContext;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderResult;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
-import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecider;
-import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDeciderContext;
-import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecision;
-import org.elasticsearch.xpack.autoscaling.decision.AutoscalingDecisionType;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_EXCLUDE_SETTING;
+import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_INCLUDE_SETTING;
+import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_PREFER_SETTING;
+import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_REQUIRE_SETTING;
 
 public class ReactiveStorageDeciderService implements AutoscalingDeciderService<ReactiveStorageDeciderConfiguration> {
     public static final String NAME = "reactive_storage";
 
     private static final Logger logger = LogManager.getLogger(ReactiveStorageDeciderService.class);
 
-    private static final ConstructingObjectParser<ReactiveStorageDeciderService, Void> PARSER;
-    private static final ParseField TIER_ATTRIBUTE_FIELD = new ParseField("tier_attribute");
-    private static final ParseField TIER_FIELD = new ParseField("tier");
+    private static final Predicate<DiscoveryNodeRole> DATA_ROLE_PREDICATE = DiscoveryNode.getPossibleRoles()
+        .stream()
+        .filter(DiscoveryNodeRole::canContainData)
+        .collect(Collectors.toSet())::contains;
 
-    static {
-        PARSER = new ConstructingObjectParser<>(NAME, a -> new ReactiveStorageDeciderService((String) a[0], (String) a[1]));
-        PARSER.declareString(ConstructingObjectParser.constructorArg(), TIER_ATTRIBUTE_FIELD);
-        PARSER.declareString(ConstructingObjectParser.constructorArg(), TIER_FIELD);
-    }
-
-
-    public ReactiveStorageDeciderService() {
-    }
-
+    public ReactiveStorageDeciderService() {}
 
     @Override
     public String name() {
         return NAME;
     }
 
-
     @Override
     public AutoscalingDeciderResult scale(ReactiveStorageDeciderConfiguration decider, AutoscalingDeciderContext context) {
+        AutoscalingCapacity autoscalingCapacity = context.currentCapacity();
+        if (autoscalingCapacity == null || autoscalingCapacity.tier().storage() == null) {
+            return new AutoscalingDeciderResult(null, new ReactiveReason("current capacity not available"));
+        }
+
         ClusterState state = simulateStartAndAllocate(context.state(), context);
-        Predicate<IndexMetadata> indexTierPredicate =
-            // we check the specific attribute to not match indices with no tier spec.
-            imd -> tier.equals(imd.getSettings().get(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey() + tierAttribute));
+        Predicate<IndexMetadata> indexTierPredicate = indexTierPredicate(context);
         Predicate<DiscoveryNode> nodeTierPredicate = context.nodes()::contains;
 
-        AutoscalingCapacity plusOne = AutoscalingCapacity.builder().total(context.currentCapacity().tier().storage().getBytes() + 1, null).build();
+        AutoscalingCapacity plusOne = AutoscalingCapacity.builder()
+            .total(autoscalingCapacity.tier().storage().getBytes() + 1, null)
+            .build();
         if (storagePreventsAllocation(state, context, indexTierPredicate, nodeTierPredicate)) {
             return new AutoscalingDeciderResult(plusOne, new ReactiveReason("not enough storage available for unassigned shards"));
         } else if (storagePreventsRemainOrMove(state, context, indexTierPredicate, nodeTierPredicate)) {
-            return new AutoscalingDeciderResult(plusOne, new ReactiveReason("not enough storage available for assigned shards");
+            return new AutoscalingDeciderResult(plusOne, new ReactiveReason("not enough storage available for assigned shards"));
         } else {
             // the message here is tricky, since storage might not be OK, but in that case, increasing storage alone would not help since
             // other deciders prevents allocation/moving shards.
-            AutoscalingCapacity ok =
-                AutoscalingCapacity.builder().total(context.currentCapacity().tier().storage(), null).build();
+            AutoscalingCapacity ok = AutoscalingCapacity.builder().total(autoscalingCapacity.tier().storage(), null).build();
             return new AutoscalingDeciderResult(ok, new ReactiveReason("storage ok"));
         }
     }
@@ -250,6 +245,74 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
         return ClusterState.builder(oldState).routingTable(newRoutingTable).metadata(newMetadata).build();
     }
 
+    static Predicate<IndexMetadata> indexTierPredicate(AutoscalingDeciderContext context) {
+        return imd -> belongsToTier(
+            imd,
+            context.roles().stream().filter(DATA_ROLE_PREDICATE).map(DiscoveryNodeRole::roleName).collect(Collectors.toSet())::contains
+        );
+    }
+
+    private enum OpType {
+        AND,
+        OR
+    }
+
+    private static boolean belongsToTier(IndexMetadata imd, Predicate<String> dataRoles) {
+        // some logic replication to DataTierAllcationDecider here, since we do not necessarily have a node.
+        Settings indexSettings = imd.getSettings();
+        String indexRequire = INDEX_ROUTING_REQUIRE_SETTING.get(indexSettings);
+        String indexInclude = INDEX_ROUTING_INCLUDE_SETTING.get(indexSettings);
+        String indexExclude = INDEX_ROUTING_EXCLUDE_SETTING.get(indexSettings);
+
+        if (Strings.hasText(indexRequire)) {
+            if (allocationAllowed(OpType.AND, indexRequire, dataRoles) == false) {
+                return false;
+            }
+        }
+        if (Strings.hasText(indexInclude)) {
+            if (allocationAllowed(OpType.OR, indexInclude, dataRoles) == false) {
+                return false;
+            }
+        }
+        if (Strings.hasText(indexExclude)) {
+            if (allocationAllowed(OpType.OR, indexExclude, dataRoles)) {
+                return false;
+            }
+        }
+
+        String tierPreference = INDEX_ROUTING_PREFER_SETTING.get(indexSettings);
+        // we only take first preference to ensure we spin up new tiers as required.
+        if (Strings.hasText(tierPreference)) {
+            String tier = Strings.tokenizeToStringArray(tierPreference, ",")[0];
+            if (allocationAllowed(OpType.AND, tier, dataRoles) == false) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean allocationAllowed(OpType opType, String tierSetting, Predicate<String> dataRoles) {
+        // minor logic replication to DataTierAllcationDecider here, since we do not necessarily have a node.
+        String[] values = Strings.tokenizeToStringArray(tierSetting, ",");
+        for (String value : values) {
+            // generic "data" roles are considered to have all tiers
+            if (dataRoles.test(DiscoveryNodeRole.DATA_ROLE.roleName()) || dataRoles.test(value)) {
+                if (opType == OpType.OR) {
+                    return true;
+                }
+            } else {
+                if (opType == OpType.AND) {
+                    return false;
+                }
+            }
+        }
+        if (opType == OpType.OR) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
     public static class ReactiveReason implements AutoscalingDeciderResult.Reason {
         private String reason;
@@ -258,7 +321,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
             this.reason = reason;
         }
 
-        public ReactiveReason(StreamInput in) {
+        public ReactiveReason(StreamInput in) throws IOException {
             this.reason = in.readString();
         }
 
