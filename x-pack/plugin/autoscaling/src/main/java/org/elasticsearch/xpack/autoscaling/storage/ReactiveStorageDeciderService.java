@@ -191,7 +191,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
             .stream()
             .filter(single -> single.type() == Decision.Type.NO)
             .collect(Collectors.toList());
-        return nos.size() == 1 && DiskThresholdDecider.NAME.equals(nos.get(0).label()) && nos.get(0).type() == Decision.Type.NO;
+        return nos.size() == 1 && DiskThresholdDecider.NAME.equals(nos.get(0).label());
 
     }
 
