@@ -194,6 +194,11 @@ public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugi
                 AutoscalingDeciderConfiguration.class,
                 ReactiveStorageDeciderService.NAME,
                 ReactiveStorageDeciderConfiguration::new
+            ),
+            new NamedWriteableRegistry.Entry(
+                AutoscalingDeciderResult.Reason.class,
+                ReactiveStorageDeciderService.NAME,
+                ReactiveStorageDeciderService.ReactiveReason::new
             )
         );
     }
