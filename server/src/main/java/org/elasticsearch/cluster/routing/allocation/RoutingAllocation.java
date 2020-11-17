@@ -78,9 +78,7 @@ public class RoutingAllocation {
     private final IndexMetadataUpdater indexMetadataUpdater = new IndexMetadataUpdater();
     private final RoutingNodesChangedObserver nodesChangedObserver = new RoutingNodesChangedObserver();
     private final RestoreInProgressUpdater restoreInProgressUpdater = new RestoreInProgressUpdater();
-    private final RoutingChangesObserver routingChangesObserver = new RoutingChangesObserver.DelegatingRoutingChangesObserver(
-        nodesChangedObserver, indexMetadataUpdater, restoreInProgressUpdater
-    );
+    private final RoutingChangesObserver routingChangesObserver;
 
 
     /**
@@ -92,6 +90,19 @@ public class RoutingAllocation {
      */
     public RoutingAllocation(AllocationDeciders deciders, RoutingNodes routingNodes, ClusterState clusterState, ClusterInfo clusterInfo,
                              SnapshotShardSizeInfo shardSizeInfo, long currentNanoTime) {
+        this(deciders, routingNodes, clusterState, clusterInfo, shardSizeInfo, currentNanoTime, null);
+    }
+
+    /**
+     * Creates a new {@link RoutingAllocation}
+     *  @param deciders {@link AllocationDeciders} to used to make decisions for routing allocations
+     * @param routingNodes Routing nodes in the current cluster
+     * @param clusterState cluster state before rerouting
+     * @param currentNanoTime the nano time to use for all delay allocation calculation (typically {@link System#nanoTime()})
+     * @param routingChangesObserver an observer of routing changes in this allocation round.
+     */
+    public RoutingAllocation(AllocationDeciders deciders, RoutingNodes routingNodes, ClusterState clusterState, ClusterInfo clusterInfo,
+                             SnapshotShardSizeInfo shardSizeInfo, long currentNanoTime, RoutingChangesObserver routingChangesObserver) {
         this.deciders = deciders;
         this.routingNodes = routingNodes;
         this.metadata = clusterState.metadata();
@@ -101,6 +112,15 @@ public class RoutingAllocation {
         this.clusterInfo = clusterInfo;
         this.shardSizeInfo = shardSizeInfo;
         this.currentNanoTime = currentNanoTime;
+        if (routingChangesObserver == null) {
+            this.routingChangesObserver = new RoutingChangesObserver.DelegatingRoutingChangesObserver(
+                nodesChangedObserver, indexMetadataUpdater, restoreInProgressUpdater
+            );
+        } else {
+            this.routingChangesObserver = new RoutingChangesObserver.DelegatingRoutingChangesObserver(
+                nodesChangedObserver, indexMetadataUpdater, restoreInProgressUpdater, routingChangesObserver
+            );
+        }
     }
 
     /** returns the nano time captured at the beginning of the allocation. used to make sure all time based decisions are aligned */

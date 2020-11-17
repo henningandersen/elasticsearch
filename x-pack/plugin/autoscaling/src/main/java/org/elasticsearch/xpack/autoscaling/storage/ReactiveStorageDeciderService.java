@@ -6,25 +6,30 @@
 
 package org.elasticsearch.xpack.autoscaling.storage;
 
+import com.carrotsearch.hppc.ObjectLongMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.DiskUsage;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
+import org.elasticsearch.cluster.routing.RoutingChangesObserver;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
+import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
@@ -36,6 +41,7 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderResult;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -89,27 +95,6 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
         }
     }
 
-    /**
-     * Check that disk decider is only decider for a node preventing allocation of the shard.
-     * @return true if and only if a node exists in the tier where only disk decider prevents allocation
-     */
-    private static boolean cannotAllocateDueToStorage(
-        ShardRouting shard,
-        RoutingAllocation allocation,
-        AutoscalingDeciderContext context,
-        Predicate<DiscoveryNode> nodeTierPredicate
-    ) {
-        assert allocation.debugDecision() == false;
-        allocation.debugDecision(true);
-        try {
-            return nodesInTier(allocation.routingNodes(), nodeTierPredicate).map(
-                node -> context.allocationDeciders().canAllocate(shard, node, allocation)
-            ).anyMatch(ReactiveStorageDeciderService::isDiskOnlyNoDecision);
-        } finally {
-            allocation.debugDecision(false);
-        }
-    }
-
     static boolean isDiskOnlyNoDecision(Decision decision) {
         // we consider throttling==yes, throttling should be temporary.
         List<Decision> nos = decision.getDecisions()
@@ -152,7 +137,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
     }
 
     private static boolean belongsToTier(IndexMetadata imd, Predicate<String> dataRoles) {
-        // some logic replication to DataTierAllcationDecider here, since we do not necessarily have a node.
+        // some logic replication to DataTierAllocationDecider here, since we do not necessarily have a node.
         Settings indexSettings = imd.getSettings();
         String indexRequire = INDEX_ROUTING_REQUIRE_SETTING.get(indexSettings);
         String indexInclude = INDEX_ROUTING_INCLUDE_SETTING.get(indexSettings);
@@ -201,11 +186,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
                 }
             }
         }
-        if (opType == OpType.OR) {
-            return false;
-        } else {
-            return true;
-        }
+        return opType != OpType.OR;
     }
 
     public static class AllocationState {
@@ -232,6 +213,15 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
         }
 
         public AllocationState simulateStartAndAllocate() {
+            // for ClusterInfo, we optimistically assume that all recoveries and relocations that were ongoing had copied all data over.
+            // this ensures we do not scale up unnecessarily and at the same time, we expect that the recovery/relocation will then
+            // complete before the next autoscaling poll.
+            // todo: we should refine how we expose reservations, since this would allow us to more precisely adjust for this.
+            // also, getting an uncertainty estimate from the node would be beneficial. Ideally, we should collect free bytes and
+            // shard sizes in one call, lowering the uncertainty and potentially allowing some level of uncertainty estimate.
+            ImmutableOpenMap.Builder<String, DiskUsage> mostAvailable = ImmutableOpenMap.builder(info.getNodeMostAvailableDiskUsages());
+            ImmutableOpenMap.Builder<String, DiskUsage> leastAvailable = ImmutableOpenMap.builder(info.getNodeLeastAvailableDiskUsages());
+
             ClusterState state = this.state;
             while (true) {
                 RoutingNodes routingNodes = new RoutingNodes(state, false);
@@ -351,8 +341,57 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
             return state;
         }
     }
+
+    public static class AdjustClusterInfoObserver implements RoutingChangesObserver {
+
+        private final ImmutableOpenMap.Builder<String, DiskUsage> diskUsage;
+
+        public AdjustClusterInfoObserver(ImmutableOpenMap.Builder<String, DiskUsage> diskUsage) {
+            this.diskUsage = diskUsage;
+        }
+
+        @Override
+        public void shardInitialized(ShardRouting unassignedShard, ShardRouting initializedShard) {
+            free(initializedShard);
+        }
+
+        @Override
+        public void shardStarted(ShardRouting initializingShard, ShardRouting startedShard) {
+        }
+
+        @Override
+        public void relocationStarted(ShardRouting startedShard, ShardRouting targetRelocatingShard) {
+            free(startedShard)
+            alloc(targetRelocatingShard);
+        }
+
+        @Override
+        public void unassignedInfoUpdated(ShardRouting unassignedShard, UnassignedInfo newUnassignedInfo) {
+        }
+
+        @Override
+        public void shardFailed(ShardRouting failedShard, UnassignedInfo unassignedInfo) {
+        }
+
+        @Override
+        public void relocationCompleted(ShardRouting removedRelocationSource) {
+        }
+
+        @Override
+        public void relocationSourceRemoved(ShardRouting removedReplicaRelocationSource) {
+        }
+
+        @Override
+        public void replicaPromoted(ShardRouting replicaShard) {
+        }
+
+        @Override
+        public void initializedReplicaReinitialized(ShardRouting oldReplica, ShardRouting reinitializedReplica) {
+        }
+    }
+
     public static class ReactiveReason implements AutoscalingDeciderResult.Reason {
-        private String reason;
+        private final String reason;
 
         public ReactiveReason(String reason) {
             this.reason = reason;
