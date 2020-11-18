@@ -6,7 +6,6 @@
 
 package org.elasticsearch.xpack.autoscaling.storage;
 
-import com.carrotsearch.hppc.ObjectLongMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.cluster.ClusterInfo;
@@ -41,7 +40,6 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderResult;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -349,12 +347,13 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
 
     public static class AdjustClusterInfoObserver implements RoutingChangesObserver {
 
-        private final ImmutableOpenMap.Builder<String, DiskUsage> diskUsage;
+        private final ImmutableOpenMap.Builder<String, DiskUsage> diskUsage1;
+        private final ImmutableOpenMap.Builder<String, DiskUsage> diskUsage2;
         private final Function<ShardRouting, Long> sizer;
         private final Function<ShardRouting, String> pathFunction;
 
         public AdjustClusterInfoObserver(ImmutableOpenMap.Builder<String, DiskUsage> diskUsage) {
-            this.diskUsage = diskUsage;
+            this.diskUsage1 = diskUsage;
         }
 
         @Override
@@ -397,9 +396,9 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
         }
 
         private void free(ShardRouting shard) {
-            DiskUsage diskUsage = this.diskUsage.get(shard.currentNodeId());
+            DiskUsage diskUsage = this.diskUsage1.get(shard.currentNodeId());
             String shardPath = pathFunction.apply(shard);
-            if (shardPath == null || diskUsage.getPath().equals(shardPath)) {
+            if (diskUsage != null && (shardPath == null || diskUsage.getPath().equals(shardPath))) {
 
             } else {
                 unk
