@@ -43,6 +43,7 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -218,7 +219,11 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
             // complete before the next autoscaling poll.
             // todo: we should refine how we expose reservations, since this would allow us to more precisely adjust for this.
             // also, getting an uncertainty estimate from the node would be beneficial. Ideally, we should collect free bytes and
-            // shard sizes in one call, lowering the uncertainty and potentially allowing some level of uncertainty estimate.
+            // shard sizes in one call, lowering the uncertainty and potentially allowing some level of uncertainty estimate.\
+
+            // for multi data paths, the simulation only ensures relocations are done and optimistically frees the space on both
+            // least and most available paths. This approximation means we may not trigger autoscaling as quickly on multi data path
+            // setups, but properly simulating shards moving around in a multi data path cluster is difficult.
             ImmutableOpenMap.Builder<String, DiskUsage> mostAvailable = ImmutableOpenMap.builder(info.getNodeMostAvailableDiskUsages());
             ImmutableOpenMap.Builder<String, DiskUsage> leastAvailable = ImmutableOpenMap.builder(info.getNodeLeastAvailableDiskUsages());
 
@@ -345,6 +350,8 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
     public static class AdjustClusterInfoObserver implements RoutingChangesObserver {
 
         private final ImmutableOpenMap.Builder<String, DiskUsage> diskUsage;
+        private final Function<ShardRouting, Long> sizer;
+        private final Function<ShardRouting, String> pathFunction;
 
         public AdjustClusterInfoObserver(ImmutableOpenMap.Builder<String, DiskUsage> diskUsage) {
             this.diskUsage = diskUsage;
@@ -361,7 +368,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
 
         @Override
         public void relocationStarted(ShardRouting startedShard, ShardRouting targetRelocatingShard) {
-            free(startedShard)
+            free(startedShard);
             alloc(targetRelocatingShard);
         }
 
@@ -387,6 +394,16 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
 
         @Override
         public void initializedReplicaReinitialized(ShardRouting oldReplica, ShardRouting reinitializedReplica) {
+        }
+
+        private void free(ShardRouting shard) {
+            DiskUsage diskUsage = this.diskUsage.get(shard.currentNodeId());
+            String shardPath = pathFunction.apply(shard);
+            if (shardPath == null || diskUsage.getPath().equals(shardPath)) {
+
+            } else {
+                unk
+            }
         }
     }
 
