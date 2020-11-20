@@ -22,6 +22,7 @@ import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
+import org.elasticsearch.cluster.routing.allocation.DiskThresholdSettings;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
@@ -29,9 +30,12 @@ import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.ByteSizeUnit;
+import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.snapshots.SnapshotShardSizeInfo;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingCapacity;
@@ -43,6 +47,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -64,7 +70,9 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
         .filter(DiscoveryNodeRole::canContainData)
         .collect(Collectors.toSet())::contains;
 
-    public ReactiveStorageDeciderService() {}
+    public ReactiveStorageDeciderService() {
+        this.diskThresholdSettings = new DiskThresholdSettings(settings, clusterSettings);
+    }
 
     @Override
     public String name() {
@@ -304,6 +312,84 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
                         || cannotRemainDueToStorage(shard, allocation)
                 );
         }
+
+        public boolean storagePreventsRemainOrMove2() {
+            RoutingNodes routingNodes = new RoutingNodes(state, false);
+            RoutingAllocation allocation = new RoutingAllocation(
+                allocationDeciders,
+                routingNodes,
+                state,
+                info,
+                shardSizeInfo,
+                System.nanoTime()
+            );
+            Metadata metadata = state.metadata();
+            List<ShardRouting> candidates = state.getRoutingNodes()
+                .shardsWithState(ShardRoutingState.STARTED)
+                .stream()
+                .filter(shard -> indexTierPredicate.test(metadata.getIndexSafe(shard.index())))
+                .filter(
+                    shard -> allocationDeciders.canRemain(shard, routingNodes.node(shard.currentNodeId()), allocation) == Decision.NO
+                )
+                .filter(shard -> canAllocate(shard, allocation) == false)
+                .collect(Collectors.toList());
+
+            long unallocatableBytes =
+                candidates.stream().filter(s -> cannotAllocateDueToStorage(s, allocation)).mapToLong(this::sizeOf).sum();
+
+            long unmovable = candidates.stream()
+                .filter(s -> cannotRemainDueToStorage(s, allocation))
+                .collect(Collectors.groupingBy(ShardRouting::currentNodeId))
+                    .entrySet().stream().mapToLong(e -> unmovableSize(e.getKey(), e.getValue())).sum();
+
+                .collect(Collectors.toList());
+
+
+                .map(s -> Tuple.tuple(s, cannotAllocateDueToStorage2(s, allocation)))
+                .anyMatch(
+                    shard -> cannotAllocateDueToStorage(shard, allocation)
+                        || cannotRemainDueToStorage(shard, allocation)
+                );
+
+        }
+
+        private long sizeOf(ShardRouting shard) {
+            long expectedShardSize = DiskThresholdDecider.getExpectedShardSize(shard, 0L, info,
+                snapshotShardSizeInfo, state.metadata(), state.routingTable());
+            if (expectedShardSize == 0L) {
+                if (shard.primary() == false) {
+                    expectedShardSize = info.getShardSize(shard.moveActiveReplicaToPrimary(), 0L);
+                }
+            }
+            assert expectedShardSize >= 0;
+            // todo: we should ideally not have the level of uncertainty we have here.
+            return expectedShardSize == 0L ? ByteSizeUnit.KB.toBytes(1) : expectedShardSize;
+        }
+
+
+        private long unmovableSize(String nodeId, List<ShardRouting> shards) {
+            RoutingNode node = state.getRoutingNodes().node(nodeId);
+            assert node != null;
+            DiskUsage diskUsage = info.getNodeMostAvailableDiskUsages().get(nodeId);
+            if (diskUsage == null) {
+                // do not want to scale up then, since this should only happen when node has just joined (clearly edge case).
+                return 0;
+            }
+
+            DiskThresholdSettings ds = null;
+            long threshold = Math.max(ds.getFreeBytesThresholdHigh().getBytes(), thresholdFromPercentage(ds.getFreeDiskThresholdHigh(), diskUsage));
+            long missing = threshold - diskUsage.getFreeBytes();
+            return Math.max(missing, shards.stream().mapToLong(this::sizeOf).sum());
+        }
+
+        private long thresholdFromPercentage(Double percentage, DiskUsage diskUsage) {
+            if (percentage == null) {
+                return 0L;
+            }
+
+            return (long) Math.ceil(diskUsage.getTotalBytes() * percentage);
+        }
+
 
         /**
          * Check that disk decider is only decider for a node preventing allocation of the shard.
