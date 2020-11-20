@@ -360,9 +360,9 @@ public class InternalClusterInfoService implements ClusterInfoService, ClusterSt
                     if (leastAvailablePath == null) {
                         assert mostAvailablePath == null;
                         mostAvailablePath = leastAvailablePath = info;
-                    } else if (leastAvailablePath.getAvailable().getBytes() > info.getAvailable().getBytes()) {
+                    } else if (lessAvailableThan(info, leastAvailablePath)) {
                         leastAvailablePath = info;
-                    } else if (mostAvailablePath.getAvailable().getBytes() < info.getAvailable().getBytes()) {
+                    } else if (lessAvailableThan(mostAvailablePath, info)) {
                         mostAvailablePath = info;
                     }
                 }
@@ -397,6 +397,13 @@ public class InternalClusterInfoService implements ClusterInfoService, ClusterSt
         }
     }
 
+    private static boolean lessAvailableThan(FsInfo.Path path1, FsInfo.Path path2) {
+        long available1 = path1.getAvailable().getBytes();
+        long available2 = path2.getAvailable().getBytes();
+        assert path1.getPath().equals(path2.getPath()) == false;
+        // for equal amounts of equality, we ensure least and most available path are still different.
+        return available1 < available2 || (available1 == available2 && path1.getPath().compareTo(path2.getPath()) < 0);
+    }
     private static class IndicesStatsSummary {
         static final IndicesStatsSummary EMPTY
             = new IndicesStatsSummary(ImmutableOpenMap.of(), ImmutableOpenMap.of(), ImmutableOpenMap.of());

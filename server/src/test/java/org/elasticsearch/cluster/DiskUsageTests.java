@@ -150,13 +150,19 @@ public class DiskUsageTests extends ESTestCase {
                 new FsInfo.Path("/least", "/dev/sda", 100, 90, 70),
                 new FsInfo.Path("/most", "/dev/sda", 100, 90, 80),
         };
+        FsInfo.Path[] node4FSInfo =  new FsInfo.Path[] {
+            new FsInfo.Path("/least", "/dev/sda", 100, 90, 80),
+            new FsInfo.Path("/most", "/dev/sda", 100, 90, 80),
+        };
         List<NodeStats> nodeStats = Arrays.asList(
                 new NodeStats(new DiscoveryNode("node_1", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT), 0,
                         null,null,null,null,null,new FsInfo(0, null, node1FSInfo), null,null,null,null,null, null, null, null),
                 new NodeStats(new DiscoveryNode("node_2", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT), 0,
                         null,null,null,null,null, new FsInfo(0, null, node2FSInfo), null,null,null,null,null, null, null, null),
                 new NodeStats(new DiscoveryNode("node_3", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT), 0,
-                        null,null,null,null,null, new FsInfo(0, null, node3FSInfo), null,null,null,null,null, null, null, null)
+                        null,null,null,null,null, new FsInfo(0, null, node3FSInfo), null,null,null,null,null, null, null, null),
+                new NodeStats(new DiscoveryNode("node_4", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT), 0,
+                        null,null,null,null,null, new FsInfo(0, null, node4FSInfo), null,null,null,null,null, null, null, null)
         );
         InternalClusterInfoService.fillDiskUsagePerNode(logger, nodeStats, newLeastAvaiableUsages, newMostAvaiableUsages);
         DiskUsage leastNode_1 = newLeastAvaiableUsages.get("node_1");
@@ -173,6 +179,11 @@ public class DiskUsageTests extends ESTestCase {
         DiskUsage mostNode_3 = newMostAvaiableUsages.get("node_3");
         assertDiskUsage(leastNode_3, node3FSInfo[0]);
         assertDiskUsage(mostNode_3, node3FSInfo[1]);
+
+        DiskUsage leastNode_4 = newLeastAvaiableUsages.get("node_4");
+        DiskUsage mostNode_4 = newMostAvaiableUsages.get("node_4");
+        assertDiskUsage(leastNode_4, node4FSInfo[0]);
+        assertDiskUsage(mostNode_4, node4FSInfo[1]);
     }
 
     public void testFillDiskUsageSomeInvalidValues() {
