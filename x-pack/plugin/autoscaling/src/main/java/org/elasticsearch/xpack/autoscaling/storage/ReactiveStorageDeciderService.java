@@ -228,6 +228,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
             ImmutableOpenMap.Builder<String, DiskUsage> leastAvailable = ImmutableOpenMap.builder(info.getNodeLeastAvailableDiskUsages());
 
             ClusterState state = this.state;
+            ClusterInfo info = this.info;
             while (true) {
                 RoutingNodes routingNodes = new RoutingNodes(state, false);
                 RoutingAllocation allocation = new RoutingAllocation(
@@ -239,22 +240,25 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
                     System.nanoTime()
                 );
 
+                AdjustClusterInfoObserver adjustClusterInfoObserver = null;
+                RoutingChangesObserver routingChangesObserver =
+                    new RoutingChangesObserver.DelegatingRoutingChangesObserver(adjustClusterInfoObserver, allocation.changes());
                 List<ShardRouting> shards = allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING);
                 // replicas before primaries, since replicas can be reinit'ed, resulting in a new ShardRouting instance.
                 shards.stream()
                     .filter(Predicate.not(ShardRouting::primary))
-                    .forEach(s -> { allocation.routingNodes().startShard(logger, s, allocation.changes()); });
+                    .forEach(s -> { allocation.routingNodes().startShard(logger, s, routingChangesObserver); });
                 shards.stream()
                     .filter(ShardRouting::primary)
-                    .forEach(s -> { allocation.routingNodes().startShard(logger, s, allocation.changes()); });
+                    .forEach(s -> { allocation.routingNodes().startShard(logger, s, routingChangesObserver); });
                 shardsAllocator.allocate(allocation);
                 ClusterState nextState = updateClusterState(state, allocation);
-
                 if (nextState == state) {
                     // todo: adjust infos
                     return new AllocationState(nextState, allocationDeciders, shardsAllocator, info, shardSizeInfo, indexTierPredicate, nodeTierPredicate);
                 } else {
                     state = nextState;
+                    info = adjustClusterInfoObserver.newInfo();
                 }
             }
         }
@@ -371,8 +375,8 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
     }
     public static class AdjustClusterInfoObserver implements RoutingChangesObserver {
 
-        private final ImmutableOpenMap.Builder<String, DiskUsage> diskUsages1;
-        private final ImmutableOpenMap.Builder<String, DiskUsage> diskUsages2;
+        // we only support single data path for now
+        private final ImmutableOpenMap.Builder<String, DiskUsage> diskUsages;
         private final Function<ShardRouting, Long> sizer;
         private final Function<ShardRouting, String> pathFunction;
         private ClusterInfo info;
@@ -384,7 +388,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
 
 
         public AdjustClusterInfoObserver(ImmutableOpenMap.Builder<String, DiskUsage> diskUsage) {
-            this.diskUsages1 = diskUsage;
+            this.diskUsages = diskUsage;
         }
 
         @Override
@@ -427,28 +431,14 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
         }
 
         private void free(ShardRouting shard) {
-            DiskUsage diskUsage = this.diskUsages1.get(shard.currentNodeId());
-            DiskUsage diskUsage2 = this.diskUsages2.get(shard.currentNodeId());
+            DiskUsage diskUsage = this.diskUsages.get(shard.currentNodeId());
             long expectedShardSize = getExpectedShardSize(shard);
             if (diskUsage != null) {
-                String shardPath = pathFunction.apply(shard);
-                if (shardPath == null || diskUsage.getPath().equals(shardPath)) {
-                    if (expectedShardSize != ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE) {
-                        DiskUsage newDiskUsage = free(diskUsage, expectedShardSize);
-                        this.diskUsages1.put(shard.currentNodeId(), newDiskUsage);
-                        if (diskUsage2 == diskUsage) {
-                            this.diskUsages2.put(shard.currentNodeId(), newDiskUsage);
-                        } else {
-                            this.diskUsages2.put(shard.currentNodeId(), free(diskUsage2, expectedShardSize));
-                            addUncertainty(-expectedShardSize, "multiple data paths on node [{}]", shard.currentNodeId()))
-                        }
-                    } else {
-                        addUncertainty(diskUsage.getUsedBytes(), "no shard size for [{}]", shard);
-                    }
+                if (expectedShardSize != ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE) {
+                    DiskUsage newDiskUsage = free(diskUsage, expectedShardSize);
+                    this.diskUsages.put(shard.currentNodeId(), newDiskUsage);
                 } else {
-                    long uncertainty = expectedShardSize != ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE ? expectedShardSize :
-                        (diskUsage2.getPath().equals(shardPath) ? diskUsage2.getUsedBytes() : Long.MAX_VALUE);
-                    addUncertainty(uncertainty, "multiple data paths on node [{}]", shard.currentNodeId()))
+                    addUncertainty(diskUsage.getUsedBytes(), "multiple data paths on node [{}]", shard.currentNodeId());
                 }
             } else {
                 long uncertainty = expectedShardSize != ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE ? expectedShardSize : Long.MAX_VALUE;
@@ -457,37 +447,19 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
         }
 
         private void alloc(ShardRouting shard) {
-            DiskUsage diskUsage = this.diskUsages1.get(shard.currentNodeId());
-            DiskUsage diskUsage2 = this.diskUsages2.get(shard.currentNodeId());
+            DiskUsage diskUsage = this.diskUsages.get(shard.currentNodeId());
             long expectedShardSize = getExpectedShardSize(shard);
             if (diskUsage != null) {
-                String shardPath = pathFunction.apply(shard);
-                if (shardPath == null || diskUsage.getPath().equals(shardPath)) {
-                    if (expectedShardSize != ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE) {
-                        DiskUsage newDiskUsage = alloc(diskUsage, expectedShardSize);
-                        this.diskUsages1.put(shard.currentNodeId(), newDiskUsage);
-                        if (diskUsage2 == diskUsage) {
-                            this.diskUsages2.put(shard.currentNodeId(), newDiskUsage);
-                        } else {
-                            this.diskUsages2.put(shard.currentNodeId(), alloc(diskUsage2, expectedShardSize));
-                            addUncertainty(-expectedShardSize, "multiple data paths on node [{}]", shard.currentNodeId()))
-                        }
-                    } else {
-                        addUncertainty(diskUsage.getUsedBytes(), "no shard size for [{}]", shard);
-                    }
+                if (expectedShardSize != ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE) {
+                    DiskUsage newDiskUsage = alloc(diskUsage, expectedShardSize);
+                    this.diskUsages.put(shard.currentNodeId(), newDiskUsage);
                 } else {
-                    long uncertainty = expectedShardSize != ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE ? expectedShardSize :
-                        (diskUsage2.getPath().equals(shardPath) ? diskUsage2.getUsedBytes() : Long.MAX_VALUE);
-                    addUncertainty(uncertainty, "multiple data paths on node [{}]", shard.currentNodeId()))
+                    addUncertainty(diskUsage.getUsedBytes(), "no shard size for [{}]", shard);
                 }
             } else {
-                long uncertainty = expectedShardSize != ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE ? expectedShardSize : Long.MAX_VALUE;
+                long uncertainty = expectedShardSize != ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE ? expectedShardSize : Long.MIN_VALUE;
                 addUncertainty(uncertainty, "no disk usage for node [{}]", shard.currentNodeId());
             }
-        }
-
-        private void addUncertainty(long maxError, String message, Object... messageParams) {
-            uncertainties.add(new Uncertainty(maxError, String.format(Locale.ROOT, message, messageParams)));
         }
 
         private long getExpectedShardSize(ShardRouting shard) {
@@ -506,6 +478,21 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
             assert expectedShardSize >= 0;
             return new DiskUsage(diskUsage.getNodeId(), diskUsage.getNodeName(), diskUsage.getPath(), diskUsage.getTotalBytes(),
                 Math.addExact(diskUsage.getFreeBytes(), expectedShardSize));
+        }
+
+        private DiskUsage alloc(DiskUsage diskUsage, long expectedShardSize) {
+            assert expectedShardSize >= 0;
+            return new DiskUsage(diskUsage.getNodeId(), diskUsage.getNodeName(), diskUsage.getPath(), diskUsage.getTotalBytes(),
+                Math.subtractExact(diskUsage.getFreeBytes(), expectedShardSize));
+        }
+
+        private void addUncertainty(long maxError, String message, Object... messageParams) {
+            uncertainties.add(new Uncertainty(maxError, String.format(Locale.ROOT, message, messageParams)));
+        }
+
+        public ClusterInfo newInfo() {
+            ImmutableOpenMap<String, DiskUsage> diskUsagesMap = diskUsages.build();
+            return new ClusterInfo(diskUsagesMap, diskUsagesMap, )
         }
     }
 

@@ -182,7 +182,8 @@ public class AutoscalingCalculateCapacityService {
         }
 
         private boolean nodeHasAccurateCapacity(DiscoveryNode node) {
-            return totalStorage(clusterInfo.getNodeLeastAvailableDiskUsages(), node) >= 0
+            // todo: multiple data path support.
+            return clusterInfo.getNodeMostAvailableDiskUsages().get(node.getId()) == clusterInfo.getNodeLeastAvailableDiskUsages().get(node.getId())
                 && totalStorage(clusterInfo.getNodeMostAvailableDiskUsages(), node) >= 0;
         }
 
