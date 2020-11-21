@@ -35,16 +35,12 @@ import java.util.stream.StreamSupport;
 
 public class AutoscalingCalculateCapacityService {
     private final AllocationDeciders allocationDeciders;
-    private final ShardsAllocator shardsAllocator;
     private Map<String, AutoscalingDeciderService<? extends AutoscalingDeciderConfiguration>> deciderByName;
 
     public AutoscalingCalculateCapacityService(
         Set<AutoscalingDeciderService<? extends AutoscalingDeciderConfiguration>> deciders,
-        AllocationDeciders allocationDeciders,
-        ShardsAllocator shardsAllocator
-    ) {
+        AllocationDeciders allocationDeciders) {
         this.allocationDeciders = allocationDeciders;
-        this.shardsAllocator = shardsAllocator;
         assert deciders.size() >= 1; // always have fixed
         this.deciderByName = deciders.stream().collect(Collectors.toMap(AutoscalingDeciderService::name, Function.identity()));
     }
@@ -63,13 +59,10 @@ public class AutoscalingCalculateCapacityService {
             if (autoscalingCalculateCapacityService == null) {
                 autoscalingCalculateCapacityService = new AutoscalingCalculateCapacityService(
                     autoscaling.createDeciderServices(),
-                    allocationDeciders,
-                    shardsAllocator
-                );
+                    allocationDeciders);
                 servicesSetOnce.set(autoscalingCalculateCapacityService);
             }
             assert autoscalingCalculateCapacityService.allocationDeciders == allocationDeciders;
-            assert autoscalingCalculateCapacityService.shardsAllocator == shardsAllocator;
             return autoscalingCalculateCapacityService;
         }
     }
@@ -107,7 +100,7 @@ public class AutoscalingCalculateCapacityService {
 
     // visible for tests
     DefaultAutoscalingDeciderContext createContext(SortedSet<String> roles, ClusterState state, ClusterInfo clusterInfo) {
-        return new DefaultAutoscalingDeciderContext(roles, state, clusterInfo, allocationDeciders, shardsAllocator);
+        return new DefaultAutoscalingDeciderContext(roles, state, clusterInfo, allocationDeciders);
     }
 
     /**
@@ -132,7 +125,6 @@ public class AutoscalingCalculateCapacityService {
 
         private final SortedSet<DiscoveryNodeRole> roles;
         private final AllocationDeciders allocationDeciders;
-        private final ShardsAllocator shardsAllocator;
         private final ClusterState state;
         private final ClusterInfo clusterInfo;
         private final AutoscalingCapacity currentCapacity;
@@ -142,12 +134,10 @@ public class AutoscalingCalculateCapacityService {
             SortedSet<String> roles,
             ClusterState state,
             ClusterInfo clusterInfo,
-            AllocationDeciders allocationDeciders,
-            ShardsAllocator shardsAllocator
+            AllocationDeciders allocationDeciders
         ) {
             this.roles = roles.stream().map(DiscoveryNode::getRoleFromRoleName).collect(Sets.toUnmodifiableSortedSet());
             this.allocationDeciders = allocationDeciders;
-            this.shardsAllocator = shardsAllocator;
             Objects.requireNonNull(state);
             Objects.requireNonNull(clusterInfo);
             this.state = state;
@@ -237,11 +227,6 @@ public class AutoscalingCalculateCapacityService {
         public SnapshotShardSizeInfo snapshotShardSizeInfo() {
             // todo: support this.
             throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ShardsAllocator shardsAllocator() {
-            return shardsAllocator;
         }
 
         @Override

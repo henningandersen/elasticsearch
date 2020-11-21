@@ -39,7 +39,5 @@ public interface AutoscalingDeciderContext {
 
     SnapshotShardSizeInfo snapshotShardSizeInfo();
 
-    ShardsAllocator shardsAllocator();
-
     AllocationDeciders allocationDeciders();
 }

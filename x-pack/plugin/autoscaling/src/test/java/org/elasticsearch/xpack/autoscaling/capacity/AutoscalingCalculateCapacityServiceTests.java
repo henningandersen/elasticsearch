@@ -43,7 +43,6 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
     public void testMultiplePoliciesFixedCapacity() {
         AutoscalingCalculateCapacityService service = new AutoscalingCalculateCapacityService(
             Set.of(new FixedAutoscalingDeciderService()),
-            null,
             null
         );
         Set<String> policyNames = IntStream.range(0, randomIntBetween(1, 10))
@@ -126,14 +125,11 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
         ShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
         AutoscalingCalculateCapacityService service = new AutoscalingCalculateCapacityService(
             Set.of(new FixedAutoscalingDeciderService()),
-            allocationDeciders,
-            shardsAllocator
-        );
+            allocationDeciders);
         AutoscalingDeciderContext context = service.createContext(roleNames, state, info);
 
         assertSame(state, context.state());
         assertSame(allocationDeciders, context.allocationDeciders());
-        assertSame(shardsAllocator, context.shardsAllocator());
         assertThat(context.nodes(), equalTo(Set.of()));
         assertThat(context.currentCapacity(), equalTo(AutoscalingCapacity.ZERO));
 
@@ -146,7 +142,7 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
                 DiscoveryNodes.builder().add(new DiscoveryNode("nodeId", buildNewFakeTransportAddress(), Map.of(), roles, Version.CURRENT))
             )
             .build();
-        context = new AutoscalingCalculateCapacityService.DefaultAutoscalingDeciderContext(roleNames, state, info, null, null);
+        context = new AutoscalingCalculateCapacityService.DefaultAutoscalingDeciderContext(roleNames, state, info, null);
 
         assertThat(context.nodes().size(), equalTo(1));
         assertThat(context.nodes(), equalTo(StreamSupport.stream(state.nodes().spliterator(), false).collect(Collectors.toSet())));
@@ -183,7 +179,7 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
         }
         state = ClusterState.builder(ClusterName.DEFAULT).nodes(nodes).build();
         info = new ClusterInfo(leastUsages.build(), mostUsages.build(), null, null, null);
-        context = new AutoscalingCalculateCapacityService.DefaultAutoscalingDeciderContext(roleNames, state, info, null, null);
+        context = new AutoscalingCalculateCapacityService.DefaultAutoscalingDeciderContext(roleNames, state, info, null);
 
         assertThat(context.nodes(), equalTo(expectedNodes));
         AutoscalingCapacity capacity = context.currentCapacity();
