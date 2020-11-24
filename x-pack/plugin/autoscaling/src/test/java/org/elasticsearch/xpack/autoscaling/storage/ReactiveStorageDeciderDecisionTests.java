@@ -101,11 +101,13 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
     private final AllocationDecider mockCanAllocateDiskDecider = new AllocationDecider() {
         @Override
         public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-            if (subjectShards.contains(shardRouting.shardId()) && node.node().getName().startsWith("hot")) return allocation.decision(
-                Decision.NO,
-                DiskThresholdDecider.NAME,
-                "test"
-            );
+            if (subjectShards.contains(shardRouting.shardId()) && node.node().getName().startsWith("hot")) {
+                return allocation.decision(
+                    Decision.NO,
+                    DiskThresholdDecider.NAME,
+                    "test"
+                );
+            }
             return super.canAllocate(shardRouting, node, allocation);
         }
     };
@@ -118,7 +120,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
                 DiskThresholdDecider.NAME,
                 "test"
             );
-            return super.canAllocate(shardRouting, node, allocation);
+            return super.canRemain(shardRouting, node, allocation);
         }
     };
 
@@ -156,10 +158,9 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
                 CAN_ALLOCATE_NO_DECIDER
             );
             verify(ReactiveStorageDeciderService.AllocationState::storagePreventsAllocation, 0);
-            if (hasUnassignedSubjectShards()) {
-                verifyScale(numPrevents, "not enough storage available,needs " + numPrevents, mockCanAllocateDiskDecider);
+            if (numPrevents> 0) {
+                verifyScale(numPrevents, "not enough storage available, needs " + numPrevents, mockCanAllocateDiskDecider);
             } else {
-                assert numPrevents == 0;
                 verifyScale(0, "storage ok", mockCanAllocateDiskDecider);
             }
             verifyScale(0, "storage ok", mockCanAllocateDiskDecider, CAN_ALLOCATE_NO_DECIDER);
@@ -181,7 +182,10 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
     }
 
     public void testStoragePreventsMove() {
-        // allocate shards (will allocate all primaries)
+        // this test does things backwards to avoid adding too much additional setup. It moves shards to warm nodes and then checks that
+        // the reactive decider can calculate the storage necessary to move them back to hot nodes.
+
+        // allocate all primary shards
         allocate();
 
         // pick set of shards to force on to warm nodes.
@@ -236,7 +240,8 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
         );
         verify(ReactiveStorageDeciderService.AllocationState::storagePreventsRemainOrMove, 0);
 
-        verifyScale(1, "not enough storage available for assigned shards", mockCanAllocateDiskDecider);
+        verifyScale(subjectShards.size(), "not enough storage available, needs " + subjectShards.size(),
+            mockCanAllocateDiskDecider);
         verifyScale(0, "storage ok", mockCanAllocateDiskDecider, CAN_ALLOCATE_NO_DECIDER);
         verifyScale(0, "storage ok");
         verifyScale(addDataNodes("data_hot", "additional", state, hotNodes), 0, "storage ok", mockCanAllocateDiskDecider);
@@ -249,11 +254,15 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
             startRandomShards();
         }
 
-        int started = state.routingTable().shardsWithState(ShardRoutingState.STARTED).size();
+        // the remain check only assumes the smallest shard need to move off. More detailed testing of AllocationState.unmovableSize in
+        // {@link ReactiveStorageDeciderServiceTests#testUnmovableSize}
+        long nodes =
+            state.routingTable().shardsWithState(ShardRoutingState.STARTED).stream()
+                .filter(s -> subjectShards.contains(s.shardId())).map(ShardRouting::currentNodeId).distinct().count();
 
         verify(
             ReactiveStorageDeciderService.AllocationState::storagePreventsRemainOrMove,
-            started,
+            nodes,
             mockCanRemainDiskDecider,
             CAN_ALLOCATE_NO_DECIDER
         );
@@ -266,7 +275,16 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
         );
         verify(ReactiveStorageDeciderService.AllocationState::storagePreventsRemainOrMove, 0);
 
-        verifyScale(started, "not enough storage available for assigned shards", mockCanRemainDiskDecider, CAN_ALLOCATE_NO_DECIDER);
+        // only consider it once (move case) if both cannot remain and cannot allocate.
+        verify(
+            ReactiveStorageDeciderService.AllocationState::storagePreventsRemainOrMove,
+            nodes,
+            mockCanAllocateDiskDecider,
+            mockCanRemainDiskDecider
+        );
+
+
+        verifyScale(nodes, "not enough storage available, needs " + nodes, mockCanRemainDiskDecider,CAN_ALLOCATE_NO_DECIDER);
         verifyScale(0, "storage ok", mockCanRemainDiskDecider, CAN_REMAIN_NO_DECIDER, CAN_ALLOCATE_NO_DECIDER);
         verifyScale(0, "storage ok");
     }

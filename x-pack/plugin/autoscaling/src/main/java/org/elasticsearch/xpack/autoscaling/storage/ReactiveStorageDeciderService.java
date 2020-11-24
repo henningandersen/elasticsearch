@@ -38,6 +38,7 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -153,6 +154,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 System.nanoTime()
             );
             return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
+                .filter(shard -> canAllocate(shard, allocation) == false)
                 .filter(shard -> cannotAllocateDueToStorage(shard, allocation))
                 .mapToLong(this::sizeOf)
                 .sum();
@@ -175,19 +177,24 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 .filter(shard -> canAllocate(shard, allocation) == false)
                 .collect(Collectors.toList());
 
-            long unallocatableBytes = candidates.stream()
-                .filter(s -> cannotAllocateDueToStorage(s, allocation))
-                .mapToLong(this::sizeOf)
-                .sum();
-
-            long unmovableBytes = candidates.stream()
+            // track these to ensure we do not double account if they both cannot remain and allocated due to storage.
+            Set<ShardRouting> unmovableShards = candidates.stream()
                 .filter(s -> allocatedToTier(s, allocation))
                 .filter(s -> cannotRemainDueToStorage(s, allocation))
+                .collect(Collectors.toSet());
+            long unmovableBytes = unmovableShards.stream()
                 .collect(Collectors.groupingBy(ShardRouting::currentNodeId))
                 .entrySet()
                 .stream()
                 .mapToLong(e -> unmovableSize(e.getKey(), e.getValue()))
                 .sum();
+
+            long unallocatableBytes = candidates.stream()
+                .filter(Predicate.not(unmovableShards::contains))
+                .filter(s1 -> cannotAllocateDueToStorage(s1, allocation))
+                .mapToLong(this::sizeOf)
+                .sum();
+
 
             return unallocatableBytes + unmovableBytes;
         }

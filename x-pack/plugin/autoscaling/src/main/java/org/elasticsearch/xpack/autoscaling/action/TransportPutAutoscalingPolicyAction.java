@@ -18,6 +18,8 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.metadata.Metadata;
+import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
+import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.tasks.Task;
@@ -45,9 +47,12 @@ public class TransportPutAutoscalingPolicyAction extends AcknowledgedTransportMa
         final ThreadPool threadPool,
         final ActionFilters actionFilters,
         final IndexNameExpressionResolver indexNameExpressionResolver,
+        final AllocationDeciders allocationDeciders,
+        final ShardsAllocator shardsAllocator,
         final AutoscalingCalculateCapacityService.Holder policyValidatorHolder
     ) {
-        this(transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, policyValidatorHolder.get());
+        this(transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver,
+            policyValidatorHolder.get(allocationDeciders, shardsAllocator));
     }
 
     TransportPutAutoscalingPolicyAction(

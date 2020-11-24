@@ -193,7 +193,8 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
     }
 
     public void testValidateDeciderName() {
-        AutoscalingCalculateCapacityService service = new AutoscalingCalculateCapacityService(Set.of(new FixedAutoscalingDeciderService()));
+        AutoscalingCalculateCapacityService service =
+            new AutoscalingCalculateCapacityService(Set.of(new FixedAutoscalingDeciderService()), null);
         String badDeciderName = randomValueOtherThan(FixedAutoscalingDeciderService.NAME, () -> randomAlphaOfLength(8));
         AutoscalingPolicy policy = new AutoscalingPolicy(
             randomAlphaOfLength(8),
@@ -205,7 +206,8 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
     }
 
     public void testValidateSettingName() {
-        AutoscalingCalculateCapacityService service = new AutoscalingCalculateCapacityService(Set.of(new FixedAutoscalingDeciderService()));
+        AutoscalingCalculateCapacityService service =
+            new AutoscalingCalculateCapacityService(Set.of(new FixedAutoscalingDeciderService()), null);
         Set<String> legalNames = Set.of(
             FixedAutoscalingDeciderService.STORAGE.getKey(),
             FixedAutoscalingDeciderService.MEMORY.getKey(),
@@ -227,7 +229,8 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
     }
 
     public void testValidateSettingValue() {
-        AutoscalingCalculateCapacityService service = new AutoscalingCalculateCapacityService(Set.of(new FixedAutoscalingDeciderService()));
+        AutoscalingCalculateCapacityService service =
+            new AutoscalingCalculateCapacityService(Set.of(new FixedAutoscalingDeciderService()), null);
         String value = randomValueOtherThanMany(s -> Character.isDigit(s.charAt(0)), () -> randomAlphaOfLength(5));
         AutoscalingPolicy policy = new AutoscalingPolicy(
             randomAlphaOfLength(8),
