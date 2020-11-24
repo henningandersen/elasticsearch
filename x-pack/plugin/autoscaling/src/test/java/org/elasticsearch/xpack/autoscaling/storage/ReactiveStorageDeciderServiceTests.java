@@ -17,14 +17,10 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.RoutingNode;
-import org.elasticsearch.cluster.routing.RoutingNodes;
-import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.TestShardRouting;
 import org.elasticsearch.cluster.routing.allocation.DiskThresholdSettings;
-import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
-import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.AwarenessAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
@@ -36,13 +32,11 @@ import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
-import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.test.ESTestCase;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,10 +45,7 @@ import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.sameInstance;
 
 /**
  * Tests the primitive methods in {@link ReactiveStorageDeciderService}. Tests of higher level methods are in
@@ -133,23 +124,34 @@ public class ReactiveStorageDeciderServiceTests extends ESTestCase {
             settingsBuilder.put(DiskThresholdSettings.CLUSTER_ROUTING_ALLOCATION_DISK_FLOOD_STAGE_WATERMARK_SETTING.getKey(), tenKb);
         }
         Settings settings = settingsBuilder.build();
-        DiskThresholdSettings thresholdSettings = new DiskThresholdSettings(settings, new ClusterSettings(settings,
-            ClusterSettings.BUILT_IN_CLUSTER_SETTINGS));
-
+        DiskThresholdSettings thresholdSettings = new DiskThresholdSettings(
+            settings,
+            new ClusterSettings(settings, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS)
+        );
 
         String nodeId = randomAlphaOfLength(5);
 
         ClusterState.Builder stateBuilder = ClusterState.builder(ClusterName.DEFAULT);
         Metadata.Builder metaBuilder = Metadata.builder();
-        IndexMetadata indexMetadata =
-            IndexMetadata.builder(randomAlphaOfLength(5)).settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(10).build();
+        IndexMetadata indexMetadata = IndexMetadata.builder(randomAlphaOfLength(5))
+            .settings(settings(Version.CURRENT))
+            .numberOfShards(1)
+            .numberOfReplicas(10)
+            .build();
         metaBuilder.put(indexMetadata, true);
         stateBuilder.metadata(metaBuilder);
         ClusterState clusterState = stateBuilder.build();
 
-        Set<ShardRouting> shards =
-            IntStream.range(0, between(1, 10)).mapToObj(i -> TestShardRouting.newShardRouting(new ShardId(indexMetadata.getIndex(),
-                randomInt(10)), nodeId, randomBoolean(), ShardRoutingState.STARTED)).collect(Collectors.toSet());
+        Set<ShardRouting> shards = IntStream.range(0, between(1, 10))
+            .mapToObj(
+                i -> TestShardRouting.newShardRouting(
+                    new ShardId(indexMetadata.getIndex(), randomInt(10)),
+                    nodeId,
+                    randomBoolean(),
+                    ShardRoutingState.STARTED
+                )
+            )
+            .collect(Collectors.toSet());
 
         long minShardSize = randomLongBetween(1, 10);
 
@@ -160,26 +162,38 @@ public class ReactiveStorageDeciderServiceTests extends ESTestCase {
         ShardRouting missingShard = randomBoolean() ? randomFrom(shards) : null;
         Collection<ShardRouting> shardsWithSizes = shards.stream().filter(s -> s != missingShard).collect(Collectors.toSet());
         for (ShardRouting shard : shardsWithSizes) {
-            shardSizeBuilder.put(ClusterInfo.shardIdentifierFromRouting(shard),
-                ByteSizeUnit.KB.toBytes(randomLongBetween(minShardSize, 100)));
+            shardSizeBuilder.put(
+                ClusterInfo.shardIdentifierFromRouting(shard),
+                ByteSizeUnit.KB.toBytes(randomLongBetween(minShardSize, 100))
+            );
         }
         if (shardsWithSizes.isEmpty() == false) {
-            shardSizeBuilder.put(ClusterInfo.shardIdentifierFromRouting(randomFrom(shardsWithSizes)),
-                ByteSizeUnit.KB.toBytes(minShardSize));
+            shardSizeBuilder.put(
+                ClusterInfo.shardIdentifierFromRouting(randomFrom(shardsWithSizes)),
+                ByteSizeUnit.KB.toBytes(minShardSize)
+            );
         }
         ClusterInfo info = new ClusterInfo(diskUsages, diskUsages, shardSizeBuilder.build(), null, null);
 
-        ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(clusterState, null,
-            thresholdSettings, info, null, null);
+        ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
+            clusterState,
+            null,
+            thresholdSettings,
+            info,
+            null,
+            null
+        );
 
         long result = allocationState.unmovableSize(nodeId, shards);
-        if (missingShard != null && (missingShard.primary() || info.getShardSize(missingShard.moveActiveReplicaToPrimary()) == null) || minShardSize < 5) {
+        if (missingShard != null && (missingShard.primary() || info.getShardSize(missingShard.moveActiveReplicaToPrimary()) == null)
+            || minShardSize < 5) {
             // the diff between used and high watermark is 5 KB.
             assertThat(result, equalTo(ByteSizeUnit.KB.toBytes(5)));
         } else {
             assertThat(result, equalTo(ByteSizeUnit.KB.toBytes(minShardSize)));
         }
     }
+
     private static ClusterState addDataNodes(String tier, String prefix, ClusterState state, int nodes) {
         DiscoveryNodes.Builder builder = DiscoveryNodes.builder(state.nodes());
         IntStream.range(0, nodes).mapToObj(i -> newDataNode(tier, prefix + "_" + i)).forEach(builder::add);

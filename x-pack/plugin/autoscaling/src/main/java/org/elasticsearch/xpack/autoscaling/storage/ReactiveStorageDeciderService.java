@@ -11,25 +11,17 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.DiskUsage;
-import org.elasticsearch.cluster.metadata.IndexMetadata;
-import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
-import org.elasticsearch.cluster.routing.RoutingChangesObserver;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingNodes;
-import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
-import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.routing.allocation.DiskThresholdSettings;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
-import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ClusterSettings;
@@ -44,20 +36,12 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderResult;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_EXCLUDE_SETTING;
-import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_INCLUDE_SETTING;
-import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_PREFER_SETTING;
-import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_REQUIRE_SETTING;
 
 public class ReactiveStorageDeciderService implements AutoscalingDeciderService {
     public static final String NAME = "reactive_storage";
@@ -98,9 +82,10 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             AutoscalingCapacity plusOne = AutoscalingCapacity.builder()
                 .total(autoscalingCapacity.tier().storage().getBytes() + unassigned + assigned, null)
                 .build();
-            return new AutoscalingDeciderResult(plusOne, new ReactiveReason("not enough storage available, needs " + (unassigned + assigned),
-                unassigned,
-                assigned));
+            return new AutoscalingDeciderResult(
+                plusOne,
+                new ReactiveReason("not enough storage available, needs " + (unassigned + assigned), unassigned, assigned)
+            );
         } else {
             AutoscalingCapacity ok = AutoscalingCapacity.builder().total(autoscalingCapacity.tier().storage(), null).build();
             return new AutoscalingDeciderResult(ok, new ReactiveReason("storage ok", unassigned, assigned));
@@ -131,11 +116,24 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         private final Predicate<DiscoveryNode> nodeTierPredicate;
 
         public AllocationState(AutoscalingDeciderContext context, DiskThresholdSettings diskThresholdSettings) {
-            this(context.state(), context.allocationDeciders(),
-                diskThresholdSettings, context.info(), context.snapshotShardSizeInfo(), context.nodes()::contains);
+            this(
+                context.state(),
+                context.allocationDeciders(),
+                diskThresholdSettings,
+                context.info(),
+                context.snapshotShardSizeInfo(),
+                context.nodes()::contains
+            );
         }
 
-        public AllocationState(ClusterState state, AllocationDeciders allocationDeciders, DiskThresholdSettings diskThresholdSettings, ClusterInfo info, SnapshotShardSizeInfo shardSizeInfo, Predicate<DiscoveryNode> nodeTierPredicate) {
+        public AllocationState(
+            ClusterState state,
+            AllocationDeciders allocationDeciders,
+            DiskThresholdSettings diskThresholdSettings,
+            ClusterInfo info,
+            SnapshotShardSizeInfo shardSizeInfo,
+            Predicate<DiscoveryNode> nodeTierPredicate
+        ) {
             this.state = state;
             this.allocationDeciders = allocationDeciders;
             this.diskThresholdSettings = diskThresholdSettings;
@@ -155,9 +153,10 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 System.nanoTime()
             );
             return StreamSupport.stream(state.getRoutingNodes().unassigned().spliterator(), false)
-                .filter(shard -> cannotAllocateDueToStorage(shard, allocation)).mapToLong(this::sizeOf).sum();
+                .filter(shard -> cannotAllocateDueToStorage(shard, allocation))
+                .mapToLong(this::sizeOf)
+                .sum();
         }
-
 
         public long storagePreventsRemainOrMove() {
             RoutingNodes routingNodes = new RoutingNodes(state, false);
@@ -172,20 +171,23 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             List<ShardRouting> candidates = state.getRoutingNodes()
                 .shardsWithState(ShardRoutingState.STARTED)
                 .stream()
-                .filter(
-                    shard -> allocationDeciders.canRemain(shard, routingNodes.node(shard.currentNodeId()), allocation) == Decision.NO
-                )
+                .filter(shard -> allocationDeciders.canRemain(shard, routingNodes.node(shard.currentNodeId()), allocation) == Decision.NO)
                 .filter(shard -> canAllocate(shard, allocation) == false)
                 .collect(Collectors.toList());
 
-            long unallocatableBytes =
-                candidates.stream().filter(s -> cannotAllocateDueToStorage(s, allocation)).mapToLong(this::sizeOf).sum();
+            long unallocatableBytes = candidates.stream()
+                .filter(s -> cannotAllocateDueToStorage(s, allocation))
+                .mapToLong(this::sizeOf)
+                .sum();
 
             long unmovableBytes = candidates.stream()
                 .filter(s -> allocatedToTier(s, allocation))
                 .filter(s -> cannotRemainDueToStorage(s, allocation))
                 .collect(Collectors.groupingBy(ShardRouting::currentNodeId))
-                    .entrySet().stream().mapToLong(e -> unmovableSize(e.getKey(), e.getValue())).sum();
+                .entrySet()
+                .stream()
+                .mapToLong(e -> unmovableSize(e.getKey(), e.getValue()))
+                .sum();
 
             return unallocatableBytes + unmovableBytes;
         }
@@ -195,8 +197,14 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         }
 
         private long sizeOf(ShardRouting shard) {
-            long expectedShardSize = DiskThresholdDecider.getExpectedShardSize(shard, 0L, info,
-                shardSizeInfo, state.metadata(), state.routingTable());
+            long expectedShardSize = DiskThresholdDecider.getExpectedShardSize(
+                shard,
+                0L,
+                info,
+                shardSizeInfo,
+                state.metadata(),
+                state.routingTable()
+            );
             if (expectedShardSize == 0L) {
                 if (shard.primary() == false) {
                     expectedShardSize = info.getShardSize(shard.moveActiveReplicaToPrimary(), 0L);
@@ -207,7 +215,6 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             return expectedShardSize == 0L ? ByteSizeUnit.KB.toBytes(1) : expectedShardSize;
         }
 
-
         long unmovableSize(String nodeId, Collection<ShardRouting> shards) {
             ClusterState state = this.state;
             ClusterInfo info = this.info;
@@ -217,7 +224,10 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 return 0;
             }
 
-            long threshold = Math.max(diskThresholdSettings.getFreeBytesThresholdHigh().getBytes(), thresholdFromPercentage(diskThresholdSettings.getFreeDiskThresholdHigh(), diskUsage));
+            long threshold = Math.max(
+                diskThresholdSettings.getFreeBytesThresholdHigh().getBytes(),
+                thresholdFromPercentage(diskThresholdSettings.getFreeDiskThresholdHigh(), diskUsage)
+            );
             long missing = threshold - diskUsage.getFreeBytes();
             return Math.max(missing, shards.stream().mapToLong(this::sizeOf).min().orElseThrow());
         }
@@ -234,9 +244,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
          * Check that disk decider is only decider for a node preventing allocation of the shard.
          * @return true if and only if a node exists in the tier where only disk decider prevents allocation
          */
-        private boolean cannotAllocateDueToStorage(
-            ShardRouting shard,
-            RoutingAllocation allocation) {
+        private boolean cannotAllocateDueToStorage(ShardRouting shard, RoutingAllocation allocation) {
             assert allocation.debugDecision() == false;
             allocation.debugDecision(true);
             try {
@@ -269,7 +277,6 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 node -> allocationDeciders.canAllocate(shard, node, allocation) != Decision.NO
             );
         }
-
 
         public ClusterState state() {
             return state;

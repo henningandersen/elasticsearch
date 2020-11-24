@@ -211,8 +211,10 @@ public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugi
 
     @Override
     public Collection<AutoscalingDeciderService> deciders() {
-        return List.of(new FixedAutoscalingDeciderService(), new ReactiveStorageDeciderService(clusterService.get().getSettings(),
-            clusterService.get().getClusterSettings()));
+        return List.of(
+            new FixedAutoscalingDeciderService(),
+            new ReactiveStorageDeciderService(clusterService.get().getSettings(), clusterService.get().getClusterSettings())
+        );
     }
 
     public Set<AutoscalingDeciderService> createDeciderServices() {

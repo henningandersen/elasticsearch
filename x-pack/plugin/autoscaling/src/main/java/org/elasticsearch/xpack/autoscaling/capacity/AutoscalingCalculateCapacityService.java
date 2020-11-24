@@ -42,9 +42,7 @@ public class AutoscalingCalculateCapacityService implements PolicyValidator {
     private final AllocationDeciders allocationDeciders;
     private final Map<String, AutoscalingDeciderService> deciderByName;
 
-    public AutoscalingCalculateCapacityService(
-        Set<AutoscalingDeciderService> deciders,
-        AllocationDeciders allocationDeciders) {
+    public AutoscalingCalculateCapacityService(Set<AutoscalingDeciderService> deciders, AllocationDeciders allocationDeciders) {
         this.allocationDeciders = allocationDeciders;
         assert deciders.size() >= 1; // always have fixed
         this.deciderByName = deciders.stream().collect(Collectors.toMap(AutoscalingDeciderService::name, Function.identity()));
@@ -91,7 +89,8 @@ public class AutoscalingCalculateCapacityService implements PolicyValidator {
             if (autoscalingCalculateCapacityService == null) {
                 autoscalingCalculateCapacityService = new AutoscalingCalculateCapacityService(
                     autoscaling.createDeciderServices(),
-                    allocationDeciders);
+                    allocationDeciders
+                );
                 servicesSetOnce.set(autoscalingCalculateCapacityService);
             }
             assert autoscalingCalculateCapacityService.allocationDeciders == allocationDeciders;
@@ -204,8 +203,8 @@ public class AutoscalingCalculateCapacityService implements PolicyValidator {
 
         private boolean nodeHasAccurateCapacity(DiscoveryNode node) {
             // todo: multiple data path support.
-            return clusterInfo.getNodeMostAvailableDiskUsages().get(node.getId()) == clusterInfo.getNodeLeastAvailableDiskUsages().get(node.getId())
-                && totalStorage(clusterInfo.getNodeMostAvailableDiskUsages(), node) >= 0;
+            return clusterInfo.getNodeMostAvailableDiskUsages().get(node.getId()) == clusterInfo.getNodeLeastAvailableDiskUsages()
+                .get(node.getId()) && totalStorage(clusterInfo.getNodeMostAvailableDiskUsages(), node) >= 0;
         }
 
         private AutoscalingCapacity calculateCurrentCapacity() {

@@ -126,7 +126,8 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
         ShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
         AutoscalingCalculateCapacityService service = new AutoscalingCalculateCapacityService(
             Set.of(new FixedAutoscalingDeciderService()),
-            allocationDeciders);
+            allocationDeciders
+        );
         AutoscalingDeciderContext context = service.createContext(roleNames, state, info);
 
         assertSame(state, context.state());
