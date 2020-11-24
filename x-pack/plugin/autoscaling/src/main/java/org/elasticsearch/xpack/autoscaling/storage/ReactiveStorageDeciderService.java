@@ -33,6 +33,7 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ClusterSettings;
+import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -58,7 +59,7 @@ import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocat
 import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_PREFER_SETTING;
 import static org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider.INDEX_ROUTING_REQUIRE_SETTING;
 
-public class ReactiveStorageDeciderService implements AutoscalingDeciderService<ReactiveStorageDeciderConfiguration> {
+public class ReactiveStorageDeciderService implements AutoscalingDeciderService {
     public static final String NAME = "reactive_storage";
 
     private static final Logger logger = LogManager.getLogger(ReactiveStorageDeciderService.class);
@@ -79,7 +80,12 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService<
     }
 
     @Override
-    public AutoscalingDeciderResult scale(ReactiveStorageDeciderConfiguration decider, AutoscalingDeciderContext context) {
+    public List<Setting<?>> deciderSettings() {
+        return List.of();
+    }
+
+    @Override
+    public AutoscalingDeciderResult scale(Settings configuration, AutoscalingDeciderContext context) {
         AutoscalingCapacity autoscalingCapacity = context.currentCapacity();
         if (autoscalingCapacity == null || autoscalingCapacity.tier().storage() == null) {
             return new AutoscalingDeciderResult(null, new ReactiveReason("current capacity not available", -1, -1));

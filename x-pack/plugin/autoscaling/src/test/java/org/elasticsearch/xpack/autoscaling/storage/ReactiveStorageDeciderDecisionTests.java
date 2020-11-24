@@ -273,7 +273,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
             Set.of(DataTier.DATA_HOT_NODE_ROLE),
             allocationDeciders
         );
-        AutoscalingDeciderResult result = decider.scale(new ReactiveStorageDeciderConfiguration(), context);
+        AutoscalingDeciderResult result = decider.scale(Settings.EMPTY, context);
         // todo: change this to be deterministic tests.
         if (context.currentCapacity != null && context.currentCapacity.tier() != null && context.currentCapacity.tier().storage() != null) {
             assertThat(result.requiredCapacity().tier().storage().getBytes() - context.currentCapacity.tier().storage().getBytes(),
