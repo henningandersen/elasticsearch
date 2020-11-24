@@ -123,7 +123,6 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
         SortedSet<String> roleNames = randomRoles();
 
         AllocationDeciders allocationDeciders = new AllocationDeciders(Set.of());
-        ShardsAllocator shardsAllocator = new BalancedShardsAllocator(Settings.EMPTY);
         AutoscalingCalculateCapacityService service = new AutoscalingCalculateCapacityService(
             Set.of(new FixedAutoscalingDeciderService()),
             allocationDeciders

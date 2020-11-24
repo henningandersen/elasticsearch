@@ -186,6 +186,8 @@ public class AutoscalingCalculateCapacityService implements PolicyValidator {
         @Override
         public AutoscalingCapacity currentCapacity() {
             if (currentCapacityAccurate) {
+                assert currentCapacity.tier().storage() != null;
+                assert currentCapacity.node().storage() != null;
                 return currentCapacity;
             } else {
                 return null;
