@@ -9,9 +9,15 @@ package org.elasticsearch.xpack.autoscaling.storage;
 import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.DiskUsage;
+import org.elasticsearch.cluster.metadata.DataStream;
+import org.elasticsearch.cluster.metadata.DataStreamMetadata;
+import org.elasticsearch.cluster.metadata.IndexAbstraction;
+import org.elasticsearch.cluster.metadata.IndexMetadata;
+import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingNodes;
+import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.allocation.DiskThresholdSettings;
@@ -19,6 +25,8 @@ import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
+import org.elasticsearch.common.UUIDs;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ClusterSettings;
@@ -33,13 +41,19 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderResult;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static org.elasticsearch.xpack.autoscaling.storage.ProactiveStorageDeciderService.MINIMUM_INDICES;
 
 public class ReactiveStorageDeciderService implements AutoscalingDeciderService {
     public static final String NAME = "reactive_storage";
@@ -93,7 +107,8 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         return nos.size() == 1 && DiskThresholdDecider.NAME.equals(nos.get(0).label());
     }
 
-    static class AllocationState {
+    // todo: move this to top level class.
+    public static class AllocationState {
         private final ClusterState state;
         private final AllocationDeciders allocationDeciders;
         private final DiskThresholdSettings diskThresholdSettings;
@@ -101,6 +116,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         private final SnapshotShardSizeInfo shardSizeInfo;
         private final Predicate<DiscoveryNode> nodeTierPredicate;
         private final Set<DiscoveryNode> nodes;
+        private final Set<String> nodeIds;
 
         AllocationState(
             AutoscalingDeciderContext context,
@@ -131,6 +147,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             this.info = info;
             this.shardSizeInfo = shardSizeInfo;
             this.nodes = nodes;
+            this.nodeIds = nodes.stream().map(DiscoveryNode::getId).collect(Collectors.toSet());
             this.nodeTierPredicate = nodes::contains;
         }
 
@@ -279,7 +296,182 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         }
 
         Stream<RoutingNode> nodesInTier(RoutingNodes routingNodes) {
-            return nodes.stream().map(n -> routingNodes.node(n.getId()));
+            return nodeIds.stream().map(n -> routingNodes.node(n));
+        }
+
+        private static class Prediction {
+            private Map<IndexMetadata, Long> additionalIndices;
+            private DataStream updatedDataStream;
+
+            public Prediction(Map<IndexMetadata, Long> additionalIndices, DataStream updatedDataStream) {
+                this.additionalIndices = additionalIndices;
+                this.updatedDataStream = updatedDataStream;
+            }
+
+            public void applyRouting(RoutingTable.Builder routing) {
+                additionalIndices.keySet().forEach(routing::addAsNew);
+            }
+
+            public void applyMetadata(Metadata.Builder metadataBuilder) {
+                additionalIndices.keySet().forEach(imd -> metadataBuilder.put(imd, false));
+                metadataBuilder.put(updatedDataStream);
+            }
+
+            public void applySize(ImmutableOpenMap.Builder<String, Long> builder, RoutingTable updatedRoutingTable) {
+                for (Map.Entry<IndexMetadata, Long> entry : additionalIndices.entrySet()) {
+                    List<ShardRouting> shardRoutings = updatedRoutingTable.allShards(entry.getKey().getIndex().getName());
+                    long size = entry.getValue() / shardRoutings.size();
+                    shardRoutings.forEach(s -> builder.put(ClusterInfo.shardIdentifierFromRouting(s), size));
+                }
+            }
+        }
+
+        public AllocationState predict(long forecastWindow, long now) {
+            // for now we only look at data-streams. We might want to also detect alias based time-based indices.
+            DataStreamMetadata dataStreamMetadata = state.metadata().custom(DataStreamMetadata.TYPE);
+            List<Prediction> predictions =
+                dataStreamMetadata.dataStreams().keySet().stream().map(state.metadata().getIndicesLookup()::get).map(IndexAbstraction.DataStream.class::cast).map(ds -> predict(ds, forecastWindow, now)).filter(Objects::nonNull).collect(Collectors.toList());
+            if (predictions.isEmpty()) {
+                return this;
+            }
+            Metadata.Builder metadataBuilder = Metadata.builder(state.metadata());
+            RoutingTable.Builder routingTableBuilder = RoutingTable.builder(state.routingTable());
+            ImmutableOpenMap.Builder<String, Long> sizeBuilder = ImmutableOpenMap.builder();
+            predictions.forEach(p -> p.applyMetadata(metadataBuilder));
+            predictions.forEach(p -> p.applyRouting(routingTableBuilder));
+            RoutingTable routingTable = routingTableBuilder.build();
+            predictions.forEach(p -> p.applySize(sizeBuilder, routingTable));
+            ClusterState predictedClusterState = ClusterState.builder(state).metadata(metadataBuilder).routingTable(routingTable).build();
+            ClusterInfo predictedInfo = new ExtendedClusterInfo(sizeBuilder.build(), AllocationState.this.info);
+
+            return new AllocationState(predictedClusterState, allocationDeciders, diskThresholdSettings, predictedInfo, shardSizeInfo,
+                nodes);
+        }
+
+        private Prediction predict(IndexAbstraction.DataStream stream, long forecastWindow, long now) {
+            List<IndexMetadata> indices = stream.getIndices();
+            if (dataStreamAllocatedToNodes(indices) == false) return null;
+            int count;
+            long minCreationDate = Long.MAX_VALUE;
+            long totalSize = 0;
+            for (count = 0; count < indices.size(); ++count) {
+                IndexMetadata indexMetadata = indices.get(indices.size() - count - 1);
+                long creationDate = indexMetadata.getCreationDate();
+                if (creationDate < 0) {
+                    return null;
+                }
+                if (creationDate < now - forecastWindow && count > MINIMUM_INDICES) {
+                    break;
+                }
+                minCreationDate = Math.min(minCreationDate, creationDate);
+                totalSize += state.getRoutingTable().allShards(indexMetadata.getIndex().getName()).stream().mapToLong(this::sizeOf).sum();
+            }
+
+            if (totalSize == 0) {
+                return null;
+            }
+
+            long avgSize = totalSize / count;
+            if (avgSize == 0) {
+                return null;
+            }
+
+            long actualWindow = now - minCreationDate;
+            long scaledTotalSize =
+                BigInteger.valueOf(totalSize).multiply(BigInteger.valueOf(forecastWindow)).divide(BigInteger.valueOf(actualWindow)).longValueExact();
+            if (scaledTotalSize == 0) {
+                return null;
+            }
+            // rather than simulate rollover, we copy the index meta data and do minimal adjustments.
+
+            // limit to max number of indices in data stream as a safety precaution against cases like data stream created 1 second ago.
+            int numberNewIndices = (int) Math.min((scaledTotalSize - 1) / avgSize + 1, indices.size());
+
+            IndexMetadata writeIndex = stream.getWriteIndex();
+
+            Map<IndexMetadata, Long> newIndices = new HashMap<>();
+            DataStream dataStream = stream.getDataStream();
+            for (int i = 0; i < numberNewIndices; ++i) {
+                final String newWriteIndexName = DataStream.getDefaultBackingIndexName(dataStream.getName(), dataStream.getGeneration() + 1);
+                IndexMetadata newIndex =
+                    IndexMetadata.builder(writeIndex).index(newWriteIndexName).settings(Settings.builder().put(writeIndex.getSettings()).put(IndexMetadata.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())).build();
+                long size = Math.min(avgSize, scaledTotalSize - (avgSize * i));
+                assert size > 0;
+                newIndices.put(newIndex, size);
+                dataStream = dataStream.rollover(newIndex.getIndex());
+            }
+
+            return new Prediction(newIndices, dataStream);
+        }
+
+        /**
+         * Check that at least one shard is on the set of nodes. If they are all unallocated, we do not want to make any prediction to not
+         * hit the wrong policy.
+         * @param indices the indices of the data stream, in original order from data stream meta.
+         * @return true if the first allocated index is allocated only to the set of nodes.
+         */
+        private boolean dataStreamAllocatedToNodes(List<IndexMetadata> indices) {
+            for (int i = 0; i < indices.size(); ++i) {
+                IndexMetadata indexMetadata = indices.get(indices.size() - i - 1);
+                Set<Boolean> inNodes =
+                    state.getRoutingTable().allShards(indexMetadata.getIndex().getName()).stream().filter(s -> s.currentNodeId() != null ).map(ShardRouting::currentNodeId).map(nodeIds::contains).collect(Collectors.toSet());
+                if (inNodes.contains(false)) {
+                    return false;
+                }
+                if (inNodes.contains(true)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static class ExtendedClusterInfo extends ClusterInfo {
+            private final ClusterInfo delegate;
+
+            public ExtendedClusterInfo(ImmutableOpenMap<String, Long> extraShardSizes, ClusterInfo info) {
+                super(info.getNodeLeastAvailableDiskUsages(), info.getNodeMostAvailableDiskUsages(), extraShardSizes, null, null);
+                this.delegate = info;
+            }
+
+            @Override
+            public Long getShardSize(ShardRouting shardRouting) {
+                Long shardSize = super.getShardSize(shardRouting);
+                if (shardSize != null) {
+                    return shardSize;
+                } else {
+                    return delegate.getShardSize(shardRouting);
+                }
+            }
+
+            @Override
+            public long getShardSize(ShardRouting shardRouting, long defaultValue) {
+                Long shardSize = super.getShardSize(shardRouting);
+                if (shardSize != null) {
+                    return shardSize;
+                } else {
+                    return delegate.getShardSize(shardRouting, defaultValue);
+                }
+            }
+
+            @Override
+            public String getDataPath(ShardRouting shardRouting) {
+                return delegate.getDataPath(shardRouting);
+            }
+
+            @Override
+            public ReservedSpace getReservedSpace(String nodeId, String dataPath) {
+                return delegate.getReservedSpace(nodeId, dataPath);
+            }
+
+            @Override
+            public void writeTo(StreamOutput out) throws IOException {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+                throw new UnsupportedOperationException();
+            }
         }
     }
 
