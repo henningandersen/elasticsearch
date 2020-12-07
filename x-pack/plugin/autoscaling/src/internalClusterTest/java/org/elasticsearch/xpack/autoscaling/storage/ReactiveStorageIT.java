@@ -37,28 +37,7 @@ import static org.elasticsearch.index.store.Store.INDEX_STORE_STATS_REFRESH_INTE
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 
 @ESIntegTestCase.ClusterScope(scope = ESIntegTestCase.Scope.TEST, numDataNodes = 0)
-public class ReactiveStorageIT extends DiskUsageIntegTestCase {
-
-    private static final long WATERMARK_BYTES = 10240;
-
-    @Override
-    protected Collection<Class<? extends Plugin>> nodePlugins() {
-        Collection<Class<? extends Plugin>> plugins = new ArrayList<>(super.nodePlugins());
-        plugins.add(LocalStateAutoscaling.class);
-        return plugins;
-    }
-
-    @Override
-    protected Settings nodeSettings(final int nodeOrdinal) {
-        final Settings.Builder builder = Settings.builder().put(super.nodeSettings(nodeOrdinal));
-        builder.put(Autoscaling.AUTOSCALING_ENABLED_SETTING.getKey(), true)
-            .put(DiskThresholdSettings.CLUSTER_ROUTING_ALLOCATION_LOW_DISK_WATERMARK_SETTING.getKey(), (WATERMARK_BYTES * 2) + "b")
-            .put(DiskThresholdSettings.CLUSTER_ROUTING_ALLOCATION_HIGH_DISK_WATERMARK_SETTING.getKey(), WATERMARK_BYTES + "b")
-            .put(DiskThresholdSettings.CLUSTER_ROUTING_ALLOCATION_DISK_FLOOD_STAGE_WATERMARK_SETTING.getKey(), "0b")
-            .put(DiskThresholdSettings.CLUSTER_ROUTING_ALLOCATION_REROUTE_INTERVAL_SETTING.getKey(), "0ms")
-            .put(DiskThresholdDecider.ENABLE_FOR_SINGLE_DATA_NODE.getKey(), "true");
-        return builder.build();
-    }
+public class ReactiveStorageIT extends AutoscalingStorageIntegTestCase {
 
     public void testScaleUp() throws InterruptedException {
         internalCluster().startMasterOnlyNode();
@@ -113,18 +92,6 @@ public class ReactiveStorageIT extends DiskUsageIntegTestCase {
             Matchers.lessThanOrEqualTo(enoughSpace + minShardSize)
         );
         assertThat(response.results().get(policyName).requiredCapacity().node().storage().getBytes(), Matchers.equalTo(maxShardSize));
-    }
-
-    public void setTotalSpace(String dataNodeName, long totalSpace) {
-        getTestFileStore(dataNodeName).setTotalSpace(totalSpace);
-        final ClusterInfoService clusterInfoService = internalCluster().getCurrentMasterNodeInstance(ClusterInfoService.class);
-        ((InternalClusterInfoService) clusterInfoService).refresh();
-    }
-
-    public GetAutoscalingCapacityAction.Response capacity() {
-        GetAutoscalingCapacityAction.Request request = new GetAutoscalingCapacityAction.Request();
-        GetAutoscalingCapacityAction.Response response = client().execute(GetAutoscalingCapacityAction.INSTANCE, request).actionGet();
-        return response;
     }
 
     private void putAutoscalingPolicy(String policyName) {

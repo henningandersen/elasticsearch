@@ -27,7 +27,6 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
     public static final String NAME = "proactive_storage";
     public static final Setting<TimeValue> FORECAST_WINDOW = Setting.timeSetting("forecast_window", TimeValue.timeValueMinutes(30));
 
-    public static final int MINIMUM_INDICES = 3;
     private final DiskThresholdSettings diskThresholdSettings;
     private final AllocationDeciders allocationDeciders;
 
