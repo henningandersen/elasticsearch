@@ -22,6 +22,7 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class ProactiveStorageDeciderService implements AutoscalingDeciderService {
     public static final String NAME = "proactive_storage";
@@ -111,6 +112,22 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
             return reason;
         }
 
+        public long unassigned() {
+            return unassigned;
+        }
+
+        public long assigned() {
+            return assigned;
+        }
+
+        public long forecasted() {
+            return forecasted;
+        }
+
+        public TimeValue forecastWindow() {
+            return forecastWindow;
+        }
+
         @Override
         public String getWriteableName() {
             return NAME;
@@ -135,6 +152,23 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
             builder.field("forecast_window", forecastWindow);
             builder.endObject();
             return builder;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ProactiveReason that = (ProactiveReason) o;
+            return unassigned == that.unassigned
+                && assigned == that.assigned
+                && forecasted == that.forecasted
+                && reason.equals(that.reason)
+                && forecastWindow.equals(that.forecastWindow);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(reason, unassigned, assigned, forecasted, forecastWindow);
         }
     }
 }

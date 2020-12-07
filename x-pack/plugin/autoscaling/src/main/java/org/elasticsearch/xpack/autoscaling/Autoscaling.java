@@ -227,7 +227,8 @@ public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugi
                 clusterService.get().getClusterSettings(),
                 allocationDeciders.get()
             ),
-            new ProactiveStorageDeciderService(clusterService.get().getSettings(),
+            new ProactiveStorageDeciderService(
+                clusterService.get().getSettings(),
                 clusterService.get().getClusterSettings(),
                 allocationDeciders.get()
             )

@@ -41,7 +41,9 @@ public class ProactiveStorageIT extends AutoscalingStorageIntegTestCase {
 
     @After
     public void deleteAllDataStreams() {
-        assertAcked(client().execute(DeleteDataStreamAction.INSTANCE, new DeleteDataStreamAction.Request(new String[]{"*"})).actionGet());
+        assertAcked(
+            client().execute(DeleteDataStreamAction.INSTANCE, new DeleteDataStreamAction.Request(new String[] { "*" })).actionGet()
+        );
     }
 
     public void testScaleUp() throws IOException, InterruptedException {
@@ -54,10 +56,17 @@ public class ProactiveStorageIT extends AutoscalingStorageIntegTestCase {
         createDataStreamAndTemplate(dsName);
         for (int i = 0; i < between(1, 5); ++i) {
             indexRandom(
-                true, false,
+                true,
+                false,
                 IntStream.range(1, 100)
-                    .mapToObj(unused -> client().prepareIndex(dsName).setCreate(true).setSource("@timestamp",
-                        DateFieldMapper.DEFAULT_DATE_TIME_FORMATTER.formatMillis(randomLongBetween(1, Long.MAX_VALUE / 2))))
+                    .mapToObj(
+                        unused -> client().prepareIndex(dsName)
+                            .setCreate(true)
+                            .setSource(
+                                "@timestamp",
+                                DateFieldMapper.DEFAULT_DATE_TIME_FORMATTER.formatMillis(randomLongBetween(1, Long.MAX_VALUE / 2))
+                            )
+                    )
                     .toArray(IndexRequestBuilder[]::new)
             );
             client().admin().indices().rolloverIndex(new RolloverRequest(dsName, null));
@@ -79,21 +88,23 @@ public class ProactiveStorageIT extends AutoscalingStorageIntegTestCase {
         // default 30 minute window includes everything.
         GetAutoscalingCapacityAction.Response response = capacity();
         assertThat(response.results().keySet(), Matchers.equalTo(Set.of(policyName)));
-        assertThat(response.results().get(policyName).currentCapacity().tier().storage().getBytes(),
-            Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).currentCapacity().tier().storage().getBytes(), Matchers.equalTo(enoughSpace));
         // ideally, we would count replicas too, but we leave this for follow-up work
-        assertThat(response.results().get(policyName).requiredCapacity().tier().storage().getBytes(),
-            Matchers.greaterThanOrEqualTo(enoughSpace + used));
+        assertThat(
+            response.results().get(policyName).requiredCapacity().tier().storage().getBytes(),
+            Matchers.greaterThanOrEqualTo(enoughSpace + used)
+        );
         assertThat(response.results().get(policyName).requiredCapacity().node().storage().getBytes(), Matchers.equalTo(maxShardSize));
 
         // with 0 window, we expect just current.
-        putAutoscalingPolicy(policyName, Settings.builder().put(ProactiveStorageDeciderService.FORECAST_WINDOW.getKey(), TimeValue.ZERO).build());
+        putAutoscalingPolicy(
+            policyName,
+            Settings.builder().put(ProactiveStorageDeciderService.FORECAST_WINDOW.getKey(), TimeValue.ZERO).build()
+        );
         response = capacity();
         assertThat(response.results().keySet(), Matchers.equalTo(Set.of(policyName)));
-        assertThat(response.results().get(policyName).currentCapacity().tier().storage().getBytes(),
-            Matchers.equalTo(enoughSpace));
-        assertThat(response.results().get(policyName).requiredCapacity().tier().storage().getBytes(),
-            Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).currentCapacity().tier().storage().getBytes(), Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).requiredCapacity().tier().storage().getBytes(), Matchers.equalTo(enoughSpace));
         assertThat(response.results().get(policyName).requiredCapacity().node().storage().getBytes(), Matchers.equalTo(maxShardSize));
     }
 
@@ -107,17 +118,21 @@ public class ProactiveStorageIT extends AutoscalingStorageIntegTestCase {
     }
 
     private static void createDataStreamAndTemplate(String dataStreamName) throws IOException {
-        client().execute(PutComposableIndexTemplateAction.INSTANCE,
-            new PutComposableIndexTemplateAction.Request(dataStreamName + "_template")
-                .indexTemplate(new ComposableIndexTemplate(Collections.singletonList(dataStreamName),
+        client().execute(
+            PutComposableIndexTemplateAction.INSTANCE,
+            new PutComposableIndexTemplateAction.Request(dataStreamName + "_template").indexTemplate(
+                new ComposableIndexTemplate(
+                    Collections.singletonList(dataStreamName),
                     new Template(Settings.builder().put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 0).build(), null, null),
                     null,
                     null,
                     null,
                     null,
                     new ComposableIndexTemplate.DataStreamTemplate(),
-                    null)))
-            .actionGet();
+                    null
+                )
+            )
+        ).actionGet();
         client().execute(CreateDataStreamAction.INSTANCE, new CreateDataStreamAction.Request(dataStreamName)).actionGet();
     }
 }

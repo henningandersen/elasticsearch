@@ -8,24 +8,14 @@ package org.elasticsearch.xpack.autoscaling.storage;
 
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.cluster.ClusterInfoService;
-import org.elasticsearch.cluster.DiskUsageIntegTestCase;
-import org.elasticsearch.cluster.InternalClusterInfoService;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
-import org.elasticsearch.cluster.routing.allocation.DiskThresholdSettings;
-import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESIntegTestCase;
-import org.elasticsearch.xpack.autoscaling.Autoscaling;
-import org.elasticsearch.xpack.autoscaling.LocalStateAutoscaling;
 import org.elasticsearch.xpack.autoscaling.action.GetAutoscalingCapacityAction;
 import org.elasticsearch.xpack.autoscaling.action.PutAutoscalingPolicyAction;
 import org.hamcrest.Matchers;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;

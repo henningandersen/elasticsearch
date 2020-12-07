@@ -9,7 +9,6 @@ package org.elasticsearch.xpack.autoscaling;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.xpack.core.LocalStateCompositeXPackPlugin;
-import org.elasticsearch.xpack.datastreams.DataStreamsPlugin;
 
 public class LocalStateAutoscaling extends LocalStateCompositeXPackPlugin {
 
