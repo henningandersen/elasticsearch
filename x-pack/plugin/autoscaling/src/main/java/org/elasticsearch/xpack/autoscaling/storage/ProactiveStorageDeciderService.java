@@ -45,15 +45,22 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
     public AutoscalingDeciderResult scale(Settings configuration, AutoscalingDeciderContext context) {
         AutoscalingCapacity autoscalingCapacity = context.currentCapacity();
         if (autoscalingCapacity == null || autoscalingCapacity.tier().storage() == null) {
-            return new AutoscalingDeciderResult(null, new ReactiveStorageDeciderService.ReactiveReason("current capacity not available", -1, -1));
+            return new AutoscalingDeciderResult(
+                null,
+                new ReactiveStorageDeciderService.ReactiveReason("current capacity not available", -1, -1)
+            );
         }
 
-        ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(context, diskThresholdSettings, allocationDeciders);
+        ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
+            context,
+            diskThresholdSettings,
+            allocationDeciders
+        );
         long unassignedBeforeForecast = allocationState.storagePreventsAllocation();
         assert unassignedBeforeForecast >= 0;
 
         TimeValue forecastWindow = FORECAST_WINDOW.get(configuration);
-        allocationState = allocationState.predict(forecastWindow.millis(), System.currentTimeMillis());
+        allocationState = allocationState.forecast(forecastWindow.millis(), System.currentTimeMillis());
 
         long unassigned = allocationState.storagePreventsAllocation();
         long assigned = allocationState.storagePreventsRemainOrMove();
@@ -66,8 +73,10 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
             .total(autoscalingCapacity.tier().storage().getBytes() + unassigned + assigned, null)
             .node(maxShard, null)
             .build();
-        return new AutoscalingDeciderResult(requiredCapacity, new ProactiveReason(message, unassigned, assigned,
-            unassigned - unassignedBeforeForecast, forecastWindow));
+        return new AutoscalingDeciderResult(
+            requiredCapacity,
+            new ProactiveReason(message, unassigned, assigned, unassigned - unassignedBeforeForecast, forecastWindow)
+        );
     }
 
     @Override

@@ -53,8 +53,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static org.elasticsearch.xpack.autoscaling.storage.ProactiveStorageDeciderService.MINIMUM_INDICES;
-
 public class ReactiveStorageDeciderService implements AutoscalingDeciderService {
     public static final String NAME = "reactive_storage";
 
@@ -299,11 +297,11 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             return nodeIds.stream().map(n -> routingNodes.node(n));
         }
 
-        private static class Prediction {
-            private Map<IndexMetadata, Long> additionalIndices;
-            private DataStream updatedDataStream;
+        private static class SingleForecast {
+            private final Map<IndexMetadata, Long> additionalIndices;
+            private final DataStream updatedDataStream;
 
-            public Prediction(Map<IndexMetadata, Long> additionalIndices, DataStream updatedDataStream) {
+            public SingleForecast(Map<IndexMetadata, Long> additionalIndices, DataStream updatedDataStream) {
                 this.additionalIndices = additionalIndices;
                 this.updatedDataStream = updatedDataStream;
             }
@@ -326,82 +324,107 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             }
         }
 
-        public AllocationState predict(long forecastWindow, long now) {
+        public AllocationState forecast(long forecastWindow, long now) {
             // for now we only look at data-streams. We might want to also detect alias based time-based indices.
             DataStreamMetadata dataStreamMetadata = state.metadata().custom(DataStreamMetadata.TYPE);
-            List<Prediction> predictions =
-                dataStreamMetadata.dataStreams().keySet().stream().map(state.metadata().getIndicesLookup()::get).map(IndexAbstraction.DataStream.class::cast).map(ds -> predict(ds, forecastWindow, now)).filter(Objects::nonNull).collect(Collectors.toList());
-            if (predictions.isEmpty()) {
+            List<SingleForecast> singleForecasts = dataStreamMetadata.dataStreams()
+                .keySet()
+                .stream()
+                .map(state.metadata().getIndicesLookup()::get)
+                .map(IndexAbstraction.DataStream.class::cast)
+                .map(ds -> forecast(ds, forecastWindow, now))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+            if (singleForecasts.isEmpty()) {
                 return this;
             }
             Metadata.Builder metadataBuilder = Metadata.builder(state.metadata());
             RoutingTable.Builder routingTableBuilder = RoutingTable.builder(state.routingTable());
             ImmutableOpenMap.Builder<String, Long> sizeBuilder = ImmutableOpenMap.builder();
-            predictions.forEach(p -> p.applyMetadata(metadataBuilder));
-            predictions.forEach(p -> p.applyRouting(routingTableBuilder));
+            singleForecasts.forEach(p -> p.applyMetadata(metadataBuilder));
+            singleForecasts.forEach(p -> p.applyRouting(routingTableBuilder));
             RoutingTable routingTable = routingTableBuilder.build();
-            predictions.forEach(p -> p.applySize(sizeBuilder, routingTable));
-            ClusterState predictedClusterState = ClusterState.builder(state).metadata(metadataBuilder).routingTable(routingTable).build();
-            ClusterInfo predictedInfo = new ExtendedClusterInfo(sizeBuilder.build(), AllocationState.this.info);
+            singleForecasts.forEach(p -> p.applySize(sizeBuilder, routingTable));
+            ClusterState forecastClusterState = ClusterState.builder(state).metadata(metadataBuilder).routingTable(routingTable).build();
+            ClusterInfo forecastInfo = new ExtendedClusterInfo(sizeBuilder.build(), AllocationState.this.info);
 
-            return new AllocationState(predictedClusterState, allocationDeciders, diskThresholdSettings, predictedInfo, shardSizeInfo,
-                nodes);
+            return new AllocationState(forecastClusterState, allocationDeciders, diskThresholdSettings, forecastInfo, shardSizeInfo, nodes);
         }
 
-        private Prediction predict(IndexAbstraction.DataStream stream, long forecastWindow, long now) {
+        private SingleForecast forecast(IndexAbstraction.DataStream stream, long forecastWindow, long now) {
             List<IndexMetadata> indices = stream.getIndices();
             if (dataStreamAllocatedToNodes(indices) == false) return null;
-            int count;
             long minCreationDate = Long.MAX_VALUE;
             long totalSize = 0;
-            for (count = 0; count < indices.size(); ++count) {
-                IndexMetadata indexMetadata = indices.get(indices.size() - count - 1);
+            int count = 0;
+            while (count < indices.size()) {
+                ++count;
+                IndexMetadata indexMetadata = indices.get(indices.size() - count);
                 long creationDate = indexMetadata.getCreationDate();
                 if (creationDate < 0) {
                     return null;
                 }
-                if (creationDate < now - forecastWindow && count > MINIMUM_INDICES) {
-                    break;
-                }
                 minCreationDate = Math.min(minCreationDate, creationDate);
                 totalSize += state.getRoutingTable().allShards(indexMetadata.getIndex().getName()).stream().mapToLong(this::sizeOf).sum();
+                // we terminate loop after collecting data to ensure we consider at least the forecast window (and likely some more).
+                if (creationDate <= now - forecastWindow) {
+                    break;
+                }
             }
 
             if (totalSize == 0) {
                 return null;
             }
 
-            long avgSize = totalSize / count;
+            long avgSize = (totalSize - 1) / count + 1;
             if (avgSize == 0) {
                 return null;
             }
 
             long actualWindow = now - minCreationDate;
-            long scaledTotalSize =
-                BigInteger.valueOf(totalSize).multiply(BigInteger.valueOf(forecastWindow)).divide(BigInteger.valueOf(actualWindow)).longValueExact();
-            if (scaledTotalSize == 0) {
+            if (actualWindow == 0) {
                 return null;
             }
-            // rather than simulate rollover, we copy the index meta data and do minimal adjustments.
 
-            // limit to max number of indices in data stream as a safety precaution against cases like data stream created 1 second ago.
-            int numberNewIndices = (int) Math.min((scaledTotalSize - 1) / avgSize + 1, indices.size());
+            // rather than simulate rollover, we copy the index meta data and do minimal adjustments.
+            long scaledTotalSize;
+            int numberNewIndices;
+            if (actualWindow > forecastWindow) {
+                scaledTotalSize = BigInteger.valueOf(totalSize)
+                    .multiply(BigInteger.valueOf(forecastWindow))
+                    .divide(BigInteger.valueOf(actualWindow))
+                    .longValueExact();
+                numberNewIndices = (int) Math.min((scaledTotalSize - 1) / avgSize + 1, indices.size());
+                if (scaledTotalSize == 0) {
+                    return null;
+                }
+            } else {
+                numberNewIndices = count;
+                scaledTotalSize = totalSize;
+            }
 
             IndexMetadata writeIndex = stream.getWriteIndex();
 
             Map<IndexMetadata, Long> newIndices = new HashMap<>();
             DataStream dataStream = stream.getDataStream();
             for (int i = 0; i < numberNewIndices; ++i) {
-                final String newWriteIndexName = DataStream.getDefaultBackingIndexName(dataStream.getName(), dataStream.getGeneration() + 1);
-                IndexMetadata newIndex =
-                    IndexMetadata.builder(writeIndex).index(newWriteIndexName).settings(Settings.builder().put(writeIndex.getSettings()).put(IndexMetadata.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())).build();
+                final String newWriteIndexName = DataStream.getDefaultBackingIndexName(
+                    dataStream.getName(),
+                    dataStream.getGeneration() + 1
+                );
+                IndexMetadata newIndex = IndexMetadata.builder(writeIndex)
+                    .index(newWriteIndexName)
+                    .settings(
+                        Settings.builder().put(writeIndex.getSettings()).put(IndexMetadata.SETTING_INDEX_UUID, UUIDs.randomBase64UUID())
+                    )
+                    .build();
                 long size = Math.min(avgSize, scaledTotalSize - (avgSize * i));
                 assert size > 0;
                 newIndices.put(newIndex, size);
                 dataStream = dataStream.rollover(newIndex.getIndex());
             }
 
-            return new Prediction(newIndices, dataStream);
+            return new SingleForecast(newIndices, dataStream);
         }
 
         /**
@@ -413,8 +436,13 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         private boolean dataStreamAllocatedToNodes(List<IndexMetadata> indices) {
             for (int i = 0; i < indices.size(); ++i) {
                 IndexMetadata indexMetadata = indices.get(indices.size() - i - 1);
-                Set<Boolean> inNodes =
-                    state.getRoutingTable().allShards(indexMetadata.getIndex().getName()).stream().filter(s -> s.currentNodeId() != null ).map(ShardRouting::currentNodeId).map(nodeIds::contains).collect(Collectors.toSet());
+                Set<Boolean> inNodes = state.getRoutingTable()
+                    .allShards(indexMetadata.getIndex().getName())
+                    .stream()
+                    .filter(s -> s.currentNodeId() != null)
+                    .map(ShardRouting::currentNodeId)
+                    .map(nodeIds::contains)
+                    .collect(Collectors.toSet());
                 if (inNodes.contains(false)) {
                     return false;
                 }
@@ -423,6 +451,15 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 }
             }
             return false;
+        }
+
+        // for tests
+        ClusterState state() {
+            return state;
+        }
+
+        ClusterInfo info() {
+            return info;
         }
 
         private static class ExtendedClusterInfo extends ClusterInfo {
