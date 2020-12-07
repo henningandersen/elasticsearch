@@ -537,6 +537,14 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             return reason;
         }
 
+        public long unassigned() {
+            return unassigned;
+        }
+
+        public long assigned() {
+            return assigned;
+        }
+
         @Override
         public String getWriteableName() {
             return ReactiveStorageDeciderService.NAME;
@@ -557,6 +565,19 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             builder.field("assigned", assigned);
             builder.endObject();
             return builder;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ReactiveReason that = (ReactiveReason) o;
+            return unassigned == that.unassigned && assigned == that.assigned && reason.equals(that.reason);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(reason, unassigned, assigned);
         }
     }
 }
