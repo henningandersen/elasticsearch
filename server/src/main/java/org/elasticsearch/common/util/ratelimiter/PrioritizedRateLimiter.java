@@ -58,7 +58,7 @@ public class PrioritizedRateLimiter extends RateLimiter {
         ticketQueues = IntStream.range(0, priorities).mapToObj(i -> new TicketQueue()).toArray(TicketQueue[]::new);
         this.nowSupplier = nowSupplier;
         setMBPerSec(mbPerSec);
-        this.lastNS = System.nanoTime();
+        this.lastNS = nowSupplier.getAsLong();
     }
 
     /**
@@ -120,13 +120,15 @@ public class PrioritizedRateLimiter extends RateLimiter {
                 }
                 long lowerPriorityReservations = calculateReserved(0, priority);
                 long reservedBeforeTicket = ticketQueue.reservedBeforeTicket(ticket);
-                assert reservedBeforeTicket >= 0;
-                long targetNS = lastNS + deltaNS + reservedBeforeTicket + lowerPriorityReservations;
+                if (reservedBeforeTicket <= 0) {
+                    return now - start;
+                }
+                long targetNS = lastNS + reservedBeforeTicket + lowerPriorityReservations;
                 sleepTime = targetNS - now;
-                if (sleepTime <= 0 && reservedBeforeTicket == 0) {
+                if (sleepTime <= 0) {
                     // regardless of priority, it is ok to release now, even if higher priority paused threads are not yet dealt with,
                     // since we accounted for all higher priority pause threads.
-                    ticketQueue.release(ticket, deltaNS);
+                    ticketQueue.release(ticket, reservedBeforeTicket);
                     if (lowerPriorityReservations == 0 && calculateReserved(priority, ticketQueues.length) == 0) {
                         // Set to startNS, not targetNS, to enforce the instant rate, not
                         // the "averaged over all history" rate:
@@ -144,8 +146,8 @@ public class PrioritizedRateLimiter extends RateLimiter {
 
     private long calculateReserved(int start, int end) {
         long sum = 0;
-        for (int i = start; i <= end; ++i) {
-            sum += ticketQueues[i].reservedNS;
+        for (int i = start; i < end; ++i) {
+            sum += ticketQueues[i].reserved();
         }
         return sum;
     }
@@ -196,14 +198,13 @@ public class PrioritizedRateLimiter extends RateLimiter {
 
         public long ticket(long reservationNS) {
             assert lock.isHeldByCurrentThread();
-            long ticket = this.reservedNS;
             this.reservedNS += reservationNS;
-            return ticket;
+            return reservedNS;
         }
 
         public void release(long ticket, long reservationNS) {
             assert lock.isHeldByCurrentThread();
-            assert releasedNS == ticket : releasedNS + "!=" + ticket;
+            assert releasedNS < ticket : releasedNS + ">=" + ticket;
             this.releasedNS += reservationNS;
         }
 

@@ -182,6 +182,62 @@ public class PrioritizedRateLimiterTests extends ESTestCase {
         threads.forEach(t -> assertThat(t.isAlive(), is(false)));
     }
 
+    public void testPriority3() throws Exception {
+        int priorities = randomIntBetween(2, 5);
+        double mbPerSec = 1d / 1024 / 1024 * 1_000_000_000;
+        AtomicLong clock = new AtomicLong(randomLong());
+        CyclicBarrier barrier = new CyclicBarrier(3);
+        PrioritizedRateLimiter rateLimiter = new PrioritizedRateLimiter(mbPerSec, clock::get, priorities) {
+            @Override
+            void trySleepNS(long pauseNS) {
+                try {
+                    barrier.await();
+                    barrier.await();
+                } catch (InterruptedException | BrokenBarrierException e) {
+                    fail();
+                }
+            }
+        };
+        clock.addAndGet(50);
+        Thread t1 = new Thread(() -> {
+            long time = rateLimiter.pause(100, priorities - 1);
+            assertThat(time, Matchers.equalTo(150L));
+        });
+        t1.start();
+
+        Thread t2 = new Thread(() -> {
+            long time = rateLimiter.pause(100, between(0, priorities - 2));
+            try {
+                barrier.await();
+                barrier.await();
+            } catch (InterruptedException | BrokenBarrierException e) {
+                fail();
+            }
+            assertThat(time, Matchers.equalTo(100L));
+        });
+        t2.start();
+
+        barrier.await();
+
+        clock.addAndGet(100);
+
+        barrier.await();
+
+        barrier.await();
+
+        assertThat(t1.isAlive(), is(true));
+
+        clock.addAndGet(50);
+
+        barrier.await();
+
+        t2.join(10000);
+        t1.join(10000);
+
+        assertThat(t1.isAlive(), is(false));
+        assertThat(t2.isAlive(), is(false));
+    }
+
     public void testMinPauseCheckBytes() {
         double mbPerSec = randomDoubleBetween(0, 1_000_000, false);
         PrioritizedRateLimiter rateLimiter = new PrioritizedRateLimiter(mbPerSec, System::nanoTime, between(1, 10));
