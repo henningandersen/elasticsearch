@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.elasticsearch.common.util;
+package org.elasticsearch.common.util.ratelimiter;
 
 import org.apache.lucene.store.RateLimiter;
 import org.apache.lucene.util.ThreadInterruptedException;
@@ -32,14 +32,12 @@ import java.util.function.LongSupplier;
 import java.util.stream.IntStream;
 
 /**
- * A rate limiter that allows prioritization by stacking the rate limiters. The inner most rate limiter has highest priority,
- * the outer level rate limiters generally wait for the inner rate limiters to have spare capacity before using it.
+ * A rate limiter that allows prioritization of rate limiters by calling the pause method with a priority.
  *
  * It otherwise works similarly to SimpleRateLimiter.
  */
-public class PrioritizedRateLimiter4 extends RateLimiter {
+public class PrioritizedRateLimiter extends RateLimiter {
 
-    // todo: make a version where the locks are in an array and we just lock all from priority-no and down.
     private final static int MIN_PAUSE_CHECK_MSEC = 5;
 
     private long lastNS;
@@ -49,12 +47,18 @@ public class PrioritizedRateLimiter4 extends RateLimiter {
     private final ReleasableLock lock;
     private final TicketQueue[] ticketQueues;
 
-    /** mbPerSec is the MB/sec max IO rate */
-    public PrioritizedRateLimiter4(double mbPerSec, LongSupplier nowSupplier, int priorities) {
+    /**
+     * @param mbPerSec is the MB/sec max IO rate
+     * @param nowSupplier supplies current nano time
+     * @param priorities number of priorities, must be > 0
+     */
+    public PrioritizedRateLimiter(double mbPerSec, LongSupplier nowSupplier, int priorities) {
+        assert priorities > 0;
         lock = new ReleasableLock(new ReentrantLock());
         ticketQueues = IntStream.range(0, priorities).mapToObj(i -> new TicketQueue()).toArray(TicketQueue[]::new);
         this.nowSupplier = nowSupplier;
         setMBPerSec(mbPerSec);
+        this.lastNS = System.nanoTime();
     }
 
     /**
@@ -90,7 +94,15 @@ public class PrioritizedRateLimiter4 extends RateLimiter {
         return pause(bytes, 0);
     }
 
-
+    /** Pauses, if necessary, to keep the instantaneous IO
+     *  rate at or below the target.  Be sure to only call
+     *  this method when bytes &gt; {@link #getMinPauseCheckBytes},
+     *  otherwise it will pause way too long!
+     *
+     * @param bytes the bytes to account for
+     * @param priority the priority of the caller, 0 is highest priority.
+     * @return the pause time in nano seconds
+     */
     public long pause(long bytes, int priority) {
         assert priority < ticketQueues.length;
         long start = now();
@@ -111,7 +123,7 @@ public class PrioritizedRateLimiter4 extends RateLimiter {
                 assert reservedBeforeTicket >= 0;
                 long targetNS = lastNS + deltaNS + reservedBeforeTicket + lowerPriorityReservations;
                 sleepTime = targetNS - now;
-                if (sleepTime <= 0) {
+                if (sleepTime <= 0 && reservedBeforeTicket == 0) {
                     // regardless of priority, it is ok to release now, even if higher priority paused threads are not yet dealt with,
                     // since we accounted for all higher priority pause threads.
                     ticketQueue.release(ticket, deltaNS);
@@ -141,7 +153,7 @@ public class PrioritizedRateLimiter4 extends RateLimiter {
     /**
      * Try to sleep for the indicated time though waking up earlier is possible.
      */
-    private void trySleepNS(long pauseNS) {
+    void trySleepNS(long pauseNS) {
         assert pauseNS > 0;
         try {
             // NOTE: except maybe on real-time JVMs, minimum realistic sleep time
@@ -164,11 +176,13 @@ public class PrioritizedRateLimiter4 extends RateLimiter {
     }
 
     private long calculateDeltaNS(long bytes) {
-        double secondsToPause = (bytes /1024./1024.) / mbPerSec;
+        assert bytes > 0;
+        double secondsToPause = (bytes / 1024. / 1024.) / mbPerSec;
+        assert secondsToPause > 0d;
 
         long delta = (long) (1000000000 * secondsToPause);
-        assert delta > 0;
-        return delta;
+        assert delta >= 0 : delta;
+        return delta == 0 ? 1 : delta;
     }
 
     private long now() {
@@ -189,7 +203,7 @@ public class PrioritizedRateLimiter4 extends RateLimiter {
 
         public void release(long ticket, long reservationNS) {
             assert lock.isHeldByCurrentThread();
-            assert releasedNS == ticket;
+            assert releasedNS == ticket : releasedNS + "!=" + ticket;
             this.releasedNS += reservationNS;
         }
 
@@ -201,6 +215,14 @@ public class PrioritizedRateLimiter4 extends RateLimiter {
         public long reservedBeforeTicket(long ticket) {
             assert lock.isHeldByCurrentThread();
             return ticket - releasedNS;
+        }
+    }
+
+    void assertAllReleased() {
+        try (Releasable dummy = lock.acquire()) {
+            for (TicketQueue ticketQueue : ticketQueues) {
+                assert ticketQueue.reserved() == 0;
+            }
         }
     }
 }
