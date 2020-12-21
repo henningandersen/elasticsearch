@@ -80,6 +80,7 @@ import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
+import org.elasticsearch.common.util.ratelimiter.PrioritizedRateLimiter;
 import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -2262,6 +2263,9 @@ public abstract class BlobStoreRepository extends AbstractLifecycleComponent imp
     }
 
     public InputStream maybeRateLimitRestores(InputStream stream) {
+        return maybeRateLimitRestores(stream, Function.identity());
+    }
+    public InputStream maybeRateLimitRestores(InputStream stream, Function<PrioritizedRateLimiter, ? extends RateLimiter> wrapRestore) {
         return maybeRateLimit(maybeRateLimit(stream, () -> restoreRateLimiter, restoreRateLimitingTimeInNanos),
             recoverySettings::rateLimiter, restoreRateLimitingTimeInNanos);
     }

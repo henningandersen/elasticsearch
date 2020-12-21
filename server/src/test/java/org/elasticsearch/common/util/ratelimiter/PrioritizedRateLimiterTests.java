@@ -149,6 +149,7 @@ public class PrioritizedRateLimiterTests extends ESTestCase {
             void trySleepNS(long pauseNS) {
                 try {
                     barrier.await();
+                    barrier.await();
                 } catch (InterruptedException | BrokenBarrierException e) {
                     fail();
                 }

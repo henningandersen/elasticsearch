@@ -30,6 +30,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.ratelimiter.PrioritizedRateLimiter;
 
 public class RecoverySettings {
 
@@ -98,7 +99,7 @@ public class RecoverySettings {
     private volatile ByteSizeValue maxBytesPerSec;
     private volatile int maxConcurrentFileChunks;
     private volatile int maxConcurrentOperations;
-    private volatile SimpleRateLimiter rateLimiter;
+    private volatile PrioritizedRateLimiter rateLimiter;
     private volatile TimeValue retryDelayStateSync;
     private volatile TimeValue retryDelayNetwork;
     private volatile TimeValue activityTimeout;
@@ -125,7 +126,7 @@ public class RecoverySettings {
         if (maxBytesPerSec.getBytes() <= 0) {
             rateLimiter = null;
         } else {
-            rateLimiter = new SimpleRateLimiter(maxBytesPerSec.getMbFrac());
+            rateLimiter = new PrioritizedRateLimiter(maxBytesPerSec.getMbFrac(), System::nanoTime, 2);
         }
 
 
@@ -143,7 +144,7 @@ public class RecoverySettings {
         clusterSettings.addSettingsUpdateConsumer(INDICES_RECOVERY_ACTIVITY_TIMEOUT_SETTING, this::setActivityTimeout);
     }
 
-    public RateLimiter rateLimiter() {
+    public PrioritizedRateLimiter rateLimiter() {
         return rateLimiter;
     }
 
@@ -208,7 +209,7 @@ public class RecoverySettings {
         } else if (rateLimiter != null) {
             rateLimiter.setMBPerSec(maxBytesPerSec.getMbFrac());
         } else {
-            rateLimiter = new SimpleRateLimiter(maxBytesPerSec.getMbFrac());
+            rateLimiter = new PrioritizedRateLimiter(maxBytesPerSec.getMbFrac(), System::nanoTime, 2);
         }
     }
 

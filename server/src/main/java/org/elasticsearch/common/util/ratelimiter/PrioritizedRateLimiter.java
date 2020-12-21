@@ -50,7 +50,7 @@ public class PrioritizedRateLimiter extends RateLimiter {
     /**
      * @param mbPerSec is the MB/sec max IO rate
      * @param nowSupplier supplies current nano time
-     * @param priorities number of priorities, must be > 0
+     * @param priorities number of priorities, must be &gt; 0
      */
     public PrioritizedRateLimiter(double mbPerSec, LongSupplier nowSupplier, int priorities) {
         assert priorities > 0;
