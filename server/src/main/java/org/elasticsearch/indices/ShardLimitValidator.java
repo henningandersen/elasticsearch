@@ -8,17 +8,22 @@
 
 package org.elasticsearch.indices;
 
+import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
+import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.ValidationException;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.datatier.DataTierConstants;
 import org.elasticsearch.index.Index;
 
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.StreamSupport;
 
 import static org.elasticsearch.cluster.metadata.IndexMetadata.INDEX_NUMBER_OF_SHARDS_SETTING;
 
@@ -33,15 +38,27 @@ import static org.elasticsearch.cluster.metadata.IndexMetadata.INDEX_NUMBER_OF_S
 public class ShardLimitValidator {
     public static final Setting<Integer> SETTING_CLUSTER_MAX_SHARDS_PER_NODE =
         Setting.intSetting("cluster.max_shards_per_node", 1000, 1, Setting.Property.Dynamic, Setting.Property.NodeScope);
+
+    public static final Setting<Integer> SETTING_CLUSTER_MAX_SHARDS_PER_FROZEN_NODE =
+        Setting.intSetting("cluster.max_shards_per_node", 2500, 1, Setting.Property.Dynamic, Setting.Property.NodeScope);
+
     protected final AtomicInteger shardLimitPerNode = new AtomicInteger();
+    protected final AtomicInteger shardLimitPerFrozenNode = new AtomicInteger();
 
     public ShardLimitValidator(final Settings settings, ClusterService clusterService) {
         this.shardLimitPerNode.set(SETTING_CLUSTER_MAX_SHARDS_PER_NODE.get(settings));
+        this.shardLimitPerFrozenNode.set(SETTING_CLUSTER_MAX_SHARDS_PER_FROZEN_NODE.get(settings));
         clusterService.getClusterSettings().addSettingsUpdateConsumer(SETTING_CLUSTER_MAX_SHARDS_PER_NODE, this::setShardLimitPerNode);
+        clusterService.getClusterSettings().addSettingsUpdateConsumer(SETTING_CLUSTER_MAX_SHARDS_PER_FROZEN_NODE,
+            this::setShardLimitPerFrozenNode);
     }
 
     private void setShardLimitPerNode(int newValue) {
         this.shardLimitPerNode.set(newValue);
+    }
+
+    private void setShardLimitPerFrozenNode(int newValue) {
+        this.shardLimitPerFrozenNode.set(newValue);
     }
 
     /**
@@ -113,16 +130,18 @@ public class ShardLimitValidator {
     }
 
     // package-private for testing
-    static Optional<String> checkShardLimit(int newShards, ClusterState state, int maxShardsPerNodeSetting) {
+    static Optional<String> checkShardLimit(int newShards, ClusterState state, int maxShardsPerNode,
+                                            int maxShardsPerFrozenNode) {
         int nodeCount = state.getNodes().getDataNodes().size();
-
         // Only enforce the shard limit if we have at least one data node, so that we don't block
         // index creation during cluster setup
         if (nodeCount == 0 || newShards < 0) {
             return Optional.empty();
         }
-        int maxShardsPerNode = maxShardsPerNodeSetting;
-        int maxShardsInCluster = maxShardsPerNode * nodeCount;
+        int frozenNodeCount = (int) StreamSupport.stream(state.getNodes().getDataNodes().spliterator(), false)
+            .filter(ShardLimitValidator::isFrozenOnlyDataNode).count();
+
+        int maxShardsInCluster = maxShardsPerNode * (nodeCount - frozenNodeCount) + maxShardsPerFrozenNode * frozenNodeCount
         int currentOpenShards = state.getMetadata().getTotalOpenIndexShards();
 
         if ((currentOpenShards + newShards) > maxShardsInCluster) {
@@ -131,5 +150,10 @@ public class ShardLimitValidator {
             return Optional.of(errorMessage);
         }
         return Optional.empty();
+    }
+
+    private static boolean isFrozenOnlyDataNode(ObjectObjectCursor<String, DiscoveryNode> nodeCursor) {
+        DiscoveryNode node = nodeCursor.value;
+        return node.getRoles().stream().filter(DiscoveryNodeRole::canContainData).allMatch(role -> role.roleName().equals(DataTierConstants.DATA_FROZEN));
     }
 }
