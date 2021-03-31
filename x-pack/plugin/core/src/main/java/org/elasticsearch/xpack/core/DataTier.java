@@ -37,7 +37,7 @@ public class DataTier {
     public static final String DATA_HOT = "data_hot";
     public static final String DATA_WARM = "data_warm";
     public static final String DATA_COLD = "data_cold";
-    public static final String DATA_FROZEN = DataTierConstants.DATA_FROZEN;
+    public static final String DATA_FROZEN = "data_frozen";
 
     public static final Set<String> ALL_DATA_TIERS =
         new HashSet<>(Arrays.asList(DATA_CONTENT, DATA_HOT, DATA_WARM, DATA_COLD, DATA_FROZEN));
