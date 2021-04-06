@@ -191,8 +191,8 @@ public class ShardLimitValidator {
         int currentOpenShards = state.getMetadata().getTotalOpenIndexShards();
 
         if ((currentOpenShards + newShards) > maxShardsInCluster) {
-            Predicate<IndexMetadata> indexMetadataPredicate =
-                imd -> imd.getState().equals(IndexMetadata.State.OPEN) && group.equals(INDEX_SETTING_SHARD_LIMIT_GROUP.get(imd.getSettings()));
+            Predicate<IndexMetadata> indexMetadataPredicate = imd ->
+                imd.getState().equals(IndexMetadata.State.OPEN) && group.equals(INDEX_SETTING_SHARD_LIMIT_GROUP.get(imd.getSettings()));
             long currentFilteredShards = StreamSupport.stream(state.metadata().indices().values().spliterator(), false).map(oc -> oc.value)
                 .filter(indexMetadataPredicate).mapToInt(IndexMetadata::getTotalNumberOfShards).sum();
             if ((currentFilteredShards + newShards) > maxShardsInCluster) {
