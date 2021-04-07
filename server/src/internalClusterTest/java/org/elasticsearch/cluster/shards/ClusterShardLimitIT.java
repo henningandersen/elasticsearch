@@ -352,7 +352,7 @@ public class ClusterShardLimitIT extends ESIntegTestCase {
         int currentShards = counts.getFirstIndexShards() * (1 + counts.getFirstIndexReplicas());
         int maxShards = counts.getShardsPerNode() * dataNodes;
         String expectedError = "Validation Failed: 1: this action would add [" + totalShards
-            + "] total shards, but this cluster currently has [" + currentShards + "]/[" + maxShards + "] maximum shards open;";
+            + "] shards, but this cluster currently has [" + currentShards + "]/[" + maxShards + "] maximum normal shards open;";
         assertEquals(expectedError, e.getMessage());
     }
 
