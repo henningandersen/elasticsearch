@@ -86,10 +86,7 @@ public class ShardLimitValidatorTests extends ESTestCase {
             counts.getFirstIndexReplicas(),
             counts.getFailingIndexShards(), counts.getFailingIndexReplicas(), group);
 
-        Index[] indices = Arrays.stream(state.metadata().indices().values().toArray(IndexMetadata.class))
-            .map(IndexMetadata::getIndex)
-            .collect(Collectors.toList())
-            .toArray(new Index[2]);
+        Index[] indices = getIndices(state);
 
         int totalShards = counts.getFailingIndexShards() * (1 + counts.getFailingIndexReplicas());
         int currentShards = counts.getFirstIndexShards() * (1 + counts.getFirstIndexReplicas());
@@ -101,13 +98,42 @@ public class ShardLimitValidatorTests extends ESTestCase {
             currentShards + "]/[" + maxShards + "] maximum " + group + " shards open;", exception.getMessage());
     }
 
-    public static ClusterState createClusterForShardLimitTest(int nodesInCluster, int shardsInIndex, int replicas, String group) {
-        ImmutableOpenMap.Builder<String, DiscoveryNode> dataNodes = ImmutableOpenMap.builder();
-        for (int i = 0; i < nodesInCluster; i++) {
-            dataNodes.put(randomAlphaOfLengthBetween(5, 15), createNode(group));
+    public void testValidateShardLimitUpdateReplicas() {
+        final int nodesInCluster = randomIntBetween(2, 90);
+        final int shardsPerNode = randomIntBetween(1, 10);
+        final String group = randomFrom(ShardLimitValidator.VALID_GROUPS);
+        ClusterState state = createClusterStateForReplicaUpdate(nodesInCluster, shardsPerNode, group);
+
+        final Index[] indices = getIndices(state);
+        final ShardLimitValidator shardLimitValidator = createTestShardLimitService(shardsPerNode, group);
+        shardLimitValidator.validateShardLimitOnReplicaUpdate(state, indices, nodesInCluster - 1);
+
+        ValidationException exception = expectThrows(ValidationException.class,
+            () -> shardLimitValidator.validateShardLimitOnReplicaUpdate(state, indices, nodesInCluster));
+        assertEquals("Validation Failed: 1: this action would add [" + (shardsPerNode * 2) + "] shards, but this cluster currently has [" +
+            (shardsPerNode * (nodesInCluster - 1)) + "]/[" + shardsPerNode * nodesInCluster + "] maximum " + group + " shards open;",
+            exception.getMessage());
+    }
+
+    public Index[] getIndices(ClusterState state) {
+        return Arrays.stream(state.metadata().indices().values().toArray(IndexMetadata.class))
+            .map(IndexMetadata::getIndex)
+            .collect(Collectors.toList())
+            .toArray(Index.EMPTY_ARRAY);
+    }
+
+    private ClusterState createClusterStateForReplicaUpdate(int nodesInCluster, int shardsPerNode, String group) {
+        DiscoveryNodes nodes = createDiscoveryNodes(nodesInCluster, group);
+        ClusterState state = ClusterState.builder(ClusterName.DEFAULT).nodes(nodes).build();
+        state = addOpenedIndex(randomAlphaOfLengthBetween(5, 15), shardsPerNode, nodesInCluster - 2, state);
+        if (group.equals(ShardLimitValidator.FROZEN_GROUP)) {
+            state = ClusterState.builder(state).metadata(freezeMetadata(Metadata.builder(state.metadata()), state.metadata())).build();
         }
-        DiscoveryNodes nodes = mock(DiscoveryNodes.class);
-        when(nodes.getDataNodes()).thenReturn(dataNodes.build());
+        return state;
+    }
+
+    public static ClusterState createClusterForShardLimitTest(int nodesInCluster, int shardsInIndex, int replicas, String group) {
+        DiscoveryNodes nodes = createDiscoveryNodes(nodesInCluster, group);
 
         Settings.Builder settings = Settings.builder().put(IndexMetadata.SETTING_VERSION_CREATED, Version.CURRENT);
         if (ShardLimitValidator.FROZEN_GROUP.equals(group) || randomBoolean()) {
@@ -133,12 +159,7 @@ public class ShardLimitValidatorTests extends ESTestCase {
 
     public static ClusterState createClusterForShardLimitTest(int nodesInCluster, int openIndexShards, int openIndexReplicas,
                                                               int closedIndexShards, int closedIndexReplicas, String group) {
-        ImmutableOpenMap.Builder<String, DiscoveryNode> dataNodes = ImmutableOpenMap.builder();
-        for (int i = 0; i < nodesInCluster; i++) {
-            dataNodes.put(randomAlphaOfLengthBetween(5, 15), createNode(group));
-        }
-        DiscoveryNodes nodes = mock(DiscoveryNodes.class);
-        when(nodes.getDataNodes()).thenReturn(dataNodes.build());
+        DiscoveryNodes nodes = createDiscoveryNodes(nodesInCluster, group);
 
         ClusterState state = ClusterState.builder(ClusterName.DEFAULT).build();
         state = addOpenedIndex(randomAlphaOfLengthBetween(5, 15), openIndexShards, openIndexReplicas, state);
@@ -156,6 +177,16 @@ public class ShardLimitValidatorTests extends ESTestCase {
         return ClusterState.builder(state).metadata(metadata).nodes(nodes).build();
     }
 
+    public static DiscoveryNodes createDiscoveryNodes(int nodesInCluster, String group) {
+        ImmutableOpenMap.Builder<String, DiscoveryNode> dataNodes = ImmutableOpenMap.builder();
+        for (int i = 0; i < nodesInCluster; i++) {
+            dataNodes.put(randomAlphaOfLengthBetween(5, 15), createNode(group));
+        }
+        DiscoveryNodes nodes = mock(DiscoveryNodes.class);
+        when(nodes.getDataNodes()).thenReturn(dataNodes.build());
+        return nodes;
+    }
+
     private static DiscoveryNode createNode(String group) {
         DiscoveryNode mock = mock(DiscoveryNode.class);
         if (ShardLimitValidator.FROZEN_GROUP.equals(group)) {
@@ -165,11 +196,12 @@ public class ShardLimitValidatorTests extends ESTestCase {
         return mock;
     }
 
-    private static void freezeMetadata(Metadata.Builder builder, Metadata metadata) {
+    private static Metadata.Builder freezeMetadata(Metadata.Builder builder, Metadata metadata) {
         StreamSupport.stream(metadata.indices().values().spliterator(), false)
             .map(oc -> oc.value).map(imd -> IndexMetadata.builder(imd).settings(Settings.builder().put(imd.getSettings())
             .put(ShardLimitValidator.INDEX_SETTING_SHARD_LIMIT_GROUP.getKey(), ShardLimitValidator.FROZEN_GROUP)))
             .forEach(builder::put);
+        return builder;
     }
 
 
