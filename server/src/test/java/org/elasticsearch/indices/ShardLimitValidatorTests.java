@@ -14,6 +14,7 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.cluster.shards.ShardCounts;
@@ -27,6 +28,7 @@ import org.elasticsearch.test.ESTestCase;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -102,7 +104,7 @@ public class ShardLimitValidatorTests extends ESTestCase {
     public static ClusterState createClusterForShardLimitTest(int nodesInCluster, int shardsInIndex, int replicas, String group) {
         ImmutableOpenMap.Builder<String, DiscoveryNode> dataNodes = ImmutableOpenMap.builder();
         for (int i = 0; i < nodesInCluster; i++) {
-            dataNodes.put(randomAlphaOfLengthBetween(5, 15), mock(DiscoveryNode.class));
+            dataNodes.put(randomAlphaOfLengthBetween(5, 15), createNode(group));
         }
         DiscoveryNodes nodes = mock(DiscoveryNodes.class);
         when(nodes.getDataNodes()).thenReturn(dataNodes.build());
@@ -133,7 +135,7 @@ public class ShardLimitValidatorTests extends ESTestCase {
                                                               int closedIndexShards, int closedIndexReplicas, String group) {
         ImmutableOpenMap.Builder<String, DiscoveryNode> dataNodes = ImmutableOpenMap.builder();
         for (int i = 0; i < nodesInCluster; i++) {
-            dataNodes.put(randomAlphaOfLengthBetween(5, 15), mock(DiscoveryNode.class));
+            dataNodes.put(randomAlphaOfLengthBetween(5, 15), createNode(group));
         }
         DiscoveryNodes nodes = mock(DiscoveryNodes.class);
         when(nodes.getDataNodes()).thenReturn(dataNodes.build());
@@ -152,6 +154,15 @@ public class ShardLimitValidatorTests extends ESTestCase {
             freezeMetadata(metadata, state.metadata());
         }
         return ClusterState.builder(state).metadata(metadata).nodes(nodes).build();
+    }
+
+    private static DiscoveryNode createNode(String group) {
+        DiscoveryNode mock = mock(DiscoveryNode.class);
+        if (ShardLimitValidator.FROZEN_GROUP.equals(group)) {
+            when(mock.getRoles()).thenReturn(randomBoolean() ? DiscoveryNodeRole.BUILT_IN_ROLES :
+                Set.of(DiscoveryNodeRole.DATA_FROZEN_NODE_ROLE));
+        }
+        return mock;
     }
 
     private static void freezeMetadata(Metadata.Builder builder, Metadata metadata) {

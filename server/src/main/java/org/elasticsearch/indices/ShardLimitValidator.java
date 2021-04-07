@@ -176,8 +176,8 @@ public class ShardLimitValidator {
     private Optional<String> checkShardLimit(int newShards, int newFrozenShards, ClusterState state) {
         int frozenNodeCount = nodeCount(state, ShardLimitValidator::hasFrozen);
         int normalNodeCount = nodeCount(state, ShardLimitValidator::hasNonFrozen);
-            return checkShardLimit(newShards, state, getShardLimitPerNode(), normalNodeCount, "normal")
-                .or(() -> checkShardLimit(newFrozenShards, state, shardLimitPerNodeFrozen.get(), frozenNodeCount, "frozen"));
+        return checkShardLimit(newShards, state, getShardLimitPerNode(), normalNodeCount, "normal")
+            .or(() -> checkShardLimit(newFrozenShards, state, shardLimitPerNodeFrozen.get(), frozenNodeCount, "frozen"));
     }
 
     // package-private for testing
