@@ -145,8 +145,8 @@ public class ClusterShardLimitIT extends ESIntegTestCase {
             fail("shouldn't be able to increase the number of replicas");
         } catch (IllegalArgumentException e) {
             String expectedError = "Validation Failed: 1: this action would add [" + (dataNodes * firstShardCount)
-                + "] total shards, but this cluster currently has [" + firstShardCount + "]/[" + dataNodes * shardsPerNode
-                + "] maximum shards open;";
+                + "] shards, but this cluster currently has [" + firstShardCount + "]/[" + dataNodes * shardsPerNode
+                + "] maximum normal shards open;";
             assertEquals(expectedError, e.getMessage());
         }
         Metadata clusterState = client().admin().cluster().prepareState().get().getState().metadata();
@@ -192,8 +192,8 @@ public class ClusterShardLimitIT extends ESIntegTestCase {
             int difference = totalShardsAfter - totalShardsBefore;
 
             String expectedError = "Validation Failed: 1: this action would add [" + difference
-                + "] total shards, but this cluster currently has [" + totalShardsBefore + "]/[" + dataNodes * shardsPerNode
-                + "] maximum shards open;";
+                + "] shards, but this cluster currently has [" + totalShardsBefore + "]/[" + dataNodes * shardsPerNode
+                + "] maximum normal shards open;";
             assertEquals(expectedError, e.getMessage());
         }
         Metadata clusterState = client().admin().cluster().prepareState().get().getState().metadata();
