@@ -370,7 +370,7 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             diskUsage,
             diskUsage,
             ImmutableOpenMap.<String, Long>builder().putAll(collect).build(),
-            ImmutableOpenMap.of(),
+                dataSetShardSizes, ImmutableOpenMap.of(),
             ImmutableOpenMap.of()
         );
     }

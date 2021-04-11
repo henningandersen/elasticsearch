@@ -19,7 +19,7 @@ public class ClusterInfoTests extends ESTestCase {
 
     public void testSerialization() throws Exception {
         ClusterInfo clusterInfo = new ClusterInfo(
-                randomDiskUsage(), randomDiskUsage(), randomShardSizes(), randomRoutingToDataPath(),
+                randomDiskUsage(), randomDiskUsage(), randomShardSizes(), dataSetShardSizes, randomRoutingToDataPath(),
                 randomReservedSpace());
         BytesStreamOutput output = new BytesStreamOutput();
         clusterInfo.writeTo(output);

@@ -356,7 +356,7 @@ public class InternalClusterInfoService implements ClusterInfoService, ClusterSt
     public ClusterInfo getClusterInfo() {
         final IndicesStatsSummary indicesStatsSummary = this.indicesStatsSummary; // single volatile read
         return new ClusterInfo(leastAvailableSpaceUsages, mostAvailableSpaceUsages,
-            indicesStatsSummary.shardSizes, indicesStatsSummary.shardRoutingToDataPath, indicesStatsSummary.reservedSpace);
+            indicesStatsSummary.shardSizes, dataSetShardSizes, indicesStatsSummary.shardRoutingToDataPath, indicesStatsSummary.reservedSpace);
     }
 
     // allow tests to adjust the node stats on receipt
