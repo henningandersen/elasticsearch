@@ -35,6 +35,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.snapshots.SnapshotShardSizeInfo;
 import org.elasticsearch.xpack.autoscaling.AutoscalingTestCase;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingCapacity;
@@ -355,10 +356,15 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
     }
 
     private ClusterInfo randomClusterInfo(ClusterState state) {
-        Map<String, Long> collect = state.routingTable()
+        Map<String, Long> shardSizes = state.routingTable()
             .allShards()
             .stream()
             .map(ClusterInfo::shardIdentifierFromRouting)
+            .collect(Collectors.toMap(Function.identity(), id -> randomLongBetween(1, 1000), (v1, v2) -> v1));
+        Map<ShardId, Long> shardDataSetSizes = state.routingTable()
+            .allShards()
+            .stream()
+            .map(ShardRouting::shardId)
             .collect(Collectors.toMap(Function.identity(), id -> randomLongBetween(1, 1000), (v1, v2) -> v1));
         ImmutableOpenMap.Builder<String, DiskUsage> builder = ImmutableOpenMap.builder();
         for (ObjectCursor<String> cursor : state.nodes().getDataNodes().keys()) {
@@ -369,8 +375,9 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         return new ClusterInfo(
             diskUsage,
             diskUsage,
-            ImmutableOpenMap.<String, Long>builder().putAll(collect).build(),
-                dataSetShardSizes, ImmutableOpenMap.of(),
+            ImmutableOpenMap.<String, Long>builder().putAll(shardSizes).build(),
+            ImmutableOpenMap.<ShardId, Long>builder().putAll(shardDataSetSizes).build(),
+            ImmutableOpenMap.of(),
             ImmutableOpenMap.of()
         );
     }
