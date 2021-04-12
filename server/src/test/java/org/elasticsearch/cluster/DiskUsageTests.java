@@ -109,7 +109,7 @@ public class DiskUsageTests extends ESTestCase {
         ImmutableOpenMap.Builder<String, Long> shardSizes = ImmutableOpenMap.builder();
         ImmutableOpenMap.Builder<ShardRouting, String> routingToPath = ImmutableOpenMap.builder();
         ClusterState state = ClusterState.builder(new ClusterName("blarg")).version(0).build();
-        InternalClusterInfoService.buildShardLevelInfo(stats, shardSizes, routingToPath, new HashMap<>());
+        InternalClusterInfoService.buildShardLevelInfo(stats, shardSizes, shardDataSetSizeBuilder, routingToPath, new HashMap<>());
         assertEquals(2, shardSizes.size());
         assertTrue(shardSizes.containsKey(ClusterInfo.shardIdentifierFromRouting(test_0)));
         assertTrue(shardSizes.containsKey(ClusterInfo.shardIdentifierFromRouting(test_1)));
