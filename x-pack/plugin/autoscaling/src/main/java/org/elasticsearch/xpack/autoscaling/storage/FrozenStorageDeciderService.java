@@ -8,12 +8,16 @@
 package org.elasticsearch.xpack.autoscaling.storage;
 
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderContext;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderResult;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
 
+import java.io.IOException;
 import java.util.List;
 
 public class FrozenStorageDeciderService implements AutoscalingDeciderService {
@@ -40,5 +44,30 @@ public class FrozenStorageDeciderService implements AutoscalingDeciderService {
     @Override
     public List<DiscoveryNodeRole> roles() {
         return List.of(DiscoveryNodeRole.DATA_FROZEN_NODE_ROLE);
+    }
+
+    public static class FrozenReason implements AutoscalingDeciderResult.Reason {
+        public FrozenReason(StreamInput in) {
+
+        }
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            return builder;
+        }
+
+        @Override
+        public String getWriteableName() {
+            return NAME;
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+
+        }
+
+        @Override
+        public String summary() {
+            return null;
+        }
     }
 }
