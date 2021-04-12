@@ -26,6 +26,7 @@ import org.elasticsearch.xpack.core.DataTier;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
@@ -51,7 +52,7 @@ public class FrozenStorageDeciderService implements AutoscalingDeciderService {
         return new AutoscalingDeciderResult(AutoscalingCapacity.builder().total(storageSize, null).build(), new FrozenReason(dataSetSize));
     }
 
-    private long estimateSize(IndexMetadata imd, ClusterInfo info) {
+    static long estimateSize(IndexMetadata imd, ClusterInfo info) {
         int copies = imd.getNumberOfReplicas() + 1;
         return IntStream.range(0, imd.getNumberOfShards())
             .mapToObj(s -> new ShardId(imd.getIndex(), s))
@@ -85,6 +86,7 @@ public class FrozenStorageDeciderService implements AutoscalingDeciderService {
         private final long totalDataSetSize;
 
         public FrozenReason(long totalDataSetSize) {
+            assert totalDataSetSize >= 0;
             this.totalDataSetSize = totalDataSetSize;
         }
 
@@ -111,6 +113,23 @@ public class FrozenStorageDeciderService implements AutoscalingDeciderService {
         @Override
         public String summary() {
             return "total data set size [" + totalDataSetSize + "]";
+        }
+
+        public long totalDataSetSize() {
+            return totalDataSetSize;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            FrozenReason that = (FrozenReason) o;
+            return totalDataSetSize == that.totalDataSetSize;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(totalDataSetSize);
         }
     }
 }
