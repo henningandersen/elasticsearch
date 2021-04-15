@@ -26,7 +26,6 @@ import org.elasticsearch.xpack.autoscaling.util.FrozenUtilsTests;
 import org.elasticsearch.xpack.core.DataTier;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -37,8 +36,10 @@ public class FrozenStorageDeciderServiceTests extends AutoscalingTestCase {
         final int shards = between(1, 10);
         final int replicas = between(0, 9);
         final IndexMetadata indexMetadata = IndexMetadata.builder(randomAlphaOfLength(5))
-            .settings(Settings.builder().put(IndexMetadata.SETTING_VERSION_CREATED,
-                Version.CURRENT)).numberOfShards(shards).numberOfReplicas(replicas).build();
+            .settings(Settings.builder().put(IndexMetadata.SETTING_VERSION_CREATED, Version.CURRENT))
+            .numberOfShards(shards)
+            .numberOfReplicas(replicas)
+            .build();
         final Tuple<Long, ClusterInfo> sizeAndClusterInfo = sizeAndClusterInfo(indexMetadata);
         final long expected = sizeAndClusterInfo.v1();
         final ClusterInfo info = sizeAndClusterInfo.v2();

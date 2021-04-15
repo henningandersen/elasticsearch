@@ -8,9 +8,7 @@
 package org.elasticsearch.xpack.autoscaling.storage;
 
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.AbstractWireSerializingTestCase;
-import org.elasticsearch.test.ESTestCase;
 
 public class FrozenStorageDeciderReasonWireSerializationTests extends AbstractWireSerializingTestCase<
     FrozenStorageDeciderService.FrozenReason> {
@@ -21,8 +19,9 @@ public class FrozenStorageDeciderReasonWireSerializationTests extends AbstractWi
 
     @Override
     protected FrozenStorageDeciderService.FrozenReason mutateInstance(FrozenStorageDeciderService.FrozenReason instance) {
-        return new FrozenStorageDeciderService.FrozenReason(randomValueOtherThan(instance.totalDataSetSize(),
-            () -> randomLongBetween(0, Long.MAX_VALUE)));
+        return new FrozenStorageDeciderService.FrozenReason(
+            randomValueOtherThan(instance.totalDataSetSize(), () -> randomLongBetween(0, Long.MAX_VALUE))
+        );
     }
 
     @Override

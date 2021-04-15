@@ -20,7 +20,6 @@ import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.xpack.autoscaling.action.GetAutoscalingCapacityAction;
 import org.elasticsearch.xpack.autoscaling.action.PutAutoscalingPolicyAction;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingCapacity;
-import org.elasticsearch.xpack.autoscaling.shards.FrozenShardsDeciderService;
 import org.elasticsearch.xpack.autoscaling.shards.LocalStateAutoscalingAndSearchableSnapshots;
 import org.elasticsearch.xpack.core.DataTier;
 import org.elasticsearch.xpack.core.searchablesnapshots.MountSearchableSnapshotAction;
@@ -43,7 +42,7 @@ import static org.elasticsearch.license.LicenseService.SELF_GENERATED_LICENSE_TY
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.equalTo;
 
-@ESIntegTestCase.ClusterScope(scope= ESIntegTestCase.Scope.TEST)
+@ESIntegTestCase.ClusterScope(scope = ESIntegTestCase.Scope.TEST)
 public abstract class AbstractFrozenAutoscalingIntegTestCase extends AbstractSnapshotIntegTestCase {
 
     protected final String indexName = "index";
@@ -110,10 +109,7 @@ public abstract class AbstractFrozenAutoscalingIntegTestCase extends AbstractSna
 
     private void putAutoscalingPolicy(String policyName) {
         // randomly set the setting to verify it can be set.
-        Settings settings = randomBoolean()
-            ? Settings.EMPTY
-            : addDeciderSettings(Settings.builder())
-            .build();
+        Settings settings = randomBoolean() ? Settings.EMPTY : addDeciderSettings(Settings.builder()).build();
         final PutAutoscalingPolicyAction.Request request = new PutAutoscalingPolicyAction.Request(
             policyName,
             new TreeSet<>(Set.of(DataTier.DATA_FROZEN)),
@@ -123,5 +119,6 @@ public abstract class AbstractFrozenAutoscalingIntegTestCase extends AbstractSna
     }
 
     protected abstract String deciderName();
+
     protected abstract Settings.Builder addDeciderSettings(Settings.Builder builder);
 }
