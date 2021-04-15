@@ -49,6 +49,7 @@ public abstract class AbstractFrozenAutoscalingIntegTestCase extends AbstractSna
     protected final String restoredIndexName = "restored";
     protected final String fsRepoName = randomAlphaOfLength(10);
     protected final String snapshotName = randomAlphaOfLength(10).toLowerCase(Locale.ROOT);
+    protected final String policyName = "frozen";
 
     @Override
     protected boolean addMockInternalEngine() {
@@ -71,15 +72,10 @@ public abstract class AbstractFrozenAutoscalingIntegTestCase extends AbstractSna
         return builder.build();
     }
 
-    protected GetAutoscalingCapacityAction.Response capacity() {
-        GetAutoscalingCapacityAction.Request request = new GetAutoscalingCapacityAction.Request();
-        return client().execute(GetAutoscalingCapacityAction.INSTANCE, request).actionGet();
-    }
-
     @Before
     public void createMountedIndex() throws Exception {
         createRepository(fsRepoName, "fs");
-        putAutoscalingPolicy("frozen");
+        putAutoscalingPolicy();
         assertAcked(prepareCreate(indexName, Settings.builder().put(INDEX_SOFT_DELETES_SETTING.getKey(), true)));
 
         indexRandom(
@@ -107,7 +103,13 @@ public abstract class AbstractFrozenAutoscalingIntegTestCase extends AbstractSna
         assertThat(restoreSnapshotResponse.getRestoreInfo().failedShards(), equalTo(0));
     }
 
-    private void putAutoscalingPolicy(String policyName) {
+    protected GetAutoscalingCapacityAction.Response capacity() {
+        GetAutoscalingCapacityAction.Request request = new GetAutoscalingCapacityAction.Request();
+        return client().execute(GetAutoscalingCapacityAction.INSTANCE, request).actionGet();
+    }
+
+
+    private void putAutoscalingPolicy() {
         // randomly set the setting to verify it can be set.
         Settings settings = randomBoolean() ? Settings.EMPTY : addDeciderSettings(Settings.builder()).build();
         final PutAutoscalingPolicyAction.Request request = new PutAutoscalingPolicyAction.Request(
