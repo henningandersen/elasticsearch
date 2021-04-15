@@ -43,6 +43,7 @@ public class FrozenStorageDeciderServiceTests extends AutoscalingTestCase {
         final long expected = sizeAndClusterInfo.v1();
         final ClusterInfo info = sizeAndClusterInfo.v2();
         assertThat(FrozenStorageDeciderService.estimateSize(indexMetadata, info), equalTo(expected));
+        assertThat(FrozenStorageDeciderService.estimateSize(indexMetadata, ClusterInfo.EMPTY), equalTo(0L));
     }
 
     public void testScale() {
@@ -69,7 +70,7 @@ public class FrozenStorageDeciderServiceTests extends AutoscalingTestCase {
         AutoscalingDeciderResult defaultSettingsResult = service.scale(Settings.EMPTY, context);
         assertThat(
             defaultSettingsResult.requiredCapacity().total().storage(),
-            equalTo(ByteSizeValue.ofBytes((long) (FrozenStorageDeciderService.DEFAULT_PERCENTAGE * dataSetSize)))
+            equalTo(ByteSizeValue.ofBytes((long) (FrozenStorageDeciderService.DEFAULT_PERCENTAGE * dataSetSize) / 100))
         );
         assertThat(defaultSettingsResult.requiredCapacity().total().memory(), nullValue());
         assertThat(defaultSettingsResult.reason().summary(), equalTo("total data set size [" + dataSetSize + "]"));
@@ -83,7 +84,7 @@ public class FrozenStorageDeciderServiceTests extends AutoscalingTestCase {
         );
         assertThat(
             overrideSettingsResult.requiredCapacity().total().storage(),
-            equalTo(ByteSizeValue.ofBytes((long) (percentage * dataSetSize)))
+            equalTo(ByteSizeValue.ofBytes((long) (percentage * dataSetSize) / 100))
         );
     }
 

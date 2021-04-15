@@ -215,7 +215,7 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
     }
 
     public Optional<Long> getShardDataSetSize(ShardId shardId) {
-        return Optional.of(shardDataSetSizes.get(shardId));
+        return Optional.ofNullable(shardDataSetSizes.get(shardId));
     }
     /**
      * Returns the reserved space for each shard on the given node/path pair

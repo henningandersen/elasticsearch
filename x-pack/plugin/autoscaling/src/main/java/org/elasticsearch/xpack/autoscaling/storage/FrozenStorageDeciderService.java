@@ -48,7 +48,7 @@ public class FrozenStorageDeciderService implements AutoscalingDeciderService {
             .mapToLong(imd -> estimateSize(imd, context.info()))
             .sum();
 
-        long storageSize = (long) (PERCENTAGE.get(configuration) * dataSetSize);
+        long storageSize = (long) (PERCENTAGE.get(configuration) * dataSetSize) / 100;
         return new AutoscalingDeciderResult(AutoscalingCapacity.builder().total(storageSize, null).build(), new FrozenReason(dataSetSize));
     }
 
