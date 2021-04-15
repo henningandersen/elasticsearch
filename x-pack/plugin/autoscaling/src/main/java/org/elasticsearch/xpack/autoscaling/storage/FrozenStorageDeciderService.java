@@ -21,8 +21,7 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingCapacity;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderContext;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderResult;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderService;
-import org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider;
-import org.elasticsearch.xpack.core.DataTier;
+import org.elasticsearch.xpack.autoscaling.util.FrozenUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +32,8 @@ import java.util.stream.StreamSupport;
 public class FrozenStorageDeciderService implements AutoscalingDeciderService {
     public static final String NAME = "frozen_storage";
 
-    public static final Setting<Double> PERCENTAGE = Setting.doubleSetting("percentage", 5.0d, 0.0d);
+    static final double DEFAULT_PERCENTAGE = 5.0d;
+    public static final Setting<Double> PERCENTAGE = Setting.doubleSetting("percentage", DEFAULT_PERCENTAGE, 0.0d);
 
     @Override
     public String name() {
@@ -44,7 +44,7 @@ public class FrozenStorageDeciderService implements AutoscalingDeciderService {
     public AutoscalingDeciderResult scale(Settings configuration, AutoscalingDeciderContext context) {
         Metadata metadata = context.state().metadata();
         long dataSetSize = StreamSupport.stream(metadata.spliterator(), false)
-            .filter(imd -> isFrozenIndex(imd.getSettings()))
+            .filter(imd -> FrozenUtils.isFrozenIndex(imd.getSettings()))
             .mapToLong(imd -> estimateSize(imd, context.info()))
             .sum();
 
@@ -59,17 +59,6 @@ public class FrozenStorageDeciderService implements AutoscalingDeciderService {
             .mapToLong(s -> info.getShardDataSetSize(s).orElse(0L))
             .map(s -> s * copies)
             .sum();
-    }
-
-    static boolean isFrozenIndex(Settings indexSettings) {
-        String tierPreference = DataTierAllocationDecider.INDEX_ROUTING_PREFER_SETTING.get(indexSettings);
-        String[] preferredTiers = DataTierAllocationDecider.parseTierList(tierPreference);
-        if (preferredTiers.length >= 1 && preferredTiers[0].equals(DataTier.DATA_FROZEN)) {
-            assert preferredTiers.length == 1 : "frozen tier preference must be frozen only";
-            return true;
-        } else {
-            return false;
-        }
     }
 
     @Override

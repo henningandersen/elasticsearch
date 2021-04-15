@@ -20,6 +20,7 @@ import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.xpack.autoscaling.AutoscalingTestCase;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderContext;
 import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingDeciderResult;
+import org.elasticsearch.xpack.autoscaling.util.FrozenUtilsTests;
 import org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDecider;
 import org.elasticsearch.xpack.core.DataTier;
 import org.elasticsearch.xpack.searchablesnapshots.SearchableSnapshotsConstants;
@@ -32,13 +33,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class FrozenShardsDeciderServiceTests extends AutoscalingTestCase {
-
-    public void testIsFrozenIndex() {
-        assertThat(FrozenShardsDeciderService.isFrozenIndex(indexSettings(DataTier.DATA_FROZEN)), is(true));
-        assertThat(FrozenShardsDeciderService.isFrozenIndex(indexSettings(null)), is(false));
-        String notFrozenAlone = randomNonFrozenTierPreference();
-        assertThat(FrozenShardsDeciderService.isFrozenIndex(indexSettings(notFrozenAlone)), is(false));
-    }
 
     public void testCountFrozenShards() {
         final Metadata.Builder builder = Metadata.builder();
@@ -95,22 +89,10 @@ public class FrozenShardsDeciderServiceTests extends AutoscalingTestCase {
     }
 
     private String randomNonFrozenTierPreference() {
-        return randomValueOtherThanMany(
-            tiers -> tiers.contains(DataTier.DATA_FROZEN),
-            () -> Strings.join(randomSubsetOf(DataTier.ALL_DATA_TIERS), ",")
-        );
+        return FrozenUtilsTests.randomNonFrozenTierPreference();
     }
 
-    private Settings indexSettings(String tierPreference) {
-        Settings.Builder settings = Settings.builder()
-            .put(randomAlphaOfLength(10), randomLong())
-            .put(DataTierAllocationDecider.INDEX_ROUTING_PREFER, tierPreference)
-            .put(IndexMetadata.SETTING_VERSION_CREATED, Version.CURRENT);
-        // pass setting validator.
-        if (Objects.equals(tierPreference, DataTier.DATA_FROZEN)) {
-            settings.put(SearchableSnapshotsConstants.SNAPSHOT_PARTIAL_SETTING.getKey(), true)
-                .put(IndexModule.INDEX_STORE_TYPE_SETTING.getKey(), SearchableSnapshotsConstants.SNAPSHOT_DIRECTORY_FACTORY_KEY);
-        }
-        return settings.build();
+    private static Settings indexSettings(String tierPreference) {
+        return FrozenUtilsTests.indexSettings(tierPreference);
     }
 }
