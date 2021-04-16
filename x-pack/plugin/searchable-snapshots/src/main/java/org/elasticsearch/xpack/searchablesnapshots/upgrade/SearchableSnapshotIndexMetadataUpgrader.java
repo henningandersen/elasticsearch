@@ -113,6 +113,7 @@ public class SearchableSnapshotIndexMetadataUpgrader {
                     .put(indexMetadata.getSettings())
                     .put(ShardLimitValidator.INDEX_SETTING_SHARD_LIMIT_GROUP.getKey(), ShardLimitValidator.FROZEN_GROUP)
             )
+            .settingsVersion(indexMetadata.getSettingsVersion() + 1)
             .build();
     }
 }

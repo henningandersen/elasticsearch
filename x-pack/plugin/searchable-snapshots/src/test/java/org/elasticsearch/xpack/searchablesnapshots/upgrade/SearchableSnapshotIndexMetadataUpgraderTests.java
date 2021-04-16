@@ -71,6 +71,7 @@ public class SearchableSnapshotIndexMetadataUpgraderTests extends ESTestCase {
                     ShardLimitValidator.INDEX_SETTING_SHARD_LIMIT_GROUP.get(upgraded.getSettings()),
                     equalTo(ShardLimitValidator.FROZEN_GROUP)
                 );
+                assertThat(upgraded.getSettingsVersion(), equalTo(original.getSettingsVersion() + 1));
                 return true;
             }
         }));
