@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 import static org.elasticsearch.common.xcontent.support.XContentMapValues.extractValue;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class SearchableSnapshotsRollingUpgradeIT extends AbstractUpgradeTestCase {
@@ -49,10 +50,10 @@ public class SearchableSnapshotsRollingUpgradeIT extends AbstractUpgradeTestCase
 
         if (CLUSTER_TYPE.equals(ClusterType.UPGRADED)) {
             assertBusy(() -> {
-                Map<String, Object> settings = getIndexSettings("mounted_index_shared_cache");
+                Map<String, Object> settings = getIndexSettingsAsMap("mounted_index_shared_cache");
                 logger.info(settings.toString());
-                assertThat(settings.get(ShardLimitValidator.INDEX_SETTING_SHARD_LIMIT_GROUP.getKey()),
-                    equalTo(ShardLimitValidator.FROZEN_GROUP));
+                assertThat(settings,
+                    hasEntry(ShardLimitValidator.INDEX_SETTING_SHARD_LIMIT_GROUP.getKey(), ShardLimitValidator.FROZEN_GROUP));
             });
         }
 
