@@ -62,6 +62,7 @@ public class SearchableSnapshotIndexMetadataUpgrader {
     private void maybeUpgradeIndices(ClusterState state) {
         // 99% of the time, this will be a noop, so precheck that before adding a cluster state update.
         if (needsUpgrade(state)) {
+            logger.info("Upgrading partial searchable snapshots to use frozen shard limit group");
             clusterService.submitStateUpdateTask("searchable-snapshot-index-upgrader", new ClusterStateUpdateTask() {
                 @Override
                 public ClusterState execute(ClusterState currentState) throws Exception {
