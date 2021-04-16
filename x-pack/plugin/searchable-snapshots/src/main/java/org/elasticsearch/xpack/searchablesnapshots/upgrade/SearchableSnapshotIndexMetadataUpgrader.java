@@ -93,6 +93,7 @@ public class SearchableSnapshotIndexMetadataUpgrader {
         }
         Metadata.Builder builder = Metadata.builder(currentState.metadata());
         StreamSupport.stream(currentState.metadata().spliterator(), false)
+            .filter(imd -> imd.getCreationVersion().onOrAfter(Version.V_7_12_0) && imd.getCreationVersion().before(Version.V_8_0_0))
             .filter(
                 imd -> SearchableSnapshotsConstants.isPartialSearchableSnapshotIndex(imd.getSettings())
                     && wrongShardLimitGroup(imd.getSettings())
