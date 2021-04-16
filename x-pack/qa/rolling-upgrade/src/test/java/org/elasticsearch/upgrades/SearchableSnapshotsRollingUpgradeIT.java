@@ -19,6 +19,7 @@ import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
+import org.elasticsearch.indices.ShardLimitValidator;
 import org.elasticsearch.repositories.fs.FsRepository;
 import org.elasticsearch.rest.RestStatus;
 import org.hamcrest.Matcher;
@@ -45,6 +46,14 @@ public class SearchableSnapshotsRollingUpgradeIT extends AbstractUpgradeTestCase
     public void testMountPartialCopyAndRecoversCorrectly() throws Exception {
         final Storage storage = Storage.SHARED_CACHE;
         assumeVersion(Version.V_7_12_0, Storage.SHARED_CACHE);
+
+        if (CLUSTER_TYPE.equals(ClusterType.UPGRADED)) {
+            assertBusy(() -> {
+                Map<String, Object> settings = getIndexSettings("mounted_index_shared_cache");
+                assertThat(settings.get(ShardLimitValidator.INDEX_SETTING_SHARD_LIMIT_GROUP.getKey()),
+                    equalTo(ShardLimitValidator.FROZEN_GROUP));
+            });
+        }
 
         executeMountAndRecoversCorrectlyTestCase(storage, 5678L);
     }
