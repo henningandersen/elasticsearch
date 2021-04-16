@@ -51,7 +51,6 @@ public class SearchableSnapshotsRollingUpgradeIT extends AbstractUpgradeTestCase
         if (CLUSTER_TYPE.equals(ClusterType.UPGRADED)) {
             assertBusy(() -> {
                 Map<String, Object> settings = getIndexSettingsAsMap("mounted_index_shared_cache");
-                logger.info(settings.toString());
                 assertThat(settings,
                     hasEntry(ShardLimitValidator.INDEX_SETTING_SHARD_LIMIT_GROUP.getKey(), ShardLimitValidator.FROZEN_GROUP));
             });

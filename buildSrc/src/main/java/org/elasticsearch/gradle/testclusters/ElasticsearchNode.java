@@ -1221,9 +1221,6 @@ public class ElasticsearchNode implements TestClusterConfiguration {
 
         baseConfig.put("action.destructive_requires_name", "false");
 
-        if (System.getProperty("tests.es.logger.level") != null) {
-            baseConfig.put("logger.level", System.getProperty("tests.es.logger.level"));
-        }
         HashSet<String> overriden = new HashSet<>(baseConfig.keySet());
         overriden.retainAll(settings.keySet());
         overriden.removeAll(OVERRIDABLE_SETTINGS);
