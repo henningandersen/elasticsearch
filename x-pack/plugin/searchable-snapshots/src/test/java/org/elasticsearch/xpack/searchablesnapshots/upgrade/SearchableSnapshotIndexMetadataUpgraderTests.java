@@ -30,22 +30,38 @@ import static org.hamcrest.Matchers.sameInstance;
 public class SearchableSnapshotIndexMetadataUpgraderTests extends ESTestCase {
 
     public void testNoUpgradeNeeded() {
-        Metadata.Builder metadataBuilder = randomMetadata(normal(), full(), partial_7_13plus(), shardLimitGroupFrozen(partial_7_12()));
+        Metadata.Builder metadataBuilder = randomMetadata(
+            normal(),
+            full(),
+            partial_8plusNoShardLimit(),
+            shardLimitGroupFrozen(partial_7_13plus()),
+            shardLimitGroupFrozen(partialNeedsUpgrade())
+        );
         assertThat(needsUpgrade(metadataBuilder), is(false));
     }
 
     public void testNeedsUpgrade() {
-        Metadata.Builder metadataBuilder = addIndex(
-            partial_7_12(),
-            randomMetadata(normal(), full(), partial_7_13plus(), partial_7_12(), shardLimitGroupFrozen(partial_7_12()))
+        assertThat(
+            needsUpgrade(
+                addIndex(
+                    partialNeedsUpgrade(),
+                    randomMetadata(
+                        normal(),
+                        full(),
+                        partial_7_13plus(),
+                        partialNeedsUpgrade(),
+                        shardLimitGroupFrozen(partialNeedsUpgrade())
+                    )
+                )
+            ),
+            is(true)
         );
-        assertThat(needsUpgrade(metadataBuilder), is(true));
     }
 
     public void testUpgradeIndices() {
         Metadata.Builder metadataBuilder = addIndex(
-            partial_7_12(),
-            randomMetadata(normal(), full(), partial_7_13plus(), partial_7_12(), shardLimitGroupFrozen(partial_7_12()))
+            partialNeedsUpgrade(),
+            randomMetadata(normal(), full(), partial_7_13plus(), partialNeedsUpgrade(), shardLimitGroupFrozen(partialNeedsUpgrade()))
         );
 
         ClusterState originalState = clusterState(metadataBuilder);
@@ -74,10 +90,18 @@ public class SearchableSnapshotIndexMetadataUpgraderTests extends ESTestCase {
                 return true;
             }
         }));
+
+        assertThat(SearchableSnapshotIndexMetadataUpgrader.needsUpgrade(upgradedState), is(false));
     }
 
     public void testNoopUpgrade() {
-        Metadata.Builder metadataBuilder = randomMetadata(normal(), full(), partial_7_13plus(), shardLimitGroupFrozen(partial_7_12()));
+        Metadata.Builder metadataBuilder = randomMetadata(
+            normal(),
+            full(),
+            partial_7_13plus(),
+            shardLimitGroupFrozen(partialNeedsUpgrade()),
+            partial_8plusNoShardLimit()
+        );
         ClusterState originalState = clusterState(metadataBuilder);
         ClusterState upgradedState = SearchableSnapshotIndexMetadataUpgrader.upgradeIndices(originalState);
         assertThat(upgradedState, sameInstance(originalState));
@@ -87,14 +111,31 @@ public class SearchableSnapshotIndexMetadataUpgraderTests extends ESTestCase {
         return settings(VersionUtils.randomVersion(random())).build();
     }
 
-    private Settings partial_7_12() {
-        return searchableSnapshotSettings(VersionUtils.randomVersionBetween(random(), Version.V_7_12_0, Version.V_7_12_1), true);
+    /**
+     * Simulate an index mounted with no shard limit group. Notice that due to not applying the group during rolling upgrades, we can see
+     * other than 7.12 versions here, but not 8.0 (since a rolling upgrade to 8.0 requires an upgrade to 7.latest first).
+     */
+    private Settings partialNeedsUpgrade() {
+        return searchableSnapshotSettings(
+            VersionUtils.randomVersionBetween(random(), Version.V_7_12_0, VersionUtils.getPreviousVersion(Version.V_8_0_0)),
+            true
+        );
     }
 
+    /**
+     * Simulate a 7.13plus mounted index with shard limit.
+     */
     private Settings partial_7_13plus() {
         return shardLimitGroupFrozen(
             searchableSnapshotSettings(VersionUtils.randomVersionBetween(random(), Version.V_7_13_0, Version.CURRENT), true)
         );
+    }
+
+    /**
+     * This is an illegal state, but we simulate it to capture that we do the version check
+     */
+    private Settings partial_8plusNoShardLimit() {
+        return searchableSnapshotSettings(VersionUtils.randomVersionBetween(random(), Version.V_8_0_0, Version.CURRENT), true);
     }
 
     private Settings full() {
