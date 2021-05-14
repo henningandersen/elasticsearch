@@ -21,6 +21,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
+import org.elasticsearch.test.InternalTestCluster;
 
 import static org.elasticsearch.client.Requests.createIndexRequest;
 import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
@@ -102,4 +103,32 @@ public class SimpleDataNodesIT extends ESIntegTestCase {
         client().admin().cluster().prepareReroute().setRetryFailed(true).get();
     }
 
+    public void testAutoExpandReplicasDataLoss() throws Exception {
+        internalCluster().startMasterOnlyNode();
+        internalCluster().startDataOnlyNodes(2);
+
+        client().admin().indices().create(createIndexRequest("test")
+                .settings(Settings.builder().put(IndexMetadata.SETTING_AUTO_EXPAND_REPLICAS, "0-all")))
+            .actionGet();
+
+        index("test", "id", "{}");
+
+        ensureGreen("test");
+
+        internalCluster().restartRandomDataNode(new InternalTestCluster.RestartCallback() {
+            @Override
+            public Settings onNodeStopped(String nodeName) throws Exception {
+                ensureGreen("test");
+                // we only remove in-sync-allocation-ids when expanding it (or shard is failed) so need to start a node
+                internalCluster().startDataOnlyNode();
+                ensureGreen("test");
+                internalCluster().stopRandomDataNode();
+                ensureGreen("test");
+                internalCluster().stopRandomDataNode();
+                return super.onNodeStopped(nodeName);
+            }
+        });
+
+        ensureYellow("test");
+    }
 }
