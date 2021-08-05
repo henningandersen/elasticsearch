@@ -29,6 +29,10 @@ public class NodeReplaceOverrideWrapper extends AllocationDecider {
         this.original = original;
     }
 
+    public AllocationDecider getOriginal() {
+        return original;
+    }
+
     @Override
     public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
         return original.canRebalance(shardRouting, allocation);
