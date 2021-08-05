@@ -97,4 +97,9 @@ public class SearchableSnapshotEnableAllocationDecider extends AllocationDecider
             return allocation.decision(Decision.YES, NAME, "decider only applicable for indices backed by searchable snapshots");
         }
     }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
 }

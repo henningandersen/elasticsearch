@@ -73,4 +73,9 @@ public class MaxRetryAllocationDecider extends AllocationDecider {
         // if so, we don't want to force the primary allocation here
         return canAllocate(shardRouting, node, allocation);
     }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
 }

@@ -47,6 +47,11 @@ public class SearchableSnapshotAllocationDecider extends AllocationDecider {
         return allowAllocation(allocation.metadata().getIndexSafe(shardRouting.index()), allocation);
     }
 
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
     private Decision allowAllocation(IndexMetadata indexMetadata, RoutingAllocation allocation) {
         if (SearchableSnapshotsSettings.isSearchableSnapshotStore(indexMetadata.getSettings())) {
             if (hasValidLicenseSupplier.getAsBoolean()) {

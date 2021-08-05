@@ -76,6 +76,11 @@ public class ClusterModuleTests extends ModuleTestCase {
     static class FakeAllocationDecider extends AllocationDecider {
         protected FakeAllocationDecider() {
         }
+
+        @Override
+        public String getName() {
+            return "fake_allocation_decider";
+        }
     }
 
     static class FakeShardsAllocator implements ShardsAllocator {

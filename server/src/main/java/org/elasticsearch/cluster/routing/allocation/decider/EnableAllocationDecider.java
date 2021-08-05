@@ -8,8 +8,6 @@
 
 package org.elasticsearch.cluster.routing.allocation.decider;
 
-import java.util.Locale;
-
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.routing.RecoverySource;
 import org.elasticsearch.cluster.routing.RoutingNode;
@@ -19,6 +17,8 @@ import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
+
+import java.util.Locale;
 
 /**
  * This allocation decider allows shard allocations / rebalancing via the cluster wide settings
@@ -163,6 +163,11 @@ public class EnableAllocationDecider extends AllocationDecider {
         }
 
         return allocation.decision(Decision.YES, NAME, "rebalancing is not globally disabled");
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 
     @Override

@@ -85,6 +85,11 @@ public class ShardsLimitAllocationDecider extends AllocationDecider {
 
     }
 
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
     private Decision doDecide(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation,
                               BiPredicate<Integer, Integer> decider) {
         IndexMetadata indexMd = allocation.metadata().getIndexSafe(shardRouting.index());

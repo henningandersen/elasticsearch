@@ -109,6 +109,11 @@ public class TransportGetShutdownStatusActionTests extends ESTestCase {
                     // No behavior should change based on rebalance decisions
                     return Decision.NO;
                 }
+
+                @Override
+                public String getName() {
+                    return "test";
+                }
             }));
         snapshotsInfoService = () -> new SnapshotShardSizeInfo(
             new ImmutableOpenMap.Builder<InternalSnapshotsInfoService.SnapshotShard, Long>().build()

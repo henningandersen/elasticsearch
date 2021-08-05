@@ -239,6 +239,11 @@ public abstract class ESAllocationTestCase extends ESTestCase {
         public Decision canAllocate(ShardRouting shardRouting, RoutingAllocation allocation) {
             return decision;
         }
+
+        @Override
+        public String getName() {
+            return "test_allocate_decision";
+        }
     }
 
     /** A lock {@link AllocationService} allowing tests to override time */

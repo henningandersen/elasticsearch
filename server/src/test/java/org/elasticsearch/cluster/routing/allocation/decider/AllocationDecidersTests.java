@@ -76,6 +76,11 @@ public class AllocationDecidersTests extends ESTestCase {
             public Decision canRebalance(RoutingAllocation allocation) {
                 return Decision.YES;
             }
+
+            @Override
+            public String getName() {
+                return "test";
+            }
         }));
 
         ClusterState clusterState = ClusterState.builder(new ClusterName("test")).build();
@@ -151,6 +156,11 @@ public class AllocationDecidersTests extends ESTestCase {
                     public Decision canForceAllocatePrimary(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                         return decisionOne;
                     }
+
+                    @Override
+                    public String getName() {
+                        return "test";
+                    }
                 }, new AllocationDecider() {
 
                     @Override
@@ -193,7 +203,12 @@ public class AllocationDecidersTests extends ESTestCase {
                         return decision(allocation);
                     }
 
-                    private Decision decision(RoutingAllocation allocation) {
+                @Override
+                public String getName() {
+                    return "test";
+                }
+
+                private Decision decision(RoutingAllocation allocation) {
                         if (allocation.debugDecision() == false) {
                             throw new AssertionError("Should not be called");
                         }

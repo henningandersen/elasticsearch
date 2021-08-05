@@ -9,8 +9,6 @@
 package org.elasticsearch.cluster.routing.allocation.decider;
 
 import org.elasticsearch.cluster.metadata.IndexMetadata;
-import org.elasticsearch.cluster.metadata.Metadata;
-import org.elasticsearch.cluster.metadata.SingleNodeShutdownMetadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.ShardRouting;
@@ -23,22 +21,6 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
     private static final Decision NO_REPLACEMENTS = Decision.single(Decision.Type.YES, NAME,
         "no node replacements are currently ongoing, allocation is allowed");
 
-    public static boolean replacementOngoing(Metadata metadata) {
-        return metadata.nodeShutdowns().values().stream()
-            // TODO: change this to "REPLACE" type
-            .anyMatch(shutdown -> shutdown.getType().equals(SingleNodeShutdownMetadata.Type.REMOVE));
-    }
-
-    public static boolean isReplacementSource(Metadata metadata, String nodeId) {
-//        Optional.ofNullable(metadata.nodeShutdowns().get(nodeId))
-//            .map();
-        return false;
-    }
-
-    public static boolean isReplacementTarget(Metadata metadata, String nodeId) {
-        return false;
-    }
-
     @Override
     public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
         if (replacementOngoing(allocation.metadata()) == false) {
@@ -47,10 +29,10 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
             // The target node is a replacement target, that means we only allow allocating shards from the source node to the target
             if (isReplacementSource(allocation.metadata(), shardRouting.currentNodeId())) {
                 return Decision.single(Decision.Type.YES, NAME,
-                    "node [{}] is replacing node [{}], and may receive shards from it", node.nodeId(), "source");
+                    "node [%s] is replacing node [%s], and may receive shards from it", node.nodeId(), "source");
             } else {
                 return Decision.single(Decision.Type.NO, NAME,
-                    "node [{}] is replacing node [{}], so no data from other nodes may be allocated to it", node.nodeId(), "source");
+                    "node [%s] is replacing node [%s], so no data from other nodes may be allocated to it", node.nodeId(), "source");
             }
         } else {
             // The node in question is not a replacement target, so allow allocation.
@@ -74,9 +56,9 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
             return NO_REPLACEMENTS;
         } else if (isReplacementSource(allocation.metadata(), node.nodeId())) {
             return Decision.single(Decision.Type.NO, NAME,
-                "node [{}] is being replaced by node [{}], so no data may remain on it", node.nodeId(), "replacement");
+                "node [%s] is being replaced by node [%s], so no data may remain on it", node.nodeId(), "replacement");
         } else {
-            return Decision.single(Decision.Type.YES, NAME, "node [{}] is not being replaced", node.nodeId());
+            return Decision.single(Decision.Type.YES, NAME, "node [%s] is not being replaced", node.nodeId());
         }
     }
 
@@ -93,10 +75,11 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
             // The target node is a replacement target, that means we only allow allocating shards
             // from the source node to the target, since this index has no source node, we disallow it.
             return Decision.single(Decision.Type.NO, NAME,
-                "node [{}] is replacing node [{}], so no other data may be allocated to it", node.nodeId(), "source");
+                "node [%s] is replacing node [%s], so no other data may be allocated to it", node.nodeId(), "source");
         } else {
             // The node in question is not a replacement target, so allow allocation.
-            return Decision.ALWAYS;
+            return Decision.single(Decision.Type.YES, NAME,
+                "node is not a replacement target, so allocation is allowed");
         }
     }
 
@@ -106,12 +89,18 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
             return NO_REPLACEMENTS;
         } else if (isReplacementTarget(allocation.metadata(), node.getId())) {
             return Decision.single(Decision.Type.NO, NAME,
-                "node [{}] is replacing node [{}], shards cannot auto expand to be on it", node.getId(), "source");
+                "node [%s] is replacing node [%s], shards cannot auto expand to be on it", node.getId(), "source");
         } else if (isReplacementSource(allocation.metadata(), node.getId())) {
             return Decision.single(Decision.Type.NO, NAME,
-                "node [{}] is being replaced by node [{}], shards cannot auto expand to be on it", node.getId(), "replacement");
+                "node [%s] is being replaced by node [%s], shards cannot auto expand to be on it", node.getId(), "replacement");
         } else {
-            return Decision.ALWAYS;
+            return Decision.single(Decision.Type.YES, NAME,
+                "node is not part of a node replacement, so shards may be auto expanded onto it");
         }
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 }

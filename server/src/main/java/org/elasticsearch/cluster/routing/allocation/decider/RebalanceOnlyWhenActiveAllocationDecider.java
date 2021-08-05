@@ -25,4 +25,9 @@ public class RebalanceOnlyWhenActiveAllocationDecider extends AllocationDecider 
         }
         return allocation.decision(Decision.YES, NAME, "rebalancing is allowed as all replicas are active in the cluster");
     }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
 }

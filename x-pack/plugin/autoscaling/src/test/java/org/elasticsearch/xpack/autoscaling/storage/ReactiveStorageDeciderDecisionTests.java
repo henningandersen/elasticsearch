@@ -82,11 +82,21 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
         public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
             return Decision.NO;
         }
+
+        @Override
+        public String getName() {
+            return "test";
+        }
     };
     private static final AllocationDecider CAN_REMAIN_NO_DECIDER = new AllocationDecider() {
         @Override
         public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
             return Decision.NO;
+        }
+
+        @Override
+        public String getName() {
+            return "test";
         }
     };
     private static final BalancedShardsAllocator SHARDS_ALLOCATOR = new BalancedShardsAllocator(Settings.EMPTY);
@@ -111,6 +121,11 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
             }
             return super.canAllocate(shardRouting, node, allocation);
         }
+
+        @Override
+        public String getName() {
+            return "test";
+        }
     };
     // say NO with disk label for subject shards
     private final AllocationDecider mockCanRemainDiskDecider = new AllocationDecider() {
@@ -122,6 +137,11 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
                 "test"
             );
             return super.canRemain(shardRouting, node, allocation);
+        }
+
+        @Override
+        public String getName() {
+            return "test";
         }
     };
 

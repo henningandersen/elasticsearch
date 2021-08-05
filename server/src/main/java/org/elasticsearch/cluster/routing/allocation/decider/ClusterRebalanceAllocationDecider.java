@@ -8,8 +8,6 @@
 
 package org.elasticsearch.cluster.routing.allocation.decider;
 
-import java.util.Locale;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.cluster.routing.RoutingNodes;
@@ -19,6 +17,8 @@ import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
+
+import java.util.Locale;
 
 /**
  * This {@link AllocationDecider} controls re-balancing operations based on the
@@ -149,5 +149,10 @@ public class ClusterRebalanceAllocationDecider extends AllocationDecider {
                 // all shards active from above or type == Type.ALWAYS
                 return YES_ALL_SHARDS_ACTIVE;
         }
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 }

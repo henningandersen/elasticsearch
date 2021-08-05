@@ -181,6 +181,11 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
                 rebalanceAttempts++;
                 return super.canRebalance(allocation);
             }
+
+            @Override
+            public String getName() {
+                return "rebalance_short_circuit";
+            }
         }
     }
 
@@ -210,6 +215,11 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
             public Decision canAllocate(IndexMetadata indexMetadata, RoutingNode node, RoutingAllocation allocation) {
                 canAllocateAttempts++;
                 return super.canAllocate(indexMetadata, node, allocation);
+            }
+
+            @Override
+            public String getName() {
+                return "allocate_short_circuit_allocation_decider";
             }
         }
     }

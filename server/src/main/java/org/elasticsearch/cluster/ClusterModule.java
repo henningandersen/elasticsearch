@@ -42,6 +42,7 @@ import org.elasticsearch.cluster.routing.allocation.decider.NodeReplacementAlloc
 import org.elasticsearch.cluster.routing.allocation.decider.NodeShutdownAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.NodeVersionAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.RebalanceOnlyWhenActiveAllocationDecider;
+import org.elasticsearch.cluster.routing.allocation.decider.NodeReplaceOverrideWrapper;
 import org.elasticsearch.cluster.routing.allocation.decider.ReplicaAfterPrimaryActiveAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.ResizeAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.RestoreInProgressAllocationDecider;
@@ -190,8 +191,8 @@ public class ClusterModule extends AbstractModule {
     /** Return a new {@link AllocationDecider} instance with builtin deciders as well as those from plugins. */
     public static Collection<AllocationDecider> createAllocationDeciders(Settings settings, ClusterSettings clusterSettings,
                                                                          List<ClusterPlugin> clusterPlugins) {
-        // collect deciders by class so that we can detect duplicates
-        Map<Class<?>, AllocationDecider> deciders = new LinkedHashMap<>();
+        // collect deciders by name so that we can detect duplicates
+        Map<String, AllocationDecider> deciders = new LinkedHashMap<>();
         addAllocationDecider(deciders, new MaxRetryAllocationDecider());
         addAllocationDecider(deciders, new ResizeAllocationDecider());
         addAllocationDecider(deciders, new ReplicaAfterPrimaryActiveAllocationDecider());
@@ -204,24 +205,27 @@ public class ClusterModule extends AbstractModule {
         addAllocationDecider(deciders, new RestoreInProgressAllocationDecider());
         addAllocationDecider(deciders, new NodeShutdownAllocationDecider());
         addAllocationDecider(deciders, new NodeReplacementAllocationDecider());
-        addAllocationDecider(deciders, new FilterAllocationDecider(settings, clusterSettings));
+        addAllocationDecider(deciders, new NodeReplaceOverrideWrapper(new FilterAllocationDecider(settings, clusterSettings)));
         addAllocationDecider(deciders, new SameShardAllocationDecider(settings, clusterSettings));
-        addAllocationDecider(deciders, new DiskThresholdDecider(settings, clusterSettings));
+        addAllocationDecider(deciders, new NodeReplaceOverrideWrapper(new DiskThresholdDecider(settings, clusterSettings)));
         addAllocationDecider(deciders, new ThrottlingAllocationDecider(settings, clusterSettings));
-        addAllocationDecider(deciders, new ShardsLimitAllocationDecider(settings, clusterSettings));
-        addAllocationDecider(deciders, new AwarenessAllocationDecider(settings, clusterSettings));
+        addAllocationDecider(deciders, new NodeReplaceOverrideWrapper(new ShardsLimitAllocationDecider(settings, clusterSettings)));
+        addAllocationDecider(deciders, new NodeReplaceOverrideWrapper(new AwarenessAllocationDecider(settings, clusterSettings)));
 
         clusterPlugins.stream()
             .flatMap(p -> p.createAllocationDeciders(settings, clusterSettings).stream())
-            .forEach(d -> addAllocationDecider(deciders, d));
+            // Allow all plugin-based allocation deciders to be overridden by a
+            // node replacement by wrapping in a NodeReplaceOverrideWrapper
+            .forEach(d -> addAllocationDecider(deciders, new NodeReplaceOverrideWrapper(d)));
 
         return deciders.values();
     }
 
     /** Add the given allocation decider to the given deciders collection, erroring if the class name is already used. */
-    private static void addAllocationDecider(Map<Class<?>, AllocationDecider> deciders, AllocationDecider decider) {
-        if (deciders.put(decider.getClass(), decider) != null) {
-            throw new IllegalArgumentException("Cannot specify allocation decider [" + decider.getClass().getName() + "] twice");
+    private static void addAllocationDecider(Map<String, AllocationDecider> deciders, AllocationDecider decider) {
+        if (deciders.put(decider.getName(), decider) != null) {
+            throw new IllegalArgumentException("Cannot specify allocation decider [" + decider.getClass().getName() +
+                "] with name [" + decider.getName() + "] twice");
         }
     }
 

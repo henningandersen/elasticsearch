@@ -222,6 +222,11 @@ public class RandomAllocationDeciderTests extends ESAllocationTestCase {
             return getRandomDecision();
         }
 
+        @Override
+        public String getName() {
+            return "random_allocation_decider";
+        }
+
     }
 
 }

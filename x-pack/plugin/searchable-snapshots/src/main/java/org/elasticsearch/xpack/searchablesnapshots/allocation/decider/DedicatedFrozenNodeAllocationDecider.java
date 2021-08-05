@@ -64,6 +64,11 @@ public class DedicatedFrozenNodeAllocationDecider extends AllocationDecider {
         return canAllocateToNode(indexMetadata, node);
     }
 
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
     private Decision canAllocateToNode(IndexMetadata indexMetadata, DiscoveryNode discoveryNode) {
 
         boolean hasDataFrozenRole = false;

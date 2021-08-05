@@ -35,4 +35,9 @@ public class ReplicaAfterPrimaryActiveAllocationDecider extends AllocationDecide
         }
         return allocation.decision(Decision.YES, NAME, "primary shard for this replica is already active");
     }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
 }

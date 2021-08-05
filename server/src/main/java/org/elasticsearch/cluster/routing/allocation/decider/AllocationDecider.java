@@ -9,6 +9,8 @@
 package org.elasticsearch.cluster.routing.allocation.decider;
 
 import org.elasticsearch.cluster.metadata.IndexMetadata;
+import org.elasticsearch.cluster.metadata.Metadata;
+import org.elasticsearch.cluster.metadata.SingleNodeShutdownMetadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.ShardRouting;
@@ -103,5 +105,41 @@ public abstract class AllocationDecider {
             // On a THROTTLE/YES decision, we use the same decision instead of forcing allocation
             return decision;
         }
+    }
+
+    /**
+     * Return the human-readable string name for the allocation decider
+     */
+    public abstract String getName();
+
+    /**
+     * Returns true if there are any node replacements ongoing in the cluster
+     */
+    public static boolean replacementOngoing(Metadata metadata) {
+        return metadata.nodeShutdowns().values().stream()
+            // TODO: change this to "REPLACE" type
+            .anyMatch(shutdown -> shutdown.getType().equals(SingleNodeShutdownMetadata.Type.REMOVE));
+    }
+
+    /**
+     * Returns true if the given node id is the source (the replaced node) of an ongoing node replacement
+     */
+    public static boolean isReplacementSource(Metadata metadata, String nodeId) {
+        if (replacementOngoing(metadata) == false) {
+            return false;
+        }
+//        Optional.ofNullable(metadata.nodeShutdowns().get(nodeId))
+//            .map();
+        return false;
+    }
+
+    /**
+     * Returns true if the given node id is the target (the replacing node) of an ongoing node replacement
+     */
+    public static boolean isReplacementTarget(Metadata metadata, String nodeId) {
+        if (replacementOngoing(metadata) == false) {
+            return false;
+        }
+        return false;
     }
 }

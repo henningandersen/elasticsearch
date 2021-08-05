@@ -395,6 +395,11 @@ public class SearchableSnapshotsBlobStoreCacheIntegTests extends BaseFrozenSearc
                     }
                     return allocation.decision(Decision.YES, name, "primary shard for this replica is already active");
                 }
+
+                @Override
+                public String getName() {
+                    return "test";
+                }
             });
         }
     }

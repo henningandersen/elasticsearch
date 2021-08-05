@@ -390,6 +390,11 @@ public class DiskThresholdDecider extends AllocationDecider {
                 "there is enough disk on this node for the shard to remain, free: [%s]", new ByteSizeValue(freeBytes));
     }
 
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
     private DiskUsageWithRelocations getDiskUsage(RoutingNode node, RoutingAllocation allocation,
                                                   ImmutableOpenMap<String, DiskUsage> usages, boolean subtractLeavingShards) {
         DiskUsage usage = usages.get(node.nodeId());
