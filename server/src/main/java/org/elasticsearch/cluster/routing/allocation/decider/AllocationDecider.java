@@ -117,7 +117,7 @@ public abstract class AllocationDecider {
      */
     public static boolean replacementOngoing(Metadata metadata) {
         return metadata.nodeShutdowns().values().stream()
-            // TODO: change this to "REPLACE" type
+            // TODO: change this to "REPLACE" type once that is available
             .anyMatch(shutdown -> shutdown.getType().equals(SingleNodeShutdownMetadata.Type.REMOVE));
     }
 
@@ -128,8 +128,7 @@ public abstract class AllocationDecider {
         if (replacementOngoing(metadata) == false) {
             return false;
         }
-//        Optional.ofNullable(metadata.nodeShutdowns().get(nodeId))
-//            .map();
+        // TODO: actually implement this once we have a replace type
         return false;
     }
 
@@ -140,6 +139,7 @@ public abstract class AllocationDecider {
         if (replacementOngoing(metadata) == false) {
             return false;
         }
+        // TODO: actually implement this once we have a replace type
         return false;
     }
 }
