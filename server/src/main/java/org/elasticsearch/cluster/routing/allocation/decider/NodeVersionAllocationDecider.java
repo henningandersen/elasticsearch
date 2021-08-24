@@ -53,11 +53,6 @@ public class NodeVersionAllocationDecider extends AllocationDecider {
         }
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
     private Decision isVersionCompatibleRelocatePrimary(final RoutingNodes routingNodes, final String sourceNodeId,
                                                         final RoutingNode target, final RoutingAllocation allocation) {
         final RoutingNode source = routingNodes.node(sourceNodeId);

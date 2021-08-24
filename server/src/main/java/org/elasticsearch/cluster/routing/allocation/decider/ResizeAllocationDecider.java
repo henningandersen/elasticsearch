@@ -71,9 +71,4 @@ public class ResizeAllocationDecider extends AllocationDecider {
         assert shardRouting.primary() : "must not call canForceAllocatePrimary on a non-primary shard " + shardRouting;
         return canAllocate(shardRouting, node, allocation);
     }
-
-    @Override
-    public String getName() {
-        return NAME;
-    }
 }

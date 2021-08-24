@@ -76,11 +76,6 @@ public class HasFrozenCacheAllocationDecider extends AllocationDecider {
         return canAllocateToNode(indexMetadata, node);
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
     private Decision canAllocateToNode(IndexMetadata indexMetadata, DiscoveryNode discoveryNode) {
         final Settings indexSettings = indexMetadata.getSettings();
 

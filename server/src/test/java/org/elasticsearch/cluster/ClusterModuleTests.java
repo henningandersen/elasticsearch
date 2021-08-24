@@ -21,8 +21,6 @@ import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider
 import org.elasticsearch.cluster.routing.allocation.decider.EnableAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.FilterAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.MaxRetryAllocationDecider;
-import org.elasticsearch.cluster.routing.allocation.decider.NodeReplaceOverrideWrapper;
-import org.elasticsearch.cluster.routing.allocation.decider.NodeReplacementAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.NodeShutdownAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.NodeVersionAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.RebalanceOnlyWhenActiveAllocationDecider;
@@ -55,9 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.equalTo;
-
 public class ClusterModuleTests extends ModuleTestCase {
     private ClusterInfoService clusterInfoService = EmptyClusterInfoService.INSTANCE;
     private ClusterService clusterService;
@@ -79,11 +74,6 @@ public class ClusterModuleTests extends ModuleTestCase {
 
     static class FakeAllocationDecider extends AllocationDecider {
         protected FakeAllocationDecider() {
-        }
-
-        @Override
-        public String getName() {
-            return "fake_allocation_decider";
         }
     }
 
@@ -134,12 +124,11 @@ public class ClusterModuleTests extends ModuleTestCase {
                 Collections.<ClusterPlugin>singletonList(new ClusterPlugin() {
                     @Override
                     public Collection<AllocationDecider> createAllocationDeciders(Settings settings, ClusterSettings clusterSettings) {
-                        return Collections.singletonList(new DiskThresholdDecider(settings, clusterSettings));
+                        return Collections.singletonList(new EnableAllocationDecider(settings, clusterSettings));
                     }
                 }), clusterInfoService, null, threadContext, EmptySystemIndices.INSTANCE));
         assertEquals(e.getMessage(),
-            "Cannot specify allocation decider [" + NodeReplaceOverrideWrapper.class.getName() + "] with name [node_replace_wrapped[" +
-                DiskThresholdDecider.NAME + "]] twice");
+            "Cannot specify allocation decider [" + EnableAllocationDecider.class.getName() + "] twice");
     }
 
     public void testRegisterAllocationDecider() {
@@ -150,15 +139,7 @@ public class ClusterModuleTests extends ModuleTestCase {
                     return Collections.singletonList(new FakeAllocationDecider());
                 }
             }), clusterInfoService, null, threadContext, EmptySystemIndices.INSTANCE);
-        assertTrue(module.deciderList.stream().anyMatch(d -> {
-            if (d.getClass().equals(NodeReplaceOverrideWrapper.class)) {
-                // Plugin allocation deciders are automatically wrapped with a node replacement override wrapper
-                NodeReplaceOverrideWrapper d2 = (NodeReplaceOverrideWrapper) d;
-                return d2.getOriginal().getClass().equals(FakeAllocationDecider.class);
-            } else {
-                return false;
-            }
-        }));
+        assertTrue(module.deciderList.stream().anyMatch(d -> d.getClass().equals(FakeAllocationDecider.class)));
     }
 
     private ClusterModule newClusterModuleWithShardsAllocator(Settings settings, String name, Supplier<ShardsAllocator> supplier) {
@@ -202,33 +183,31 @@ public class ClusterModuleTests extends ModuleTestCase {
     // running them. If the order of the deciders is changed for a valid reason, the order should be
     // changed in the test too.
     public void testAllocationDeciderOrder() {
-        List<String> expectedDeciders = Arrays.asList(
-            MaxRetryAllocationDecider.NAME,
-            ResizeAllocationDecider.NAME,
-            ReplicaAfterPrimaryActiveAllocationDecider.NAME,
-            RebalanceOnlyWhenActiveAllocationDecider.NAME,
-            ClusterRebalanceAllocationDecider.NAME,
-            ConcurrentRebalanceAllocationDecider.NAME,
-            EnableAllocationDecider.NAME,
-            NodeVersionAllocationDecider.NAME,
-            SnapshotInProgressAllocationDecider.NAME,
-            RestoreInProgressAllocationDecider.NAME,
-            NodeShutdownAllocationDecider.NAME,
-            NodeReplacementAllocationDecider.NAME,
-            FilterAllocationDecider.NAME,
-            SameShardAllocationDecider.NAME,
-            DiskThresholdDecider.NAME,
-            ThrottlingAllocationDecider.NAME,
-            ShardsLimitAllocationDecider.NAME,
-            AwarenessAllocationDecider.NAME);
+        List<Class<? extends AllocationDecider>> expectedDeciders = Arrays.asList(
+            MaxRetryAllocationDecider.class,
+            ResizeAllocationDecider.class,
+            ReplicaAfterPrimaryActiveAllocationDecider.class,
+            RebalanceOnlyWhenActiveAllocationDecider.class,
+            ClusterRebalanceAllocationDecider.class,
+            ConcurrentRebalanceAllocationDecider.class,
+            EnableAllocationDecider.class,
+            NodeVersionAllocationDecider.class,
+            SnapshotInProgressAllocationDecider.class,
+            RestoreInProgressAllocationDecider.class,
+            NodeShutdownAllocationDecider.class,
+            FilterAllocationDecider.class,
+            SameShardAllocationDecider.class,
+            DiskThresholdDecider.class,
+            ThrottlingAllocationDecider.class,
+            ShardsLimitAllocationDecider.class,
+            AwarenessAllocationDecider.class);
         Collection<AllocationDecider> deciders = ClusterModule.createAllocationDeciders(Settings.EMPTY,
             new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS), Collections.emptyList());
         Iterator<AllocationDecider> iter = deciders.iterator();
         int idx = 0;
         while (iter.hasNext()) {
             AllocationDecider decider = iter.next();
-            String expectedName = expectedDeciders.get(idx++);
-            assertThat(decider.getName(), anyOf(equalTo(expectedName), equalTo("node_replace_wrapped[" + expectedName + "]")));
+            assertSame(decider.getClass(), expectedDeciders.get(idx++));
         }
     }
 

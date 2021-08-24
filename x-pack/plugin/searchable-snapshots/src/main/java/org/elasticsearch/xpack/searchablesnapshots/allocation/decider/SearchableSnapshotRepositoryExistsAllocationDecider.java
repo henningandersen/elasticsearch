@@ -55,11 +55,6 @@ public class SearchableSnapshotRepositoryExistsAllocationDecider extends Allocat
         return allowAllocation(indexMetadata, allocation);
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
     private static Decision allowAllocation(IndexMetadata indexMetadata, RoutingAllocation allocation) {
         final Settings settings = indexMetadata.getSettings();
         if (SearchableSnapshotsSettings.isSearchableSnapshotStore(settings)) {

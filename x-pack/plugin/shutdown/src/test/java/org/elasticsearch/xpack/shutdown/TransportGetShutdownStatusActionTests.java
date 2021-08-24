@@ -79,9 +79,8 @@ public class TransportGetShutdownStatusActionTests extends ESTestCase {
         canRemain.set((r, n, a) -> { throw new UnsupportedOperationException("canRemain not initiated in this test"); });
 
         clusterInfoService = EmptyClusterInfoService.INSTANCE;
-        allocationDeciders = new AllocationDeciders(List.of(new NodeShutdownAllocationDecider(),
-            new NodeReplacementAllocationDecider(),
-            new AllocationDecider() {
+        allocationDeciders = new AllocationDeciders(
+            List.of(new NodeShutdownAllocationDecider(), new NodeReplacementAllocationDecider(), new AllocationDecider() {
                 @Override
                 public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                     return canAllocate.get().test(shardRouting, node, allocation);
@@ -109,12 +108,8 @@ public class TransportGetShutdownStatusActionTests extends ESTestCase {
                     // No behavior should change based on rebalance decisions
                     return Decision.NO;
                 }
-
-                @Override
-                public String getName() {
-                    return "test";
-                }
-            }));
+            })
+        );
         snapshotsInfoService = () -> new SnapshotShardSizeInfo(
             new ImmutableOpenMap.Builder<InternalSnapshotsInfoService.SnapshotShard, Long>().build()
         );

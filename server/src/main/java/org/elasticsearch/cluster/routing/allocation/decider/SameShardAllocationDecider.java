@@ -122,11 +122,6 @@ public class SameShardAllocationDecider extends AllocationDecider {
         return decideSameNode(shardRouting, node, allocation, assignedShards);
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
     private static final Decision YES_NO_COPY = Decision.single(Decision.Type.YES, NAME, "this node does not hold a copy of this shard");
 
     private Decision decideSameNode(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation,

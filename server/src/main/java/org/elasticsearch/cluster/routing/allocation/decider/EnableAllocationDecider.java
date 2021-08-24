@@ -166,11 +166,6 @@ public class EnableAllocationDecider extends AllocationDecider {
     }
 
     @Override
-    public String getName() {
-        return NAME;
-    }
-
-    @Override
     public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
         if (allocation.ignoreDisable()) {
             return allocation.decision(Decision.YES, NAME, "allocation is explicitly ignoring any disabling of rebalancing");

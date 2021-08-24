@@ -54,9 +54,4 @@ public final class CcrPrimaryFollowerAllocationDecider extends AllocationDecider
         return allocation.decision(Decision.YES, NAME,
             "shard is a primary follower and node has the " + DiscoveryNodeRole.REMOTE_CLUSTER_CLIENT_ROLE.roleName() + " role");
     }
-
-    @Override
-    public String getName() {
-        return NAME;
-    }
 }

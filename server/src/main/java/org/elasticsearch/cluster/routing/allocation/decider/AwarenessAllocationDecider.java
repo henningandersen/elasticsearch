@@ -125,11 +125,6 @@ public class AwarenessAllocationDecider extends AllocationDecider {
         return underCapacity(shardRouting, node, allocation, false);
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
     private static final Decision YES_NOT_ENABLED = Decision.single(Decision.Type.YES, NAME,
             "allocation awareness is not enabled, set cluster setting ["
                     + CLUSTER_ROUTING_ALLOCATION_AWARENESS_ATTRIBUTE_SETTING.getKey() + "] to enable it");

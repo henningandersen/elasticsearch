@@ -127,11 +127,6 @@ public class DataTierAllocationDecider extends AllocationDecider {
         return shouldFilter(indexMetadata, node.getRoles(), allocation);
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
     private Decision shouldFilter(ShardRouting shardRouting, DiscoveryNode node, RoutingAllocation allocation) {
         return shouldFilter(allocation.metadata().getIndexSafe(shardRouting.index()), node.getRoles(), allocation);
     }

@@ -336,11 +336,6 @@ public class ReplicaShardAllocatorTests extends ESAllocationTestCase {
                         }
                         return Decision.YES;
                     }
-
-                    @Override
-                    public String getName() {
-                        return "test";
-                    }
                 })));
         testAllocator.addData(node1, "MATCH", new StoreFileMetadata("file1", 10, "MATCH_CHECKSUM", MIN_SUPPORTED_LUCENE_VERSION))
                 .addData(node2, "MATCH", new StoreFileMetadata("file1", 10, "MATCH_CHECKSUM", MIN_SUPPORTED_LUCENE_VERSION));

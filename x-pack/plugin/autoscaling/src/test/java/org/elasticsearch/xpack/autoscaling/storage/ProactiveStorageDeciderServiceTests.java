@@ -89,11 +89,6 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                 return allocation.decision(Decision.NO, DiskThresholdDecider.NAME, "test");
             }
-
-            @Override
-            public String getName() {
-                return "test";
-            }
         });
         AllocationDeciders allocationDeciders = new AllocationDeciders(allocationDecidersList);
         ProactiveStorageDeciderService service = new ProactiveStorageDeciderService(Settings.EMPTY, clusterSettings, allocationDeciders);

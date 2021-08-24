@@ -44,11 +44,6 @@ public class SnapshotInProgressAllocationDecider extends AllocationDecider {
         return canMove(shardRouting, allocation);
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
     private Decision canMove(ShardRouting shardRouting, RoutingAllocation allocation) {
         if (shardRouting.primary()) {
             // Only primary shards are snapshotted

@@ -108,9 +108,18 @@ public abstract class AllocationDecider {
     }
 
     /**
-     * Return the human-readable string name for the allocation decider
+     * Returns a {@link Decision} whether the given shard can be forced to the
+     * given node in the event that the shard's source node is being vacated.
+     * This allows nodes using a vacate-type node shutdown (replace/vacate) to
+     * override certain deciders in the interest of moving the shard away from
+     * a node that *must* be removed.
+     *
+     * It defaults to returning "NO" and must be overridden by deciders that
+     * opt-in to having their other NO decisions overridden while vacating.
      */
-    public abstract String getName();
+    public Decision canForceDuringVacate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+        return Decision.NO;
+    }
 
     /**
      * Returns true if there are any node replacements ongoing in the cluster
@@ -122,10 +131,27 @@ public abstract class AllocationDecider {
     }
 
     /**
+     * Returns true if there is a replacement currently ongoing from the source to the target node id
+     */
+    public static boolean replacementFromSourceToTarget(Metadata metadata, String sourceNodeId, String targetNodeId) {
+        if (replacementOngoing(metadata) == false) {
+            return false;
+        }
+        if (sourceNodeId == null || targetNodeId == null) {
+            return false;
+        }
+        // TODO: actually implement this once we have a replace type
+        return false;
+    }
+
+    /**
      * Returns true if the given node id is the source (the replaced node) of an ongoing node replacement
      */
     public static boolean isReplacementSource(Metadata metadata, String nodeId) {
         if (replacementOngoing(metadata) == false) {
+            return false;
+        }
+        if (nodeId == null) {
             return false;
         }
         // TODO: actually implement this once we have a replace type
@@ -137,6 +163,9 @@ public abstract class AllocationDecider {
      */
     public static boolean isReplacementTarget(Metadata metadata, String nodeId) {
         if (replacementOngoing(metadata) == false) {
+            return false;
+        }
+        if (nodeId == null) {
             return false;
         }
         // TODO: actually implement this once we have a replace type

@@ -9,6 +9,7 @@
 package org.elasticsearch.cluster.routing.allocation.decider;
 
 import org.elasticsearch.cluster.metadata.IndexMetadata;
+import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.ShardRouting;
@@ -23,30 +24,22 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
 
     @Override
     public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-        if (replacementOngoing(allocation.metadata()) == false) {
+        final Metadata metadata = allocation.metadata();
+        if (replacementOngoing(metadata) == false) {
             return NO_REPLACEMENTS;
-        } else if (isReplacementTarget(allocation.metadata(), node.nodeId())) {
-            // The target node is a replacement target, that means we only allow allocating shards from the source node to the target
-            if (isReplacementSource(allocation.metadata(), shardRouting.currentNodeId())) {
-                return Decision.single(Decision.Type.YES, NAME,
-                    "node [%s] is replacing node [%s], and may receive shards from it", node.nodeId(), "source");
-            } else {
-                return Decision.single(Decision.Type.NO, NAME,
-                    "node [%s] is replacing node [%s], so no data from other nodes may be allocated to it", node.nodeId(), "source");
-            }
+        } else if (replacementFromSourceToTarget(metadata, shardRouting.currentNodeId(), node.nodeId())) {
+            return Decision.single(Decision.Type.YES, NAME,
+                "node [%s] is replacing node [%s], and may receive shards from it", shardRouting.currentNodeId(), node.nodeId());
+        } else if (isReplacementSource(metadata, node.nodeId())) {
+            return Decision.single(Decision.Type.NO, NAME,
+                "node [%s] is being removed, so no data from other nodes may be allocated to it", node.nodeId());
+        } else if (isReplacementTarget(metadata, node.nodeId())) {
+            return Decision.single(Decision.Type.NO, NAME,
+                "node [%s] is replacing a vacating node, so no data from other nodes " +
+                    "may be allocated to it until the replacement is complete", node.nodeId());
         } else {
-            // The node in question is not a replacement target, so allow allocation.
-
-            // You might be wondering: "why do we allow allocating to the node that is being
-            // replaced? Isn't it going to just move right off of the node anyway?"
-            //
-            // The answer is that if we were to forbid allocation to the source of a REPLACE shutdown,
-            // then we could run into a situation where a user only has two nodes in the cluster—
-            // nodeA being replaced by nodeB. Since we don't allow allocation to nodeB unless it's
-            // relocating from nodeA, we would not be able to create a brand-new index because
-            // it would be allocatable to neither nodeA nor nodeB. So we allow allocating to nodeA
-            // even though we'll turn around and have to move it elsewhere soon.
-            return Decision.ALWAYS;
+            return Decision.single(Decision.Type.YES, NAME,
+                "neither the source nor target node are part of an ongoing node replacement");
         }
     }
 
@@ -72,10 +65,9 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
         if (replacementOngoing(allocation.metadata()) == false) {
             return NO_REPLACEMENTS;
         } else if (isReplacementTarget(allocation.metadata(), node.nodeId())) {
-            // The target node is a replacement target, that means we only allow allocating shards
-            // from the source node to the target, since this index has no source node, we disallow it.
             return Decision.single(Decision.Type.NO, NAME,
-                "node [%s] is replacing node [%s], so no other data may be allocated to it", node.nodeId(), "source");
+                "node [%s] is replacing a vacating node, so no data from other nodes " +
+                    "may be allocated to it until the replacement is complete", node.nodeId());
         } else {
             // The node in question is not a replacement target, so allow allocation.
             return Decision.single(Decision.Type.YES, NAME,
@@ -89,18 +81,14 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
             return NO_REPLACEMENTS;
         } else if (isReplacementTarget(allocation.metadata(), node.getId())) {
             return Decision.single(Decision.Type.NO, NAME,
-                "node [%s] is replacing node [%s], shards cannot auto expand to be on it", node.getId(), "source");
+                "node [%s] is a node replacement target, shards cannot auto expand to be on it until the replacement is complete",
+                node.getId(), "source");
         } else if (isReplacementSource(allocation.metadata(), node.getId())) {
             return Decision.single(Decision.Type.NO, NAME,
-                "node [%s] is being replaced by node [%s], shards cannot auto expand to be on it", node.getId(), "replacement");
+                "node [%s] is being replaced, shards cannot auto expand to be on it", node.getId());
         } else {
             return Decision.single(Decision.Type.YES, NAME,
                 "node is not part of a node replacement, so shards may be auto expanded onto it");
         }
-    }
-
-    @Override
-    public String getName() {
-        return NAME;
     }
 }

@@ -80,11 +80,6 @@ public class BalancedSingleShardTests extends ESAllocationTestCase {
             public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
                 return allocation.decision(canRebalanceDecision, "TEST", "foobar");
             }
-
-            @Override
-            public String getName() {
-                return "test";
-            }
         };
         BalancedShardsAllocator allocator = new BalancedShardsAllocator(Settings.EMPTY);
         ClusterState clusterState = ClusterStateCreationUtils.state("idx", randomBoolean(), ShardRoutingState.STARTED);
@@ -112,11 +107,6 @@ public class BalancedSingleShardTests extends ESAllocationTestCase {
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                 return Decision.YES;
             }
-
-            @Override
-            public String getName() {
-                return "test";
-            }
         };
         Tuple<ClusterState, MoveDecision> rebalance = setupStateAndRebalance(canAllocateDecider, Settings.EMPTY, true);
         ClusterState clusterState = rebalance.v1();
@@ -131,11 +121,6 @@ public class BalancedSingleShardTests extends ESAllocationTestCase {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                 return Decision.NO;
-            }
-
-            @Override
-            public String getName() {
-                return "test";
             }
         };
         Tuple<ClusterState, MoveDecision> rebalance = setupStateAndRebalance(canAllocateDecider, Settings.EMPTY, false);
@@ -159,11 +144,6 @@ public class BalancedSingleShardTests extends ESAllocationTestCase {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                 return Decision.YES;
-            }
-
-            @Override
-            public String getName() {
-                return "test";
             }
         };
         // ridiculously high threshold setting so we won't rebalance
@@ -217,21 +197,11 @@ public class BalancedSingleShardTests extends ESAllocationTestCase {
                 }
                 return Decision.YES;
             }
-
-            @Override
-            public String getName() {
-                return "test";
-            }
         };
         AllocationDecider rebalanceDecider = new AllocationDecider() {
             @Override
             public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
                 return Decision.YES;
-            }
-
-            @Override
-            public String getName() {
-                return "test";
             }
         };
         List<AllocationDecider> allocationDeciders = Arrays.asList(rebalanceDecider, allocationDecider);
@@ -335,21 +305,11 @@ public class BalancedSingleShardTests extends ESAllocationTestCase {
                 }
                 return Decision.YES;
             }
-
-            @Override
-            public String getName() {
-                return "test";
-            }
         };
         AllocationDecider rebalanceDecider = new AllocationDecider() {
             @Override
             public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
                 return Decision.YES;
-            }
-
-            @Override
-            public String getName() {
-                return "test";
             }
         };
         BalancedShardsAllocator allocator = new BalancedShardsAllocator(settings);
@@ -374,11 +334,6 @@ public class BalancedSingleShardTests extends ESAllocationTestCase {
             @Override
             public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
                 return Decision.YES;
-            }
-
-            @Override
-            public String getName() {
-                return "test";
             }
         };
         List<AllocationDecider> allocationDeciders = Arrays.asList(rebalanceDecider, allocationDecider);

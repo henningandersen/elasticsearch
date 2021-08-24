@@ -497,11 +497,6 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                 return Decision.NO;
             }
-
-            @Override
-            public String getName() {
-                return "test";
-            }
         };
 
         assertTrue(canRemainWithNoNodes(clusterState, shardRouting));
@@ -614,32 +609,17 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                 return Decision.single(Decision.Type.NO, FilterAllocationDecider.NAME, "test");
             }
-
-            @Override
-            public String getName() {
-                return "test";
-            }
         };
         AllocationDecider noSameShard = new AllocationDecider() {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                 return Decision.single(Decision.Type.NO, SameShardAllocationDecider.NAME, "test");
             }
-
-            @Override
-            public String getName() {
-                return "test";
-            }
         };
         AllocationDecider no = new AllocationDecider() {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
                 return Decision.single(Decision.Type.NO, AwarenessAllocationDecider.NAME, "test");
-            }
-
-            @Override
-            public String getName() {
-                return "test";
             }
         };
         verifyNeedsWarmTier(clusterState, shardRouting, false);

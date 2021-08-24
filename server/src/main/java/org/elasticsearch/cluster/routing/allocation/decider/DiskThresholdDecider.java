@@ -318,6 +318,18 @@ public class DiskThresholdDecider extends AllocationDecider {
                 new ByteSizeValue(freeBytesAfterShard));
     }
 
+    @Override
+    public Decision canForceDuringVacate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+        if (replacementFromSourceToTarget(allocation.metadata(), shardRouting.currentNodeId(), node.nodeId())) {
+            // Allow overriding this decider during node replacement
+            // TODO: double check for 100% disk usage with estimated sizes to avoid hitting disk limits
+            return Decision.single(Decision.Type.YES, NAME, "overriding disk watermark limits during node replacement of [%s] with [%s]",
+                shardRouting.currentNodeId(), node.nodeId());
+        } else {
+            return Decision.NO;
+        }
+    }
+
     private static final Decision YES_NOT_MOST_UTILIZED_DISK = Decision.single(Decision.Type.YES, NAME,
             "this shard is not allocated on the most utilized disk and can remain");
 
@@ -388,11 +400,6 @@ public class DiskThresholdDecider extends AllocationDecider {
 
         return allocation.decision(Decision.YES, NAME,
                 "there is enough disk on this node for the shard to remain, free: [%s]", new ByteSizeValue(freeBytes));
-    }
-
-    @Override
-    public String getName() {
-        return NAME;
     }
 
     private DiskUsageWithRelocations getDiskUsage(RoutingNode node, RoutingAllocation allocation,

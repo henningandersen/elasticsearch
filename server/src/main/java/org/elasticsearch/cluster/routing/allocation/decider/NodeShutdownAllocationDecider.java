@@ -114,11 +114,6 @@ public class NodeShutdownAllocationDecider extends AllocationDecider {
         }
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
     @Nullable
     private static SingleNodeShutdownMetadata getNodeShutdownMetadata(Metadata metadata, String nodeId) {
         NodesShutdownMetadata nodesShutdownMetadata = metadata.custom(NodesShutdownMetadata.TYPE);

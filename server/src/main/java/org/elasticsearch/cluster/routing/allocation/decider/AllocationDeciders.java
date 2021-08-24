@@ -212,11 +212,6 @@ public class AllocationDeciders extends AllocationDecider {
         return ret;
     }
 
-    @Override
-    public String getName() {
-        return "combined_allocation_deciders";
-    }
-
     private void addDecision(Decision.Multi ret, Decision decision, RoutingAllocation allocation) {
         // We never add ALWAYS decisions and only add YES decisions when requested by debug mode (since Multi default is YES).
         if (decision != Decision.ALWAYS

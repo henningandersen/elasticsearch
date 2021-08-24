@@ -80,14 +80,20 @@ public class ShardsLimitAllocationDecider extends AllocationDecider {
     }
 
     @Override
-    public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-        return doDecide(shardRouting, node, allocation, (count, limit) -> count > limit);
-
+    public Decision canForceDuringVacate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+        if (replacementFromSourceToTarget(allocation.metadata(), shardRouting.currentNodeId(), node.nodeId())) {
+            // Allow overriding this decider during node replacement
+            return Decision.single(Decision.Type.YES, NAME, "overriding shard count limit during node replacement of [%s] with [%s]",
+                shardRouting.currentNodeId(), node.nodeId());
+        } else {
+            return Decision.NO;
+        }
     }
 
     @Override
-    public String getName() {
-        return NAME;
+    public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+        return doDecide(shardRouting, node, allocation, (count, limit) -> count > limit);
+
     }
 
     private Decision doDecide(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation,

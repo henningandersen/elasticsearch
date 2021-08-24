@@ -150,9 +150,4 @@ public class ClusterRebalanceAllocationDecider extends AllocationDecider {
                 return YES_ALL_SHARDS_ACTIVE;
         }
     }
-
-    @Override
-    public String getName() {
-        return NAME;
-    }
 }
