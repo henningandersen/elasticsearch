@@ -131,8 +131,7 @@ public abstract class AllocationDecider {
      */
     public static boolean replacementOngoing(Metadata metadata) {
         return metadata.nodeShutdowns().values().stream()
-            // TODO: change this to "REPLACE" type once that is available
-            .anyMatch(shutdown -> shutdown.getType().equals(SingleNodeShutdownMetadata.Type.REMOVE));
+            .anyMatch(shutdown -> shutdown.getType().equals(SingleNodeShutdownMetadata.Type.REPLACE));
     }
 
     /**
@@ -143,34 +142,6 @@ public abstract class AllocationDecider {
             return false;
         }
         if (sourceNodeId == null || targetNodeId == null) {
-            return false;
-        }
-        // TODO: actually implement this once we have a replace type
-        return false;
-    }
-
-    /**
-     * Returns true if the given node id is the source (the replaced node) of an ongoing node replacement
-     */
-    public static boolean isReplacementSource(Metadata metadata, String nodeId) {
-        if (replacementOngoing(metadata) == false) {
-            return false;
-        }
-        if (nodeId == null) {
-            return false;
-        }
-        // TODO: actually implement this once we have a replace type
-        return false;
-    }
-
-    /**
-     * Returns true if the given node id is the target (the replacing node) of an ongoing node replacement
-     */
-    public static boolean isReplacementTarget(Metadata metadata, String nodeId) {
-        if (replacementOngoing(metadata) == false) {
-            return false;
-        }
-        if (nodeId == null) {
             return false;
         }
         // TODO: actually implement this once we have a replace type

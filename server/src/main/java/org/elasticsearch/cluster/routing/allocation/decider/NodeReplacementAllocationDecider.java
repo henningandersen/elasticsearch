@@ -91,4 +91,26 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
                 "node is not part of a node replacement, so shards may be auto expanded onto it");
         }
     }
+
+    /**
+     * Returns true if the given node id is the source (the replaced node) of an ongoing node replacement
+     */
+    private static boolean isReplacementSource(Metadata metadata, String nodeId) {
+        if (nodeId == null || replacementOngoing(metadata) == false) {
+            return false;
+        }
+        // TODO: actually implement this once we have a replace type
+        return false;
+    }
+
+    /**
+     * Returns true if the given node id is the target (the replacing node) of an ongoing node replacement
+     */
+    private static boolean isReplacementTarget(Metadata metadata, String nodeId) {
+        if (nodeId == null || replacementOngoing(metadata) == false) {
+            return false;
+        }
+        // TODO: actually implement this once we have a replace type
+        return false;
+    }
 }
