@@ -103,17 +103,6 @@ public class FilterAllocationDecider extends AllocationDecider {
     }
 
     @Override
-    public Decision canForceDuringVacate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-        if (replacementFromSourceToTarget(allocation.metadata(), shardRouting.currentNodeId(), node.nodeId())) {
-            // Allow overriding this decider during node replacement
-            return Decision.single(Decision.Type.YES, NAME, "overriding allocation filters during node replacement of [%s] with [%s]",
-                shardRouting.currentNodeId(), node.nodeId());
-        } else {
-            return Decision.NO;
-        }
-    }
-
-    @Override
     public Decision canAllocate(IndexMetadata indexMetadata, RoutingNode node, RoutingAllocation allocation) {
         return shouldFilter(indexMetadata, node.node(), allocation);
     }

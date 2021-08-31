@@ -114,11 +114,16 @@ public abstract class AllocationDecider {
      * override certain deciders in the interest of moving the shard away from
      * a node that *must* be removed.
      *
-     * It defaults to returning "NO" and must be overridden by deciders that
-     * opt-in to having their other NO decisions overridden while vacating.
+     * It defaults to returning "YES" and must be overridden by deciders that
+     * opt-out to having their other NO decisions *not* overridden while vacating.
+     *
+     * The caller is responsible for first checking:
+     * - that a replacement/vacate is ongoing
+     * - the shard routing's current node is the source of the replacement
+     * - the node destination is the target of the replacement
      */
     public Decision canForceDuringVacate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-        return Decision.NO;
+        return Decision.YES;
     }
 
     /**

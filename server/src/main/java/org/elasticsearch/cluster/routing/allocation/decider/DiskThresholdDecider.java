@@ -320,14 +320,8 @@ public class DiskThresholdDecider extends AllocationDecider {
 
     @Override
     public Decision canForceDuringVacate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-        if (replacementFromSourceToTarget(allocation.metadata(), shardRouting.currentNodeId(), node.nodeId())) {
-            // Allow overriding this decider during node replacement
-            // TODO: double check for 100% disk usage with estimated sizes to avoid hitting disk limits
-            return Decision.single(Decision.Type.YES, NAME, "overriding disk watermark limits during node replacement of [%s] with [%s]",
-                shardRouting.currentNodeId(), node.nodeId());
-        } else {
-            return Decision.NO;
-        }
+        // TODO: check whether we would reach 100% disk as a safety effort
+        return super.canForceDuringVacate(shardRouting, node, allocation);
     }
 
     private static final Decision YES_NOT_MOST_UTILIZED_DISK = Decision.single(Decision.Type.YES, NAME,
