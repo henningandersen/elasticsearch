@@ -92,6 +92,18 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
         }
     }
 
+    @Override
+    public Decision canForceDuringVacate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+        if (replacementFromSourceToTarget(allocation.metadata(), shardRouting.currentNodeId(), node.nodeId())) {
+            return Decision.single(Decision.Type.YES, NAME,
+                "node [%s] is being replaced by node [%s], and can be force vacated to the target",
+                shardRouting.currentNodeId(), node.nodeId());
+        } else {
+            return Decision.single(Decision.Type.NO, NAME,
+                "shard is not on the source of a node replacement relocated to the replacement target");
+        }
+    }
+
     /**
      * Returns true if the given node id is the source (the replaced node) of an ongoing node replacement
      */
