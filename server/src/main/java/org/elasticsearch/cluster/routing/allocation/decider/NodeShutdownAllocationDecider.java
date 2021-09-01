@@ -31,7 +31,7 @@ import org.elasticsearch.core.Nullable;
 public class NodeShutdownAllocationDecider extends AllocationDecider {
     private static final Logger logger = LogManager.getLogger(NodeShutdownAllocationDecider.class);
 
-    public static final String NAME = "node_shutdown";
+    private static final String NAME = "node_shutdown";
 
     /**
      * Determines if a shard can be allocated to a particular node, based on whether that node is shutting down or not.

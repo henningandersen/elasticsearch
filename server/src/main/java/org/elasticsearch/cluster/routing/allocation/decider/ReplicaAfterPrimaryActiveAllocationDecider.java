@@ -17,7 +17,7 @@ import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
  */
 public class ReplicaAfterPrimaryActiveAllocationDecider extends AllocationDecider {
 
-    public static final String NAME = "replica_after_primary_active";
+    private static final String NAME = "replica_after_primary_active";
 
     @Override
     public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
