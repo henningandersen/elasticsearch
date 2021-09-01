@@ -30,6 +30,10 @@ public class NodeReplacementAllocationDecider extends AllocationDecider {
         } else if (replacementFromSourceToTarget(metadata, shardRouting.currentNodeId(), node.nodeId())) {
             return Decision.single(Decision.Type.YES, NAME,
                 "node [%s] is replacing node [%s], and may receive shards from it", shardRouting.currentNodeId(), node.nodeId());
+        } else if (isReplacementSource(metadata, shardRouting.currentNodeId())) {
+            return Decision.single(Decision.Type.NO, NAME,
+                "node [%s] is being replaced, and its shards may only be allocated to the replacement target",
+                shardRouting.currentNodeId());
         } else if (isReplacementSource(metadata, node.nodeId())) {
             return Decision.single(Decision.Type.NO, NAME,
                 "node [%s] is being removed, so no data from other nodes may be allocated to it", node.nodeId());
