@@ -230,8 +230,7 @@ public class ReactiveStorageIT extends AutoscalingStorageIntegTestCase {
         ReactiveStorageDeciderService service = new ReactiveStorageDeciderService(
             Settings.EMPTY,
             new ClusterSettings(Settings.EMPTY, DataTierAllocationDeciderTests.ALL_SETTINGS),
-            null
-        );
+            null);
         assertThat(
             service.roles().stream().sorted().collect(Collectors.toList()),
             Matchers.equalTo(

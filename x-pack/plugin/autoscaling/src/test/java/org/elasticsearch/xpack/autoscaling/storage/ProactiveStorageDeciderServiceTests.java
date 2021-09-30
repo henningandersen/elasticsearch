@@ -25,6 +25,7 @@ import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
+import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
@@ -62,14 +63,18 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
+
+    private static final BalancedShardsAllocator SHARDS_ALLOCATOR = new BalancedShardsAllocator(Settings.EMPTY);
+
     public void testScale() {
+        int shardCopies = between(1, 3);
         ClusterState originalState = DataStreamTestHelper.getClusterStateWithDataStreams(
             org.elasticsearch.core.List.of(Tuple.tuple("test", between(1, 10))),
             org.elasticsearch.core.List.of(),
-            0
+            shardCopies - 1
         );
         ClusterState.Builder stateBuilder = ClusterState.builder(originalState);
-        IntStream.range(0, between(1, 10)).forEach(i -> ReactiveStorageDeciderServiceTests.addNode(stateBuilder));
+        IntStream.range(0, between(shardCopies, 10)).forEach(i -> ReactiveStorageDeciderServiceTests.addNode(stateBuilder));
         stateBuilder.routingTable(addRouting(originalState.metadata(), RoutingTable.builder()).build());
         long lastCreated = System.currentTimeMillis();
         applyCreatedDates(
@@ -88,11 +93,15 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         allocationDecidersList.add(new AllocationDecider() {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-                return allocation.decision(Decision.NO, DiskThresholdDecider.NAME, "test");
+                if (shardCopies == 1 || shardRouting.primary() == false || randomBoolean())
+                    return allocation.decision(Decision.NO, DiskThresholdDecider.NAME, "test no");
+                else {
+                    return allocation.decision(Decision.YES, DiskThresholdDecider.NAME, "test yes");
+                }
             }
         });
         AllocationDeciders allocationDeciders = new AllocationDeciders(allocationDecidersList);
-        ProactiveStorageDeciderService service = new ProactiveStorageDeciderService(Settings.EMPTY, clusterSettings, allocationDeciders);
+        ProactiveStorageDeciderService service = new ProactiveStorageDeciderService(Settings.EMPTY, clusterSettings, allocationDeciders, SHARDS_ALLOCATOR);
         AutoscalingCapacity currentCapacity = ReactiveStorageDeciderDecisionTests.randomCurrentCapacity();
         ClusterInfo info = randomClusterInfo(state);
         AutoscalingDeciderContext context = new AutoscalingDeciderContext() {
@@ -287,6 +296,10 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         }
     }
 
+    public void testAllocate() {
+
+    }
+
     private long totalSize(List<Index> indices, RoutingTable routingTable, ClusterInfo info) {
         return indices.stream().flatMap(i -> routingTable.allShards(i.getName()).stream()).mapToLong(info::getShardSize).sum();
     }
@@ -331,22 +344,29 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             null,
             System.nanoTime()
         );
-        startAll(allocation);
+        startAll(allocation, true);
+        startAll(allocation, false);
         return ReactiveStorageDeciderServiceTests.updateClusterState(state, allocation);
     }
 
-    private void startAll(RoutingAllocation allocation) {
+    private void startAll(RoutingAllocation allocation, boolean primary) {
         for (RoutingNodes.UnassignedShards.UnassignedIterator iterator = allocation.routingNodes().unassigned().iterator(); iterator
             .hasNext();) {
             ShardRouting unassignedShard = iterator.next();
-            assert unassignedShard.primary();
-            ShardRouting shardRouting = iterator.initialize(
-                randomFrom(Sets.newHashSet(allocation.routingNodes())).nodeId(),
-                null,
-                ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE,
-                allocation.changes()
-            );
-            allocation.routingNodes().startShard(logger, shardRouting, allocation.changes());
+            if (unassignedShard.primary() == primary) {
+                Set<String> occupied =
+                    allocation.routingNodes().assignedShards(unassignedShard.shardId()).stream().map(ShardRouting::currentNodeId).collect(Collectors.toSet());
+                Set<String> candidateNodes =
+                    Sets.newHashSet(allocation.routingNodes()).stream().map(RoutingNode::nodeId).filter(id -> occupied.contains(id) == false).collect(Collectors.toSet());
+
+                ShardRouting shardRouting = iterator.initialize(
+                    randomFrom(candidateNodes),
+                    null,
+                    ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE,
+                    allocation.changes()
+                );
+                allocation.routingNodes().startShard(logger, shardRouting, allocation.changes());
+            }
         }
     }
 
