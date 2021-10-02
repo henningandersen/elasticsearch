@@ -205,7 +205,8 @@ public class DeprecationInfoAction extends ActionType<DeprecationInfoAction.Resp
                 (c) -> c.apply(state));
             List<DeprecationIssue> nodeSettingsIssues = mergeNodeIssues(nodeDeprecationResponse);
 
-            String[] concreteIndexNames = indexNameExpressionResolver.concreteIndexNames(state, request);
+            // Allow system index access here to prevent deprecation warnings when we call this API
+            String[] concreteIndexNames = indexNameExpressionResolver.concreteIndexNamesWithSystemIndexAccess(state, request);
 
             Map<String, List<DeprecationIssue>> indexSettingsIssues = new HashMap<>();
             for (String concreteIndex : concreteIndexNames) {
@@ -215,6 +216,14 @@ public class DeprecationInfoAction extends ActionType<DeprecationInfoAction.Resp
                 if (singleIndexIssues.size() > 0) {
                     indexSettingsIssues.put(concreteIndex, singleIndexIssues);
                 }
+            }
+
+            // WORKAROUND: move transform deprecation issues into cluster_settings
+            List<DeprecationIssue> transformDeprecations = pluginSettingIssues.remove(
+                TransformDeprecationChecker.TRANSFORM_DEPRECATION_KEY
+            );
+            if (transformDeprecations != null) {
+                clusterSettingsIssues.addAll(transformDeprecations);
             }
 
             return new DeprecationInfoAction.Response(clusterSettingsIssues, nodeSettingsIssues, indexSettingsIssues, pluginSettingIssues);

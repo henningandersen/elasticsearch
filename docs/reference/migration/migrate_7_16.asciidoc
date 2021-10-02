@@ -1,0 +1,99 @@
+[[migrating-7.16]]
+== Migrating to 7.16
+++++
+<titleabbrev>7.16</titleabbrev>
+++++
+
+This section discusses the changes that you need to be aware of when migrating
+your application to {es} 7.16.
+
+See also <<release-highlights>> and <<es-release-notes>>.
+
+* <<breaking_716_ilm_changes>>
+
+* <<breaking_716_monitoring_changes>>
+
+//NOTE: The notable-breaking-changes tagged regions are re-used in the
+//Installation and Upgrade Guide
+
+[discrete]
+[[breaking-changes-7.16]]
+=== Breaking changes
+
+The following changes in {es} 7.16 might affect your applications
+and prevent them from operating normally.
+Before upgrading to 7.16, review these changes and take the described steps
+to mitigate the impact.
+
+NOTE: Breaking changes introduced in minor versions are
+normally limited to security and bug fixes.
+Significant changes in behavior are deprecated in a minor release and
+the old behavior is supported until the next major release.
+To find out if you are using any deprecated functionality,
+enable <<deprecation-logging, deprecation logging>>.
+
+[discrete]
+[[deprecated-7.16]]
+=== Deprecations
+
+The following functionality has been deprecated in {es} 7.16 and will be removed
+in 8.0. While this won't have an immediate impact on your applications, we
+strongly encourage you take the described steps to update your code after
+upgrading to 7.16.
+
+NOTE: Significant changes in behavior are deprecated in a minor release and the
+old behavior is supported until the next major release. To find out if you are
+using any deprecated functionality, enable <<deprecation-logging, deprecation
+logging>>.
+
+// tag::notable-breaking-changes[]
+[discrete]
+[[breaking_716_ilm_changes]]
+==== {ilm-cap} ({ilm-init}) changes
+
+//tag::notable-breaking-changes[]
+[[ilm-freeze-noop]]
+.The ILM `freeze` action has been deprecated and will be a no-op in a future release.
+[%collapsible]
+====
+*Details* +
+The ILM freeze action is now deprecated. This is because frozen indices provide no benefit given improvements in heap memory
+utilization. In 8.0 the freeze action will be a no-op and perform no action on the index, as the freeze API endpoint
+has been removed in 8.0.
+
+*Impact* +
+Update your ILM policies to remove the `freeze` action from the `cold` phase.
+====
+
+[discrete]
+[[breaking_716_monitoring_changes]]
+==== Monitoring deprecations
+
+[[monitoring-use-ingest-setting-deprecation]]
+.The `use_ingest` setting on Monitoring exporter configurations is deprecated.
+[%collapsible]
+====
+*Details* +
+The `xpack.monitoring.exporters.*.use_ingest` property has been deprecated in 7.16.0 and
+will be removed in 8.0.0. This parameter controls the creation of pipelines for monitoring
+indices. These pipelines currently have no function.
+
+*Impact* +
+Discontinue the use of the `xpack.monitoring.exporters.*.use_ingest` setting.
+====
+
+[[monitoring-pipeline-master-timeout-setting-deprecation]]
+.The `index.pipeline.master_timeout` setting on Monitoring HTTP exporter configurations is deprecated.
+[%collapsible]
+====
+*Details* +
+The `xpack.monitoring.exporters.*.index.pipeline.master_timeout` property has been
+deprecated in 7.16.0. This parameter sets the timeout when waiting for the remote
+Monitoring cluster to create pipelines. These pipelines for monitoring indices currently
+have no function and will be removed in 8.0.0.
+
+*Impact* +
+Discontinue the use of the `xpack.monitoring.exporters.*.index.pipeline.master_timeout` setting.
+====
+
+// end::notable-breaking-changes[]

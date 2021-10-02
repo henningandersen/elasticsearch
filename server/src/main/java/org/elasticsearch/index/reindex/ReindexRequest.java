@@ -350,7 +350,7 @@ public class ReindexRequest extends AbstractBulkIndexByScrollRequest<ReindexRequ
     }
 
     static final ObjectParser<ReindexRequest, Void> PARSER = new ObjectParser<>("reindex");
-    static final String TYPES_DEPRECATION_MESSAGE = "[types removal] Specifying types in reindex requests is deprecated.";
+    public static final String TYPES_DEPRECATION_MESSAGE = "[types removal] Specifying types in reindex requests is deprecated.";
     private static final DeprecationLogger deprecationLogger = DeprecationLogger.getLogger(ReindexRequest.class);
 
     static {
@@ -363,7 +363,7 @@ public class ReindexRequest extends AbstractBulkIndexByScrollRequest<ReindexRequ
             }
             String[] types = extractStringArray(source, "type");
             if (types != null) {
-                deprecationLogger.deprecate(DeprecationCategory.TYPES, "reindex_with_types", TYPES_DEPRECATION_MESSAGE);
+                deprecationLogger.critical(DeprecationCategory.TYPES, "reindex_with_types", TYPES_DEPRECATION_MESSAGE);
                 request.getSearchRequest().types(types);
             }
             request.setRemoteInfo(buildRemoteInfo(source));
@@ -379,7 +379,7 @@ public class ReindexRequest extends AbstractBulkIndexByScrollRequest<ReindexRequ
         ObjectParser<IndexRequest, Void> destParser = new ObjectParser<>("dest");
         destParser.declareString(IndexRequest::index, new ParseField("index"));
         destParser.declareString((request, type) -> {
-            deprecationLogger.deprecate(DeprecationCategory.TYPES, "reindex_with_types", TYPES_DEPRECATION_MESSAGE);
+            deprecationLogger.critical(DeprecationCategory.TYPES, "reindex_with_types", TYPES_DEPRECATION_MESSAGE);
             request.type(type);
         }, new ParseField("type"));
         destParser.declareString(IndexRequest::routing, new ParseField("routing"));

@@ -36,6 +36,7 @@ import org.elasticsearch.xpack.core.ilm.SearchableSnapshotAction;
 import org.elasticsearch.xpack.core.ilm.SetPriorityAction;
 import org.elasticsearch.xpack.core.ilm.ShrinkAction;
 import org.elasticsearch.xpack.core.ilm.Step;
+import org.elasticsearch.xpack.core.ilm.TimeseriesLifecycleType;
 import org.junit.Before;
 
 import java.io.IOException;
@@ -337,7 +338,7 @@ public class SearchableSnapshotActionIT extends ESRestTestCase {
                     new ForceMergeAction(1, null))
             ),
             new Phase("cold", TimeValue.ZERO, org.elasticsearch.core.Map.of(FreezeAction.NAME, new FreezeAction())),
-            null, null
+            null, null, expectWarnings(TimeseriesLifecycleType.FREEZE_ACTION_DEPRECATION_WARNING)
         );
 
         // restore the datastream
@@ -498,7 +499,7 @@ public class SearchableSnapshotActionIT extends ESRestTestCase {
         indexDocument(client(), dataStream, true);
         String firstGenIndex = DataStream.getDefaultBackingIndexName(dataStream, 1L);
         Map<String, Object> indexSettings = getIndexSettingsAsMap(firstGenIndex);
-        assertThat(indexSettings.get(DataTierAllocationDecider.INDEX_ROUTING_PREFER), is("data_hot"));
+        assertThat(indexSettings.get(DataTierAllocationDecider.TIER_PREFERENCE), is("data_hot"));
 
         // rollover the data stream so searchable_snapshot can complete
         rolloverMaxOneDocCondition(client(), dataStream);
@@ -513,7 +514,7 @@ public class SearchableSnapshotActionIT extends ESRestTestCase {
 
         Map<String, Object> hotIndexSettings = getIndexSettingsAsMap(restoredIndex);
         // searchable snapshots mounted in the hot phase should be pinned to hot nodes
-        assertThat(hotIndexSettings.get(DataTierAllocationDecider.INDEX_ROUTING_PREFER),
+        assertThat(hotIndexSettings.get(DataTierAllocationDecider.TIER_PREFERENCE),
             is("data_hot"));
     }
 }

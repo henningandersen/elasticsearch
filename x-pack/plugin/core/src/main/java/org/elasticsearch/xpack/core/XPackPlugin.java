@@ -372,7 +372,7 @@ public class XPackPlugin extends XPackClientPlugin
         if (Files.exists(config) == false) {
             Path legacyConfig = env.configFile().resolve("x-pack").resolve(name);
             if (Files.exists(legacyConfig)) {
-                deprecationLogger.deprecate(DeprecationCategory.OTHER, "config_file_path",
+                deprecationLogger.critical(DeprecationCategory.OTHER, "config_file_path",
                     "Config file [" + name + "] is in a deprecated location. Move from " +
                     legacyConfig.toString() + " to " + config.toString());
                 return legacyConfig;
@@ -434,7 +434,7 @@ public class XPackPlugin extends XPackClientPlugin
         settings.add(DataTierAllocationDecider.INDEX_ROUTING_REQUIRE_SETTING);
         settings.add(DataTierAllocationDecider.INDEX_ROUTING_INCLUDE_SETTING);
         settings.add(DataTierAllocationDecider.INDEX_ROUTING_EXCLUDE_SETTING);
-        settings.add(DataTierAllocationDecider.INDEX_ROUTING_PREFER_SETTING);
+        settings.add(DataTierAllocationDecider.TIER_PREFERENCE_SETTING);
         return settings;
     }
 
