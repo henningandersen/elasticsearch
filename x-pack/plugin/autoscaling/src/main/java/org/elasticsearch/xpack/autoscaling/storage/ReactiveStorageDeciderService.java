@@ -7,6 +7,8 @@
 
 package org.elasticsearch.xpack.autoscaling.storage;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.DiskUsage;
@@ -26,10 +28,12 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.allocation.DiskThresholdSettings;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
+import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.FilterAllocationDecider;
+import org.elasticsearch.cluster.routing.allocation.decider.ReplicaAfterPrimaryActiveAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.SameShardAllocationDecider;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.UUIDs;
@@ -53,6 +57,7 @@ import org.elasticsearch.xpack.cluster.routing.allocation.DataTierAllocationDeci
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +70,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class ReactiveStorageDeciderService implements AutoscalingDeciderService {
+    private final static Logger logger = LogManager.getLogger(ReactiveStorageDeciderService.class);
     public static final String NAME = "reactive_storage";
 
     private final DiskThresholdSettings diskThresholdSettings;
@@ -132,7 +138,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
     }
 
     static boolean isDiskOnlyNoDecision(Decision decision) {
-        return singleNoDecision(decision, single -> true).map(DiskThresholdDecider.NAME::equals).orElse(false);
+        return singleNoDecision(decision, single -> ReplicaAfterPrimaryActiveAllocationDecider.NAME.equals(single.label()) == false).map(DiskThresholdDecider.NAME::equals).orElse(false);
     }
 
     static boolean isFilterTierOnlyDecision(Decision decision, IndexMetadata indexMetadata) {
@@ -506,6 +512,10 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             ClusterState forecastClusterState = ClusterState.builder(state).metadata(metadataBuilder).routingTable(routingTable).build();
             ClusterInfo forecastInfo = new ExtendedClusterInfo(sizeBuilder.build(), AllocationState.this.info);
 
+            allocate(shardsAlloctor);
+
+            singleForecasts.
+
             return new AllocationState(
                 forecastClusterState,
                 allocationDeciders,
@@ -576,10 +586,13 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             for (int i = 0; i < numberNewIndices; ++i) {
                 final String uuid = UUIDs.randomBase64UUID();
                 dataStream = dataStream.rollover(state.metadata(), uuid);
-                IndexMetadata newIndex = IndexMetadata.builder(writeIndex)
+                IndexMetadata.Builder builder = IndexMetadata.builder(writeIndex)
                     .index(dataStream.getWriteIndex().getName())
-                    .settings(Settings.builder().put(writeIndex.getSettings()).put(IndexMetadata.SETTING_INDEX_UUID, uuid))
-                    .build();
+                    .settings(Settings.builder().put(writeIndex.getSettings()).put(IndexMetadata.SETTING_INDEX_UUID, uuid));
+                for (int s = 0; s < builder.numberOfShards(); ++s) {
+                    builder.putInSyncAllocationIds(s, Collections.emptySet()); // todo: on master port.
+                }
+                IndexMetadata newIndex = builder.build();
                 long size = Math.min(avgSizeCeil, scaledTotalSize - (avgSizeCeil * i));
                 assert size > 0;
                 newIndices.put(newIndex, size);
@@ -614,6 +627,66 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             return false;
         }
 
+        public AllocationState allocate(ShardsAllocator shardsAllocator) {
+            RoutingAllocation allocation = new RoutingAllocation(
+                allocationDeciders,
+                new RoutingNodes(state, false), // mutable routing nodes
+                state,
+                info,
+                shardSizeInfo,
+                System.nanoTime()
+            );
+            Set<ShardRouting> unassigned = StreamSupport.stream(allocation.routingNodes().unassigned().spliterator(), false).collect(Collectors.toSet());
+            shardsAllocator.allocate(allocation);
+            if (allocation.routingNodesChanged() == false) {
+                return this;
+            }
+
+            final RoutingTable oldRoutingTable = state.routingTable();
+            final RoutingNodes newRoutingNodes = allocation.routingNodes();
+            final RoutingTable newRoutingTable = new RoutingTable.Builder().updateNodes(oldRoutingTable.version(), newRoutingNodes).build();
+            final Metadata newMetadata = allocation.updateMetadataWithRoutingChanges(newRoutingTable);
+            assert newRoutingTable.validate(newMetadata); // validates the routing table is coherent with the cluster state metadata
+
+            ClusterState newState = ClusterState.builder(state).routingTable(newRoutingTable).metadata(newMetadata).build();
+
+            return new AllocationState(newState, allocationDeciders, dataTierAllocationDecider, diskThresholdSettings,
+                info, shardSizeInfo, nodes, roles);
+        }
+
+        public AllocationState startInitializingShards() {
+            RoutingAllocation allocation = new RoutingAllocation(
+                allocationDeciders,
+                new RoutingNodes(state, false), // mutable routing nodes
+                state,
+                info,
+                shardSizeInfo,
+                System.nanoTime()
+            );
+
+            allocation.routingTable().shardsWithState(ShardRoutingState.INITIALIZING).forEach(shardRouting -> {
+                // do not want to start relocation targets, since that reduces disk usage.
+                if (shardRouting.isRelocationTarget() == false) {
+                    allocation.routingNodes().startShard(logger, shardRouting, allocation.changes());
+                }
+            } );
+
+            if (allocation.routingNodesChanged() == false) {
+                return this;
+            }
+
+            final RoutingTable oldRoutingTable = state.routingTable();
+            final RoutingNodes newRoutingNodes = allocation.routingNodes();
+            final RoutingTable newRoutingTable = new RoutingTable.Builder().updateNodes(oldRoutingTable.version(), newRoutingNodes).build();
+            final Metadata newMetadata = allocation.updateMetadataWithRoutingChanges(newRoutingTable);
+            assert newRoutingTable.validate(newMetadata); // validates the routing table is coherent with the cluster state metadata
+
+            ClusterState newState = ClusterState.builder(state).routingTable(newRoutingTable).metadata(newMetadata).build();
+
+            return new AllocationState(newState, allocationDeciders, dataTierAllocationDecider, diskThresholdSettings,
+                info, shardSizeInfo, nodes, roles);
+
+        }
         // for tests
         ClusterState state() {
             return state;

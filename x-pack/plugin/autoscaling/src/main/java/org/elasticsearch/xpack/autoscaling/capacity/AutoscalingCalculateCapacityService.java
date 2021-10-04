@@ -13,6 +13,7 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.DiskUsage;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
+import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Setting;
@@ -92,12 +93,12 @@ public class AutoscalingCalculateCapacityService implements PolicyValidator {
             this.autoscaling = autoscaling;
         }
 
-        public AutoscalingCalculateCapacityService get(AllocationDeciders allocationDeciders) {
+        public AutoscalingCalculateCapacityService get(AllocationDeciders allocationDeciders, ShardsAllocator shardsAllocator) {
             // defer constructing services until transport action creation time.
             AutoscalingCalculateCapacityService autoscalingCalculateCapacityService = servicesSetOnce.get();
             if (autoscalingCalculateCapacityService == null) {
                 autoscalingCalculateCapacityService = new AutoscalingCalculateCapacityService(
-                    autoscaling.createDeciderServices(allocationDeciders)
+                    autoscaling.createDeciderServices(allocationDeciders, shardsAllocator)
                 );
                 servicesSetOnce.set(autoscalingCalculateCapacityService);
             }

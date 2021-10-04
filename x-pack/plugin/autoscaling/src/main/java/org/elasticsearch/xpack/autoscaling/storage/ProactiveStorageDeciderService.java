@@ -9,6 +9,7 @@ package org.elasticsearch.xpack.autoscaling.storage;
 
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.routing.allocation.DiskThresholdSettings;
+import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -34,11 +35,13 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
     private final DiskThresholdSettings diskThresholdSettings;
     private final AllocationDeciders allocationDeciders;
     private final DataTierAllocationDecider dataTierAllocationDecider;
+    private final ShardsAllocator shardsAllocator;
 
-    public ProactiveStorageDeciderService(Settings settings, ClusterSettings clusterSettings, AllocationDeciders allocationDeciders) {
+    public ProactiveStorageDeciderService(Settings settings, ClusterSettings clusterSettings, AllocationDeciders allocationDeciders, ShardsAllocator shardsAllocator) {
         this.diskThresholdSettings = new DiskThresholdSettings(settings, clusterSettings);
         this.dataTierAllocationDecider = new DataTierAllocationDecider();
         this.allocationDeciders = allocationDeciders;
+        this.shardsAllocator = shardsAllocator;
     }
 
     @Override
@@ -74,7 +77,7 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
         ReactiveStorageDeciderService.AllocationState allocationStateAfterForecast = allocationState.forecast(
             forecastWindow.millis(),
             System.currentTimeMillis()
-        );
+        ).allocate(shardsAllocator);
 
         long unassignedBytes = allocationStateAfterForecast.storagePreventsAllocation();
         long assignedBytes = allocationStateAfterForecast.storagePreventsRemainOrMove();
