@@ -25,7 +25,9 @@ import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
+import org.elasticsearch.cluster.routing.allocation.ShardAllocationDecision;
 import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
+import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.Decision;
@@ -64,6 +66,17 @@ import static org.hamcrest.Matchers.startsWith;
 public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
 
     private static final BalancedShardsAllocator SHARDS_ALLOCATOR = new BalancedShardsAllocator(Settings.EMPTY);
+    private static final ShardsAllocator NOOP_ALLOCATOR = new ShardsAllocator() {
+        @Override
+        public void allocate(RoutingAllocation allocation) {
+            // noop
+        }
+
+        @Override
+        public ShardAllocationDecision decideShardAllocation(ShardRouting shard, RoutingAllocation allocation) {
+            throw new AssertionError();
+        }
+    };
 
     public void testScale() {
         int shardCopies = between(1, 3);
@@ -89,10 +102,11 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         Collection<AllocationDecider> allocationDecidersList = new ArrayList<>(
             ClusterModule.createAllocationDeciders(Settings.EMPTY, clusterSettings, Collections.emptyList())
         );
+        final boolean allocatePrimaries = randomBoolean();
         allocationDecidersList.add(new AllocationDecider() {
             @Override
             public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
-                if (shardCopies == 1 || shardRouting.primary() == false || randomBoolean())
+                if (shardCopies == 1 || shardRouting.primary() == false || allocatePrimaries == false)
                     return allocation.decision(Decision.NO, DiskThresholdDecider.NAME, "test no");
                 else {
                     return allocation.decision(Decision.YES, DiskThresholdDecider.NAME, "test yes");
@@ -183,7 +197,7 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             Set.of()
         );
 
-        assertThat(allocationState.forecast(Long.MAX_VALUE, System.currentTimeMillis()), Matchers.sameInstance(allocationState));
+        assertThat(allocationState.forecast(Long.MAX_VALUE, System.currentTimeMillis(), NOOP_ALLOCATOR), Matchers.sameInstance(allocationState));
     }
 
     public void testForecastZero() {
@@ -216,8 +230,8 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             Set.of()
         );
 
-        assertThat(allocationState.forecast(0, lastCreated + between(-3, 1)), Matchers.sameInstance(allocationState));
-        assertThat(allocationState.forecast(10, lastCreated + 1), Matchers.not(Matchers.sameInstance(allocationState)));
+        assertThat(allocationState.forecast(0, lastCreated + between(-3, 1), NOOP_ALLOCATOR), Matchers.sameInstance(allocationState));
+        assertThat(allocationState.forecast(10, lastCreated + 1, NOOP_ALLOCATOR), Matchers.not(Matchers.sameInstance(allocationState)));
     }
 
     public void testForecast() {
@@ -259,7 +273,7 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         );
 
         for (int window = 0; window < between(1, 20); ++window) {
-            ReactiveStorageDeciderService.AllocationState forecast = allocationState.forecast(window, lastCreated + 1);
+            ReactiveStorageDeciderService.AllocationState forecast = allocationState.forecast(window, lastCreated + 1, NOOP_ALLOCATOR);
             int actualWindow = Math.min(window, indices);
             int expectedIndices = actualWindow + indices;
             assertThat(forecast.state().metadata().indices().size(), Matchers.equalTo(expectedIndices));

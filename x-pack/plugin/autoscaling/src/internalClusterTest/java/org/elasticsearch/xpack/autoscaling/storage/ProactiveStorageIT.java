@@ -72,25 +72,46 @@ public class ProactiveStorageIT extends AutoscalingStorageIntegTestCase {
         forceMerge();
         refresh();
 
+        String extraDataNodeName;
+        boolean addReplicas = randomBoolean() && false;
+        if (addReplicas) {
+            assertAcked(client().admin().indices().prepareUpdateSettings(dsName).setSettings(Settings.builder().put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 1)).get());
+            extraDataNodeName = internalCluster().startDataOnlyNode();
+            ensureGreen(dsName);
+            refresh();
+        } else {
+            extraDataNodeName = null;
+        }
+
         // just check it does not throw when not refreshed.
         capacity();
 
         IndicesStatsResponse stats = client().admin().indices().prepareStats(dsName).clear().setStore(true).get();
         long used = stats.getTotal().getStore().getSizeInBytes();
+        long primariesUsed = stats.getPrimaries().getStore().getSizeInBytes();
         long maxShardSize = Arrays.stream(stats.getShards()).mapToLong(s -> s.getStats().getStore().sizeInBytes()).max().orElseThrow();
-        long enoughSpace = used + WATERMARK_BYTES + 1;
+        boolean hasSpaceForPrimaries = addReplicas && randomBoolean();
+        long enoughSpace = primariesUsed + WATERMARK_BYTES + 1 + (hasSpaceForPrimaries ? WATERMARK_BYTES : 0);
+        long expectedForecast = hasSpaceForPrimaries ? primariesUsed : used;
+        assert expectedForecast > 0;
 
         setTotalSpace(dataNodeName, enoughSpace);
-
+        if (addReplicas) {
+            setTotalSpace(extraDataNodeName, enoughSpace);
+        }
+        long expectedCurrentCapacity = addReplicas ? 2 * enoughSpace : enoughSpace;
         // default 30 minute window includes everything.
         GetAutoscalingCapacityAction.Response response = capacity();
         assertThat(response.results().keySet(), Matchers.equalTo(Set.of(policyName)));
-        assertThat(response.results().get(policyName).currentCapacity().total().storage().getBytes(), Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).currentCapacity().node().storage().getBytes(), Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).currentCapacity().total().storage().getBytes(),
+            Matchers.equalTo(expectedCurrentCapacity));
+
         // ideally, we would count replicas too, but we leave this for follow-up work
         assertThat(
             response.getResults().get(policyName).toString(),
             response.results().get(policyName).requiredCapacity().total().storage().getBytes(),
-            Matchers.greaterThanOrEqualTo(enoughSpace + used)
+            Matchers.greaterThanOrEqualTo(expectedCurrentCapacity + expectedForecast)
         );
         assertThat(response.results().get(policyName).requiredCapacity().node().storage().getBytes(), Matchers.equalTo(maxShardSize));
 
@@ -101,8 +122,8 @@ public class ProactiveStorageIT extends AutoscalingStorageIntegTestCase {
         );
         response = capacity();
         assertThat(response.results().keySet(), Matchers.equalTo(Set.of(policyName)));
-        assertThat(response.results().get(policyName).currentCapacity().total().storage().getBytes(), Matchers.equalTo(enoughSpace));
-        assertThat(response.results().get(policyName).requiredCapacity().total().storage().getBytes(), Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).currentCapacity().total().storage().getBytes(), Matchers.equalTo(expectedCurrentCapacity));
+        assertThat(response.results().get(policyName).requiredCapacity().total().storage().getBytes(), Matchers.equalTo(expectedCurrentCapacity));
         assertThat(response.results().get(policyName).requiredCapacity().node().storage().getBytes(), Matchers.equalTo(maxShardSize));
     }
 

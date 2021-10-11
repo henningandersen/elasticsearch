@@ -40,7 +40,7 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
     public ProactiveStorageDeciderService(Settings settings, ClusterSettings clusterSettings, AllocationDeciders allocationDeciders, ShardsAllocator shardsAllocator) {
         this.diskThresholdSettings = new DiskThresholdSettings(settings, clusterSettings);
         this.dataTierAllocationDecider = new DataTierAllocationDecider();
-        this.allocationDeciders = allocationDeciders;
+        this.allocationDeciders = new NoThrottlingAllocationDeciders(allocationDeciders);
         this.shardsAllocator = shardsAllocator;
     }
 
@@ -76,8 +76,9 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
         TimeValue forecastWindow = FORECAST_WINDOW.get(configuration);
         ReactiveStorageDeciderService.AllocationState allocationStateAfterForecast = allocationState.forecast(
             forecastWindow.millis(),
-            System.currentTimeMillis()
-        ).allocate(shardsAllocator);
+            System.currentTimeMillis(),
+            shardsAllocator
+        );
 
         long unassignedBytes = allocationStateAfterForecast.storagePreventsAllocation();
         long assignedBytes = allocationStateAfterForecast.storagePreventsRemainOrMove();

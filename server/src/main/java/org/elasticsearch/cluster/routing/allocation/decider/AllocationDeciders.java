@@ -33,6 +33,10 @@ public class AllocationDeciders extends AllocationDecider {
         this.allocations = Collections.unmodifiableCollection(allocations);
     }
 
+    protected AllocationDeciders(AllocationDeciders allocationDeciders) {
+        this.allocations = allocationDeciders.allocations;
+    }
+
     @Override
     public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
         Decision.Multi ret = new Decision.Multi();

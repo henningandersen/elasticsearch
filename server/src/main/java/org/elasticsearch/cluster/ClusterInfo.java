@@ -339,6 +339,13 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
             private long total;
             private ObjectHashSet<ShardId> shardIds = new ObjectHashSet<>();
 
+            public Builder() {}
+
+            public Builder(ReservedSpace baseline) {
+                this.total = baseline.total;
+                this.shardIds.addAll(baseline.shardIds);
+            }
+
             public ReservedSpace build() {
                 assert shardIds != null : "already built";
                 final ReservedSpace reservedSpace = new ReservedSpace(total, shardIds);

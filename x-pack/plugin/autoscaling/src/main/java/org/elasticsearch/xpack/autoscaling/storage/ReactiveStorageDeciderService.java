@@ -35,6 +35,7 @@ import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider
 import org.elasticsearch.cluster.routing.allocation.decider.FilterAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.ReplicaAfterPrimaryActiveAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.SameShardAllocationDecider;
+import org.elasticsearch.cluster.routing.allocation.decider.ThrottlingAllocationDecider;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
@@ -64,6 +65,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -138,7 +140,8 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
     }
 
     static boolean isDiskOnlyNoDecision(Decision decision) {
-        return singleNoDecision(decision, single -> ReplicaAfterPrimaryActiveAllocationDecider.NAME.equals(single.label()) == false).map(DiskThresholdDecider.NAME::equals).orElse(false);
+        return singleNoDecision(decision,
+            single -> ReplicaAfterPrimaryActiveAllocationDecider.NAME.equals(single.label()) == false && ThrottlingAllocationDecider.NAME.equals(single.label()) == false).map(DiskThresholdDecider.NAME::equals).orElse(false);
     }
 
     static boolean isFilterTierOnlyDecision(Decision decision, IndexMetadata indexMetadata) {
@@ -480,9 +483,27 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                     shardRoutings.forEach(s -> builder.put(ClusterInfo.shardIdentifierFromRouting(s), size));
                 }
             }
+
+            public void addAdditionalDiskUsage(Map<String, Long> usages, ClusterState state) {
+                additionalIndices.forEach((imd, size) -> addAdditionalDiskUsage(usages, size, state, imd));
+            }
+
+            private void addAdditionalDiskUsage(Map<String, Long> usages, long size, ClusterState state, IndexMetadata indexMetadata) {
+                state.getRoutingTable().allShards(indexMetadata.getIndex().getName()).stream().filter(ShardRouting::assignedToNode)
+                    .forEach(shard -> usages.merge(shard.currentNodeId(), size, (node, amount) -> amount + size));
+            }
+
+            public void startShards(RoutingAllocation allocation) {
+                additionalIndices.keySet().forEach(imd -> allocation.routingNodes().shardsWithState(imd.getIndex().getName(),
+                    ShardRoutingState.INITIALIZING).stream()
+                    // do not start relocation targets, since it frees up space.
+                    .filter(Predicate.not(ShardRouting::isRelocationTarget))
+                    .forEach(shardRouting -> allocation.routingNodes().startShard(logger, shardRouting, allocation.changes()))
+                );
+            }
         }
 
-        public AllocationState forecast(long forecastWindow, long now) {
+        public AllocationState forecast(long forecastWindow, long now, ShardsAllocator shardsAllocator) {
             if (forecastWindow == 0) {
                 return this;
             }
@@ -509,23 +530,44 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             singleForecasts.forEach(p -> p.applyRouting(routingTableBuilder));
             RoutingTable routingTable = routingTableBuilder.build();
             singleForecasts.forEach(p -> p.applySize(sizeBuilder, routingTable));
+            ImmutableOpenMap<String, Long> shardSizes = sizeBuilder.build();
             ClusterState forecastClusterState = ClusterState.builder(state).metadata(metadataBuilder).routingTable(routingTable).build();
-            ClusterInfo forecastInfo = new ExtendedClusterInfo(sizeBuilder.build(), AllocationState.this.info);
+            ClusterInfo forecastInfo = new ExtendedClusterInfo(shardSizes, AllocationState.this.info);
 
-            allocate(shardsAlloctor);
+            // allocate and start new shards to ensure primaries are started if they can, such that we can check if replicas can fit.
+            ClusterState allocatedForecastClusterState = allocateAndStart(forecastClusterState, singleForecasts, forecastInfo, shardsAllocator);
 
-            singleForecasts.
+            ClusterInfo allocatedForecastClusterInfo = addAdditionalDiskUsage(allocatedForecastClusterState, singleForecasts, shardSizes);
+
+            // see if replicas can allocate too (could also be more primaries if throttled in previous round)
+            ClusterState finalClusterState = allocateAndStart(allocatedForecastClusterState, singleForecasts, allocatedForecastClusterInfo, shardsAllocator);
+            ClusterInfo finalClusterInfo = addAdditionalDiskUsage(finalClusterState, singleForecasts, shardSizes);
 
             return new AllocationState(
-                forecastClusterState,
+                finalClusterState,
                 allocationDeciders,
                 dataTierAllocationDecider,
                 diskThresholdSettings,
-                forecastInfo,
+                finalClusterInfo,
                 shardSizeInfo,
                 nodes,
                 roles
             );
+        }
+
+        private ClusterInfo addAdditionalDiskUsage(ClusterState state, List<SingleForecast> singleForecasts, ImmutableOpenMap<String, Long> shardSizes) {
+            Map<String, Long> additionalDiskUsage = new HashMap<>();
+            singleForecasts.forEach(single -> single.addAdditionalDiskUsage(additionalDiskUsage, state));
+            return new ExtendedClusterInfo(shardSizes, this.info, additionalDiskUsage);
+        }
+
+        private ClusterState allocateAndStart(ClusterState clusterState, List<SingleForecast> forecasts, ClusterInfo info, ShardsAllocator shardsAllocator) {
+            // accept that some allocations might throttle, giving a conservative result
+            return withRoutingAllocation(clusterState, info,
+                allocation -> {
+                    shardsAllocator.allocate(allocation);
+                    forecasts.forEach(f -> f.startShards(allocation));
+                });
         }
 
         private SingleForecast forecast(IndexAbstraction.DataStream stream, long forecastWindow, long now) {
@@ -627,6 +669,31 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             return false;
         }
 
+        private ClusterState withRoutingAllocation(ClusterState state, ClusterInfo info, Consumer<RoutingAllocation> method) {
+            RoutingAllocation allocation = new RoutingAllocation(
+                allocationDeciders,
+                new RoutingNodes(state, false), // mutable routing nodes
+                state,
+                info,
+                shardSizeInfo,
+                System.nanoTime()
+            );
+
+            method.accept(allocation);
+
+            if (allocation.routingNodesChanged() == false) {
+                return state;
+            }
+
+            final RoutingTable oldRoutingTable = state.routingTable();
+            final RoutingNodes newRoutingNodes = allocation.routingNodes();
+            final RoutingTable newRoutingTable = new RoutingTable.Builder().updateNodes(oldRoutingTable.version(), newRoutingNodes).build();
+            final Metadata newMetadata = allocation.updateMetadataWithRoutingChanges(newRoutingTable);
+            assert newRoutingTable.validate(newMetadata); // validates the routing table is coherent with the cluster state metadata
+
+            return ClusterState.builder(state).routingTable(newRoutingTable).metadata(newMetadata).build();
+        }
+
         public AllocationState allocate(ShardsAllocator shardsAllocator) {
             RoutingAllocation allocation = new RoutingAllocation(
                 allocationDeciders,
@@ -636,7 +703,6 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 shardSizeInfo,
                 System.nanoTime()
             );
-            Set<ShardRouting> unassigned = StreamSupport.stream(allocation.routingNodes().unassigned().spliterator(), false).collect(Collectors.toSet());
             shardsAllocator.allocate(allocation);
             if (allocation.routingNodesChanged() == false) {
                 return this;
@@ -654,7 +720,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 info, shardSizeInfo, nodes, roles);
         }
 
-        public AllocationState startInitializingShards() {
+        public AllocationState startInitializingShards(List<SingleForecast> forecasts) {
             RoutingAllocation allocation = new RoutingAllocation(
                 allocationDeciders,
                 new RoutingNodes(state, false), // mutable routing nodes
@@ -700,15 +766,37 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             private final ClusterInfo delegate;
 
             private ExtendedClusterInfo(ImmutableOpenMap<String, Long> extraShardSizes, ClusterInfo info) {
+                this(extraShardSizes, info, null);
+            }
+
+            private ExtendedClusterInfo(ImmutableOpenMap<String, Long> extraShardSizes, ClusterInfo info,
+                                        Map<String, Long> additionalDiskUsage) {
                 super(
-                    info.getNodeLeastAvailableDiskUsages(),
-                    info.getNodeMostAvailableDiskUsages(),
+                    // we do not support MDP anyway, so assume it affects all paths.
+                    addDiskUsage(info.getNodeLeastAvailableDiskUsages(), additionalDiskUsage),
+                    addDiskUsage(info.getNodeMostAvailableDiskUsages(), additionalDiskUsage),
                     extraShardSizes,
                     ImmutableOpenMap.of(),
                     null,
                     null
                 );
                 this.delegate = info;
+            }
+
+            private static ImmutableOpenMap<String, DiskUsage> addDiskUsage(ImmutableOpenMap<String, DiskUsage> original, Map<String, Long> additionalDiskUsage) {
+                if (additionalDiskUsage == null) {
+                    return original;
+                }
+                ImmutableOpenMap.Builder<String, DiskUsage> builder = ImmutableOpenMap.builder(original);
+                additionalDiskUsage.forEach((node, amount) -> {
+                    DiskUsage usage = builder.get(node);
+                    if (usage != null) {
+                        builder.put(node, new DiskUsage(usage.getNodeId(), usage.getNodeName(), usage.getPath(), usage.getTotalBytes(),
+                            Math.max(usage.getFreeBytes() - amount, 0)));
+                    }
+                });
+
+                return builder.build();
             }
 
             @Override
