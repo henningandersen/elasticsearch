@@ -32,6 +32,9 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingCalculateCapacity
 import org.elasticsearch.xpack.autoscaling.capacity.memory.AutoscalingMemoryInfoService;
 
 import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 
@@ -118,13 +121,14 @@ public class TransportGetAutoscalingCapacityAction extends TransportMasterNodeAc
         return null;
     }
 
-    private class ResponseCache extends CancellableSingleObjectCache<
-        Tuple<Long, ClusterState>,
-        Long,
-        GetAutoscalingCapacityAction.Response> {
+    // single-threaded execution batcher.
+    private class ResponseCache {
+        private Semaphore leases = new Semaphore(1);
+        private Queue<GetAutoscalingCapacityAction.Response> queue = new LinkedBlockingQueue<>();
         private final AtomicLong round = new AtomicLong();
 
         public void get(ClusterState state, BooleanSupplier isCancelled, ActionListener<GetAutoscalingCapacityAction.Response> listener) {
+            queue.add()
             final long beforeRound = round.get();
             ActionListener<GetAutoscalingCapacityAction.Response> wrappedListener = ActionListener.runBefore(listener, () -> {
                 // we ensure that any client serially calling capacity are guaranteed to get a fresh response.

@@ -1,3 +1,7 @@
+apply plugin: 'elasticsearch.internal-testclusters'
+//apply plugin: 'elasticsearch.test-with-dependencies'
+apply plugin: 'elasticsearch.internal-es-plugin'
+
 import org.elasticsearch.gradle.internal.info.BuildParams
 
 //apply plugin: 'elasticsearch.internal-yaml-rest-test'
@@ -17,7 +21,17 @@ esplugin {
 tasks.named("test").configure { enabled = false }
 
 dependencies {
-  compileOnly project(path: xpackModule('autoscaling'))
+
+  api project(path: xpackModule('autoscaling'))
+  compileOnly project(path: xpackModule('core'))
+  testImplementation(testArtifact(project(xpackModule('core'))))
+  testImplementation project(path: xpackModule('data-streams'))
+  testImplementation project(path: xpackModule('searchable-snapshots'))
+  testImplementation project(path: xpackModule('ilm'))
+
+  testImplementation "com.fasterxml.jackson.core:jackson-databind:2.10.4"
+  testImplementation project(':modules:transport-netty4') // for http
+  testImplementation project(':plugins:transport-nio') // for http
 }
 
 //dependencies {

@@ -179,7 +179,8 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
             state,
             info,
             snapshotShardSizeInfo,
-            n -> randomNonNegativeLong()
+            n -> randomNonNegativeLong(),
+            () -> {}
         );
 
         assertSame(state, context.state());
@@ -204,7 +205,7 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
             info,
             null,
             n -> memory,
-            ensureNotCancelled
+            () -> {}
         );
 
         assertThat(context.nodes().size(), equalTo(1));
@@ -264,7 +265,7 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
             info,
             null,
             n -> memory,
-            ensureNotCancelled
+            () -> {}
         );
 
         assertThat(context.nodes(), equalTo(expectedNodes));
@@ -285,7 +286,7 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
                 info,
                 null,
                 AutoscalingMemoryInfo.EMPTY,
-                ensureNotCancelled
+                () -> {}
             );
             assertThat(context.nodes(), equalTo(expectedNodes));
             assertThat(context.currentCapacity(), is(nullValue()));
@@ -311,7 +312,7 @@ public class AutoscalingCalculateCapacityServiceTests extends AutoscalingTestCas
                 info,
                 null,
                 n -> memory,
-                ensureNotCancelled
+                () -> {}
             );
             assertThat(context.nodes(), equalTo(expectedNodes));
             if (hasDataRole) {

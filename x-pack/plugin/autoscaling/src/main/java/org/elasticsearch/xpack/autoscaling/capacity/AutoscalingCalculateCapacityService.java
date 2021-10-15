@@ -348,7 +348,6 @@ public class AutoscalingCalculateCapacityService implements PolicyValidator {
 
         public void ensureNotCancelled() {
             ensureNotCancelled.run();
-            ;
         }
     }
 }
