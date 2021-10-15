@@ -1072,7 +1072,7 @@ public abstract class ESRestTestCase extends ESTestCase {
      * other tests.
      */
     private void logIfThereAreRunningTasks() throws IOException {
-        Set<String> runningTasks = runningTasks(adminClient().performRequest(new Request("GET", "/_tasks")));
+        Set<String> runningTasks = runningTasks();
         // Ignore the task list API - it doesn't count against us
         runningTasks.remove(ListTasksAction.NAME);
         runningTasks.remove(ListTasksAction.NAME + "[n]");
@@ -1087,6 +1087,10 @@ public abstract class ESRestTestCase extends ESTestCase {
          * could determine that some tasks are run by the user we'd fail the tests if those tasks were running and ignore any background
          * tasks.
          */
+    }
+
+    protected Set<String> runningTasks() throws IOException {
+        return runningTasks(adminClient().performRequest(new Request("GET", "/_tasks")));
     }
 
     /**

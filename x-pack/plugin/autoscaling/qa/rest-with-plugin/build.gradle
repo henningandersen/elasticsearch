@@ -1,0 +1,40 @@
+import org.elasticsearch.gradle.internal.info.BuildParams
+
+//apply plugin: 'elasticsearch.internal-yaml-rest-test'
+//apply plugin: 'elasticsearch.yaml-rest-compat-test'
+apply plugin: 'elasticsearch.internal-es-plugin'
+apply plugin: 'elasticsearch.internal-java-rest-test'
+
+esplugin {
+  name 'x-pack-autoscaling-qa'
+  description 'Plugin for performing QA of autoscaling'
+  classname 'org.elasticsearch.xpack.autoscaling.qa.AutoscalingQA'
+  extendedPlugins = ['x-pack-autoscaling']
+  licenseFile rootProject.file('licenses/SSPL-1.0+ELASTIC-LICENSE-2.0.txt')
+  noticeFile rootProject.file('NOTICE.txt')
+}
+
+tasks.named("test").configure { enabled = false }
+
+dependencies {
+  compileOnly project(path: xpackModule('autoscaling'))
+}
+
+//dependencies {
+//  yamlRestTestImplementation(testArtifact(project(xpackModule('core'))))
+//}
+//
+//restResources {
+//  restApi {
+//    include '_common', 'autoscaling'
+//  }
+//}
+
+testClusters.configureEach {
+  testDistribution = 'DEFAULT'
+  setting 'xpack.security.enabled', 'true'
+  setting 'xpack.license.self_generated.type', 'trial'
+  extraConfigFile 'roles.yml', file('autoscaling-roles.yml')
+  user username: 'autoscaling-admin', password: 'autoscaling-admin-password', role: 'superuser'
+  user username: 'autoscaling-user', password: 'autoscaling-user-password', role: 'autoscaling'
+}
