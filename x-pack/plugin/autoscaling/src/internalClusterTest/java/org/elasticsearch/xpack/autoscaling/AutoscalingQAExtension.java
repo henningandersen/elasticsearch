@@ -21,7 +21,7 @@ public class AutoscalingQAExtension implements AutoscalingExtension {
 
     @Override
     public Collection<AutoscalingDeciderService> deciders() {
-        return List.of(new AutoscalingQADeciderService());
+        return List.of(new AutoscalingSyncTestDeciderService());
     }
 
 }

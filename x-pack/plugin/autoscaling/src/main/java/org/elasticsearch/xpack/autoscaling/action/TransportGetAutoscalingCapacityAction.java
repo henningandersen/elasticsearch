@@ -19,8 +19,6 @@ import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.util.CancellableSingleObjectCache;
-import org.elasticsearch.core.Tuple;
 import org.elasticsearch.license.LicenseUtils;
 import org.elasticsearch.snapshots.SnapshotsInfoService;
 import org.elasticsearch.tasks.CancellableTask;
@@ -32,11 +30,6 @@ import org.elasticsearch.xpack.autoscaling.capacity.AutoscalingCalculateCapacity
 import org.elasticsearch.xpack.autoscaling.capacity.memory.AutoscalingMemoryInfoService;
 
 import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BooleanSupplier;
 
 public class TransportGetAutoscalingCapacityAction extends TransportMasterNodeAction<
     GetAutoscalingCapacityAction.Request,
@@ -49,7 +42,8 @@ public class TransportGetAutoscalingCapacityAction extends TransportMasterNodeAc
     private final SnapshotsInfoService snapshotsInfoService;
     private final AutoscalingMemoryInfoService memoryInfoService;
     private final AutoscalingLicenseChecker autoscalingLicenseChecker;
-    private final ResponseCache responseCache = new ResponseCache();
+    private final CapacityResponseCache<GetAutoscalingCapacityAction.Response> responseCache = new CapacityResponseCache<>(threadPool,
+        this::computeCapacity);
 
     @Inject
     public TransportGetAutoscalingCapacityAction(
@@ -74,7 +68,7 @@ public class TransportGetAutoscalingCapacityAction extends TransportMasterNodeAc
             GetAutoscalingCapacityAction.Request::new,
             indexNameExpressionResolver,
             GetAutoscalingCapacityAction.Response::new,
-            ThreadPool.Names.MANAGEMENT
+            ThreadPool.Names.SAME
         );
         this.snapshotsInfoService = snapshotsInfoService;
         this.memoryInfoService = memoryInfoService;
@@ -102,10 +96,10 @@ public class TransportGetAutoscalingCapacityAction extends TransportMasterNodeAc
         responseCache.get(state, cancellableTask::isCancelled, listener);
     }
 
-    private GetAutoscalingCapacityAction.Response computeCapacity(ClusterState state, Runnable ensureNotCancelled) {
+    private GetAutoscalingCapacityAction.Response computeCapacity(Runnable ensureNotCancelled) {
         GetAutoscalingCapacityAction.Response response = new GetAutoscalingCapacityAction.Response(
             capacityService.calculate(
-                state,
+                clusterService.state(),
                 clusterInfoService.getClusterInfo(),
                 snapshotsInfoService.snapshotShardSizes(),
                 memoryInfoService.snapshot(),
@@ -121,67 +115,8 @@ public class TransportGetAutoscalingCapacityAction extends TransportMasterNodeAc
         return null;
     }
 
-    // single-threaded execution batcher.
-    private class ResponseCache {
-        private Semaphore leases = new Semaphore(1);
-        private Queue<GetAutoscalingCapacityAction.Response> queue = new LinkedBlockingQueue<>();
-        private final AtomicLong round = new AtomicLong();
-
-        public void get(ClusterState state, BooleanSupplier isCancelled, ActionListener<GetAutoscalingCapacityAction.Response> listener) {
-            queue.add()
-            final long beforeRound = round.get();
-            ActionListener<GetAutoscalingCapacityAction.Response> wrappedListener = ActionListener.runBefore(listener, () -> {
-                // we ensure that any client serially calling capacity are guaranteed to get a fresh response.
-                round.compareAndSet(beforeRound, beforeRound + 1);
-                // and ensure that we clear out outdated results since the normal case is to not need the caching.
-                clearIfNotFresh(Tuple.tuple(beforeRound + 1, state));
-            });
-            super.get(Tuple.tuple(beforeRound, state), isCancelled, wrappedListener);
-        }
-
-        @Override
-        protected void refresh(
-            Tuple<Long, ClusterState> input,
-            Runnable ensureNotCancelled,
-            ActionListener<GetAutoscalingCapacityAction.Response> listener
-        ) {
-            ActionListener.completeWith(listener, () -> computeCapacity(input.v2(), ensureNotCancelled));
-        }
-
-        @Override
-        protected Long getKey(Tuple<Long, ClusterState> input) {
-            return input.v1();
-        }
-
-        @Override
-        protected boolean isFresh(Long currentKey, Long newKey) {
-            return newKey <= currentKey;
-        }
+    // for tests
+    int responseCacheQueueSize() {
+        return responseCache.jobQueueSize();
     }
-    // private class ResponseCache {
-    // private AtomicReference<ListenableActionFuture<GetAutoscalingCapacityAction.Response>> current = new AtomicReference<>();
-    //
-    // public void get(final ClusterState state, final ActionListener<GetAutoscalingCapacityAction.Response> listener) {
-    // ListenableActionFuture<GetAutoscalingCapacityAction.Response> future = new ListenableActionFuture<>();
-    // ListenableActionFuture<GetAutoscalingCapacityAction.Response> existing = current.compareAndExchange(null, future);
-    // if (existing == null) {
-    // future.addListener(listener);
-    // threadPool.executor(ThreadPool.Names.MANAGEMENT).execute(new ActionRunnable<GetAutoscalingCapacityAction.Response>(future) {
-    // @Override
-    // protected void doRun() throws Exception {
-    // computeCapacity(state);
-    // future.onResponse(computeCapacity(state));
-    // }
-    //
-    // @Override
-    // public void onAfter() {
-    // assert current.get() == future;
-    // current.set(null);
-    // }
-    // });
-    // } else {
-    // existing.addListener(listener);
-    // }
-    // }
-    // }
 }

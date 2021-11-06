@@ -165,11 +165,9 @@ public abstract class CancellableSingleObjectCache<Input, Key, Value> {
 
     /**
      * Release the cached data if it is no longer fresh.
-     * @param input The input to this computation, which will be converted to a key and used to determine whether it is
-     *              suitably fresh for future requests too.
+     * @param key the key to determine whether the cached value is suitably fresh for future requests too.
      */
-    public final void clearIfNotFresh(Input input) {
-        final Key key = getKey(input);
+    public final void clearIfNotFresh(Key key) {
         final CachedItem currentCachedItem = currentCachedItemRef.get();
         if (currentCachedItem != null && isFresh(currentCachedItem.getKey(), key) == false) {
             if (currentCachedItemRef.compareAndSet(currentCachedItem, null)) {
