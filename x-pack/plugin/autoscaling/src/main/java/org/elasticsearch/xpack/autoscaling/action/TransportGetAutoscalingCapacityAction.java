@@ -93,7 +93,7 @@ public class TransportGetAutoscalingCapacityAction extends TransportMasterNodeAc
         assert task instanceof CancellableTask;
         final CancellableTask cancellableTask = (CancellableTask) task;
 
-        responseCache.get(state, cancellableTask::isCancelled, listener);
+        responseCache.get(cancellableTask::isCancelled, listener);
     }
 
     private GetAutoscalingCapacityAction.Response computeCapacity(Runnable ensureNotCancelled) {

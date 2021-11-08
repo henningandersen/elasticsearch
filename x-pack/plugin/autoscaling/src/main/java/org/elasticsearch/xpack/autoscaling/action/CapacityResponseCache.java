@@ -27,7 +27,7 @@ import java.util.function.Function;
  *
  * The generic arg mainly helps ease testing (and we may want to generalize this in the future)
  */
-class CapacityResponseCache<Response> extends CancellableSingleObjectCache<Tuple<Long, ClusterState>, Long, Response> {
+class CapacityResponseCache<Response> extends CancellableSingleObjectCache<Long, Long, Response> {
     private final Queue<Job> jobQueue = new LinkedBlockingQueue<>();
     private final AtomicInteger jobQueueSize = new AtomicInteger();
     private final AtomicLong logicalTime = new AtomicLong();
@@ -38,12 +38,12 @@ class CapacityResponseCache<Response> extends CancellableSingleObjectCache<Tuple
         this.refresher = refresher;
     }
 
-    public void get(ClusterState state, BooleanSupplier isCancelled, ActionListener<Response> listener) {
-        super.get(Tuple.tuple(logicalTime.incrementAndGet(), state), isCancelled, listener);
+    public void get(BooleanSupplier isCancelled, ActionListener<Response> listener) {
+        super.get(logicalTime.incrementAndGet(), isCancelled, listener);
     }
 
     @Override
-    protected void refresh(Tuple<Long, ClusterState> input, Runnable ensureNotCancelled, BooleanSupplier supersedeIfStale,
+    protected void refresh(Long input, Runnable ensureNotCancelled, BooleanSupplier supersedeIfStale,
                            ActionListener<Response> listener) {
 
         jobQueue.add(new Job(ensureNotCancelled, supersedeIfStale, listener));
@@ -54,8 +54,8 @@ class CapacityResponseCache<Response> extends CancellableSingleObjectCache<Tuple
     }
 
     @Override
-    protected Long getKey(Tuple<Long, ClusterState> input) {
-        return input.v1();
+    protected Long getKey(Long input) {
+        return input;
     }
 
     @Override
