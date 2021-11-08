@@ -10,9 +10,14 @@ package org.elasticsearch.xpack.autoscaling.action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.util.CancellableSingleObjectCache;
+import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
+import org.elasticsearch.common.util.concurrent.ListenableFuture;
 import org.elasticsearch.core.Tuple;
+import org.elasticsearch.tasks.TaskCancelledException;
 import org.elasticsearch.threadpool.ThreadPool;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,10 +32,9 @@ import java.util.function.Function;
  *
  * The generic arg mainly helps ease testing (and we may want to generalize this in the future)
  */
-class CapacityResponseCache<Response> extends CancellableSingleObjectCache<Long, Long, Response> {
-    private final Queue<Job> jobQueue = new LinkedBlockingQueue<>();
+class CapacityResponseCache<Response> {
+    private final Queue<Job> jobQueue = ConcurrentCollections.newQueue();
     private final AtomicInteger jobQueueSize = new AtomicInteger();
-    private final AtomicLong logicalTime = new AtomicLong();
     private final ThreadPool threadPool;
     private final Function<Runnable, Response> refresher;
     public CapacityResponseCache(ThreadPool threadPool, Function<Runnable, Response> refresher) {
@@ -39,42 +43,42 @@ class CapacityResponseCache<Response> extends CancellableSingleObjectCache<Long,
     }
 
     public void get(BooleanSupplier isCancelled, ActionListener<Response> listener) {
-        super.get(logicalTime.incrementAndGet(), isCancelled, listener);
-    }
-
-    @Override
-    protected void refresh(Long input, Runnable ensureNotCancelled, BooleanSupplier supersedeIfStale,
-                           ActionListener<Response> listener) {
-
-        jobQueue.add(new Job(ensureNotCancelled, supersedeIfStale, listener));
+        jobQueue.offer(new Job(isCancelled, listener));
         assert jobQueueSize.get() >= 0;
         if (jobQueueSize.getAndIncrement() == 0) {
+            // todo: handle failure here.
             threadPool.executor(ThreadPool.Names.MANAGEMENT).execute(this::singleThreadRefresh);
         }
     }
 
-    @Override
-    protected Long getKey(Long input) {
-        return input;
-    }
-
-    @Override
-    protected boolean isFresh(Long currentKey, Long newKey) {
-        return newKey <= currentKey;
-    }
-
     private void singleThreadRefresh() {
         assert jobQueueSize.get() > 0 : "poor man's single thread check";
+        int jobCount = jobQueueSize.get();
         do {
-            Job job = jobQueue.poll();
-            assert job != null : jobQueueSize.get() + " queue size is out of sync";
-//             increment logical time before reading any state that the calculation depends on.
-//            logicalTime.incrementAndGet();
-            job.execute();
-        } while (jobQueueSize.decrementAndGet() > 0);
+            try {
+                ListenableFuture<Response> future = new ListenableFuture<>();
+                List<Job> jobs = new ArrayList<>(jobCount);
+                for (int i = 0; i < jobCount; ++i) {
+                    Job job = jobQueue.remove();
+                    assert job != null : jobQueueSize.get() + " queue size is out of sync";
+                    jobs.add(job);
+                    future.addListener(job.listener);
+                }
 
-        // clear the cache
-        clearIfNotFresh(logicalTime.get());
+                Runnable ensureNotCancelled = () -> {
+                    for (Job job : jobs) {
+                        if (job.isCancelled() == false) {
+                            return;
+                        }
+                    }
+                    throw new TaskCancelledException("task cancelled");
+                };
+
+                ActionListener.completeWith(future, () -> refresher.apply(ensureNotCancelled));
+            } finally {
+                jobCount = jobQueueSize.addAndGet(-jobCount);
+            }
+        } while (jobCount > 0);
     }
 
     // for tests
@@ -82,22 +86,22 @@ class CapacityResponseCache<Response> extends CancellableSingleObjectCache<Long,
         return jobQueueSize.get();
     }
 
+    // for tests
+    int jobQueueCount() {
+        return jobQueue.size();
+    }
+
     private class Job {
-        private final Runnable ensureNotCancelled;
-        private final BooleanSupplier supersedeIfStale;
+        private final BooleanSupplier isCancelled;
         private final ActionListener<Response> listener;
 
-        private Job(Runnable ensureNotCancelled, BooleanSupplier supersedeIfStale, ActionListener<Response> listener) {
-            this.ensureNotCancelled = ensureNotCancelled;
-            this.supersedeIfStale = supersedeIfStale;
+        private Job(BooleanSupplier isCancelled, ActionListener<Response> listener) {
+            this.isCancelled = isCancelled;
             this.listener = listener;
         }
 
-        public void execute() {
-            if (supersedeIfStale.getAsBoolean() == false) {
-                // disregard input, in case we sat in the queue, it is better to use newest state.
-                ActionListener.completeWith(listener, () -> refresher.apply(ensureNotCancelled));
-            }
+        public boolean isCancelled() {
+            return isCancelled.getAsBoolean();
         }
     }
 }
