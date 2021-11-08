@@ -26,8 +26,7 @@ public class AutoscalingSyncTestDeciderService implements AutoscalingDeciderServ
 
     private final CyclicBarrier syncBarrier = new CyclicBarrier(2);
 
-    public AutoscalingSyncTestDeciderService() {
-    }
+    public AutoscalingSyncTestDeciderService() {}
 
     @Override
     public String name() {

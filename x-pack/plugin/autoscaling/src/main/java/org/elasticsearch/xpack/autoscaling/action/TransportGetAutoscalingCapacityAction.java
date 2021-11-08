@@ -42,8 +42,10 @@ public class TransportGetAutoscalingCapacityAction extends TransportMasterNodeAc
     private final SnapshotsInfoService snapshotsInfoService;
     private final AutoscalingMemoryInfoService memoryInfoService;
     private final AutoscalingLicenseChecker autoscalingLicenseChecker;
-    private final CapacityResponseCache<GetAutoscalingCapacityAction.Response> responseCache = new CapacityResponseCache<>(threadPool,
-        this::computeCapacity);
+    private final CapacityResponseCache<GetAutoscalingCapacityAction.Response> responseCache = new CapacityResponseCache<>(
+        run -> threadPool.executor(ThreadPool.Names.MANAGEMENT).execute(run),
+        this::computeCapacity
+    );
 
     @Inject
     public TransportGetAutoscalingCapacityAction(

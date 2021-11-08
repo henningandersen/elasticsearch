@@ -7,7 +7,6 @@
 
 package org.elasticsearch.xpack.autoscaling.action;
 
-import org.elasticsearch.action.admin.cluster.state.ClusterStateAction;
 import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.client.Cancellable;
 import org.elasticsearch.client.Request;
@@ -19,19 +18,13 @@ import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.tasks.CancellableTask;
-import org.elasticsearch.tasks.TaskInfo;
 import org.elasticsearch.tasks.TaskManager;
 import org.elasticsearch.test.ESIntegTestCase;
-import org.elasticsearch.test.rest.yaml.ObjectPath;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.transport.netty4.Netty4Plugin;
 import org.elasticsearch.xcontent.XContentType;
-import org.elasticsearch.xpack.autoscaling.Autoscaling;
 import org.elasticsearch.xpack.autoscaling.AutoscalingIntegTestCase;
-import org.elasticsearch.xpack.autoscaling.AutoscalingQA;
 import org.elasticsearch.xpack.autoscaling.LocalStateAutoscaling;
-import org.elasticsearch.xpack.autoscaling.action.PutAutoscalingPolicyAction;
-import org.elasticsearch.xpack.autoscaling.action.TransportGetAutoscalingCapacityAction;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,15 +52,6 @@ public class GetAutoscalingCapacityRestCancellationIT extends AutoscalingIntegTe
     }
 
     @Override
-    protected Settings nodeSettings(int nodeOrdinal, Settings otherSettings) {
-        return super.nodeSettings(nodeOrdinal, otherSettings);
-//        return Settings.builder()
-//            .put(super.nodeSettings(nodeOrdinal, otherSettings))
-//            .put(NetworkModule.TRANSPORT_TYPE_KEY, nodeTransportTypeKey)
-//            .put(NetworkModule.HTTP_TYPE_KEY, nodeHttpTypeKey).build();
-    }
-
-    @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
         List<Class<? extends Plugin>> result = new ArrayList<>(super.nodePlugins());
         result.add(Netty4Plugin.class);
@@ -79,20 +63,7 @@ public class GetAutoscalingCapacityRestCancellationIT extends AutoscalingIntegTe
         return true;
     }
 
-
-//    @Override
-//    protected Settings restAdminSettings() {
-//        final String value = basicAuthHeaderValue("autoscaling-admin", new SecureString("autoscaling-admin-password".toCharArray()));
-//        return Settings.builder().put(ThreadContext.PREFIX + ".Authorization", value).build();
-//    }
-//
-//    @Override
-//    protected Settings restClientSettings() {
-//        final String value = basicAuthHeaderValue("autoscaling-user", new SecureString("autoscaling-user-password".toCharArray()));
-//        return Settings.builder().put(ThreadContext.PREFIX + ".Authorization", value).build();
-//    }
-
-    public void testCapacityRestCancellation() throws Exception {
+    public void testCapacityRestCancellationAndResponse() throws Exception {
         internalCluster().startMasterOnlyNode();
 
         putAutoscalingPolicy(Map.of("count", Settings.EMPTY, "!sync", Settings.builder().put("check_for_cancel", randomBoolean()).build()));
@@ -103,16 +74,30 @@ public class GetAutoscalingCapacityRestCancellationIT extends AutoscalingIntegTe
             PlainActionFuture<Response> successFuture2 = new PlainActionFuture<>();
             Request getCapacityRequest = new Request("GET", "/_autoscaling/capacity");
             Cancellable cancellable = restClient.performRequestAsync(getCapacityRequest, wrapAsRestResponseListener(cancelledFuture));
-            LocalStateAutoscaling.AutoscalingTestPlugin plugin =
-                internalCluster().getMasterNodeInstance(PluginsService.class).filterPlugins(LocalStateAutoscaling.class).get(0).testPlugin();
+            LocalStateAutoscaling.AutoscalingTestPlugin plugin = internalCluster().getMasterNodeInstance(PluginsService.class)
+                .filterPlugins(LocalStateAutoscaling.class)
+                .get(0)
+                .testPlugin();
             plugin.syncWithDeciderService(() -> {
                 putAutoscalingPolicy(Map.of("count", Settings.EMPTY));
-                assertThat(internalCluster().getMasterNodeInstance(TransportGetAutoscalingCapacityAction.class).responseCacheQueueSize(),
-                    equalTo(1));
+                assertThat(
+                    internalCluster().getMasterNodeInstance(TransportGetAutoscalingCapacityAction.class).responseCacheQueueSize(),
+                    equalTo(1)
+                );
                 restClient.performRequestAsync(getCapacityRequest, wrapAsRestResponseListener(successFuture1));
-                assertBusy(() -> assertThat(internalCluster().getMasterNodeInstance(TransportGetAutoscalingCapacityAction.class).responseCacheQueueSize(), equalTo(2)));
+                assertBusy(
+                    () -> assertThat(
+                        internalCluster().getMasterNodeInstance(TransportGetAutoscalingCapacityAction.class).responseCacheQueueSize(),
+                        equalTo(2)
+                    )
+                );
                 restClient.performRequestAsync(getCapacityRequest, wrapAsRestResponseListener(successFuture2));
-                assertBusy(() -> assertThat(internalCluster().getMasterNodeInstance(TransportGetAutoscalingCapacityAction.class).responseCacheQueueSize(), equalTo(3)));
+                assertBusy(
+                    () -> assertThat(
+                        internalCluster().getMasterNodeInstance(TransportGetAutoscalingCapacityAction.class).responseCacheQueueSize(),
+                        equalTo(3)
+                    )
+                );
                 cancellable.cancel();
                 waitForCancelledCapacityTask();
             });
@@ -123,7 +108,10 @@ public class GetAutoscalingCapacityRestCancellationIT extends AutoscalingIntegTe
             Map<String, Object> response2 = responseAsMap(successFuture2.get());
 
             assertThat(response1, equalTo(response2));
-            final int actualCount = ((Number) XContentMapValues.extractValue("policies.test.deciders.count.reason_details.count", response2)).intValue();
+            final int actualCount = ((Number) XContentMapValues.extractValue(
+                "policies.test.deciders.count.reason_details.count",
+                response2
+            )).intValue();
 
             // validates that the cancelled op did not do the count AND that only one of the two successful invocations did actual work.
             assertThat(actualCount, equalTo(1));
@@ -142,7 +130,6 @@ public class GetAutoscalingCapacityRestCancellationIT extends AutoscalingIntegTe
             }
             fail("found no cancellable tasks");
         });
-
     }
 
     private Map<String, Object> responseAsMap(Response response) throws IOException {
@@ -159,5 +146,4 @@ public class GetAutoscalingCapacityRestCancellationIT extends AutoscalingIntegTe
         final PutAutoscalingPolicyAction.Request request = request1;
         assertAcked(client().execute(PutAutoscalingPolicyAction.INSTANCE, request).actionGet());
     }
-
 }

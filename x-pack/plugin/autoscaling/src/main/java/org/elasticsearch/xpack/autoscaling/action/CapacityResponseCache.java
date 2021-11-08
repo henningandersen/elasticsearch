@@ -8,21 +8,16 @@
 package org.elasticsearch.xpack.autoscaling.action;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.common.util.CancellableSingleObjectCache;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.common.util.concurrent.ListenableFuture;
-import org.elasticsearch.core.Tuple;
 import org.elasticsearch.tasks.TaskCancelledException;
-import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -35,19 +30,28 @@ import java.util.function.Function;
 class CapacityResponseCache<Response> {
     private final Queue<Job> jobQueue = ConcurrentCollections.newQueue();
     private final AtomicInteger jobQueueSize = new AtomicInteger();
-    private final ThreadPool threadPool;
     private final Function<Runnable, Response> refresher;
-    public CapacityResponseCache(ThreadPool threadPool, Function<Runnable, Response> refresher) {
-        this.threadPool = threadPool;
+    private final Consumer<Runnable> runOnThread;
+
+    CapacityResponseCache(Consumer<Runnable> runOnThread, Function<Runnable, Response> refresher) {
+        this.runOnThread = runOnThread;
         this.refresher = refresher;
     }
 
     public void get(BooleanSupplier isCancelled, ActionListener<Response> listener) {
-        jobQueue.offer(new Job(isCancelled, listener));
+        Job job = new Job(isCancelled, listener);
+        jobQueue.offer(job);
         assert jobQueueSize.get() >= 0;
         if (jobQueueSize.getAndIncrement() == 0) {
-            // todo: handle failure here.
-            threadPool.executor(ThreadPool.Names.MANAGEMENT).execute(this::singleThreadRefresh);
+            try {
+                runOnThread.accept(this::singleThreadRefresh);
+            } catch (Exception e) {
+                do {
+                    Job jobToFail = jobQueue.poll();
+                    assert jobToFail != null;
+                    jobToFail.onFailure(e);
+                } while (jobQueueSize.decrementAndGet() > 0);
+            }
         }
     }
 
@@ -102,6 +106,14 @@ class CapacityResponseCache<Response> {
 
         public boolean isCancelled() {
             return isCancelled.getAsBoolean();
+        }
+
+        public void onFailure(Exception e) {
+            try {
+                listener.onFailure(e);
+            } catch (Exception e2) {
+                assert false;
+            }
         }
     }
 }

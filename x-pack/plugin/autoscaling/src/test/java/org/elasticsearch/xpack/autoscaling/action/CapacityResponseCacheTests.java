@@ -8,6 +8,7 @@
 package org.elasticsearch.xpack.autoscaling.action;
 
 import org.elasticsearch.action.support.PlainActionFuture;
+import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.tasks.TaskCancelledException;
 import org.elasticsearch.threadpool.TestThreadPool;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -24,6 +25,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -34,6 +36,10 @@ import static org.hamcrest.Matchers.is;
 
 public class CapacityResponseCacheTests extends AutoscalingTestCase {
     private ThreadPool threadPool;
+    // randomly run on generic pool, since it has at least 4 threads.
+    private final Consumer<Runnable> runOnThread = randomBoolean()
+        ? run -> threadPool.executor(ThreadPool.Names.MANAGEMENT).execute(run)
+        : run -> threadPool.executor(ThreadPool.Names.GENERIC).execute(run);
 
     @Before
     public void createThreadPool() {
@@ -48,7 +54,7 @@ public class CapacityResponseCacheTests extends AutoscalingTestCase {
 
     public void testSingleResponse() throws ExecutionException, InterruptedException {
         Queue<Long> responses = new ArrayDeque<>();
-        CapacityResponseCache<Long> cache = new CapacityResponseCache<>(threadPool, cancelled -> responses.remove());
+        CapacityResponseCache<Long> cache = new CapacityResponseCache<>(runOnThread, cancelled -> responses.remove());
         long response = randomLong();
         responses.add(response);
         PlainActionFuture<Long> future = new PlainActionFuture<>();
@@ -60,7 +66,7 @@ public class CapacityResponseCacheTests extends AutoscalingTestCase {
 
     public void testSingleCancel() {
         CyclicBarrier barrier = new CyclicBarrier(2);
-        CapacityResponseCache<Long> cache = new CapacityResponseCache<>(threadPool, cancelled -> {
+        CapacityResponseCache<Long> cache = new CapacityResponseCache<>(runOnThread, cancelled -> {
             await(barrier);
             await(barrier);
             cancelled.run();
@@ -78,9 +84,9 @@ public class CapacityResponseCacheTests extends AutoscalingTestCase {
         expectThrows(TaskCancelledException.class, future::actionGet);
     }
 
-    public void testMultipleRequests() {
+    public void testMultipleRequests() throws Exception {
         Queue<Supplier<Integer>> responses = new ArrayDeque<>();
-        CapacityResponseCache<Integer> cache = new CapacityResponseCache<>(threadPool, cancellation -> responses.remove().get());
+        CapacityResponseCache<Integer> cache = new CapacityResponseCache<>(runOnThread, ensureNotCancelled -> responses.remove().get());
 
         CyclicBarrier barrier = new CyclicBarrier(2);
         responses.add(() -> {
@@ -96,10 +102,6 @@ public class CapacityResponseCacheTests extends AutoscalingTestCase {
         int count = between(1, 10);
         List<PlainActionFuture<Integer>> supersededFutures = new ArrayList<>(count + 1);
         for (int i = 0; i < count; ++i) {
-//            responses.add(() -> {
-//                fail();
-//                return 0;
-//            });
             PlainActionFuture<Integer> supersededFuture = new PlainActionFuture<>();
             supersededFutures.add(supersededFuture);
             cache.get(() -> false, supersededFuture);
@@ -116,7 +118,7 @@ public class CapacityResponseCacheTests extends AutoscalingTestCase {
         }
         assertThat(responseFuture.isDone(), is(false));
 
-        // release the first blocking thread.
+        // release the initial blocked request.
         await(barrier);
 
         assertThat(blockingFuture.actionGet(), equalTo(0));
@@ -124,19 +126,21 @@ public class CapacityResponseCacheTests extends AutoscalingTestCase {
         assertThat(responseFuture.actionGet(), equalTo(response));
 
         assertThat(responses, empty());
-        assertThat(cache.jobQueueSize(), equalTo(0));
+        assertBusy(() -> assertThat(cache.jobQueueSize(), equalTo(0)));
         assertThat(cache.jobQueueCount(), equalTo(0));
     }
 
-    public void testMultipleRequestsCancelled() {
+    public void testMultipleRequestsCancelled() throws Exception {
         Queue<Function<Runnable, Integer>> responses = new ArrayDeque<>();
-        CapacityResponseCache<Integer> cache = new CapacityResponseCache<>(threadPool, cancellation -> responses.remove().apply(cancellation));
+        CapacityResponseCache<Integer> cache = new CapacityResponseCache<>(
+            runOnThread,
+            ensureNotCancelled -> responses.remove().apply(ensureNotCancelled)
+        );
 
         CyclicBarrier barrier = new CyclicBarrier(2);
-        responses.add(cancellation -> {
+        responses.add(ensureNotCancelled -> {
             await(barrier);
             await(barrier);
-
             return 0;
         });
 
@@ -148,20 +152,16 @@ public class CapacityResponseCacheTests extends AutoscalingTestCase {
         int count = between(1, 10);
         List<PlainActionFuture<Integer>> supersededFutures = new ArrayList<>(count + 1);
         for (int i = 0; i < count; ++i) {
-//            responses.add(cancellation -> {
-//                fail();
-//                return 0;
-//            });
             PlainActionFuture<Integer> supersededFuture = new PlainActionFuture<>();
             supersededFutures.add(supersededFuture);
             cache.get(cancelled::get, supersededFuture);
         }
 
         CyclicBarrier responseBarrier = new CyclicBarrier(2);
-        responses.add(cancellation -> {
+        responses.add(ensureNotCancelled -> {
             await(responseBarrier);
             await(responseBarrier);
-            cancellation.run();
+            ensureNotCancelled.run();
             fail();
             return 0;
         });
@@ -185,13 +185,13 @@ public class CapacityResponseCacheTests extends AutoscalingTestCase {
         expectThrows(TaskCancelledException.class, responseFuture::actionGet);
 
         assertThat(responses, empty());
-        assertThat(cache.jobQueueSize(), equalTo(0));
+        assertBusy(() -> assertThat(cache.jobQueueSize(), equalTo(0)));
         assertThat(cache.jobQueueCount(), equalTo(0));
     }
 
     public void testConcurrentRequests() throws Exception {
         AtomicInteger response = new AtomicInteger();
-        CapacityResponseCache<Integer> cache = new CapacityResponseCache<>(threadPool, cancellable -> response.incrementAndGet());
+        CapacityResponseCache<Integer> cache = new CapacityResponseCache<>(runOnThread, cancellable -> response.incrementAndGet());
         int threadCount = between(2, 10);
         int iterations = between(2, 10);
 
@@ -217,9 +217,35 @@ public class CapacityResponseCacheTests extends AutoscalingTestCase {
             thread.join();
         }
 
-        assertThat(cache.jobQueueSize(), equalTo(0));
+        assertBusy(() -> assertThat(cache.jobQueueSize(), equalTo(0)));
         assertThat(cache.jobQueueCount(), equalTo(0));
     }
+
+    public void testThreadPoolExhausted() throws Exception {
+        CyclicBarrier barrier = new CyclicBarrier(2);
+        CapacityResponseCache<Integer> cache = new CapacityResponseCache<>(run -> {
+            await(barrier);
+            await(barrier);
+            throw new EsRejectedExecutionException();
+        }, cancellable -> {
+            fail();
+            return 0;
+        });
+        PlainActionFuture<Integer> future1 = new PlainActionFuture<>();
+        runOnThread.accept(() -> { cache.get(() -> false, future1); });
+        await(barrier);
+        PlainActionFuture<Integer> future2 = new PlainActionFuture<>();
+        cache.get(() -> false, future2);
+
+        // release the spawned get request.
+        await(barrier);
+
+        expectThrows(EsRejectedExecutionException.class, future1::actionGet);
+        expectThrows(EsRejectedExecutionException.class, future2::actionGet);
+        assertBusy(() -> assertThat(cache.jobQueueSize(), equalTo(0)));
+        assertThat(cache.jobQueueCount(), equalTo(0));
+    }
+
     private void await(CyclicBarrier barrier) {
         try {
             barrier.await();

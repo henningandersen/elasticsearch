@@ -36,6 +36,7 @@ public class LocalStateAutoscaling extends LocalStateCompositeXPackPlugin {
 
     public static class AutoscalingTestPlugin extends Autoscaling {
         private final AutoscalingSyncTestDeciderService syncDeciderService = new AutoscalingSyncTestDeciderService();
+
         private AutoscalingTestPlugin() {
             super(new AutoscalingLicenseChecker(() -> true));
         }
@@ -50,7 +51,8 @@ public class LocalStateAutoscaling extends LocalStateCompositeXPackPlugin {
 
         @Override
         public List<NamedWriteableRegistry.Entry> getNamedWriteables() {
-            return CollectionUtils.appendToCopy(super.getNamedWriteables(),
+            return CollectionUtils.appendToCopy(
+                super.getNamedWriteables(),
                 new NamedWriteableRegistry.Entry(
                     AutoscalingDeciderResult.Reason.class,
                     AutoscalingCountTestDeciderService.NAME,
