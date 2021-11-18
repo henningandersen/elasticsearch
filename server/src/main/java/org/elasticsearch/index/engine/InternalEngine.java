@@ -62,6 +62,7 @@ import org.elasticsearch.core.Booleans;
 import org.elasticsearch.core.Nullable;
 import org.elasticsearch.core.Releasable;
 import org.elasticsearch.core.SuppressForbidden;
+import org.elasticsearch.core.Tuple;
 import org.elasticsearch.core.internal.io.IOUtils;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.VersionType;
@@ -114,6 +115,7 @@ import java.util.stream.Stream;
 
 public class InternalEngine extends Engine {
 
+    public static final Releasable NO_OP_RELEASE_RESERVED_DOCS = () -> {};
     /**
      * When we last pruned expired tombstones from versionMap.deletes:
      */
@@ -1083,14 +1085,19 @@ public class InternalEngine extends Engine {
         } else if (maxSeqNoOfUpdatesOrDeletes <= localCheckpointTracker.getProcessedCheckpoint()) {
             // see Engine#getMaxSeqNoOfUpdatesOrDeletes for the explanation of the optimization using sequence numbers
             assert maxSeqNoOfUpdatesOrDeletes < index.seqNo() : index.seqNo() + ">=" + maxSeqNoOfUpdatesOrDeletes;
-            plan = IndexingStrategy.optimizedAppendOnly(index.version(), 0);
+            plan = IndexingStrategy.optimizedAppendOnly(index.version(), 0, NO_OP_RELEASE_RESERVED_DOCS);
         } else {
             versionMap.enforceSafeAccess();
             final OpVsLuceneDocStatus opVsLucene = compareOpToLuceneDocBasedOnSeqNo(index);
             if (opVsLucene == OpVsLuceneDocStatus.OP_STALE_OR_EQUAL) {
                 plan = IndexingStrategy.processAsStaleOp(index.version(), 0);
             } else {
-                plan = IndexingStrategy.processNormally(opVsLucene == OpVsLuceneDocStatus.LUCENE_DOC_NOT_FOUND, index.version(), 0);
+                plan = IndexingStrategy.processNormally(
+                    opVsLucene == OpVsLuceneDocStatus.LUCENE_DOC_NOT_FOUND,
+                    index.version(),
+                    0,
+                    NO_OP_RELEASE_RESERVED_DOCS
+                );
             }
         }
         return plan;
@@ -1112,11 +1119,12 @@ public class InternalEngine extends Engine {
         // resolve an external operation into an internal one which is safe to replay
         final boolean canOptimizeAddDocument = canOptimizeAddDocument(index);
         if (canOptimizeAddDocument && mayHaveBeenIndexedBefore(index) == false) {
-            final Exception reserveError = tryAcquireInFlightDocs(index, reservingDocs);
+            final Tuple<Releasable, Exception> acquireInFlightDocsResult = tryAcquireInFlightDocs(index, reservingDocs);
+            final Exception reserveError = acquireInFlightDocsResult.v2();
             if (reserveError != null) {
                 plan = IndexingStrategy.failAsTooManyDocs(reserveError);
             } else {
-                plan = IndexingStrategy.optimizedAppendOnly(1L, reservingDocs);
+                plan = IndexingStrategy.optimizedAppendOnly(1L, reservingDocs, acquireInFlightDocsResult.v1());
             }
         } else {
             versionMap.enforceSafeAccess();
@@ -1161,14 +1169,16 @@ public class InternalEngine extends Engine {
                     );
                     plan = IndexingStrategy.skipDueToVersionConflict(e, currentNotFoundOrDeleted, currentVersion);
                 } else {
-                    final Exception reserveError = tryAcquireInFlightDocs(index, reservingDocs);
+                    final Tuple<Releasable, Exception> acquireInFlightDocsResult = tryAcquireInFlightDocs(index, reservingDocs);
+                    final Exception reserveError = acquireInFlightDocsResult.v2();
                     if (reserveError != null) {
                         plan = IndexingStrategy.failAsTooManyDocs(reserveError);
                     } else {
                         plan = IndexingStrategy.processNormally(
                             currentNotFoundOrDeleted,
                             canOptimizeAddDocument ? 1L : index.versionType().updateVersion(currentVersion, index.version()),
-                            reservingDocs
+                            reservingDocs,
+                            acquireInFlightDocsResult.v1()
                         );
                     }
                 }
@@ -1302,6 +1312,7 @@ public class InternalEngine extends Engine {
         final boolean addStaleOpToLucene;
         final int reservedDocs;
         final Optional<IndexResult> earlyResultOnPreFlightError;
+        final Releasable releaseReservedDocs;
 
         private IndexingStrategy(
             boolean currentNotFoundOrDeleted,
@@ -1310,7 +1321,8 @@ public class InternalEngine extends Engine {
             boolean addStaleOpToLucene,
             long versionForIndexing,
             int reservedDocs,
-            IndexResult earlyResultOnPreFlightError
+            IndexResult earlyResultOnPreFlightError,
+            Releasable releaseReservedDocs
         ) {
             assert useLuceneUpdateDocument == false || indexIntoLucene
                 : "use lucene update is set to true, but we're not indexing into lucene";
@@ -1330,10 +1342,11 @@ public class InternalEngine extends Engine {
             this.earlyResultOnPreFlightError = earlyResultOnPreFlightError == null
                 ? Optional.empty()
                 : Optional.of(earlyResultOnPreFlightError);
+            this.releaseReservedDocs = releaseReservedDocs;
         }
 
-        static IndexingStrategy optimizedAppendOnly(long versionForIndexing, int reservedDocs) {
-            return new IndexingStrategy(true, false, true, false, versionForIndexing, reservedDocs, null);
+        static IndexingStrategy optimizedAppendOnly(long versionForIndexing, int reservedDocs, Releasable releaseReservedDocs) {
+            return new IndexingStrategy(true, false, true, false, versionForIndexing, reservedDocs, null, releaseReservedDocs);
         }
 
         public static IndexingStrategy skipDueToVersionConflict(
@@ -1342,10 +1355,24 @@ public class InternalEngine extends Engine {
             long currentVersion
         ) {
             final IndexResult result = new IndexResult(e, currentVersion);
-            return new IndexingStrategy(currentNotFoundOrDeleted, false, false, false, Versions.NOT_FOUND, 0, result);
+            return new IndexingStrategy(
+                currentNotFoundOrDeleted,
+                false,
+                false,
+                false,
+                Versions.NOT_FOUND,
+                0,
+                result,
+                NO_OP_RELEASE_RESERVED_DOCS
+            );
         }
 
-        static IndexingStrategy processNormally(boolean currentNotFoundOrDeleted, long versionForIndexing, int reservedDocs) {
+        static IndexingStrategy processNormally(
+            boolean currentNotFoundOrDeleted,
+            long versionForIndexing,
+            int reservedDocs,
+            Releasable releaseReservedDocs
+        ) {
             return new IndexingStrategy(
                 currentNotFoundOrDeleted,
                 currentNotFoundOrDeleted == false,
@@ -1353,21 +1380,31 @@ public class InternalEngine extends Engine {
                 false,
                 versionForIndexing,
                 reservedDocs,
-                null
+                null,
+                releaseReservedDocs
             );
         }
 
         public static IndexingStrategy processButSkipLucene(boolean currentNotFoundOrDeleted, long versionForIndexing) {
-            return new IndexingStrategy(currentNotFoundOrDeleted, false, false, false, versionForIndexing, 0, null);
+            return new IndexingStrategy(
+                currentNotFoundOrDeleted,
+                false,
+                false,
+                false,
+                versionForIndexing,
+                0,
+                null,
+                NO_OP_RELEASE_RESERVED_DOCS
+            );
         }
 
         static IndexingStrategy processAsStaleOp(long versionForIndexing, int reservedDocs) {
-            return new IndexingStrategy(false, false, false, true, versionForIndexing, reservedDocs, null);
+            return new IndexingStrategy(false, false, false, true, versionForIndexing, reservedDocs, null, NO_OP_RELEASE_RESERVED_DOCS);
         }
 
         static IndexingStrategy failAsTooManyDocs(Exception e) {
             final IndexResult result = new IndexResult(e, Versions.NOT_FOUND);
-            return new IndexingStrategy(false, false, false, false, Versions.NOT_FOUND, 0, result);
+            return new IndexingStrategy(false, false, false, false, Versions.NOT_FOUND, 0, result, NO_OP_RELEASE_RESERVED_DOCS);
         }
     }
 
@@ -1490,16 +1527,16 @@ public class InternalEngine extends Engine {
         return deleteResult;
     }
 
-    private Exception tryAcquireInFlightDocs(Operation operation, int addingDocs) {
+    private Tuple<Releasable, Exception> tryAcquireInFlightDocs(Operation operation, int addingDocs) {
         assert operation.origin() == Operation.Origin.PRIMARY : operation;
         assert operation.seqNo() == SequenceNumbers.UNASSIGNED_SEQ_NO : operation;
         assert addingDocs > 0 : addingDocs;
         final long totalDocs = indexWriter.getPendingNumDocs() + inFlightDocCount.addAndGet(addingDocs);
         if (totalDocs > maxDocs) {
             releaseInFlightDocs(addingDocs);
-            return new IllegalArgumentException("Number of documents in the index can't exceed [" + maxDocs + "]");
+            return Tuple.tuple(null, new IllegalArgumentException("Number of documents in the index can't exceed [" + maxDocs + "]"));
         } else {
-            return null;
+            return Tuple.tuple(() -> releaseInFlightDocs(addingDocs), null);
         }
     }
 
@@ -1539,7 +1576,12 @@ public class InternalEngine extends Engine {
             if (opVsLucene == OpVsLuceneDocStatus.OP_STALE_OR_EQUAL) {
                 plan = DeletionStrategy.processAsStaleOp(delete.version());
             } else {
-                plan = DeletionStrategy.processNormally(opVsLucene == OpVsLuceneDocStatus.LUCENE_DOC_NOT_FOUND, delete.version(), 0);
+                plan = DeletionStrategy.processNormally(
+                    opVsLucene == OpVsLuceneDocStatus.LUCENE_DOC_NOT_FOUND,
+                    delete.version(),
+                    0,
+                    NO_OP_RELEASE_RESERVED_DOCS
+                );
             }
         }
         return plan;
@@ -1595,12 +1637,13 @@ public class InternalEngine extends Engine {
                 );
                 plan = DeletionStrategy.skipDueToVersionConflict(e, currentVersion, currentlyDeleted);
             } else {
-                final Exception reserveError = tryAcquireInFlightDocs(delete, 1);
+                final Tuple<Releasable, Exception> acquireInFlightDocsResult = tryAcquireInFlightDocs(delete, 1);
+                final Exception reserveError = acquireInFlightDocsResult.v2();
                 if (reserveError != null) {
                     plan = DeletionStrategy.failAsTooManyDocs(reserveError);
                 } else {
                     final long versionOfDeletion = delete.versionType().updateVersion(currentVersion, delete.version());
-                    plan = DeletionStrategy.processNormally(currentlyDeleted, versionOfDeletion, 1);
+                    plan = DeletionStrategy.processNormally(currentlyDeleted, versionOfDeletion, 1, acquireInFlightDocsResult.v1());
                 }
             }
         return plan;
@@ -1650,6 +1693,7 @@ public class InternalEngine extends Engine {
         final long versionOfDeletion;
         final Optional<DeleteResult> earlyResultOnPreflightError;
         final int reservedDocs;
+        final Releasable releaseReservedDocs;
 
         private DeletionStrategy(
             boolean deleteFromLucene,
@@ -1657,7 +1701,8 @@ public class InternalEngine extends Engine {
             boolean currentlyDeleted,
             long versionOfDeletion,
             int reservedDocs,
-            DeleteResult earlyResultOnPreflightError
+            DeleteResult earlyResultOnPreflightError,
+            Releasable releaseReservedDocs
         ) {
             assert (deleteFromLucene && earlyResultOnPreflightError != null) == false
                 : "can only delete from lucene or have a preflight result but not both."
@@ -1674,6 +1719,7 @@ public class InternalEngine extends Engine {
             this.earlyResultOnPreflightError = earlyResultOnPreflightError == null
                 ? Optional.empty()
                 : Optional.of(earlyResultOnPreflightError);
+            this.releaseReservedDocs = releaseReservedDocs;
         }
 
         public static DeletionStrategy skipDueToVersionConflict(
@@ -1688,20 +1734,25 @@ public class InternalEngine extends Engine {
                 SequenceNumbers.UNASSIGNED_SEQ_NO,
                 currentlyDeleted == false
             );
-            return new DeletionStrategy(false, false, currentlyDeleted, Versions.NOT_FOUND, 0, deleteResult);
+            return new DeletionStrategy(false, false, currentlyDeleted, Versions.NOT_FOUND, 0, deleteResult, NO_OP_RELEASE_RESERVED_DOCS);
         }
 
-        static DeletionStrategy processNormally(boolean currentlyDeleted, long versionOfDeletion, int reservedDocs) {
-            return new DeletionStrategy(true, false, currentlyDeleted, versionOfDeletion, reservedDocs, null);
+        static DeletionStrategy processNormally(
+            boolean currentlyDeleted,
+            long versionOfDeletion,
+            int reservedDocs,
+            Releasable releaseReservedDocs
+        ) {
+            return new DeletionStrategy(true, false, currentlyDeleted, versionOfDeletion, reservedDocs, null, releaseReservedDocs);
 
         }
 
         public static DeletionStrategy processButSkipLucene(boolean currentlyDeleted, long versionOfDeletion) {
-            return new DeletionStrategy(false, false, currentlyDeleted, versionOfDeletion, 0, null);
+            return new DeletionStrategy(false, false, currentlyDeleted, versionOfDeletion, 0, null, NO_OP_RELEASE_RESERVED_DOCS);
         }
 
         static DeletionStrategy processAsStaleOp(long versionOfDeletion) {
-            return new DeletionStrategy(false, true, false, versionOfDeletion, 0, null);
+            return new DeletionStrategy(false, true, false, versionOfDeletion, 0, null, NO_OP_RELEASE_RESERVED_DOCS);
         }
 
         static DeletionStrategy failAsTooManyDocs(Exception e) {
@@ -1712,7 +1763,7 @@ public class InternalEngine extends Engine {
                 SequenceNumbers.UNASSIGNED_SEQ_NO,
                 false
             );
-            return new DeletionStrategy(false, false, false, Versions.NOT_FOUND, 0, deleteResult);
+            return new DeletionStrategy(false, false, false, Versions.NOT_FOUND, 0, deleteResult, NO_OP_RELEASE_RESERVED_DOCS);
         }
     }
 
