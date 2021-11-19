@@ -1326,7 +1326,7 @@ public abstract class Engine implements Closeable {
             }
 
             boolean isFromTranslog() {
-                return this == LOCAL_TRANSLOG_RECOVERY || this == LOCAL_RESET;
+                return this == LOCAL_TRANSLOG_RECOVERY || this == LOCAL_RESET || this == TRANSACTION;
             }
         }
 
