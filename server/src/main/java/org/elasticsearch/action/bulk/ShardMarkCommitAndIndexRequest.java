@@ -16,15 +16,15 @@ import org.elasticsearch.index.shard.ShardId;
 import java.io.IOException;
 
 // todo: make this a per node request.
-public class ShardPrepareCommitRequest extends ReplicatedWriteRequest<ShardPrepareCommitRequest> {
+public class ShardMarkCommitAndIndexRequest extends ReplicatedWriteRequest<ShardMarkCommitAndIndexRequest> {
     private final TxID txID;
 
-    public ShardPrepareCommitRequest(ShardId shardId, TxID txID) {
+    public ShardMarkCommitAndIndexRequest(ShardId shardId, TxID txID) {
         super(shardId);
         this.txID = txID;
     }
 
-    public ShardPrepareCommitRequest(StreamInput in) throws IOException {
+    public ShardMarkCommitAndIndexRequest(StreamInput in) throws IOException {
         super(in);
         this.txID = new TxID(in);
     }

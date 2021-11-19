@@ -8,39 +8,32 @@
 
 package org.elasticsearch.action.bulk;
 
-import org.elasticsearch.action.support.replication.ReplicatedWriteRequest;
+import org.elasticsearch.action.support.WriteResponse;
+import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
+import java.util.Map;
 
-// todo: make this a per node request.
-public class ShardPrepareCommitRequest extends ReplicatedWriteRequest<ShardPrepareCommitRequest> {
-    private final TxID txID;
+public class ShardMarkCommitAndIndexResponse extends ReplicationResponse implements WriteResponse {
 
-    public ShardPrepareCommitRequest(ShardId shardId, TxID txID) {
-        super(shardId);
-        this.txID = txID;
+
+    public ShardMarkCommitAndIndexResponse() {
     }
 
-    public ShardPrepareCommitRequest(StreamInput in) throws IOException {
+    public ShardMarkCommitAndIndexResponse(StreamInput in) throws IOException {
         super(in);
-        this.txID = new TxID(in);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        txID.writeTo(out);
-    }
-
-    public TxID txid() {
-        return txID;
     }
 
     @Override
-    public String toString() {
-        return "[" + shardId + "," + txID + "]";
+    public void setForcedRefresh(boolean forcedRefresh) {
+        // this does not refresh currently.
+        throw new UnsupportedOperationException();
     }
 }

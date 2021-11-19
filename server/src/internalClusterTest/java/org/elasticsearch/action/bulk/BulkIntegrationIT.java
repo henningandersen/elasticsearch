@@ -13,6 +13,7 @@ import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.ingest.PutPipelineRequest;
@@ -262,6 +263,12 @@ public class BulkIntegrationIT extends ESIntegTestCase {
 
         // one failure
         assertThat(response1.v2() != null, is(response2.v2() == null));
+
+        client().admin().indices().prepareRefresh("test").get();
+
+        GetResponse getResponse = client().prepareGet("test", "1").get();
+// sadly this fails...
+//                assertThat(getResponse.isExists(), is(true));
 
     }
 

@@ -213,8 +213,6 @@ public class TransportShardBulkAction extends TransportWriteAction<BulkShardRequ
                     }
 
                     primary.loggingComplete(request.txID(), transactionId[0]);
-                    transactionId[0] = primary.commitTransaction(request.txID());
-                    primary.closeTransaction(transactionId);
                 } catch (Exception x) {
                     logger.warn("Encountered an error while executing bulk transaction", x);
                     primary.rollbackTransaction(transactionId);
