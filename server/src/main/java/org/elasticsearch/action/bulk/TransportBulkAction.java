@@ -779,6 +779,7 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
             for (ShardPrepareCommitResponse response : responses) {
                 for (Map.Entry<TxID, Boolean> conflict : response.conflicts().entrySet()) {
                     if (conflict.getValue() == false) {
+                        logger.info("aborting transaction due to other transaction " + conflict.getKey());
                         throw new ElasticsearchException("conflicting transaction [{}] on shard", conflict.getKey());
                     }
                 }

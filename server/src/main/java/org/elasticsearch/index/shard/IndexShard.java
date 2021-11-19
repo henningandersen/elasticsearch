@@ -4139,9 +4139,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     }
 
     public Map<TxID, Boolean> prepareCommit(TxID txID) {
-        // todo: lookup in transaction table
-        transactionRegistry.prepare(txID);
-        return new HashMap<TxID, Boolean>();
+        return transactionRegistry.prepare(txID);
     }
 
 

@@ -9,6 +9,7 @@
 package org.elasticsearch.action.bulk;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
@@ -19,10 +20,20 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.support.replication.ReplicationRequest;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
+import org.elasticsearch.core.Tuple;
 import org.elasticsearch.ingest.IngestTestPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.test.ESIntegTestCase;
+import org.elasticsearch.test.InternalSettingsPlugin;
+import org.elasticsearch.test.transport.MockTransportService;
+import org.elasticsearch.test.transport.StubbableTransport;
+import org.elasticsearch.transport.Transport;
+import org.elasticsearch.transport.TransportRequest;
+import org.elasticsearch.transport.TransportRequestOptions;
+import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentType;
 
@@ -32,6 +43,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,7 +66,7 @@ import static org.hamcrest.Matchers.oneOf;
 public class BulkIntegrationIT extends ESIntegTestCase {
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(IngestTestPlugin.class);
+        return Arrays.asList(IngestTestPlugin.class, MockTransportService.TestPlugin.class);
     }
 
     public void testBulkIndexCreatesMapping() throws Exception {
@@ -197,4 +212,64 @@ public class BulkIntegrationIT extends ESIntegTestCase {
         }
     }
 
+    // tests that we abandon one of two conflicting transactions.
+    public void testPrepareConflict() throws Exception {
+        int shards = between(1, 5);
+        createIndex("test", Settings.builder().put(IndexMetadata.SETTING_NUMBER_OF_SHARDS, shards).build());
+        String coordinating = internalCluster().startCoordinatingOnlyNode(Settings.EMPTY);
+        Iterable<TransportService> transportServiceIterable = internalCluster().getInstances(
+            TransportService.class
+        );
+        CountDownLatch ready = new CountDownLatch(1);
+        Set<TxID> txes = ConcurrentCollections.newConcurrentSet();
+        // todo: only really need to do this on coordinator.
+        transportServiceIterable.forEach(ts -> ((MockTransportService) ts).addSendBehavior(new StubbableTransport.SendRequestBehavior() {
+            @Override
+            public void sendRequest(Transport.Connection connection, long requestId, String action, TransportRequest request, TransportRequestOptions options) throws IOException {
+                if (action.startsWith(ShardPrepareCommitAction.NAME)) {
+                    txes.add(((ShardPrepareCommitRequest) request).txid());
+                    new Thread(() -> {
+                        try {
+                            ready.await();
+                        } catch (InterruptedException e) {
+                            fail();
+                        }
+                        try {
+                            connection.sendRequest(requestId, action, request, options);
+                        } catch (IOException e) {
+                            fail();
+                        }
+                    }).start();
+                } else {
+                    connection.sendRequest(requestId, action, request, options);
+                }
+            }
+        }));
+
+        ActionFuture<IndexResponse> future1 = client(coordinating).prepareIndex("test")
+            .setId("1")
+            .setSource(Map.of("f" + randomIntBetween(1, 10), randomNonNegativeLong()), XContentType.JSON)
+            .execute();
+        ActionFuture<IndexResponse> future2 = client(coordinating).prepareIndex("test")
+            .setId("1")
+            .setSource(Map.of("g" + randomIntBetween(1, 10), randomNonNegativeLong()), XContentType.JSON)
+            .execute();
+        assertBusy(() -> assertThat(txes.size(), equalTo(2)));
+
+        ready.countDown();
+        Tuple<IndexResponse, Exception> response1 = resultOrException(future1);
+        Tuple<IndexResponse, Exception> response2 = resultOrException(future2);
+
+        // one failure
+        assertThat(response1.v2() != null, is(response2.v2() == null));
+
+    }
+
+    Tuple<IndexResponse, Exception> resultOrException(ActionFuture<IndexResponse> future) {
+        try {
+            return Tuple.tuple(future.actionGet(), null);
+        } catch (Exception e) {
+            return Tuple.tuple(null, e);
+        }
+    }
 }
