@@ -999,7 +999,11 @@ public class InternalEngine extends Engine {
                     assert index.seqNo() >= 0 : "ops should have an assigned seq no.; origin: " + index.origin();
 
                     analyze(index.docs());
-                    indexResult = new IndexResult(plan.versionForIndexing, index.primaryTerm(), index.seqNo(), plan.currentNotFoundOrDeleted);
+                    if (index.origin() == Operation.Origin.TRANSACTION) {
+                        indexResult = indexIntoLucene(index, plan);
+                    } else {
+                        indexResult = new IndexResult(plan.versionForIndexing, index.primaryTerm(), index.seqNo(), plan.currentNotFoundOrDeleted);
+                    }
                 }
                 if (index.origin().isFromTranslog() == false) {
                     final Translog.Location location;
@@ -1020,14 +1024,16 @@ public class InternalEngine extends Engine {
                     }
                     indexResult.setTranslogLocation(location);
                 }
-                if (plan.indexIntoLucene && indexResult.getResultType() == Result.Type.SUCCESS) {
-                    final Translog.Location translogLocation = trackTranslogLocation.get() ? indexResult.getTranslogLocation() : null;
+                if (plan.indexIntoLucene && indexResult.getResultType() == Result.Type.SUCCESS && index.origin() == Operation.Origin.TRANSACTION) {
+                    final Translog.Location translogLocation = null; //trackTranslogLocation.get() ? indexResult.getTranslogLocation() :null;
                     versionMap.maybePutIndexUnderLock(
                         index.uid().bytes(),
                         new IndexVersionValue(translogLocation, plan.versionForIndexing, index.seqNo(), index.primaryTerm())
                     );
                 }
-                localCheckpointTracker.markSeqNoAsProcessed(indexResult.getSeqNo());
+                if (index.origin() == Operation.Origin.TRANSACTION) {
+                    localCheckpointTracker.markSeqNoAsProcessed(indexResult.getSeqNo());
+                }
                 if (indexResult.getTranslogLocation() == null) {
                     // the op is coming from the translog (and is hence persisted already) or it does not have a sequence number
                     assert index.origin().isFromTranslog() || indexResult.getSeqNo() == SequenceNumbers.UNASSIGNED_SEQ_NO;

@@ -106,11 +106,11 @@ public class ShardTransactionRegistry {
         return byTxID.get(txID);
     }
 
-    public int size() {
+    public synchronized int size() {
         return byTxID.size();
     }
 
-    public Translog.Location translogHead(TxID txID) {
+    public synchronized Translog.Location translogHead(TxID txID) {
         return translogHeads.get(txID);
     }
 }

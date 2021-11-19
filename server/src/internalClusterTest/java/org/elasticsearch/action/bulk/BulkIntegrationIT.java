@@ -264,11 +264,11 @@ public class BulkIntegrationIT extends ESIntegTestCase {
         // one failure
         assertThat(response1.v2() != null, is(response2.v2() == null));
 
-        client().admin().indices().prepareRefresh("test").get();
-
+        if (randomBoolean()) {
+            client().admin().indices().prepareRefresh("test").get();
+        }
         GetResponse getResponse = client().prepareGet("test", "1").get();
-// sadly this fails...
-//                assertThat(getResponse.isExists(), is(true));
+        assertThat(getResponse.isExists(), is(true));
 
     }
 
