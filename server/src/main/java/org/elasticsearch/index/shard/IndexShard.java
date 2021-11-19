@@ -1618,8 +1618,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         ); // completes stats recording
     }
 
-    public void loggingComplete(TxID txID, Translog.Location headOfTranslogList) {
-        transactionRegistry.loggingComplete(txID, headOfTranslogList);
+    public void loggingComplete(TxID txID, Translog.Location headOfTranslogList, int reservedDocs) {
+        transactionRegistry.loggingComplete(txID, headOfTranslogList, () -> getEngine().releaseInFlightDocs(reservedDocs));
     }
 
     private static final class NonClosingReaderWrapper extends FilterDirectoryReader {

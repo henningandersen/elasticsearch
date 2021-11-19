@@ -9,6 +9,7 @@
 package org.elasticsearch.index.shard;
 
 import org.elasticsearch.action.bulk.TxID;
+import org.elasticsearch.core.Releasable;
 import org.elasticsearch.index.translog.Translog;
 
 import java.util.HashMap;
@@ -23,6 +24,7 @@ public class ShardTransactionRegistry {
     private final Map<TxID, Set<String>> byTxID = new HashMap<>();
     private final Map<TxID, Set<String>> conflictingKeysByTxID = new HashMap<>();
     private final Map<TxID, Translog.Location> translogHeads = new HashMap<>();
+    private final Map<TxID, Releasable> reservedDocsReleseablesByTx = new HashMap<>();
 
     private final Set<TxID> prepared = new HashSet<>();
     // todo: less locking and perhaps totally different content...
@@ -45,13 +47,15 @@ public class ShardTransactionRegistry {
         byTxID.remove(txID).forEach(id -> cleanByKey(id, txID));
         prepared.remove(txID);
         conflictingKeysByTxID.remove(txID);
+        reservedDocsReleseablesByTx.remove(txID);
         assert invariant();
     }
 
-    public synchronized void loggingComplete(TxID txID, Translog.Location headOfTranslogList) {
+    public synchronized void loggingComplete(TxID txID, Translog.Location headOfTranslogList, Releasable releaseReservedDocs) {
         assert translogHeads.containsKey(txID) == false;
 
         translogHeads.put(txID, headOfTranslogList);
+        reservedDocsReleseablesByTx.put(txID, releaseReservedDocs);
     }
 
     public synchronized Map<TxID, Boolean> prepare(TxID txID) {

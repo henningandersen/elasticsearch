@@ -2078,4 +2078,8 @@ public abstract class Engine implements Closeable {
     public final EngineConfig getEngineConfig() {
         return engineConfig;
     }
+
+    public void releaseInFlightDocs(int numDocs) {
+
+    }
 }

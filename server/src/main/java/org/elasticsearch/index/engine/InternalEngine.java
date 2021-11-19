@@ -1201,7 +1201,7 @@ public class InternalEngine extends Engine {
                 index.seqNo(),
                 plan.currentNotFoundOrDeleted,
                 plan.reservedDocs,
-                0
+                index.estimatedSizeInBytes()
             );
         } catch (Exception ex) {
             if (ex instanceof AlreadyClosedException == false
@@ -1508,7 +1508,8 @@ public class InternalEngine extends Engine {
         }
     }
 
-    private void releaseInFlightDocs(int numDocs) {
+    @Override
+    public void releaseInFlightDocs(int numDocs) {
         assert numDocs >= 0 : numDocs;
         final long newValue = inFlightDocCount.addAndGet(-numDocs);
         assert newValue >= 0 : "inFlightDocCount must not be negative [" + newValue + "]";
