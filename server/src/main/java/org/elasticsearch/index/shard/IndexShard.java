@@ -162,7 +162,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -887,9 +886,15 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         return getEngine().startTransaction(id);
     }
 
-    public boolean commitTransaction(Translog.Location[] transactionId) throws IOException {
-        transactionId[0] = getEngine().commitTransaction(transactionId[0]);
-        return true;
+    public Translog.Location commitTransaction(TxID txID) throws IOException {
+        return getEngine().commitTransaction(transactionRegistry.translogHead(txID), operation -> {
+            try {
+                return applyTranslogOperation(operation, Engine.Operation.Origin.TRANSACTION);
+            } catch (IOException e) {
+                assert false;
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public boolean rollbackTransaction(Translog.Location[] transactionId) throws IOException {
@@ -1613,6 +1618,10 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         ); // completes stats recording
     }
 
+    public void loggingComplete(TxID txID, Translog.Location headOfTranslogList) {
+        transactionRegistry.loggingComplete(txID, headOfTranslogList);
+    }
+
     private static final class NonClosingReaderWrapper extends FilterDirectoryReader {
 
         private NonClosingReaderWrapper(DirectoryReader in) throws IOException {
@@ -2150,6 +2159,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 assert assertPrimaryMode();
             } else if (origin == Engine.Operation.Origin.REPLICA) {
                 assert assertReplicationTarget();
+            } else if (origin == Engine.Operation.Origin.TRANSACTION) {
+                // empty
             } else {
                 assert origin == Engine.Operation.Origin.LOCAL_RESET;
                 assert getActiveOperationsCount() == OPERATIONS_BLOCKED
@@ -4134,8 +4145,9 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         return retentionLeaseSyncer;
     }
 
-    public void registerTransaction(TxID id, Set<String> keys) {
+    public Translog.Location startTransaction(TxID id, Set<String> keys) throws IOException {
         transactionRegistry.registerTransaction(id, keys);
+        return getEngine().startTransaction(id.id());
     }
 
     public Map<TxID, Boolean> prepareCommit(TxID txID) {

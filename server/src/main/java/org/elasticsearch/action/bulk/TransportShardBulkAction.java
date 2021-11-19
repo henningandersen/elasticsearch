@@ -33,7 +33,6 @@ import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.action.index.MappingUpdatedAction;
 import org.elasticsearch.cluster.action.shard.ShardStateAction;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.compress.CompressedXContent;
 import org.elasticsearch.common.inject.Inject;
@@ -81,7 +80,6 @@ public class TransportShardBulkAction extends TransportWriteAction<BulkShardRequ
 
     private final UpdateHelper updateHelper;
     private final MappingUpdatedAction mappingUpdatedAction;
-    private static final ShardTransactionRegistry transactionRegistry = new ShardTransactionRegistry();
 
     @Inject
     public TransportShardBulkAction(
@@ -177,8 +175,14 @@ public class TransportShardBulkAction extends TransportWriteAction<BulkShardRequ
         ThreadPool threadPool,
         String executorName
     ) {
-        primary.registerTransaction(request.txID(),
-            Arrays.stream(request.items()).map(BulkItemRequest::request).map(DocWriteRequest::id).collect(Collectors.toSet()));
+        Translog.Location[] transactionId = new Translog.Location[1];
+        try {
+            transactionId[0] = primary.startTransaction(request.txID(),
+                Arrays.stream(request.items()).map(BulkItemRequest::request).map(DocWriteRequest::id).collect(Collectors.toSet()));
+        } catch (IOException e) {
+            assert false;
+            throw new RuntimeException(e);
+        }
         new ActionRunnable<>(listener) {
 
             private final Executor executor = threadPool.executor(executorName);
@@ -189,11 +193,7 @@ public class TransportShardBulkAction extends TransportWriteAction<BulkShardRequ
 
             @Override
             protected void doRun() throws Exception {
-                TxID txID1 = TxID.create();
-                Translog.Location[] transactionId = new Translog.Location[1];
                 try {
-                    transactionId[0] = primary.startTransaction(txID1.id());
-                    transactionRegistry.registerTransaction(txID1, Set.of(transactionId[0].id()));
 
                     while (context.hasMoreOperationsToExecute()) {
                         if (executeBulkItemRequest(
@@ -212,11 +212,12 @@ public class TransportShardBulkAction extends TransportWriteAction<BulkShardRequ
                         assert context.isInitial(); // either completed and moved to next or reset
                     }
 
-                    primary.commitTransaction(transactionId);
+                    primary.loggingComplete(request.txID(), transactionId[0]);
+                    transactionId[0] = primary.commitTransaction(request.txID());
+                    primary.closeTransaction(transactionId);
                 } catch (Exception x) {
                     logger.warn("Encountered an error while executing bulk transaction", x);
                     primary.rollbackTransaction(transactionId);
-                } finally {
                     primary.closeTransaction(transactionId);
                 }
                 primary.getBulkOperationListener().afterBulk(request.totalSizeInBytes(), System.nanoTime() - startBulkTime);

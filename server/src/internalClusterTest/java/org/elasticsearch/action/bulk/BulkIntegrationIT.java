@@ -226,7 +226,7 @@ public class BulkIntegrationIT extends ESIntegTestCase {
         transportServiceIterable.forEach(ts -> ((MockTransportService) ts).addSendBehavior(new StubbableTransport.SendRequestBehavior() {
             @Override
             public void sendRequest(Transport.Connection connection, long requestId, String action, TransportRequest request, TransportRequestOptions options) throws IOException {
-                if (action.startsWith(ShardPrepareCommitAction.NAME)) {
+                if (action.equals(ShardPrepareCommitAction.NAME)) {
                     txes.add(((ShardPrepareCommitRequest) request).txid());
                     new Thread(() -> {
                         try {
