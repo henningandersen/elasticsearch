@@ -742,8 +742,14 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
             ActionListener<Void> markAndCommitListener = new ActionListener<Void>() {
                 @Override
                 public void onResponse(Void ignored) {
-                    // todo: mark and commit
-                    listener.onResponse(bulkResponse);
+                    // failure is not an option at this time YOLO.
+                    GroupedActionListener<ShardMarkCommitAndIndexResponse> commitResponseListener =
+                        new GroupedActionListener<>(listener.map(responses -> bulkResponse), requestsByShard.size());
+                    requestsByShard.keySet()
+                            .forEach(shardId ->
+                                    client.executeLocally(ShardMarkCommitAndIndexAction.INSTANCE,
+                                        new ShardMarkCommitAndIndexRequest(shardId, txID), commitResponseListener)
+                            );
                 }
 
                 @Override

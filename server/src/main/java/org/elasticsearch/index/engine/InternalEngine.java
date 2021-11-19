@@ -865,6 +865,8 @@ public class InternalEngine extends Engine {
                 case LOCAL_RESET:
                     assert index.isRetry();
                     return true; // allow to optimize in order to update the max safe time stamp
+                case TRANSACTION:
+                    return false;
                 default:
                     throw new IllegalArgumentException("unknown origin " + index.origin());
             }
@@ -2101,8 +2103,8 @@ public class InternalEngine extends Engine {
             }
         }
 
+        closeTransaction(commitLocation);
         return commitLocation;
-
     }
 
     @Override
