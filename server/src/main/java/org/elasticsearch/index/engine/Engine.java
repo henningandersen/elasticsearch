@@ -81,6 +81,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -323,7 +324,8 @@ public abstract class Engine implements Closeable {
 
     public abstract Translog.Location startTransaction(String id) throws IOException;
 
-    public abstract Translog.Location commitTransaction(Translog.Location prevId) throws IOException;
+    public abstract Translog.Location commitTransaction(Translog.Location prevId,
+                                                        Function<Translog.Operation, Engine.Result> applier) throws IOException;
 
     public abstract Translog.Location rollbackTransaction(Translog.Location prevId) throws IOException;
 
@@ -1312,6 +1314,7 @@ public abstract class Engine implements Closeable {
         }
 
         public enum Origin {
+            TRANSACTION,
             PRIMARY,
             REPLICA,
             PEER_RECOVERY,

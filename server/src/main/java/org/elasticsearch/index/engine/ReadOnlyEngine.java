@@ -48,6 +48,7 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -533,7 +534,8 @@ public class ReadOnlyEngine extends Engine {
     }
 
     @Override
-    public Translog.Location commitTransaction(Translog.Location transactionId) throws IOException {
+    public Translog.Location commitTransaction(Translog.Location transactionId,
+                                               Function<Translog.Operation, Result> applier) throws IOException {
         return null;
     }
 

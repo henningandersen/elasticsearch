@@ -2074,7 +2074,10 @@ public class InternalEngine extends Engine {
     }
 
     @Override
-    public Translog.Location commitTransaction(Translog.Location prevId) throws IOException {
+    public Translog.Location commitTransaction(Translog.Location prevId, Function<Translog.Operation, Engine.Result> applier) throws IOException {
+        Translog.Location commitLocation = translog.add(
+            new Translog.TxCommit(doGenerateSeqNoForOperation(new TxOp(System.nanoTime())), prevId));
+
         Translog.Location loc = prevId;
 
         while (loc != null) {
@@ -2087,6 +2090,8 @@ public class InternalEngine extends Engine {
             logger.info("Committing op " + op);
 
             if (op instanceof Translog.TransactionMember) {
+                // todo: lots of things here, but maybe this works for now...
+                applier.apply(op);
                 loc = ((Translog.TransactionMember)op).getTransactionId();
             } else if (op instanceof Translog.TxStart) {
                 break;
@@ -2096,8 +2101,7 @@ public class InternalEngine extends Engine {
             }
         }
 
-        return translog.add(
-            new Translog.TxCommit(doGenerateSeqNoForOperation(new TxOp(System.nanoTime())), prevId));
+        return commitLocation;
 
     }
 
