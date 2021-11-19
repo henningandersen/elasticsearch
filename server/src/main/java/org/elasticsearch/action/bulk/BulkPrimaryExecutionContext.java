@@ -64,6 +64,8 @@ class BulkPrimaryExecutionContext {
     private DocWriteRequest<?> requestToExecute;
     private BulkItemResponse executionResult;
     private int retryCounter;
+    private int reservedDocs;
+    private long reservedSize;
 
     BulkPrimaryExecutionContext(BulkShardRequest request, IndexShard primary) {
         this.request = request;
@@ -240,6 +242,8 @@ class BulkPrimaryExecutionContext {
         DocWriteRequest<?> docWriteRequest = getRequestToExecute();
         switch (result.getResultType()) {
             case SUCCESS:
+                reservedDocs += result.getReservedDocs();
+                reservedSize += result.getReservedSize();
                 final DocWriteResponse response;
                 if (result.getOperationType() == Engine.Operation.TYPE.INDEX) {
                     Engine.IndexResult indexResult = (Engine.IndexResult) result;

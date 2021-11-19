@@ -367,6 +367,8 @@ public abstract class Engine implements Closeable {
         private final Exception failure;
         private final SetOnce<Boolean> freeze = new SetOnce<>();
         private final Mapping requiredMappingUpdate;
+        private final int reservedDocs;
+        private final long reservedSize;
         private Translog.Location translogLocation;
         private long took;
 
@@ -378,6 +380,8 @@ public abstract class Engine implements Closeable {
             this.seqNo = seqNo;
             this.requiredMappingUpdate = null;
             this.resultType = Type.FAILURE;
+            this.reservedDocs = 0;
+            this.reservedSize = 0;
         }
 
         protected Result(Operation.TYPE operationType, long version, long term, long seqNo) {
@@ -388,6 +392,20 @@ public abstract class Engine implements Closeable {
             this.failure = null;
             this.requiredMappingUpdate = null;
             this.resultType = Type.SUCCESS;
+            this.reservedDocs = 0;
+            this.reservedSize = 0;
+        }
+
+        protected Result(Operation.TYPE operationType, long version, long term, long seqNo, int reservedDocs, long reservedSize) {
+            this.operationType = operationType;
+            this.version = version;
+            this.seqNo = seqNo;
+            this.term = term;
+            this.failure = null;
+            this.requiredMappingUpdate = null;
+            this.resultType = Type.SUCCESS;
+            this.reservedDocs = reservedDocs;
+            this.reservedSize = reservedSize;
         }
 
         protected Result(Operation.TYPE operationType, Mapping requiredMappingUpdate) {
@@ -398,6 +416,8 @@ public abstract class Engine implements Closeable {
             this.failure = null;
             this.requiredMappingUpdate = requiredMappingUpdate;
             this.resultType = Type.MAPPING_UPDATE_REQUIRED;
+            this.reservedDocs = 0;
+            this.reservedSize = 0;
         }
 
         /** whether the operation was successful, has failed or was aborted due to a mapping update */
@@ -450,6 +470,14 @@ public abstract class Engine implements Closeable {
             return operationType;
         }
 
+        public int getReservedDocs() {
+            return reservedDocs;
+        }
+
+        public long getReservedSize() {
+            return reservedSize;
+        }
+
         void setTranslogLocation(Translog.Location translogLocation) {
             if (freeze.get() == null) {
                 this.translogLocation = translogLocation;
@@ -480,6 +508,11 @@ public abstract class Engine implements Closeable {
     public static class IndexResult extends Result {
 
         private final boolean created;
+
+        public IndexResult(long version, long term, long seqNo, boolean created, int reservedDocs, long reservedSize) {
+            super(Operation.TYPE.INDEX, version, term, seqNo, reservedDocs, reservedSize);
+            this.created = created;
+        }
 
         public IndexResult(long version, long term, long seqNo, boolean created) {
             super(Operation.TYPE.INDEX, version, term, seqNo);
@@ -512,6 +545,11 @@ public abstract class Engine implements Closeable {
     public static class DeleteResult extends Result {
 
         private final boolean found;
+
+        public DeleteResult(long version, long term, long seqNo, boolean found, int reservedDocs, long reservedSpace) {
+            super(Operation.TYPE.DELETE, version, term, seqNo, reservedDocs, reservedSpace);
+            this.found = found;
+        }
 
         public DeleteResult(long version, long term, long seqNo, boolean found) {
             super(Operation.TYPE.DELETE, version, term, seqNo);

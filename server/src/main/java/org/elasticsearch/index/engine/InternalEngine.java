@@ -1196,7 +1196,13 @@ public class InternalEngine extends Engine {
                 assert assertDocDoesNotExist(index, canOptimizeAddDocument(index) == false);
                 addDocs(index.docs(), indexWriter);
             }
-            return new IndexResult(plan.versionForIndexing, index.primaryTerm(), index.seqNo(), plan.currentNotFoundOrDeleted);
+            return new IndexResult(plan.versionForIndexing,
+                index.primaryTerm(),
+                index.seqNo(),
+                plan.currentNotFoundOrDeleted,
+                plan.reservedDocs,
+                0
+            );
         } catch (Exception ex) {
             if (ex instanceof AlreadyClosedException == false
                 && indexWriter.getTragicException() == null
@@ -1621,7 +1627,8 @@ public class InternalEngine extends Engine {
             } else {
                 indexWriter.softUpdateDocument(delete.uid(), doc, softDeletesField);
             }
-            return new DeleteResult(plan.versionOfDeletion, delete.primaryTerm(), delete.seqNo(), plan.currentlyDeleted == false);
+            return new DeleteResult(plan.versionOfDeletion, delete.primaryTerm(), delete.seqNo(), plan.currentlyDeleted == false,
+                plan.reservedDocs, 0);
         } catch (final Exception ex) {
             /*
              * Document level failures when deleting are unexpected, we likely hit something fatal such as the Lucene index being corrupt,
