@@ -1819,9 +1819,9 @@ public class InternalEngine extends Engine {
                 } finally {
                     store.decRef();
                 }
-                if (refreshed) {
-                    lastRefreshedCheckpointListener.updateRefreshedCheckpoint(localCheckpointBeforeRefresh);
-                }
+//                if (refreshed) {
+//                    lastRefreshedCheckpointListener.updateRefreshedCheckpoint(localCheckpointBeforeRefresh);
+//                }
             } else {
                 refreshed = false;
             }
