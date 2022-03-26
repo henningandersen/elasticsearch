@@ -126,12 +126,6 @@ public class DiskThresholdDecider extends AllocationDecider {
 
         // Where reserved space is unavailable (e.g. stats are out-of-sync) compute a conservative estimate for initialising shards
         for (ShardRouting routing : node.shardsWithState(ShardRoutingState.INITIALIZING)) {
-            if (routing.relocatingNodeId() == null) {
-                // in practice the only initializing-but-not-relocating shards with a nonzero expected shard size will be ones created
-                // by a resize (shrink/split/clone) operation which we expect to happen using hard links, so they shouldn't be taking
-                // any additional space and can be ignored here
-                continue;
-            }
             if (reservedSpace.containsShardId(routing.shardId())) {
                 continue;
             }
@@ -140,7 +134,14 @@ public class DiskThresholdDecider extends AllocationDecider {
             // if we don't yet know the actual path of the incoming shard then conservatively assume it's going to the path with the least
             // free space
             if (actualPath == null || actualPath.equals(dataPath)) {
-                totalSize += getExpectedShardSize(routing, 0L, clusterInfo, null, metadata, routingTable);
+                totalSize += getExpectedShardSize(
+                    routing,
+                    Math.max(routing.getExpectedShardSize(), 0L),
+                    clusterInfo,
+                    null,
+                    metadata,
+                    routingTable
+                );
             }
         }
 

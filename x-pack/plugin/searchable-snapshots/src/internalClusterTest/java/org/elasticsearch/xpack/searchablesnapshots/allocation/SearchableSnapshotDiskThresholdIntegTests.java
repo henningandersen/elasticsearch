@@ -248,7 +248,6 @@ public class SearchableSnapshotDiskThresholdIntegTests extends DiskUsageIntegTes
         }
         extraLatch.await();
 
-        // TODO Indices should not be allocated without checking the node disk usage first
         assertBusy(() -> {
             var state = client().admin().cluster().prepareState().setRoutingTable(true).get().getState();
             assertThat(
@@ -259,7 +258,7 @@ public class SearchableSnapshotDiskThresholdIntegTests extends DiskUsageIntegTes
                         shardRouting -> shardRouting.shardId().getIndexName().startsWith(extraPrefix)
                             && state.metadata().index(shardRouting.shardId().getIndex()).isSearchableSnapshot()
                     )
-                    .allMatch(
+                    .noneMatch(
                         shardRouting -> shardRouting.state() == ShardRoutingState.STARTED
                             && otherDataNodeId.equals(shardRouting.currentNodeId())
                     ),
