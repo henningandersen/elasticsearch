@@ -146,6 +146,33 @@ public class EsExecutors {
         }
     }
 
+    public static QOSThreadPoolExecutor newFixedQOS(
+        String name,
+        int size,
+        int maxSize,
+        int queueCapacity,
+        ThreadFactory threadFactory,
+        ThreadContext contextHolder
+    ) {
+        BlockingQueue<Runnable> queue;
+        if (queueCapacity < 0) {
+            queue = ConcurrentCollections.newBlockingQueue();
+        } else {
+            queue = new SizeBlockingQueue<>(ConcurrentCollections.<Runnable>newBlockingQueue(), queueCapacity);
+        }
+        return QOSThreadPoolExecutor.create(
+            name,
+            size,
+            maxSize,
+            10,
+            TimeUnit.SECONDS,
+            queue,
+            threadFactory,
+            new EsAbortPolicy(),
+            contextHolder
+        );
+    }
+
     /**
      * Checks if the runnable arose from asynchronous submission of a task to an executor. If an uncaught exception was thrown
      * during the execution of this task, we need to inspect this runnable and see if it is an error that should be propagated

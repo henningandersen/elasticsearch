@@ -16,6 +16,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.elasticsearch.action.StepListener;
 import org.elasticsearch.common.unit.ByteSizeValue;
+import org.elasticsearch.common.util.concurrent.QOSThreadPoolExecutor;
 import org.elasticsearch.index.snapshots.blobstore.BlobStoreIndexShardSnapshot.FileInfo;
 import org.elasticsearch.xpack.searchablesnapshots.cache.common.ByteRange;
 import org.elasticsearch.xpack.searchablesnapshots.cache.shared.FrozenCacheService.FrozenCacheFile;
@@ -165,7 +166,8 @@ public class FrozenIndexInput extends MetadataCachingIndexInput {
                 directory.cacheFetchAsyncExecutor()
             );
 
-            final int bytesRead = populateCacheFuture.asFuture().get();
+            final int bytesRead = QOSThreadPoolExecutor.pauseAndGet(populateCacheFuture.asFuture());
+//            final int bytesRead = populateCacheFuture.asFuture().get();
             assert bytesRead == length : bytesRead + " vs " + length;
             assert luceneByteBufLock.getReadHoldCount() == 0;
 

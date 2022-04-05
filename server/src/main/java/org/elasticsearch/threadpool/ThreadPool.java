@@ -83,6 +83,7 @@ public class ThreadPool implements ReportingService<ThreadPoolInfo>, Scheduler {
     public enum ThreadPoolType {
         DIRECT("direct"),
         FIXED("fixed"),
+        FIXED_QOS("fixed_qos"),
         FIXED_AUTO_QUEUE_SIZE("fixed_auto_queue_size"), // TODO: remove in 9.0
         SCALING("scaling");
 
@@ -114,7 +115,7 @@ public class ThreadPool implements ReportingService<ThreadPoolInfo>, Scheduler {
         entry(Names.GET, ThreadPoolType.FIXED),
         entry(Names.ANALYZE, ThreadPoolType.FIXED),
         entry(Names.WRITE, ThreadPoolType.FIXED),
-        entry(Names.SEARCH, ThreadPoolType.FIXED),
+        entry(Names.SEARCH, ThreadPoolType.FIXED_QOS),
         entry(Names.SEARCH_COORDINATION, ThreadPoolType.FIXED),
         entry(Names.MANAGEMENT, ThreadPoolType.SCALING),
         entry(Names.FLUSH, ThreadPoolType.SCALING),
@@ -189,7 +190,8 @@ public class ThreadPool implements ReportingService<ThreadPoolInfo>, Scheduler {
         builders.put(Names.WRITE, new FixedExecutorBuilder(settings, Names.WRITE, allocatedProcessors, 10000, false));
         builders.put(Names.GET, new FixedExecutorBuilder(settings, Names.GET, allocatedProcessors, 1000, false));
         builders.put(Names.ANALYZE, new FixedExecutorBuilder(settings, Names.ANALYZE, 1, 16, false));
-        builders.put(Names.SEARCH, new FixedExecutorBuilder(settings, Names.SEARCH, searchThreadPoolSize(allocatedProcessors), 1000, true));
+        int searchThreadPoolSize = searchThreadPoolSize(allocatedProcessors);
+        builders.put(Names.SEARCH, new FixedQOSExecutorBuilder(settings, Names.SEARCH, searchThreadPoolSize, searchThreadPoolSize * 2, 1000));
         builders.put(Names.SEARCH_COORDINATION, new FixedExecutorBuilder(settings, Names.SEARCH_COORDINATION, halfProcMaxAt5, 1000, true));
         builders.put(
             Names.AUTO_COMPLETE,

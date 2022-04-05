@@ -178,9 +178,10 @@ public class QueryPhase {
             try {
                 boolean shouldRescore = searchWithCollector(searchContext, searcher, query, collectors, hasFilterCollector, timeoutSet);
                 ExecutorService executor = searchContext.indexShard().getThreadPool().executor(ThreadPool.Names.SEARCH);
-                assert executor instanceof EWMATrackingEsThreadPoolExecutor
-                    || (executor instanceof EsThreadPoolExecutor == false /* in case thread pool is mocked out in tests */)
-                    : "SEARCH threadpool should have an executor that exposes EWMA metrics, but is of type " + executor.getClass();
+                // todo: support EWMA
+//                assert executor instanceof EWMATrackingEsThreadPoolExecutor
+//                    || (executor instanceof EsThreadPoolExecutor == false /* in case thread pool is mocked out in tests */)
+//                    : "SEARCH threadpool should have an executor that exposes EWMA metrics, but is of type " + executor.getClass();
                 if (executor instanceof EWMATrackingEsThreadPoolExecutor rExecutor) {
                     queryResult.nodeQueueSize(rExecutor.getCurrentQueueSize());
                     queryResult.serviceTimeEWMA((long) rExecutor.getTaskExecutionEWMA());
