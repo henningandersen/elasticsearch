@@ -91,7 +91,7 @@ public final class FixedQOSExecutorBuilder extends ExecutorBuilder<FixedQOSExecu
     FixedExecutorSettings getSettings(Settings settings) {
         final String nodeName = Node.NODE_NAME_SETTING.get(settings);
         final int size = sizeSetting.get(settings);
-        final int maxSize = sizeSetting.get(settings);
+        final int maxSize = maxSizeSetting.get(settings);
         final int queueSize = queueSizeSetting.get(settings);
         return new FixedExecutorSettings(nodeName, size, maxSize, queueSize);
     }

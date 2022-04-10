@@ -8,9 +8,6 @@
 
 package org.elasticsearch.common.util.concurrent;
 
-import org.elasticsearch.common.CheckedSupplier;
-import org.elasticsearch.core.CheckedFunction;
-
 import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.Iterator;
@@ -30,50 +27,10 @@ public class QOSQueue extends AbstractQueue<Runnable> implements BlockingQueue<R
         return paused.get();
     }
 
-    private static class ReduceSemaphore extends Semaphore {
-        private ReduceSemaphore(int permits) {
-            super(permits);
-        }
-
-        @Override
-        public void reducePermits(int reduction) {
-            super.reducePermits(reduction);
-        }
-
-        public void reacquire() throws InterruptedException {
-            if (availablePermits() < 0) {
-                release();
-                acquire();
-            }
-        }
-
-        public Runnable handlePoll(CheckedFunction<Semaphore, Boolean, InterruptedException> acquirer,
-                                   CheckedSupplier<Runnable, InterruptedException> poller) throws InterruptedException {
-            Runnable runnable = null;
-            if (acquirer.apply(this)) {
-                try {
-                    runnable = poller.get();
-                    if (runnable != null) {
-                        reacquire();
-                    }
-                    return runnable;
-                } finally {
-                    if (runnable == null) {
-                        // exception or poll returned null
-                        release();
-                    }
-                }
-            } else {
-                return null;
-            }
-        }
-    }
-    private final Semaphore runPermit;
     private final ReduceSemaphore pollPermit;
 
 
     public QOSQueue(int size, BlockingQueue<Runnable> delegate) {
-        this.runPermit = new Semaphore(size);
         this.pollPermit = new ReduceSemaphore(size);
         this.delegate = delegate;
     }
@@ -150,7 +107,6 @@ public class QOSQueue extends AbstractQueue<Runnable> implements BlockingQueue<R
 
     <T> T pauseAndGet(Future<T> until, QOSThreadPoolExecutor executor) throws ExecutionException, InterruptedException {
         pollPermit.release();
-        runPermit.release();
         paused.incrementAndGet();
         try {
             executor.adjustPoolSize(paused::get);
@@ -159,7 +115,6 @@ public class QOSQueue extends AbstractQueue<Runnable> implements BlockingQueue<R
             pollPermit.reducePermits(1); // hard take it.
             paused.decrementAndGet();
             executor.adjustPoolSize(paused::get);
-            runPermit.acquire(); // but do not run until a slot is available.
         }
     }
 
@@ -173,16 +128,8 @@ public class QOSQueue extends AbstractQueue<Runnable> implements BlockingQueue<R
         @Override
         public void run() {
             try {
-                runPermit.acquire();
-            } catch (InterruptedException e) {
-                pollPermit.release();
-                // todo: better handling.
-                throw new RuntimeException(e);
-            }
-            try {
                 delegate.run();
             } finally {
-                runPermit.release();
                 pollPermit.release();
             }
         }

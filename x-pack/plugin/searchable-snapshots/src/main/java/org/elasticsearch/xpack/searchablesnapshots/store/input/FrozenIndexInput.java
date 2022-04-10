@@ -167,7 +167,7 @@ public class FrozenIndexInput extends MetadataCachingIndexInput {
             );
 
             final int bytesRead = QOSThreadPoolExecutor.pauseAndGet(populateCacheFuture.asFuture());
-//            final int bytesRead = populateCacheFuture.asFuture().get();
+            // final int bytesRead = populateCacheFuture.asFuture().get();
             assert bytesRead == length : bytesRead + " vs " + length;
             assert luceneByteBufLock.getReadHoldCount() == 0;
 
