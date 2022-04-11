@@ -1,0 +1,94 @@
+
+{% set p_clients= (clients| default(4)) %}
+{% set p_query_iterations = (query_iterations | default(2)) %}
+{
+  "name": "single-query-searchable-snapshot-frozen",
+  "schedule": [
+    {
+      "name": "delete-any-old-indices",
+      "operation": {
+        "operation-type": "delete-index",
+        "index": "{{ p_query_index_pattern }}"
+      }
+    },
+{% if indices_recovery_max_bytes_per_sec is defined %}
+    {# Tune Elasticsearch to speed up restore #}
+    {
+      "name": "tweak-restore-settings",
+      "operation": {
+        "operation-type": "raw-request",
+        "method": "PUT",
+        "path": "/_cluster/settings",
+        "body": {
+          "transient": {
+            "indices.recovery.max_bytes_per_sec": {{ indices_recovery_max_bytes_per_sec | tojson(indent=2) }}
+          }
+        }
+      }
+    },
+{%- endif %}
+    {
+      "name": "register-snapshot-repository",
+      "operation": {
+        "operation-type": "create-snapshot-repository",
+        "repository": "{{ es_snapshot_repo_name }}",
+        "body": {
+          "type": "{{ es_snapshot_repo_type }}"
+{%- if es_snapshot_repo_settings is defined %}
+          ,"settings": {{ es_snapshot_repo_settings | tojson(indent=2) }}
+{%- endif %}
+        }
+      }
+    },
+    {
+      "name": "mount-searchable-snapshot",
+      "operation": {
+        "operation-type": "mount-searchable-snapshot",
+        "repository": "{{ es_snapshot_repo_name }}",
+        "snapshot": "{{ es_snapshot_name }}",
+        "query_params": {
+          "storage": {{ es_snapshot_storage_type | tojson(indent=2) }}
+        }
+      }
+    },
+    {
+      "name": "wait-for-mount",
+      "operation": {
+        "operation-type": "cluster-health",
+        "index": "{{ p_query_index_pattern }}",
+        "request-params": {
+          "wait_for_status": "green"
+        },
+        "retry-until-success": true,
+        "include-in-reporting": true
+      }
+    },
+    {
+      "operation": {
+        "operation-type": "fieldstats",
+        "index_pattern": "{{ p_query_index_pattern }}"
+      },
+      "iterations": 1,
+      "clients": {{ p_clients }}
+    },
+    {
+      "name": "kibana-content_issues-75%",
+      "operation": {
+        "operation-type": "kibana",
+        "param-source": "elasticlogs_kibana",
+        "debug": {{ p_verbose }},
+        "dashboard": "content_issues",
+        "index_pattern": "{{ p_query_index_pattern }}",
+        "query_string": "query_string_lists/country_code_query_strings.json",
+{%- if max_concurrent_shard_requests is defined %}
+        "max_concurrent_shard_requests": {{ max_concurrent_shard_requests }},
+{%- endif %}
+        "window_end": "END",
+        "window_length": "75%"
+      },
+      "iterations": {{ p_query_iterations }},
+      "clients": {{ p_clients }},
+      "warmup-iterations": 0
+    }
+  ]
+}
