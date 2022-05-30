@@ -7,6 +7,9 @@
 
 package org.elasticsearch.xpack.autoscaling.storage;
 
+import org.apache.lucene.queryparser.flexible.core.util.StringUtils;
+import org.elasticsearch.action.admin.cluster.allocation.ClusterAllocationExplainRequest;
+import org.elasticsearch.action.admin.cluster.allocation.ClusterAllocationExplainResponse;
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
@@ -14,14 +17,19 @@ import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.cluster.ClusterInfoService;
 import org.elasticsearch.cluster.ClusterInfoServiceUtils;
 import org.elasticsearch.cluster.InternalClusterInfoService;
+import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
+import org.elasticsearch.cluster.node.DiscoveryNodeFilters;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.routing.allocation.DataTier;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.core.Tuple;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.NodeRoles;
+import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.autoscaling.action.GetAutoscalingCapacityAction;
 import org.elasticsearch.xpack.autoscaling.action.PutAutoscalingPolicyAction;
 import org.hamcrest.Matchers;
@@ -204,6 +212,125 @@ public class ReactiveStorageIT extends AutoscalingStorageIntegTestCase {
         assertThat(capacity().results().get("cold").requiredCapacity().total().storage().getBytes(), Matchers.greaterThan(0L));
     }
 
+    public void testScaleWhileShrinking() throws Exception {
+        internalCluster().startMasterOnlyNode();
+        final String dataNode1Name = internalCluster().startDataOnlyNode();
+        final String dataNode2Name = internalCluster().startDataOnlyNode();
+
+        final String id1 = internalCluster().getInstance(TransportService.class, dataNode1Name).getLocalNode().getId();
+        final String id2 = internalCluster().getInstance(TransportService.class, dataNode2Name).getLocalNode().getId();
+        final String policyName = "test";
+        putAutoscalingPolicy(policyName, "data");
+
+        final String indexName = randomAlphaOfLength(10).toLowerCase(Locale.ROOT);
+        createIndex(
+            indexName,
+            Settings.builder()
+                .put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 0)
+                .put(IndexMetadata.SETTING_NUMBER_OF_SHARDS, 6)
+                .put(INDEX_STORE_STATS_REFRESH_INTERVAL_SETTING.getKey(), "0ms")
+                .build()
+        );
+        indexRandom(
+            true,
+            IntStream.range(1, 100)
+                .mapToObj(i -> client().prepareIndex(indexName).setSource("field", randomAlphaOfLength(50)))
+                .toArray(IndexRequestBuilder[]::new)
+        );
+        forceMerge();
+        refresh();
+
+        // just check it does not throw when not refreshed.
+        capacity();
+
+        IndicesStatsResponse stats = client().admin().indices().prepareStats(indexName).clear().setStore(true).get();
+        long used = stats.getTotal().getStore().getSizeInBytes();
+        long minShardSize = Arrays.stream(stats.getShards()).mapToLong(s -> s.getStats().getStore().sizeInBytes()).min().orElseThrow();
+        long maxShardSize = Arrays.stream(stats.getShards()).mapToLong(s -> s.getStats().getStore().sizeInBytes()).max().orElseThrow();
+
+        Map<String, Long> byNode = Arrays.stream(stats.getShards()).collect(Collectors.groupingBy(s -> s.getShardRouting().currentNodeId(),
+            Collectors.summingLong(s -> s.getStats().getStore().getSizeInBytes())));
+
+        long enoughSpace1 = byNode.get(id1).longValue() + HIGH_WATERMARK_BYTES + 1;
+        long enoughSpace2 = byNode.get(id2).longValue() + HIGH_WATERMARK_BYTES + 1;
+        long enoughSpace = enoughSpace1 + enoughSpace2;
+
+        setTotalSpace(dataNode1Name, enoughSpace1);
+        setTotalSpace(dataNode2Name, enoughSpace2);
+
+        GetAutoscalingCapacityAction.Response response = capacity();
+        assertThat(response.results().keySet(), Matchers.equalTo(Set.of(policyName)));
+        assertThat(response.results().get(policyName).currentCapacity().total().storage().getBytes(), Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).requiredCapacity().total().storage().getBytes(), Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).requiredCapacity().node().storage().getBytes(),
+            Matchers.equalTo(maxShardSize + LOW_WATERMARK_BYTES + ReactiveStorageDeciderService.NODE_DISK_OVERHEAD));
+
+
+        Tuple<String, String> filter = switch (between(0, 2)) {
+            case 0 -> Tuple.tuple("_id", id1);
+            case 1 -> Tuple.tuple("_name", dataNode1Name);
+            case 2 -> Tuple.tuple("name", dataNode1Name);
+            default -> throw new IllegalArgumentException();
+        };
+
+        String filterKey = randomFrom(IndexMetadata.INDEX_ROUTING_INCLUDE_GROUP_SETTING, IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING).getKey() + filter.v1();
+
+        assertAcked(
+            client().admin()
+                .indices()
+                .updateSettings(
+                    new UpdateSettingsRequest(indexName).settings(Settings.builder().put(filterKey, filter.v2()).put("index.blocks.write", true))
+                )
+                .actionGet()
+        );
+
+        long shrinkSpace = used + LOW_WATERMARK_BYTES;
+
+        response = capacity();
+        assertThat(response.results().keySet(), Matchers.equalTo(Set.of(policyName)));
+        assertThat(response.results().get(policyName).currentCapacity().total().storage().getBytes(), Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).requiredCapacity().total().storage().getBytes(), Matchers.equalTo(enoughSpace));
+        assertThat(response.results().get(policyName).requiredCapacity().node().storage().getBytes(),
+            Matchers.equalTo(shrinkSpace + ReactiveStorageDeciderService.NODE_DISK_OVERHEAD));
+
+        long enoughSpaceForColocation = used + LOW_WATERMARK_BYTES;
+        setTotalSpace(dataNode1Name, enoughSpaceForColocation);
+        setTotalSpace(dataNode2Name, enoughSpaceForColocation);
+        waitForRelocation();
+        refreshClusterInfo();
+
+        String shrinkName = "shrink-" + indexName;
+        assertAcked(client().admin().indices().prepareResizeIndex(indexName, shrinkName).setSettings(
+                Settings.builder().put(IndexMetadata.SETTING_NUMBER_OF_SHARDS, 1).put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 0).build()
+            ).setWaitForActiveShards(ActiveShardCount.NONE)
+            .get());
+
+//        ClusterAllocationExplainResponse explainResponse = client().admin().cluster().allocationExplain(new ClusterAllocationExplainRequest()).actionGet();
+//        logger.info(Strings.toString(explainResponse.getExplanation()));
+//        ensureGreen();
+
+
+        // * 2 since worst case is no hard links, see DiskThresholdDecider.getExpectedShardSize
+        long requiredSpaceForShrink = used * 2 + LOW_WATERMARK_BYTES;
+
+        response = capacity();
+        assertThat(response.results().keySet(), Matchers.equalTo(Set.of(policyName)));
+        assertThat(response.results().get(policyName).currentCapacity().total().storage().getBytes(),
+            Matchers.equalTo(enoughSpaceForColocation * 2));
+        assertThat(response.results().get(policyName).requiredCapacity().total().storage().getBytes(),
+            Matchers.equalTo(enoughSpaceForColocation * 2));
+        assertThat(response.results().get(policyName).requiredCapacity().node().storage().getBytes(),
+            Matchers.equalTo(requiredSpaceForShrink + ReactiveStorageDeciderService.NODE_DISK_OVERHEAD));
+
+        assertEquals(client().admin().cluster().prepareHealth(shrinkName).get().getStatus(), ClusterHealthStatus.RED);
+
+        logger.info("--> setting total space [{}]", requiredSpaceForShrink);
+        setTotalSpace(dataNode1Name, requiredSpaceForShrink);
+        assertAcked(client().admin().cluster().prepareReroute());
+
+        ensureGreen();
+    }
+
     /**
      * Verify that the list of roles includes all data roles except frozen to ensure we consider adding future data roles.
      */
@@ -230,9 +357,13 @@ public class ReactiveStorageIT extends AutoscalingStorageIntegTestCase {
 
     public void setTotalSpace(String dataNodeName, long totalSpace) {
         getTestFileStore(dataNodeName).setTotalSpace(totalSpace);
-        final ClusterInfoService clusterInfoService = internalCluster().getCurrentMasterNodeInstance(ClusterInfoService.class);
-        ClusterInfoServiceUtils.refresh(((InternalClusterInfoService) clusterInfoService));
+        refreshClusterInfo();
     }
+
+//    private void refreshClusterInfo() {
+//        final ClusterInfoService clusterInfoService = internalCluster().getCurrentMasterNodeInstance(ClusterInfoService.class);
+//        ClusterInfoServiceUtils.refresh(((InternalClusterInfoService) clusterInfoService));
+//    }
 
     public GetAutoscalingCapacityAction.Response capacity() {
         GetAutoscalingCapacityAction.Request request = new GetAutoscalingCapacityAction.Request();

@@ -210,6 +210,9 @@ public class PluginsService implements ReportingService<PluginsAndModules> {
 
     private static Set<String> getOfficialPlugins() {
         try (var stream = PluginsService.class.getResourceAsStream("/plugins.txt")) {
+            if (stream == null) {
+                return Collections.emptySet();
+            }
             return Streams.readAllLines(stream).stream().map(String::trim).collect(Sets.toUnmodifiableSortedSet());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
