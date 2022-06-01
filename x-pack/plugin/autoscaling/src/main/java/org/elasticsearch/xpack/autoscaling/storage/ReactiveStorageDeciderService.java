@@ -77,7 +77,8 @@ import java.util.stream.StreamSupport;
 public class ReactiveStorageDeciderService implements AutoscalingDeciderService {
     public static final String NAME = "reactive_storage";
     /**
-     * An estimate of what space other things use on disk, like index metadata files. Set conservatively low for now.
+     * An estimate of what space other things than accounted for by shard sizes in ClusterInfo use on disk.
+     * Set conservatively low for now.
      */
     static final long NODE_DISK_OVERHEAD = ByteSizeValue.ofMb(10).getBytes();
 
@@ -495,7 +496,8 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         }
 
         public long maxNodeLockedSize() {
-            return originalState.getMetadata().indices().values().stream().filter(AllocationState::isNodeLocked).mapToLong(this::nodeLockedSize).max().orElse(0L);
+            Metadata metadata = originalState.getMetadata();
+            return metadata.indices().values().stream().filter(imd -> isNodeLockedOrCloneOrSplit(imd, metadata)).mapToLong(this::nodeLockedSize).max().orElse(0L);
         }
 
         private long nodeLockedSize(IndexMetadata indexMetadata) {
@@ -532,8 +534,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
 
         long unmovableSize(String nodeId, Collection<ShardRouting> shards) {
             DiskUsage diskUsage = this.info.getNodeMostAvailableDiskUsages().get(nodeId);
-            if (diskUsage == null) {
-                // do not want to scale up then, since this should only happen when node has just joined (clearly edge case).
+            if (diskUsage == null) {// do not want to scale up then, since this should only happen when node has just joined (clearly edge case).
                 return 0;
             }
 
@@ -765,6 +766,21 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             } else {
                 return settings;
             }
+        }
+
+        private static boolean isNodeLockedOrCloneOrSplit(IndexMetadata indexMetadata, Metadata metadata) {
+            return isNodeLocked(indexMetadata) || isCloneOrSplit(indexMetadata, metadata);
+        }
+
+        private static boolean isCloneOrSplit(IndexMetadata indexMetadata, Metadata metadata) {
+            // mimicks behavior in ResizeAllocationDecider
+            Index resizeSourceIndex = indexMetadata.getResizeSourceIndex();
+            if (resizeSourceIndex != null) {
+                IndexMetadata sourceIndexMetadata = metadata.getIndexSafe(resizeSourceIndex);
+                // ResizeAllocationDecider only handles clone or split, do the same here.
+                return indexMetadata.getNumberOfShards() >= sourceIndexMetadata.getNumberOfShards();
+            }
+            return false;
         }
 
         private static boolean isNodeLocked(IndexMetadata indexMetadata) {
