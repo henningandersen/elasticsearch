@@ -500,19 +500,42 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             return metadata.indices().values().stream().filter(imd -> isNodeLockedOrCloneOrSplit(imd, metadata)).mapToLong(this::nodeLockedSize).max().orElse(0L);
         }
 
-        private long nodeLockedSize(IndexMetadata indexMetadata) {
-            IndexRoutingTable indexRoutingTable = state.getRoutingTable().index(indexMetadata.getIndex());
-            long sum = 0;
-            for (int s = 0; s < indexMetadata.getNumberOfShards(); ++s) {
-                ShardRouting shard = indexRoutingTable.shard(s).primaryShard();
-                long size = sizeOf(shard);
-                sum += size;
+        private long nodeLockedSize(IndexMetadata indexMetadata, Metadata metadata) {
+            if (isNodeLocked(indexMetadata)) {
+                IndexRoutingTable indexRoutingTable = state.getRoutingTable().index(indexMetadata.getIndex());
+                long sum = 0;
+                for (int s = 0; s < indexMetadata.getNumberOfShards(); ++s) {
+                    ShardRouting shard = indexRoutingTable.shard(s).primaryShard();
+                    long size = sizeOf(shard);
+                    sum += size;
+                }
+                if (indexMetadata.getResizeSourceIndex() != null) {
+                    // since we only report the max size for an index, count a shrink/clone/split 2x if it is node locked.
+                    sum = sum * 2;
+                }
+                return sum;
+            } else {
+                Index resizeSourceIndex = indexMetadata.getResizeSourceIndex();
+                if (resizeSourceIndex != null) {
+                    IndexMetadata sourceIndexMetadata = metadata.getIndexSafe(resizeSourceIndex);
+                    // ResizeAllocationDecider only handles clone or split, do the same here.
+
+                    if (indexMetadata.getNumberOfShards() >= sourceIndexMetadata.getNumberOfShards()) {
+                        IndexRoutingTable indexRoutingTable = state.getRoutingTable().index(indexMetadata.getIndex());
+                        long max = 0;
+                        for (int s = 0; s < indexMetadata.getNumberOfShards(); ++s) {
+                            ShardRouting shard = indexRoutingTable.shard(s).primaryShard();
+                            long size = sizeOf(shard);
+                            max = Math.max(max, size);
+                        }
+
+                        // times 2 since
+                        return max * 2;
+                    }
+
+
+                }
             }
-            if (indexMetadata.getResizeSourceIndex() != null) {
-                // since we only report the max size for an index, count a shrink/clone/split 2x if it is node locked.
-                sum = sum * 2;
-            }
-            return sum;
         }
 
         long sizeOf(ShardRouting shard) {
