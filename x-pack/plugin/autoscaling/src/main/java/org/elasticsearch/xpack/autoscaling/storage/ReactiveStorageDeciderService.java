@@ -497,7 +497,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
 
         public long maxNodeLockedSize() {
             Metadata metadata = originalState.getMetadata();
-            return metadata.indices().values().stream().filter(imd -> isNodeLockedOrCloneOrSplit(imd, metadata)).mapToLong(this::nodeLockedSize).max().orElse(0L);
+            return metadata.indices().values().stream().mapToLong(imd -> nodeLockedSize(imd, metadata)).max().orElse(0L);
         }
 
         private long nodeLockedSize(IndexMetadata indexMetadata, Metadata metadata) {
@@ -521,21 +521,21 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                     // ResizeAllocationDecider only handles clone or split, do the same here.
 
                     if (indexMetadata.getNumberOfShards() >= sourceIndexMetadata.getNumberOfShards()) {
-                        IndexRoutingTable indexRoutingTable = state.getRoutingTable().index(indexMetadata.getIndex());
+                        IndexRoutingTable indexRoutingTable = state.getRoutingTable().index(resizeSourceIndex);
                         long max = 0;
-                        for (int s = 0; s < indexMetadata.getNumberOfShards(); ++s) {
+                        for (int s = 0; s < sourceIndexMetadata.getNumberOfShards(); ++s) {
                             ShardRouting shard = indexRoutingTable.shard(s).primaryShard();
                             long size = sizeOf(shard);
                             max = Math.max(max, size);
                         }
 
-                        // times 2 since
+                        // 2x to account for the extra copy residing on the same node
                         return max * 2;
                     }
-
-
                 }
             }
+
+            return 0;
         }
 
         long sizeOf(ShardRouting shard) {
@@ -789,10 +789,6 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             } else {
                 return settings;
             }
-        }
-
-        private static boolean isNodeLockedOrCloneOrSplit(IndexMetadata indexMetadata, Metadata metadata) {
-            return isNodeLocked(indexMetadata) || isCloneOrSplit(indexMetadata, metadata);
         }
 
         private static boolean isCloneOrSplit(IndexMetadata indexMetadata, Metadata metadata) {

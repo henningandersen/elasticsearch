@@ -15,6 +15,7 @@ import org.elasticsearch.cluster.DiskUsage;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNodeFilters;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.IndexShardRoutingTable;
@@ -39,6 +40,7 @@ import org.elasticsearch.cluster.routing.allocation.decider.SameShardAllocationD
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.ClusterSettings;
+import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -268,9 +270,38 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ShardRouting subjectShard = useReplica ? replicaShard : primaryShard;
         validateSizeOf(clusterState, subjectShard, shardSize, expected);
         validateSizeOf(clusterState, subjectShard, Map.of(), ByteSizeUnit.KB.toBytes(1));
+
+        assertThat(createAllocationState(shardSize, clusterState).maxNodeLockedSize(), equalTo(0L));
     }
 
+    public void testMaxNodeLockedSizeWithAttributes() {
+        ClusterState.Builder stateBuilder = ClusterState.builder(ClusterName.DEFAULT);
+        Metadata.Builder metaBuilder = Metadata.builder();
+        IndexMetadata indexMetadata = IndexMetadata.builder(randomAlphaOfLength(5))
+            .settings(addRandomNodeLock(settings(Version.CURRENT)))
+            .numberOfShards(randomIntBetween(1, 10))
+            .numberOfReplicas(randomIntBetween(1, 10))
+            .build();
+        metaBuilder.put(indexMetadata, true);
+        stateBuilder.metadata(metaBuilder);
+        stateBuilder.routingTable(RoutingTable.builder().addAsNew(indexMetadata).build());
+
+        assertThat(createAllocationState(shardSize, clusterState).maxNodeLockedSize(), equalTo(0L));
+    }
+
+    private Settings.Builder addRandomNodeLock(Settings.Builder settings) {
+        String setting = randomFrom(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING,
+            IndexMetadata.INDEX_ROUTING_INCLUDE_GROUP_SETTING, IndexMetadata.INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING).getKey();
+        String attribute = randomFrom(DiscoveryNodeFilters.SINGLE_NODE_NAMES);
+        return settings.put(setting + attribute, randomAlphaOfLength(5));
+    }
+
+
     public void validateSizeOf(ClusterState clusterState, ShardRouting subjectShard, Map<String, Long> shardSize, long expected) {
+        assertThat(createAllocationState(shardSize, clusterState).sizeOf(subjectShard), equalTo(expected));
+    }
+
+    private ReactiveStorageDeciderService.AllocationState createAllocationState(Map<String, Long> shardSize, ClusterState clusterState) {
         ClusterInfo info = new ClusterInfo(null, null, shardSize, null, null, null);
         ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
             clusterState,
@@ -281,8 +312,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             Set.of(),
             Set.of()
         );
-
-        assertThat(allocationState.sizeOf(subjectShard), equalTo(expected));
+        return allocationState;
     }
 
     private void startShard(RoutingAllocation allocation, ShardRouting unassignedShard, String nodeId) {
