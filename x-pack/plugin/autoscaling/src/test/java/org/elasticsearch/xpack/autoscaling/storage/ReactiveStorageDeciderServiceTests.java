@@ -63,6 +63,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -274,22 +276,67 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         assertThat(createAllocationState(shardSize, clusterState).maxNodeLockedSize(), equalTo(0L));
     }
 
-    public void testMaxNodeLockedSizeWithAttributes() {
+    public void testMaxNodeLockedSizeUsingAttributes() {
         ClusterState.Builder stateBuilder = ClusterState.builder(ClusterName.DEFAULT);
         Metadata.Builder metaBuilder = Metadata.builder();
+        int numberOfShards = randomIntBetween(1, 10);
+        int numberOfReplicas = randomIntBetween(1, 10);
         IndexMetadata indexMetadata = IndexMetadata.builder(randomAlphaOfLength(5))
-            .settings(addRandomNodeLock(settings(Version.CURRENT)))
-            .numberOfShards(randomIntBetween(1, 10))
-            .numberOfReplicas(randomIntBetween(1, 10))
+            .settings(addRandomNodeLockUsingAttributes(settings(Version.CURRENT)))
+            .numberOfShards(numberOfShards)
+            .numberOfReplicas(numberOfReplicas)
             .build();
         metaBuilder.put(indexMetadata, true);
         stateBuilder.metadata(metaBuilder);
         stateBuilder.routingTable(RoutingTable.builder().addAsNew(indexMetadata).build());
+        ClusterState clusterState = stateBuilder.build();
 
-        assertThat(createAllocationState(shardSize, clusterState).maxNodeLockedSize(), equalTo(0L));
+        long baseSize = between(1, 10);
+        Map<String, Long> shardSizes =
+            IntStream.range(0, numberOfShards).mapToObj(s -> clusterState.getRoutingTable().index(indexMetadata.getIndex()).shard(s)).flatMap(irt -> Stream.of(irt.primaryShard(), irt.replicaShards().get(0))).collect(Collectors.toMap(ClusterInfo::shardIdentifierFromRouting, s -> s.primary() ? s.shardId().getId() + baseSize : between(1, 100)));
+
+        // keep the calculation in 2x until the end to avoid rounding.
+        long nodeLockedSize = (baseSize * 2 + numberOfShards - 1) * numberOfShards / 2;
+        assertThat(createAllocationState(shardSizes, clusterState).maxNodeLockedSize(),
+            equalTo(nodeLockedSize));
+
+        ClusterState withResizeSource =
+            ClusterState.builder(clusterState).metadata(Metadata.builder(clusterState.metadata()).put(IndexMetadata.builder(indexMetadata).settings(Settings.builder().put(indexMetadata.getSettings()).put(IndexMetadata.INDEX_RESIZE_SOURCE_UUID_KEY, randomAlphaOfLength(9))))).build();
+
+        assertThat(createAllocationState(shardSizes, withResizeSource).maxNodeLockedSize(),
+            equalTo(nodeLockedSize * 2));
     }
 
-    private Settings.Builder addRandomNodeLock(Settings.Builder settings) {
+    public void testNodeLockSplitClone() {
+        ClusterState.Builder stateBuilder = ClusterState.builder(ClusterName.DEFAULT);
+        Metadata.Builder metaBuilder = Metadata.builder();
+        IndexMetadata sourceIndexMetadata = IndexMetadata.builder(randomAlphaOfLength(5))
+            .settings(settings(Version.CURRENT))
+            .numberOfShards(1)
+            .numberOfReplicas(between(1, 10))
+            .build();
+        int numberOfShards = randomIntBetween(1, 2);
+        int numberOfReplicas = randomIntBetween(1, 10);
+        IndexMetadata indexMetadata = IndexMetadata.builder(randomAlphaOfLength(5))
+            .settings(settings(Version.CURRENT).put(IndexMetadata.INDEX_RESIZE_SOURCE_UUID_KEY, sourceIndexMetadata.getIndexUUID()).put(IndexMetadata.INDEX_RESIZE_SOURCE_NAME_KEY, sourceIndexMetadata.getIndex().getName()))
+            .numberOfShards(numberOfShards)
+            .numberOfReplicas(numberOfReplicas)
+            .build();
+        metaBuilder.put(sourceIndexMetadata, true);
+        metaBuilder.put(indexMetadata, true);
+        stateBuilder.metadata(metaBuilder);
+        stateBuilder.routingTable(RoutingTable.builder().addAsNew(sourceIndexMetadata).addAsNew(indexMetadata).build());
+        ClusterState clusterState = stateBuilder.build();
+
+        long sourceSize = between(1, 10);
+        Map<String, Long> shardSizes =
+            Map.of(ClusterInfo.shardIdentifierFromRouting(clusterState.getRoutingTable().index(sourceIndexMetadata.getIndex()).shard(0).primaryShard()), sourceSize);
+
+        assertThat(createAllocationState(shardSizes, clusterState).maxNodeLockedSize(),
+            equalTo(sourceSize * 2));
+    }
+
+    private Settings.Builder addRandomNodeLockUsingAttributes(Settings.Builder settings) {
         String setting = randomFrom(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING,
             IndexMetadata.INDEX_ROUTING_INCLUDE_GROUP_SETTING, IndexMetadata.INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING).getKey();
         String attribute = randomFrom(DiscoveryNodeFilters.SINGLE_NODE_NAMES);
