@@ -85,21 +85,32 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
     private final DiskThresholdSettings diskThresholdSettings;
     private final AllocationDeciders allocationDeciders;
 
-    private static final Set<String> NODE_LOCKED_SETTINGS =
-        DiscoveryNodeFilters.SINGLE_NODE_NAMES.stream().flatMap(suffix -> Stream.of(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_PREFIX,
-            IndexMetadata.INDEX_ROUTING_INCLUDE_GROUP_PREFIX, IndexMetadata.INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING.getKey()).map(prefix -> prefix + suffix)).collect(Collectors.toSet());
+    private static final Set<String> NODE_LOCKED_SETTINGS = DiscoveryNodeFilters.SINGLE_NODE_NAMES.stream()
+        .flatMap(
+            suffix -> Stream.of(
+                IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_PREFIX,
+                IndexMetadata.INDEX_ROUTING_INCLUDE_GROUP_PREFIX,
+                IndexMetadata.INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING.getKey()
+            ).map(prefix -> prefix + suffix)
+        )
+        .collect(Collectors.toSet());
 
-    private static final Predicate<String> REMOVE_NODE_LOCKED_FILTER_INITIAL =
-        removeNodeLockedFilterPredicate(IndexMetadata.INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING.getKey());
+    private static final Predicate<String> REMOVE_NODE_LOCKED_FILTER_INITIAL = removeNodeLockedFilterPredicate(
+        IndexMetadata.INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING.getKey()
+    );
 
-    private static final Predicate<String> REMOVE_NODE_LOCKED_FILTER_REQUIRE =
-        removeNodeLockedFilterPredicate(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey());
+    private static final Predicate<String> REMOVE_NODE_LOCKED_FILTER_REQUIRE = removeNodeLockedFilterPredicate(
+        IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING.getKey()
+    );
 
-    private static final Predicate<String> REMOVE_NODE_LOCKED_FILTER_INCLUDE =
-        removeNodeLockedFilterPredicate(IndexMetadata.INDEX_ROUTING_INCLUDE_GROUP_SETTING.getKey());
+    private static final Predicate<String> REMOVE_NODE_LOCKED_FILTER_INCLUDE = removeNodeLockedFilterPredicate(
+        IndexMetadata.INDEX_ROUTING_INCLUDE_GROUP_SETTING.getKey()
+    );
 
     private static Predicate<String> removeNodeLockedFilterPredicate(String settingPrefix) {
-        return Predicate.not(DiscoveryNodeFilters.SINGLE_NODE_NAMES.stream().map(settingPrefix::concat).collect(Collectors.toSet())::contains);
+        return Predicate.not(
+            DiscoveryNodeFilters.SINGLE_NODE_NAMES.stream().map(settingPrefix::concat).collect(Collectors.toSet())::contains
+        );
     }
 
     public ReactiveStorageDeciderService(Settings settings, ClusterSettings clusterSettings, AllocationDeciders allocationDeciders) {
@@ -142,8 +153,8 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         long unassignedBytes = unassignedBytesUnassignedShards.sizeInBytes();
         long maxShardSize = allocationState.maxShardSize();
         long maxNodeLockedSize = allocationState.maxNodeLockedSize();
-        long minimumNodeSize =
-            nodeSizeForDataBelowLowWatermark(Math.max(maxShardSize, maxNodeLockedSize), diskThresholdSettings) + NODE_DISK_OVERHEAD;
+        long minimumNodeSize = nodeSizeForDataBelowLowWatermark(Math.max(maxShardSize, maxNodeLockedSize), diskThresholdSettings)
+            + NODE_DISK_OVERHEAD;
         assert assignedBytes >= 0;
         assert unassignedBytes >= 0;
         assert maxShardSize >= 0;
@@ -225,7 +236,8 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         List<Decision> nos = decision.getDecisions()
             .stream()
             .filter(single -> single.type() == Decision.Type.NO)
-            .filter(predicate).toList();
+            .filter(predicate)
+            .toList();
 
         if (nos.size() == 1) {
             return Optional.ofNullable(nos.get(0).label());
@@ -389,8 +401,9 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             // enable debug decisions to see all decisions and preserve the allocation decision label
             allocation.debugDecision(true);
             try {
-                boolean diskOnly = nodesInTier(allocation.routingNodes()).map(node -> allocationDeciders.canAllocate(shard, node, allocation))
-                    .anyMatch(ReactiveStorageDeciderService::isDiskOnlyNoDecision);
+                boolean diskOnly = nodesInTier(allocation.routingNodes()).map(
+                    node -> allocationDeciders.canAllocate(shard, node, allocation)
+                ).anyMatch(ReactiveStorageDeciderService::isDiskOnlyNoDecision);
                 if (diskOnly && shard.unassigned() && shard.recoverySource().getType() == RecoverySource.Type.LOCAL_SHARDS) {
                     // For resize shards only allow autoscaling if there is no other node where the shard could fit had it not been
                     // a resize shard. Notice that we already removed any initial_recovery filters.
@@ -557,7 +570,8 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
 
         long unmovableSize(String nodeId, Collection<ShardRouting> shards) {
             DiskUsage diskUsage = this.info.getNodeMostAvailableDiskUsages().get(nodeId);
-            if (diskUsage == null) {// do not want to scale up then, since this should only happen when node has just joined (clearly edge case).
+            if (diskUsage == null) {// do not want to scale up then, since this should only happen when node has just joined (clearly edge
+                                    // case).
                 return 0;
             }
 
@@ -769,7 +783,10 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
 
         private static Metadata removeNodeLockFilters(Metadata metadata) {
             Metadata.Builder builder = Metadata.builder(metadata);
-            metadata.stream().filter(AllocationState::isNodeLocked).map(AllocationState::removeNodeLockFilters).forEach(imd -> builder.put(imd, false));
+            metadata.stream()
+                .filter(AllocationState::isNodeLocked)
+                .map(AllocationState::removeNodeLockFilters)
+                .forEach(imd -> builder.put(imd, false));
             return builder.build();
         }
 
@@ -781,8 +798,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
             return IndexMetadata.builder(indexMetadata).settings(settings).build();
         }
 
-        private static Settings removeNodeLockFilters(Settings settings, Predicate<String> predicate,
-                                                      DiscoveryNodeFilters filters) {
+        private static Settings removeNodeLockFilters(Settings settings, Predicate<String> predicate, DiscoveryNodeFilters filters) {
             // only filter if it is a single node filter - otherwise removing it risks narrowing legal nodes for OR filters.
             if (filters != null && filters.isSingleNodeFilter()) {
                 return settings.filter(predicate);
@@ -803,7 +819,9 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
         }
 
         private static boolean isNodeLocked(IndexMetadata indexMetadata) {
-            return isNodeLocked(indexMetadata.requireFilters()) || isNodeLocked(indexMetadata.includeFilters()) || isNodeLocked(indexMetadata.getInitialRecoveryFilters());
+            return isNodeLocked(indexMetadata.requireFilters())
+                || isNodeLocked(indexMetadata.includeFilters())
+                || isNodeLocked(indexMetadata.getInitialRecoveryFilters());
         }
 
         private static boolean isNodeLocked(DiscoveryNodeFilters filters) {
@@ -818,6 +836,7 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 return shardRouting;
             }
         }
+
         private static class ExtendedClusterInfo extends ClusterInfo {
             private final ClusterInfo delegate;
 

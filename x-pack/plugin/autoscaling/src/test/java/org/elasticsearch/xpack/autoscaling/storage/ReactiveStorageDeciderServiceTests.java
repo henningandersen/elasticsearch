@@ -40,7 +40,6 @@ import org.elasticsearch.cluster.routing.allocation.decider.SameShardAllocationD
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.ClusterSettings;
-import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -64,7 +63,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -292,19 +290,35 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ClusterState clusterState = stateBuilder.build();
 
         long baseSize = between(1, 10);
-        Map<String, Long> shardSizes =
-            IntStream.range(0, numberOfShards).mapToObj(s -> clusterState.getRoutingTable().index(indexMetadata.getIndex()).shard(s)).flatMap(irt -> Stream.of(irt.primaryShard(), irt.replicaShards().get(0))).collect(Collectors.toMap(ClusterInfo::shardIdentifierFromRouting, s -> s.primary() ? s.shardId().getId() + baseSize : between(1, 100)));
+        Map<String, Long> shardSizes = IntStream.range(0, numberOfShards)
+            .mapToObj(s -> clusterState.getRoutingTable().index(indexMetadata.getIndex()).shard(s))
+            .flatMap(irt -> Stream.of(irt.primaryShard(), irt.replicaShards().get(0)))
+            .collect(
+                Collectors.toMap(
+                    ClusterInfo::shardIdentifierFromRouting,
+                    s -> s.primary() ? s.shardId().getId() + baseSize : between(1, 100)
+                )
+            );
 
         // keep the calculation in 2x until the end to avoid rounding.
         long nodeLockedSize = (baseSize * 2 + numberOfShards - 1) * numberOfShards / 2;
-        assertThat(createAllocationState(shardSizes, clusterState).maxNodeLockedSize(),
-            equalTo(nodeLockedSize));
+        assertThat(createAllocationState(shardSizes, clusterState).maxNodeLockedSize(), equalTo(nodeLockedSize));
 
-        ClusterState withResizeSource =
-            ClusterState.builder(clusterState).metadata(Metadata.builder(clusterState.metadata()).put(IndexMetadata.builder(indexMetadata).settings(Settings.builder().put(indexMetadata.getSettings()).put(IndexMetadata.INDEX_RESIZE_SOURCE_UUID_KEY, randomAlphaOfLength(9))))).build();
+        ClusterState withResizeSource = ClusterState.builder(clusterState)
+            .metadata(
+                Metadata.builder(clusterState.metadata())
+                    .put(
+                        IndexMetadata.builder(indexMetadata)
+                            .settings(
+                                Settings.builder()
+                                    .put(indexMetadata.getSettings())
+                                    .put(IndexMetadata.INDEX_RESIZE_SOURCE_UUID_KEY, randomAlphaOfLength(9))
+                            )
+                    )
+            )
+            .build();
 
-        assertThat(createAllocationState(shardSizes, withResizeSource).maxNodeLockedSize(),
-            equalTo(nodeLockedSize * 2));
+        assertThat(createAllocationState(shardSizes, withResizeSource).maxNodeLockedSize(), equalTo(nodeLockedSize * 2));
     }
 
     public void testNodeLockSplitClone() {
@@ -318,7 +332,10 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         int numberOfShards = randomIntBetween(1, 2);
         int numberOfReplicas = randomIntBetween(1, 10);
         IndexMetadata indexMetadata = IndexMetadata.builder(randomAlphaOfLength(5))
-            .settings(settings(Version.CURRENT).put(IndexMetadata.INDEX_RESIZE_SOURCE_UUID_KEY, sourceIndexMetadata.getIndexUUID()).put(IndexMetadata.INDEX_RESIZE_SOURCE_NAME_KEY, sourceIndexMetadata.getIndex().getName()))
+            .settings(
+                settings(Version.CURRENT).put(IndexMetadata.INDEX_RESIZE_SOURCE_UUID_KEY, sourceIndexMetadata.getIndexUUID())
+                    .put(IndexMetadata.INDEX_RESIZE_SOURCE_NAME_KEY, sourceIndexMetadata.getIndex().getName())
+            )
             .numberOfShards(numberOfShards)
             .numberOfReplicas(numberOfReplicas)
             .build();
@@ -329,20 +346,25 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ClusterState clusterState = stateBuilder.build();
 
         long sourceSize = between(1, 10);
-        Map<String, Long> shardSizes =
-            Map.of(ClusterInfo.shardIdentifierFromRouting(clusterState.getRoutingTable().index(sourceIndexMetadata.getIndex()).shard(0).primaryShard()), sourceSize);
+        Map<String, Long> shardSizes = Map.of(
+            ClusterInfo.shardIdentifierFromRouting(
+                clusterState.getRoutingTable().index(sourceIndexMetadata.getIndex()).shard(0).primaryShard()
+            ),
+            sourceSize
+        );
 
-        assertThat(createAllocationState(shardSizes, clusterState).maxNodeLockedSize(),
-            equalTo(sourceSize * 2));
+        assertThat(createAllocationState(shardSizes, clusterState).maxNodeLockedSize(), equalTo(sourceSize * 2));
     }
 
     private Settings.Builder addRandomNodeLockUsingAttributes(Settings.Builder settings) {
-        String setting = randomFrom(IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING,
-            IndexMetadata.INDEX_ROUTING_INCLUDE_GROUP_SETTING, IndexMetadata.INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING).getKey();
+        String setting = randomFrom(
+            IndexMetadata.INDEX_ROUTING_REQUIRE_GROUP_SETTING,
+            IndexMetadata.INDEX_ROUTING_INCLUDE_GROUP_SETTING,
+            IndexMetadata.INDEX_ROUTING_INITIAL_RECOVERY_GROUP_SETTING
+        ).getKey();
         String attribute = randomFrom(DiscoveryNodeFilters.SINGLE_NODE_NAMES);
         return settings.put(setting + attribute, randomAlphaOfLength(5));
     }
-
 
     public void validateSizeOf(ClusterState clusterState, ShardRouting subjectShard, Map<String, Long> shardSize, long expected) {
         assertThat(createAllocationState(shardSize, clusterState).sizeOf(subjectShard), equalTo(expected));
