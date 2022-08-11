@@ -35,8 +35,10 @@ import org.elasticsearch.cluster.routing.allocation.decider.NodeShutdownAllocati
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.snapshots.SearchableSnapshotsSettings;
 import org.elasticsearch.snapshots.SnapshotShardSizeInfo;
 import org.elasticsearch.snapshots.SnapshotsInfoService;
 import org.elasticsearch.test.ESTestCase;
@@ -357,6 +359,20 @@ public class TransportGetShutdownStatusActionTests extends ESTestCase {
             .addShard(TestShardRouting.newShardRouting(new ShardId(index, 0), SHUTTING_DOWN_NODE_ID, true, ShardRoutingState.STARTED))
             .build();
 
+        verifyNotStalled(imd, indexRoutingTable);
+    }
+
+    public void testNotStalledIfAllShardsAreSearchableSnapshots() {
+        Index index = new Index(randomAlphaOfLength(5), randomAlphaOfLengthBetween(1, 20));
+        IndexMetadata imd = generateIndexMetadata(index, 3, 0, true);
+        IndexRoutingTable indexRoutingTable = IndexRoutingTable.builder(index)
+            .addShard(TestShardRouting.newShardRouting(new ShardId(index, 0), SHUTTING_DOWN_NODE_ID, true, ShardRoutingState.STARTED))
+            .build();
+
+        verifyNotStalled(imd, indexRoutingTable);
+    }
+
+    private void verifyNotStalled(IndexMetadata imd, IndexRoutingTable indexRoutingTable) {
         // Force a decision of NO for all moves and new allocations, simulating a decider that's stuck
         canAllocate.set((r, n, a) -> Decision.NO);
         // And the remain decider simulates NodeShutdownAllocationDecider
@@ -369,7 +385,7 @@ public class TransportGetShutdownStatusActionTests extends ESTestCase {
         ShutdownShardMigrationStatus status = TransportGetShutdownStatusAction.shardMigrationStatus(
             state,
             SHUTTING_DOWN_NODE_ID,
-            SingleNodeShutdownMetadata.Type.REMOVE,
+            randomFrom(SingleNodeShutdownMetadata.Type.REMOVE, SingleNodeShutdownMetadata.Type.REPLACE),
             true,
             clusterInfoService,
             snapshotsInfoService,
@@ -381,7 +397,9 @@ public class TransportGetShutdownStatusActionTests extends ESTestCase {
             status,
             SingleNodeShutdownMetadata.Status.COMPLETE,
             0,
-            containsString("[1] shards cannot be moved away from this node but have at least one copy on another node in the cluster")
+            containsString(
+                "[1] shards cannot be moved away from this node but have at least one copy on another node in the cluster or are searchable snapshots"
+            )
         );
     }
 
@@ -489,12 +507,18 @@ public class TransportGetShutdownStatusActionTests extends ESTestCase {
     }
 
     private IndexMetadata generateIndexMetadata(Index index, int numberOfShards, int numberOfReplicas) {
+        return generateIndexMetadata(index, numberOfShards, numberOfReplicas, false);
+    }
+
+    private IndexMetadata generateIndexMetadata(Index index, int numberOfShards, int numberOfReplicas, boolean searchableSnapshot) {
+        Settings.Builder settingsBuilder = Settings.builder()
+            .put(IndexMetadata.SETTING_VERSION_CREATED, Version.CURRENT.id)
+            .put(IndexMetadata.SETTING_INDEX_UUID, index.getUUID());
+        if (searchableSnapshot) {
+            settingsBuilder.put(IndexModule.INDEX_STORE_TYPE_SETTING.getKey(), SearchableSnapshotsSettings.SEARCHABLE_SNAPSHOT_STORE_TYPE);
+        }
         return IndexMetadata.builder(index.getName())
-            .settings(
-                Settings.builder()
-                    .put(IndexMetadata.SETTING_VERSION_CREATED, Version.CURRENT.id)
-                    .put(IndexMetadata.SETTING_INDEX_UUID, index.getUUID())
-            )
+            .settings(settingsBuilder)
             .numberOfShards(numberOfShards)
             .numberOfReplicas(numberOfReplicas)
             .build();

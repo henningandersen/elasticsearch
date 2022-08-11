@@ -100,6 +100,10 @@ public class SearchableSnapshotShutdownIntegTests extends BaseSearchableSnapshot
         ensureGreen(restoredIndexNamesArray);
     }
 
+    public void testFailedAllocation() {
+
+    }
+
     private List<String> setupMountedIndices() throws Exception {
         int count = between(1, 10);
         List<String> restoredIndices = new ArrayList<>();

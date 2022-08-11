@@ -229,6 +229,7 @@ public class TransportGetShutdownStatusAction extends TransportMasterNodeAction<
         Set<String> shuttingDownNodes = currentState.metadata().nodeShutdowns().keySet();
 
         AtomicInteger shardsToIgnoreForFinalStatus = new AtomicInteger(0);
+        AtomicInteger searchableSnapshotShardsToIgnoreForFinalStatus = new AtomicInteger(0);
 
         // Explain shard allocations until we find one that can't move, then stop (as `findFirst` short-circuits)
         Optional<Tuple<ShardRouting, ShardAllocationDecision>> unmovableShard = currentState.getRoutingNodes()
@@ -256,10 +257,14 @@ public class TransportGetShutdownStatusAction extends TransportMasterNodeAction<
                     // of this shard safely on a node that's not shutting down, so we don't want to report `STALLED` because of this shard.
                     .filter(ShardRouting::started)
                     .anyMatch(routing -> shuttingDownNodes.contains(routing.currentNodeId()) == false);
-                if (hasShardCopyOnOtherNode) {
+                final boolean searchableSnapshot = currentState.metadata().index(pair.v1().index()).isSearchableSnapshot();
+                if (hasShardCopyOnOtherNode || searchableSnapshot) {
                     shardsToIgnoreForFinalStatus.incrementAndGet();
+                    if (searchableSnapshot) {
+                        searchableSnapshotShardsToIgnoreForFinalStatus.incrementAndGet();
+                    }
                 }
-                return hasShardCopyOnOtherNode == false;
+                return hasShardCopyOnOtherNode == false && searchableSnapshot == false;
             })
             .peek(pair -> {
                 logger.debug(
@@ -280,7 +285,7 @@ public class TransportGetShutdownStatusAction extends TransportMasterNodeAction<
                 0,
                 "["
                     + shardsToIgnoreForFinalStatus.get()
-                    + "] shards cannot be moved away from this node but have at least one copy on another node in the cluster"
+                    + "] shards cannot be moved away from this node but have at least one copy on another node in the cluster or are searchable snapshots"
             );
         } else if (unmovableShard.isPresent()) {
             // We found a shard that can't be moved, so shard relocation is stalled. Blame the unmovable shard.
@@ -298,9 +303,23 @@ public class TransportGetShutdownStatusAction extends TransportMasterNodeAction<
                 ),
                 decision
             );
-        } else {
-            return new ShutdownShardMigrationStatus(SingleNodeShutdownMetadata.Status.IN_PROGRESS, totalRemainingShards);
+        } else if (shutdownType == SingleNodeShutdownMetadata.Type.REPLACE) {
+            long searchableSnapshots = Arrays.stream(currentState.getRoutingNodes().node(nodeId).relocating()).filter(shardRouting -> currentState.metadata().index(shardRouting.index()).isSearchableSnapshot()).count();
+            // in the future we could do shardsToIgnoreForFinalStatus.get() + searchableSnapshots, but we would ideally add tracking
+            // state to check that the REPLACE is not progressing. For now, only do this for searchable snapshots to help the REPLACE
+            // succeed.
+            if (totalRemainingShards == searchableSnapshotShardsToIgnoreForFinalStatus.get() + searchableSnapshots) {
+                return new ShutdownShardMigrationStatus(
+                    SingleNodeShutdownMetadata.Status.COMPLETE,
+                    0,
+                    "["
+                        + totalRemainingShards
+                        + "] shards cannot be moved away from this node but are searchable snapshots (REPLACE mode)"
+                );
+            }
         }
+
+        return new ShutdownShardMigrationStatus(SingleNodeShutdownMetadata.Status.IN_PROGRESS, totalRemainingShards);
     }
 
     @Override
