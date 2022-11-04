@@ -7,6 +7,9 @@
 
 package org.elasticsearch.xpack.autoscaling.storage;
 
+import org.elasticsearch.Version;
+import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.routing.allocation.decider.Decision;
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.index.shard.ShardId;
@@ -18,12 +21,15 @@ import org.elasticsearch.xcontent.json.JsonXContent;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static org.hamcrest.Matchers.greaterThan;
 
 public class ReactiveReasonTests extends ESTestCase {
@@ -37,12 +43,29 @@ public class ReactiveReasonTests extends ESTestCase {
         String indexName = randomAlphaOfLength(10);
         SortedSet<ShardId> unassignedShardIds = new TreeSet<>(randomUnique(() -> new ShardId(indexName, indexUUID, randomInt(1000)), 600));
         SortedSet<ShardId> assignedShardIds = new TreeSet<>(randomUnique(() -> new ShardId(indexName, indexUUID, randomInt(1000)), 600));
+        DiscoveryNode discoveryNode = new DiscoveryNode("node1", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT);
+        Map<ShardId, NodeDecisions> unassignedShardAllocationDecision = Map.of(
+            unassignedShardIds.first(),
+            new NodeDecisions(
+                List.of(new NodeDecision(discoveryNode, Decision.single(Decision.Type.NO, "no_label", "No space to allocate"))),
+                List.of()
+            )
+        );
+        Map<ShardId, NodeDecisions> assignedShardAllocateDecision = Map.of(
+            assignedShardIds.first(),
+            new NodeDecisions(
+                List.of(),
+                List.of(new NodeDecision(discoveryNode, Decision.single(Decision.Type.YES, "yes_label", "There's enough space")))
+            )
+        );
         var reactiveReason = new ReactiveStorageDeciderService.ReactiveReason(
             reason,
             unassigned,
             unassignedShardIds,
             assigned,
-            assignedShardIds
+            assignedShardIds,
+            unassignedShardAllocationDecision,
+            assignedShardAllocateDecision
         );
 
         try (
@@ -77,6 +100,44 @@ public class ReactiveReasonTests extends ESTestCase {
             );
             assertSorted(xContentAssignedShardIds.stream().map(ShardId::fromString).toList());
             assertEquals(assignedShardIds.size(), map.get("assigned_shards_count"));
+
+            List<Map<String, Object>> canAllocateDecisions = (List<Map<String, Object>>) ((Map<String, Object>) ((Map<String, Object>) map
+                .get("unassigned_node_decisions")).get(unassignedShardIds.first().toString())).get("can_allocate_decisions");
+            assertEquals("node1", canAllocateDecisions.get(0).get("node_id"));
+            assertEquals(
+                Map.of("decision", "NO", "decider", "no_label", "explanation", "No space to allocate"),
+                canAllocateDecisions.get(0).get("node_decision")
+            );
+
+            List<Map<String, Object>> canRemainDecisions = (List<Map<String, Object>>) ((Map<String, Object>) ((Map<String, Object>) map
+                .get("assigned_node_decisions")).get(assignedShardIds.first().toString())).get("can_remain_decisions");
+            assertEquals("node1", canRemainDecisions.get(0).get("node_id"));
+            assertEquals(
+                Map.of("decision", "YES", "decider", "yes_label", "explanation", "There's enough space"),
+                canRemainDecisions.get(0).get("node_decision")
+            );
+        }
+    }
+
+    public void testEmptyNodeDecisions() throws IOException {
+        var reactiveReason = new ReactiveStorageDeciderService.ReactiveReason(
+            randomAlphaOfLength(10),
+            randomNonNegativeLong(),
+            Collections.emptySortedSet(),
+            randomNonNegativeLong(),
+            Collections.emptySortedSet(),
+            Map.of(),
+            Map.of()
+        );
+        try (
+            XContentParser parser = createParser(
+                JsonXContent.jsonXContent,
+                BytesReference.bytes(reactiveReason.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS))
+            )
+        ) {
+            Map<String, Object> map = parser.map();
+            assertEquals(Map.of(), map.get("unassigned_node_decisions"));
+            assertEquals(Map.of(), map.get("assigned_node_decisions"));
         }
     }
 
