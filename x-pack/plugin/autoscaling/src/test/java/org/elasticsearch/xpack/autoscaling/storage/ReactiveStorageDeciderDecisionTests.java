@@ -368,7 +368,10 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
             ReactiveStorageDeciderService.AllocationState::storagePreventsRemainOrMove,
             allocatedCandidateShards,
             allocatedShardIds,
-            Map::isEmpty,
+            shardIdNodeDecisions -> {
+                assertEquals(shardIdNodeDecisions.size(), allocatedShardIds.size());
+                return true;
+            },
             DiscoveryNodeRole.DATA_COLD_NODE_ROLE
         );
     }
