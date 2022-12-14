@@ -102,6 +102,11 @@ public class VerifyRepositoryIntegrityAction extends ActionType<VerifyRepository
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(repository);
+            out.writeVInt(threadpoolConcurrency);
+            out.writeVInt(snapshotVerificationConcurrency);
+            out.writeVInt(indexVerificationConcurrency);
+            out.writeVInt(indexSnapshotVerificationConcurrency);
+            out.writeVInt(maxFailures);
         }
 
         @Override
