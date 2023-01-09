@@ -9,6 +9,7 @@
 package org.elasticsearch.cluster.routing;
 
 import org.elasticsearch.cluster.ClusterChangedEvent;
+import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.service.ClusterService;
@@ -21,14 +22,21 @@ import org.elasticsearch.plugins.ClusterPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.InternalTestCluster;
+import org.elasticsearch.test.XContentTestUtils;
 import org.elasticsearch.xcontent.XContentBuilder;
+import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
 
 public class ShardCopyRoleIT extends ESIntegTestCase {
 
@@ -131,7 +139,12 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
         );
         ensureGreen("test");
 
-        logger.info("--> {}", client().admin().cluster().prepareState().get().getState());
+
+        final var clusterStateAtStart = client().admin().cluster().prepareState().get().getState();
+
+        assertRolesInRoutingTable(clusterStateAtStart);
+
+        logger.info("--> {}", clusterStateAtStart);
 
         final ClusterStateListener stateListener = new ClusterStateListener() {
             private final AtomicLong lastVersionLogged = new AtomicLong();
@@ -171,6 +184,26 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
         for (RoutingNode routingNode : client().admin().cluster().prepareState().get().getState().getRoutingNodes()) {
             for (ShardRouting shardRouting : routingNode) {
                 assertThat(shardRouting.getRole(), Matchers.oneOf(TestRole.ROLE_1, TestRole.ROLE_2));
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void assertRolesInRoutingTable(ClusterState state) throws IOException {
+        var stateAsString = state.toString();
+        for (var testRole : TestRole.values()) {
+            assertThat(stateAsString, containsString("[" + testRole + "]"));
+        }
+
+        final var routingTable = (Map<String, Object>) XContentTestUtils.convertToMap(state).get("routing_table");
+        final var routingTableIndices = (Map<String, Object>) routingTable.get("indices");
+        final var routingTableIndex = (Map<String, Object>) routingTableIndices.get("test");
+        final var routingTableShards = (Map<String, Object>) routingTableIndex.get("shards");
+        final var routingTableShardValues = (Collection<Object>) routingTableShards.values();
+        for (final var routingTableShardValue : routingTableShardValues) {
+            for (Object routingTableShardCopy : (List<Object>) routingTableShardValue) {
+                final var routingTableShard = (Map<String, String>) routingTableShardCopy;
+                assertNotNull(TestRole.valueOf(routingTableShard.get("role")));
             }
         }
     }
