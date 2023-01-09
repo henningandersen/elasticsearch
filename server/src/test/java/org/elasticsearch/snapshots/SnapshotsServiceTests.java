@@ -12,6 +12,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.SnapshotsInProgress;
+import org.elasticsearch.cluster.TestShardCopyRoles;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -480,7 +481,8 @@ public class SnapshotsServiceTests extends ESTestCase {
                                     shardId,
                                     true,
                                     RecoverySource.EmptyStoreRecoverySource.INSTANCE,
-                                    new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "test")
+                                    new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "test"),
+                                    TestShardCopyRoles.EMPTY_ROLE
                                 )
                             )
                     )
