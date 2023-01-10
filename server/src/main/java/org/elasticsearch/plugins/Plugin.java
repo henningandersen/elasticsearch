@@ -82,6 +82,7 @@ public abstract class Plugin implements Closeable {
      * @param repositoriesServiceSupplier A supplier for the service that manages snapshot repositories; will return null when this method
      *                                    is called, but will return the repositories service once the node is initialized.
      * @param tracer                      An interface for distributed tracing
+     * @param allocationService           A service to manage shard allocation in the cluster
      */
     public Collection<Object> createComponents(
         Client client,
