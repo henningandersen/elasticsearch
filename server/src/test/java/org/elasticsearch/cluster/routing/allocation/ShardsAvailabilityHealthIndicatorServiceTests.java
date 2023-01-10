@@ -22,7 +22,6 @@ import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.IndexRoutingTable;
 import org.elasticsearch.cluster.routing.RecoverySource;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.routing.allocation.ShardsAvailabilityHealthIndicatorService.ShardAllocationStatus;
@@ -1642,7 +1641,7 @@ public class ShardsAvailabilityHealthIndicatorServiceTests extends ESTestCase {
             primary,
             getSource(primary, allocation.state),
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         if (allocation.state == INITIALIZING) {
             return routing;

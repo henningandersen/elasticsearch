@@ -581,7 +581,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
                 );
         }
 
-        public Builder addReplica(ShardCopyRole role) {
+        public Builder addReplica(ShardRouting.Role role) {
             assert shards != null;
             for (IndexShardRoutingTable.Builder existing : shards) {
                 assert existing != null;

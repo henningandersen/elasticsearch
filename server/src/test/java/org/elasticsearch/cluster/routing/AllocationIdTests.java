@@ -32,7 +32,7 @@ public class AllocationIdTests extends ESTestCase {
             true,
             ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         assertThat(shard.allocationId(), nullValue());
 
@@ -58,7 +58,7 @@ public class AllocationIdTests extends ESTestCase {
             true,
             ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         shard = shard.initialize("node1", null, -1);
         shard = shard.moveToStarted(ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE);
@@ -87,7 +87,7 @@ public class AllocationIdTests extends ESTestCase {
             true,
             ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         shard = shard.initialize("node1", null, -1);
         shard = shard.moveToStarted(ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE);
@@ -113,7 +113,7 @@ public class AllocationIdTests extends ESTestCase {
             true,
             ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         shard = shard.initialize("node1", null, -1);
         shard = shard.moveToStarted(ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE);

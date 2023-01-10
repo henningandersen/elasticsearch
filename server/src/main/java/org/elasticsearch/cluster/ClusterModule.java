@@ -25,8 +25,8 @@ import org.elasticsearch.cluster.metadata.MetadataMappingService;
 import org.elasticsearch.cluster.metadata.NodesShutdownMetadata;
 import org.elasticsearch.cluster.metadata.RepositoriesMetadata;
 import org.elasticsearch.cluster.routing.DelayedAllocationService;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardCopyRoleFactory;
+import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.routing.allocation.ExistingShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
@@ -157,18 +157,18 @@ public class ClusterModule extends AbstractModule {
         return switch (factories.size()) {
             case 0 -> new ShardCopyRoleFactory() {
                 @Override
-                public ShardCopyRole newReplicaRole() {
-                    return ShardCopyRole.DEFAULT;
+                public ShardRouting.Role newReplicaRole() {
+                    return ShardRouting.Role.DEFAULT;
                 }
 
                 @Override
-                public ShardCopyRole newRestoredRole(int copyIndex) {
-                    return ShardCopyRole.DEFAULT;
+                public ShardRouting.Role newRestoredRole(int copyIndex) {
+                    return ShardRouting.Role.DEFAULT;
                 }
 
                 @Override
-                public ShardCopyRole newEmptyRole(int copyIndex) {
-                    return ShardCopyRole.DEFAULT;
+                public ShardRouting.Role newEmptyRole(int copyIndex) {
+                    return ShardRouting.Role.DEFAULT;
                 }
             };
             case 1 -> factories.get(0);

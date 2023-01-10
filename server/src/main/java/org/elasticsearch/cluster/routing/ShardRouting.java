@@ -20,6 +20,7 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.core.Nullable;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.xcontent.ToXContentFragment;
 import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
 
@@ -61,7 +62,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
     private final long expectedShardSize;
     @Nullable
     private final ShardRouting targetRelocatingShard;
-    private final ShardCopyRole shardCopyRole;
+    private final Role role;
 
     /**
      * A constructor to internally create shard routing instances, note, the internal flag should only be set to true
@@ -78,7 +79,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
         RelocationFailureInfo relocationFailureInfo,
         AllocationId allocationId,
         long expectedShardSize,
-        ShardCopyRole shardCopyRole
+        Role role
     ) {
         this.shardId = shardId;
         this.currentNodeId = currentNodeId;
@@ -90,8 +91,8 @@ public final class ShardRouting implements Writeable, ToXContentObject {
         this.relocationFailureInfo = relocationFailureInfo;
         this.allocationId = allocationId;
         this.expectedShardSize = expectedShardSize;
-        this.shardCopyRole = shardCopyRole;
-        assert shardCopyRole != null;
+        this.role = role;
+        assert role != null;
         this.targetRelocatingShard = initializeTargetRelocatingShard();
         assert (state == ShardRoutingState.UNASSIGNED && unassignedInfo == null) == false : "unassigned shard must be created with meta";
         assert relocationFailureInfo != null : "relocation failure info must be always set";
@@ -103,7 +104,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             : "unassigned shard must not be assigned to a node " + this;
         assert relocatingNodeId == null || state == ShardRoutingState.RELOCATING || state == ShardRoutingState.INITIALIZING
             : state + " shard must not have relocating node " + this;
-        assert primary == false || shardCopyRole.isPromotableToPrimary() : "shard with unpromotable role was promoted to primary: " + this;
+        assert primary == false || role.isPromotableToPrimary() : "shard with unpromotable role was promoted to primary: " + this;
     }
 
     @Nullable
@@ -120,7 +121,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
                 RelocationFailureInfo.NO_FAILURES,
                 AllocationId.newTargetRelocation(allocationId),
                 expectedShardSize,
-                shardCopyRole
+                role
             );
         } else {
             return null;
@@ -135,7 +136,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
         boolean primary,
         RecoverySource recoverySource,
         UnassignedInfo unassignedInfo,
-        ShardCopyRole role
+        Role role
     ) {
         return new ShardRouting(
             shardId,
@@ -327,9 +328,9 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             expectedShardSize = UNAVAILABLE_EXPECTED_SHARD_SIZE;
         }
         if (in.getVersion().onOrAfter(Version.V_8_7_0)) {
-            shardCopyRole = ShardCopyRole.readFrom(in);
+            role = Role.readFrom(in);
         } else {
-            shardCopyRole = ShardCopyRole.DEFAULT;
+            role = Role.DEFAULT;
         }
         targetRelocatingShard = initializeTargetRelocatingShard();
     }
@@ -364,10 +365,10 @@ public final class ShardRouting implements Writeable, ToXContentObject {
         }
 
         if (out.getVersion().onOrAfter(Version.V_8_7_0)) {
-            shardCopyRole.writeTo(out);
-        } else if (shardCopyRole != ShardCopyRole.DEFAULT) {
+            role.writeTo(out);
+        } else if (role != Role.DEFAULT) {
             throw new IllegalStateException(
-                Strings.format("cannot send role [%s] to node of version [%s]", shardCopyRole, out.getVersion())
+                Strings.format("cannot send role [%s] to node of version [%s]", role, out.getVersion())
             );
         }
     }
@@ -392,7 +393,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             relocationFailureInfo,
             allocationId,
             expectedShardSize,
-            shardCopyRole
+            role
         );
     }
 
@@ -409,7 +410,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             relocationFailureInfo,
             allocationId,
             expectedShardSize,
-            shardCopyRole
+            role
         );
     }
 
@@ -439,7 +440,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             RelocationFailureInfo.NO_FAILURES,
             null,
             UNAVAILABLE_EXPECTED_SHARD_SIZE,
-            shardCopyRole
+            role
         );
     }
 
@@ -468,7 +469,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             RelocationFailureInfo.NO_FAILURES,
             allocationId,
             expectedShardSize,
-            shardCopyRole
+            role
         );
     }
 
@@ -490,7 +491,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             relocationFailureInfo,
             AllocationId.newRelocation(allocationId),
             expectedShardSize,
-            shardCopyRole
+            role
         );
     }
 
@@ -513,7 +514,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             relocationFailureInfo.incFailedRelocations(),
             AllocationId.cancelRelocation(allocationId),
             UNAVAILABLE_EXPECTED_SHARD_SIZE,
-            shardCopyRole
+            role
         );
     }
 
@@ -538,7 +539,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             relocationFailureInfo,
             AllocationId.finishRelocation(allocationId),
             expectedShardSize,
-            shardCopyRole
+            role
         );
     }
 
@@ -560,7 +561,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             relocationFailureInfo,
             AllocationId.newInitializing(),
             expectedShardSize,
-            shardCopyRole
+            role
         );
     }
 
@@ -588,7 +589,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             RelocationFailureInfo.NO_FAILURES,
             allocationId,
             expectedShardSize,
-            shardCopyRole
+            role
         );
     }
 
@@ -613,7 +614,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             relocationFailureInfo,
             allocationId,
             expectedShardSize,
-            shardCopyRole
+            role
         );
     }
 
@@ -638,7 +639,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             relocationFailureInfo,
             allocationId,
             expectedShardSize,
-            shardCopyRole
+            role
         );
     }
 
@@ -762,13 +763,13 @@ public final class ShardRouting implements Writeable, ToXContentObject {
     /** returns true if the current routing is identical to the other routing in all but meta fields, i.e., unassigned info */
     public boolean equalsIgnoringMetadata(ShardRouting other) {
         return primary == other.primary
-            && shardId.equals(other.shardId)
-            && Objects.equals(currentNodeId, other.currentNodeId)
-            && Objects.equals(relocatingNodeId, other.relocatingNodeId)
-            && Objects.equals(allocationId, other.allocationId)
-            && state == other.state
-            && Objects.equals(recoverySource, other.recoverySource)
-            && shardCopyRole == other.shardCopyRole;
+               && shardId.equals(other.shardId)
+               && Objects.equals(currentNodeId, other.currentNodeId)
+               && Objects.equals(relocatingNodeId, other.relocatingNodeId)
+               && Objects.equals(allocationId, other.allocationId)
+               && state == other.state
+               && Objects.equals(recoverySource, other.recoverySource)
+               && role == other.role;
     }
 
     @Override
@@ -804,7 +805,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             h = 31 * h + (allocationId != null ? allocationId.hashCode() : 0);
             h = 31 * h + (unassignedInfo != null ? unassignedInfo.hashCode() : 0);
             h = 31 * h + (relocationFailureInfo != null ? relocationFailureInfo.hashCode() : 0);
-            h = 31 * h + shardCopyRole.hashCode();
+            h = 31 * h + role.hashCode();
             hashCode = h;
         }
         return h;
@@ -826,7 +827,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             sb.append("relocating [").append(relocatingNodeId).append("], ");
         }
         // TODO test role appears
-        var roleString = shardCopyRole.toString();
+        var roleString = role.toString();
         if (Strings.isNullOrBlank(roleString) == false) {
             sb.append("[").append(roleString).append("], ");
         }
@@ -875,7 +876,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             unassignedInfo.toXContent(builder, params);
         }
         relocationFailureInfo.toXContent(builder, params);
-        shardCopyRole.toXContent(builder, params);
+        role.toXContent(builder, params);
         return builder.endObject();
     }
 
@@ -897,15 +898,65 @@ public final class ShardRouting implements Writeable, ToXContentObject {
         return recoverySource;
     }
 
-    public ShardCopyRole getRole() {
-        return shardCopyRole;
+    public Role getRole() {
+        return role;
     }
 
     public boolean isPromotableToPrimary() {
-        return shardCopyRole.isPromotableToPrimary();
+        return role.isPromotableToPrimary();
     }
 
     public boolean isSearchable() {
-        return shardCopyRole.isSearchable();
+        return role.isSearchable();
+    }
+
+    public enum Role implements Writeable, ToXContentFragment {
+        DEFAULT((byte) 0, true, true),
+        INDEX_ONLY((byte) 1, true, false),
+        SEARCH_ONLY((byte) 2, false, true);
+
+        private final byte code;
+        private final boolean promotable;
+        private final boolean searchable;
+
+        Role(byte code, boolean promotable, boolean searchable) {
+            this.code = code;
+            this.promotable = promotable;
+            this.searchable = searchable;
+        }
+
+        /**
+         * @return whether a shard copy with this role may be promoted from replica to primary. If {@code index.number_of_replicas} is reduced,
+         * unpromotable replicas are removed first.
+         */
+        public boolean isPromotableToPrimary() {
+            return promotable;
+        }
+
+        /**
+         * @return whether a shard copy with this role may be the target of a search.
+         */
+        public boolean isSearchable() {
+            return searchable;
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            return builder.field("role", toString());
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            out.writeByte(code);
+        }
+
+        public static Role readFrom(StreamInput in) throws IOException {
+            return switch (in.readByte()) {
+                case 0 -> DEFAULT;
+                case 1 -> INDEX_ONLY;
+                case 2 -> SEARCH_ONLY;
+                default -> throw new IllegalStateException("unknown role");
+            };
+        }
     }
 }

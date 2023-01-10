@@ -481,7 +481,7 @@ public class UnassignedInfoTests extends ESAllocationTestCase {
         for (int i = 0; i < indexRoutingTable.size(); i++) {
             builder.addIndexShard(new IndexShardRoutingTable.Builder(indexRoutingTable.shard(i)));
         }
-        builder.addReplica(ShardCopyRole.DEFAULT);
+        builder.addReplica(ShardRouting.Role.DEFAULT);
         clusterState = ClusterState.builder(clusterState)
             .routingTable(RoutingTable.builder(clusterState.routingTable()).add(builder).build())
             .build();

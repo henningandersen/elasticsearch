@@ -15,7 +15,6 @@ import org.elasticsearch.action.admin.indices.stats.ShardStats;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.RecoverySource.PeerRecoverySource;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingHelper;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
@@ -103,7 +102,7 @@ public class DiskUsageTests extends ESTestCase {
             false,
             PeerRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "foo"),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         test_0 = ShardRoutingHelper.initialize(test_0, "node1");
         test_0 = ShardRoutingHelper.moveToStarted(test_0);
@@ -115,7 +114,7 @@ public class DiskUsageTests extends ESTestCase {
             false,
             PeerRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "foo"),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         test_1 = ShardRoutingHelper.initialize(test_1, "node2");
         test_1 = ShardRoutingHelper.moveToStarted(test_1);

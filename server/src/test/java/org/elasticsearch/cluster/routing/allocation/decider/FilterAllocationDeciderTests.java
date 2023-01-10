@@ -20,7 +20,6 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.RecoverySource;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
@@ -319,7 +318,7 @@ public class FilterAllocationDeciderTests extends ESAllocationTestCase {
             true,
             RecoverySource.LocalShardsRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "index created"),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         assertThat(decider.getForcedInitialShardAllocationToNodes(localRecoveryShard, allocation), equalTo(Optional.of(Set.of("node-1"))));
 
@@ -328,7 +327,7 @@ public class FilterAllocationDeciderTests extends ESAllocationTestCase {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "index created"),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         assertThat(decider.getForcedInitialShardAllocationToNodes(newShard, allocation), equalTo(Optional.empty()));
     }

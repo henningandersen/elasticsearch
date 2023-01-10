@@ -33,7 +33,6 @@ import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.routing.RecoverySource;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.service.ClusterService;
@@ -677,7 +676,7 @@ public class IndexModuleTests extends ESTestCase {
                 true,
                 RecoverySource.EmptyStoreRecoverySource.INSTANCE,
                 new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-                ShardCopyRole.DEFAULT
+                ShardRouting.Role.DEFAULT
             ).initialize("_node_id", null, -1);
 
             IndexService indexService = newIndexService(module);
@@ -801,7 +800,7 @@ public class IndexModuleTests extends ESTestCase {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         ).initialize("_node_id", null, -1);
         IndexShard indexShard = indexService.createShard(shardRouting, s -> {}, RetentionLeaseSyncer.EMPTY);
         assertThat(indexShard.getReplicationTracker(), instanceOf(CustomReplicationTracker.class));
@@ -813,7 +812,7 @@ public class IndexModuleTests extends ESTestCase {
             true,
             RecoverySource.ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         shard = shard.initialize("node1", null, -1);
         return shard;

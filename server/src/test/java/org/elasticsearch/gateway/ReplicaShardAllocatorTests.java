@@ -24,7 +24,6 @@ import org.elasticsearch.cluster.routing.RecoverySource;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.TestShardRouting;
@@ -565,7 +564,7 @@ public class ReplicaShardAllocatorTests extends ESAllocationTestCase {
                                         Collections.emptySet(),
                                         lastAllocatedNodeId
                                     ),
-                                    ShardCopyRole.DEFAULT
+                                    ShardRouting.Role.DEFAULT
                                 )
                             )
                     )

@@ -25,7 +25,6 @@ import org.elasticsearch.cluster.routing.IndexRoutingTable;
 import org.elasticsearch.cluster.routing.IndexShardRoutingTable;
 import org.elasticsearch.cluster.routing.RecoverySource;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.common.Strings;
@@ -318,7 +317,7 @@ public class SystemIndexManagerTests extends ESTestCase {
                                     true,
                                     RecoverySource.ExistingStoreRecoverySource.INSTANCE,
                                     new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, ""),
-                                    ShardCopyRole.DEFAULT
+                                    ShardRouting.Role.DEFAULT
                                 )
                                     .initialize(UUIDs.randomBase64UUID(random()), null, 0L)
                                     .moveToUnassigned(new UnassignedInfo(UnassignedInfo.Reason.ALLOCATION_FAILED, ""))
@@ -378,7 +377,7 @@ public class SystemIndexManagerTests extends ESTestCase {
             true,
             RecoverySource.ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, ""),
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
         String nodeId = ESTestCase.randomAlphaOfLength(8);
         return RoutingTable.builder()

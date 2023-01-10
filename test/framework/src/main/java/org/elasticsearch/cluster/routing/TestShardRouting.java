@@ -46,7 +46,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             buildAllocationId(state),
             -1,
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
     }
 
@@ -68,7 +68,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             buildAllocationId(state),
             -1,
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
     }
 
@@ -107,7 +107,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             buildAllocationId(state),
             -1,
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
     }
 
@@ -149,7 +149,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             allocationId,
             -1,
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
     }
 
@@ -191,7 +191,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             buildAllocationId(state),
             -1,
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
     }
 

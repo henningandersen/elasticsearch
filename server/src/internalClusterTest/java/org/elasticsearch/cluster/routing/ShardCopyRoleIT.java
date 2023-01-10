@@ -38,18 +38,18 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
         public ShardCopyRoleFactory getShardRoleFactory() {
             return new ShardCopyRoleFactory() {
                 @Override
-                public ShardCopyRole newReplicaRole() {
-                    return ShardCopyRole.SEARCH_ONLY;
+                public ShardRouting.Role newReplicaRole() {
+                    return ShardRouting.Role.SEARCH_ONLY;
                 }
 
                 @Override
-                public ShardCopyRole newRestoredRole(int copyIndex) {
+                public ShardRouting.Role newRestoredRole(int copyIndex) {
                     return newEmptyRole(copyIndex);
                 }
 
                 @Override
-                public ShardCopyRole newEmptyRole(int copyIndex) {
-                    return copyIndex <= 1 ? ShardCopyRole.INDEX_ONLY : ShardCopyRole.SEARCH_ONLY;
+                public ShardRouting.Role newEmptyRole(int copyIndex) {
+                    return copyIndex <= 1 ? ShardRouting.Role.INDEX_ONLY : ShardRouting.Role.SEARCH_ONLY;
                 }
             };
         }
@@ -113,7 +113,7 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
 
         for (RoutingNode routingNode : client().admin().cluster().prepareState().get().getState().getRoutingNodes()) {
             for (ShardRouting shardRouting : routingNode) {
-                assertThat(shardRouting.getRole(), Matchers.oneOf(ShardCopyRole.INDEX_ONLY, ShardCopyRole.SEARCH_ONLY));
+                assertThat(shardRouting.getRole(), Matchers.oneOf(ShardRouting.Role.INDEX_ONLY, ShardRouting.Role.SEARCH_ONLY));
             }
         }
     }
@@ -121,7 +121,7 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
     @SuppressWarnings("unchecked")
     private void assertRolesInRoutingTable(ClusterState state) throws IOException {
         var stateAsString = state.toString();
-        for (var testRole : ShardCopyRole.values()) {
+        for (var testRole : ShardRouting.Role.values()) {
             assertThat(stateAsString, containsString("[" + testRole + "]"));
         }
 
@@ -132,7 +132,7 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
         for (final var routingTableShardValue : routingTableShards.values()) {
             for (Object routingTableShardCopy : (List<Object>) routingTableShardValue) {
                 final var routingTableShard = (Map<String, String>) routingTableShardCopy;
-                assertNotNull(ShardCopyRole.valueOf(routingTableShard.get("role")));
+                assertNotNull(ShardRouting.Role.valueOf(routingTableShard.get("role")));
             }
         }
     }

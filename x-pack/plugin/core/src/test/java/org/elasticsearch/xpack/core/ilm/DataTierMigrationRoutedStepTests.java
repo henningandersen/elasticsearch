@@ -15,7 +15,7 @@ import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.IndexRoutingTable;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
+import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.TestShardRouting;
 import org.elasticsearch.cluster.routing.allocation.DataTier;
@@ -238,7 +238,7 @@ public class DataTierMigrationRoutedStepTests extends AbstractStepTestCase<DataT
         {
             IndexRoutingTable.Builder indexRoutingTable = IndexRoutingTable.builder(index)
                 .addShard(TestShardRouting.newShardRouting(new ShardId(index, 0), "node1", true, ShardRoutingState.STARTED))
-                .addReplica(ShardCopyRole.DEFAULT);
+                .addReplica(ShardRouting.Role.DEFAULT);
 
             ClusterState clusterState = ClusterState.builder(ClusterState.EMPTY_STATE)
                 .metadata(Metadata.builder().put(indexMetadata, true).build())

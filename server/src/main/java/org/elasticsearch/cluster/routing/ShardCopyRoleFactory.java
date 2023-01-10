@@ -13,17 +13,17 @@ public interface ShardCopyRoleFactory {
     /**
      * @return the role for a new replica copy of an existing shard.
      */
-    ShardCopyRole newReplicaRole();
+    ShardRouting.Role newReplicaRole();
 
     /**
      * @return the role for a copy of a new shard being restored from snapshot, where {@code copyIndex} is the index of the copy ({@code 0}
      * for the primary and {@code 1..N} for replicas).
      */
-    ShardCopyRole newRestoredRole(int copyIndex);
+    ShardRouting.Role newRestoredRole(int copyIndex);
 
     /**
      * @return the role for a copy of a new empty shard, where {@code copyIndex} is the index of the copy ({@code 0} for the primary and
      * {@code 1..N} for replicas).
      */
-    ShardCopyRole newEmptyRole(int copyIndex);
+    ShardRouting.Role newEmptyRole(int copyIndex);
 }

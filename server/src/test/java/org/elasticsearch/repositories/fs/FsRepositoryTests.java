@@ -29,7 +29,6 @@ import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.RepositoryMetadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.RecoverySource;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingHelper;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
@@ -127,7 +126,7 @@ public class FsRepositoryTests extends ESTestCase {
                 true,
                 new RecoverySource.SnapshotRecoverySource("test", new Snapshot("foo", snapshotId), Version.CURRENT, indexId),
                 new UnassignedInfo(UnassignedInfo.Reason.EXISTING_INDEX_RESTORED, ""),
-                ShardCopyRole.DEFAULT
+                ShardRouting.Role.DEFAULT
             );
             routing = ShardRoutingHelper.initialize(routing, localNode.getId(), 0);
             RecoveryState state = new RecoveryState(routing, localNode, null);

@@ -28,7 +28,6 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.RecoverySource;
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -402,7 +401,7 @@ public class ClusterStatsMonitoringDocTests extends BaseMonitoringDocTestCase<Cl
             true,
             RecoverySource.ExistingStoreRecoverySource.INSTANCE,
             unassignedInfo,
-            ShardCopyRole.DEFAULT
+            ShardRouting.Role.DEFAULT
         );
 
         final ShardStats mockShardStats = mock(ShardStats.class);
