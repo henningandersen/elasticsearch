@@ -29,6 +29,9 @@ public interface ShardRoutingRoleStrategy {
      */
     ShardRouting.Role newEmptyRole(int copyIndex);
 
+    /**
+     * A strategy that refuses to create any new shard copies, which is used (for instance) when reading shard copies from a remote node.
+     */
     ShardRoutingRoleStrategy NO_SHARD_CREATION = new ShardRoutingRoleStrategy() {
         @Override
         public ShardRouting.Role newReplicaRole() {
