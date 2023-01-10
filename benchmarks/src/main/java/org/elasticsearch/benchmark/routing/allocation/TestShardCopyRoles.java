@@ -8,19 +8,14 @@
 
 package org.elasticsearch.benchmark.routing.allocation;
 
-import org.elasticsearch.cluster.routing.ShardCopyRoleFactory;
 import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.ShardRoutingRoleStrategy;
 
 public class TestShardCopyRoles {
 
-    public static final ShardCopyRoleFactory EMPTY_FACTORY = new ShardCopyRoleFactory() {
+    public static final ShardRoutingRoleStrategy DEFAULT_ONLY_STRATEGY = new ShardRoutingRoleStrategy() {
         @Override
         public ShardRouting.Role newReplicaRole() {
-            return ShardRouting.Role.DEFAULT;
-        }
-
-        @Override
-        public ShardRouting.Role newRestoredRole(int copyIndex) {
             return ShardRouting.Role.DEFAULT;
         }
 

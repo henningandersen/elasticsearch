@@ -44,7 +44,7 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.IndexRoutingTable;
 import org.elasticsearch.cluster.routing.IndexShardRoutingTable;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardCopyRoleFactory;
+import org.elasticsearch.cluster.routing.ShardRoutingRoleStrategy;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.routing.allocation.allocator.AllocationActionMultiListener;
 import org.elasticsearch.cluster.service.ClusterService;
@@ -811,7 +811,7 @@ public class MetadataIndexStateService {
         final ClusterState currentState,
         final Map<Index, ClusterBlock> blockedIndices,
         final Map<Index, IndexResult> verifyResult,
-        ShardCopyRoleFactory roleFactory
+        ShardRoutingRoleStrategy roleFactory
     ) {
         final Metadata.Builder metadata = Metadata.builder(currentState.metadata());
         final ClusterBlocks.Builder blocks = ClusterBlocks.builder(currentState.blocks());

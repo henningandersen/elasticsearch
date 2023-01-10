@@ -26,8 +26,8 @@ import org.elasticsearch.cluster.routing.RerouteService;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardCopyRoleFactory;
 import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.ShardRoutingRoleStrategy;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.routing.UnassignedInfo.AllocationStatus;
 import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
@@ -77,7 +77,7 @@ public class AllocationService {
     private final ShardsAllocator shardsAllocator;
     private final ClusterInfoService clusterInfoService;
     private final SnapshotsInfoService snapshotsInfoService;
-    private final ShardCopyRoleFactory roleFactory;
+    private final ShardRoutingRoleStrategy roleFactory;
 
     // only for tests that use the GatewayAllocator as the unique ExistingShardsAllocator
     public AllocationService(
@@ -86,7 +86,7 @@ public class AllocationService {
         ShardsAllocator shardsAllocator,
         ClusterInfoService clusterInfoService,
         SnapshotsInfoService snapshotsInfoService,
-        ShardCopyRoleFactory roleFactory
+        ShardRoutingRoleStrategy roleFactory
     ) {
         this(allocationDeciders, shardsAllocator, clusterInfoService, snapshotsInfoService, roleFactory);
         setExistingShardsAllocators(Collections.singletonMap(GatewayAllocator.ALLOCATOR_NAME, gatewayAllocator));
@@ -97,7 +97,7 @@ public class AllocationService {
         ShardsAllocator shardsAllocator,
         ClusterInfoService clusterInfoService,
         SnapshotsInfoService snapshotsInfoService,
-        ShardCopyRoleFactory roleFactory
+        ShardRoutingRoleStrategy roleFactory
     ) {
         this.allocationDeciders = allocationDeciders;
         this.shardsAllocator = shardsAllocator;
@@ -122,7 +122,7 @@ public class AllocationService {
         return allocationDeciders;
     }
 
-    public ShardCopyRoleFactory getShardCopyRoleFactory() {
+    public ShardRoutingRoleStrategy getShardCopyRoleFactory() {
         return roleFactory;
     }
 

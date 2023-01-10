@@ -367,9 +367,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
         if (out.getVersion().onOrAfter(Version.V_8_7_0)) {
             role.writeTo(out);
         } else if (role != Role.DEFAULT) {
-            throw new IllegalStateException(
-                Strings.format("cannot send role [%s] to node of version [%s]", role, out.getVersion())
-            );
+            throw new IllegalStateException(Strings.format("cannot send role [%s] to node of version [%s]", role, out.getVersion()));
         }
     }
 
@@ -763,13 +761,13 @@ public final class ShardRouting implements Writeable, ToXContentObject {
     /** returns true if the current routing is identical to the other routing in all but meta fields, i.e., unassigned info */
     public boolean equalsIgnoringMetadata(ShardRouting other) {
         return primary == other.primary
-               && shardId.equals(other.shardId)
-               && Objects.equals(currentNodeId, other.currentNodeId)
-               && Objects.equals(relocatingNodeId, other.relocatingNodeId)
-               && Objects.equals(allocationId, other.allocationId)
-               && state == other.state
-               && Objects.equals(recoverySource, other.recoverySource)
-               && role == other.role;
+            && shardId.equals(other.shardId)
+            && Objects.equals(currentNodeId, other.currentNodeId)
+            && Objects.equals(relocatingNodeId, other.relocatingNodeId)
+            && Objects.equals(allocationId, other.allocationId)
+            && state == other.state
+            && Objects.equals(recoverySource, other.recoverySource)
+            && role == other.role;
     }
 
     @Override

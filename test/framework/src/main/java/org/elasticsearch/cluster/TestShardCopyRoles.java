@@ -8,12 +8,12 @@
 
 package org.elasticsearch.cluster;
 
-import org.elasticsearch.cluster.routing.ShardCopyRoleFactory;
+import org.elasticsearch.cluster.routing.ShardRoutingRoleStrategy;
 
 import java.util.List;
 
 public class TestShardCopyRoles {
-    public static final ShardCopyRoleFactory DEFAULT_ROLE_ONLY = ClusterModule.getShardCopyRoleFactory(List.of());
+    public static final ShardRoutingRoleStrategy DEFAULT_ROLE_ONLY = ClusterModule.getShardRoutingRoleStrategy(List.of());
 
     private TestShardCopyRoles() {
         // no instances

@@ -344,21 +344,21 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
         /**
          * Initializes a new empty index, as if it was created from an API.
          */
-        public Builder initializeAsNew(IndexMetadata indexMetadata, ShardCopyRoleFactory roleFactory) {
+        public Builder initializeAsNew(IndexMetadata indexMetadata, ShardRoutingRoleStrategy roleFactory) {
             return initializeEmpty(indexMetadata, new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null), null, roleFactory);
         }
 
         /**
          * Initializes an existing index.
          */
-        public Builder initializeAsRecovery(IndexMetadata indexMetadata, ShardCopyRoleFactory roleFactory) {
+        public Builder initializeAsRecovery(IndexMetadata indexMetadata, ShardRoutingRoleStrategy roleFactory) {
             return initializeEmpty(indexMetadata, new UnassignedInfo(UnassignedInfo.Reason.CLUSTER_RECOVERED, null), null, roleFactory);
         }
 
         /**
          * Initializes a new index caused by dangling index imported.
          */
-        public Builder initializeAsFromDangling(IndexMetadata indexMetadata, ShardCopyRoleFactory roleFactory) {
+        public Builder initializeAsFromDangling(IndexMetadata indexMetadata, ShardRoutingRoleStrategy roleFactory) {
             return initializeEmpty(
                 indexMetadata,
                 new UnassignedInfo(UnassignedInfo.Reason.DANGLING_INDEX_IMPORTED, null),
@@ -373,7 +373,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
         public Builder initializeAsFromCloseToOpen(
             IndexMetadata indexMetadata,
             IndexRoutingTable indexRoutingTable,
-            ShardCopyRoleFactory roleFactory
+            ShardRoutingRoleStrategy roleFactory
         ) {
             return initializeEmpty(
                 indexMetadata,
@@ -389,7 +389,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
         public Builder initializeAsFromOpenToClose(
             IndexMetadata indexMetadata,
             IndexRoutingTable indexRoutingTable,
-            ShardCopyRoleFactory roleFactory
+            ShardRoutingRoleStrategy roleFactory
         ) {
             return initializeEmpty(
                 indexMetadata,
@@ -406,7 +406,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
             IndexMetadata indexMetadata,
             SnapshotRecoverySource recoverySource,
             Set<Integer> ignoreShards,
-            ShardCopyRoleFactory roleFactory
+            ShardRoutingRoleStrategy roleFactory
         ) {
             final UnassignedInfo unassignedInfo = new UnassignedInfo(
                 UnassignedInfo.Reason.NEW_INDEX_RESTORED,
@@ -426,7 +426,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
             IndexMetadata indexMetadata,
             SnapshotRecoverySource recoverySource,
             IndexRoutingTable previousIndexRoutingTable,
-            ShardCopyRoleFactory roleFactory
+            ShardRoutingRoleStrategy roleFactory
         ) {
             final UnassignedInfo unassignedInfo = new UnassignedInfo(
                 UnassignedInfo.Reason.EXISTING_INDEX_RESTORED,
@@ -449,7 +449,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
             boolean asNew,
             UnassignedInfo unassignedInfo,
             @Nullable IndexRoutingTable previousIndexRoutingTable,
-            ShardCopyRoleFactory roleFactory
+            ShardRoutingRoleStrategy roleFactory
         ) {
             assert indexMetadata.getIndex().equals(index);
             if (shards != null) {
@@ -497,7 +497,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
             IndexMetadata indexMetadata,
             UnassignedInfo unassignedInfo,
             @Nullable IndexRoutingTable previousIndexRoutingTable,
-            ShardCopyRoleFactory roleFactory
+            ShardRoutingRoleStrategy roleFactory
         ) {
             assert indexMetadata.getIndex().equals(index);
             assert previousIndexRoutingTable == null || previousIndexRoutingTable.size() == indexMetadata.getNumberOfShards();

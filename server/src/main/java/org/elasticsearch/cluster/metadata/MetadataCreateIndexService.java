@@ -30,8 +30,8 @@ import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.IndexRoutingTable;
 import org.elasticsearch.cluster.routing.RoutingTable;
-import org.elasticsearch.cluster.routing.ShardCopyRoleFactory;
 import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.ShardRoutingRoleStrategy;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.routing.allocation.DataTier;
@@ -1227,7 +1227,7 @@ public class MetadataCreateIndexService {
         Set<ClusterBlock> clusterBlocks,
         IndexMetadata indexMetadata,
         BiConsumer<Metadata.Builder, IndexMetadata> metadataTransformer,
-        ShardCopyRoleFactory roleFactory
+        ShardRoutingRoleStrategy roleFactory
     ) {
         final Metadata newMetadata;
         if (metadataTransformer != null) {

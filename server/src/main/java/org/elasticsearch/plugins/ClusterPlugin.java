@@ -8,7 +8,7 @@
 
 package org.elasticsearch.plugins;
 
-import org.elasticsearch.cluster.routing.ShardCopyRoleFactory;
+import org.elasticsearch.cluster.routing.ShardRoutingRoleStrategy;
 import org.elasticsearch.cluster.routing.allocation.ExistingShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.WriteLoadForecaster;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
@@ -69,7 +69,7 @@ public interface ClusterPlugin {
         return Collections.emptyList();
     }
 
-    default ShardCopyRoleFactory getShardRoleFactory() {
+    default ShardRoutingRoleStrategy getShardRoutingRoleStrategy() {
         return null;
     }
 

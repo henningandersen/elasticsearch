@@ -35,16 +35,11 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
 
     public static class TestPlugin extends Plugin implements ClusterPlugin {
         @Override
-        public ShardCopyRoleFactory getShardRoleFactory() {
-            return new ShardCopyRoleFactory() {
+        public ShardRoutingRoleStrategy getShardRoutingRoleStrategy() {
+            return new ShardRoutingRoleStrategy() {
                 @Override
                 public ShardRouting.Role newReplicaRole() {
                     return ShardRouting.Role.SEARCH_ONLY;
-                }
-
-                @Override
-                public ShardRouting.Role newRestoredRole(int copyIndex) {
-                    return newEmptyRole(copyIndex);
                 }
 
                 @Override
