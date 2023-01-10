@@ -75,16 +75,14 @@ public class RoutingTableTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder().put(createIndexMetadata(TEST_INDEX_1)).put(createIndexMetadata(TEST_INDEX_2)).build();
 
         RoutingTable testRoutingTable = new RoutingTable.Builder().add(
-            new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_1).getIndex()).initializeAsNew(
-                metadata.index(TEST_INDEX_1),
-                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
-            ).build()
+            new IndexRoutingTable.Builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, metadata.index(TEST_INDEX_1).getIndex())
+                .initializeAsNew(metadata.index(TEST_INDEX_1))
+                .build()
         )
             .add(
-                new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_2).getIndex()).initializeAsNew(
-                    metadata.index(TEST_INDEX_2),
-                    TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
-                ).build()
+                new IndexRoutingTable.Builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, metadata.index(TEST_INDEX_2).getIndex())
+                    .initializeAsNew(metadata.index(TEST_INDEX_2))
+                    .build()
             )
             .build();
         this.clusterState = ClusterState.builder(org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
@@ -467,7 +465,7 @@ public class RoutingTableTests extends ESAllocationTestCase {
         shards.add(TestShardRouting.newShardRouting(shardId, "node3", false, STARTED));
 
         for (int removeReplicaNumber = 0; removeReplicaNumber <= rightRemoveOrder.size(); removeReplicaNumber++) {
-            IndexRoutingTable.Builder builder = new IndexRoutingTable.Builder(index);
+            IndexRoutingTable.Builder builder = new IndexRoutingTable.Builder(ShardRoutingRoleStrategy.NO_SHARD_CREATION, index);
             Randomness.shuffle(shards);
             for (ShardRouting shard : shards) {
                 builder.addShard(shard);

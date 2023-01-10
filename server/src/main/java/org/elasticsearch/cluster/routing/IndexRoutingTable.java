@@ -307,7 +307,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
 
     public static IndexRoutingTable readFrom(StreamInput in) throws IOException {
         Index index = new Index(in);
-        Builder builder = new Builder(index);
+        Builder builder = new Builder(ShardRoutingRoleStrategy.NO_SHARD_CREATION, index);
 
         int size = in.readVInt();
         builder.ensureShardArray(size);
@@ -329,84 +329,57 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
     }
 
     public static Builder builder(Index index) {
-        return new Builder(index);
+        return new Builder(ShardRoutingRoleStrategy.NO_SHARD_CREATION, index);
+    }
+
+    public static Builder builder(ShardRoutingRoleStrategy shardRoutingRoleStrategy, Index index) {
+        return new Builder(shardRoutingRoleStrategy, index);
     }
 
     public static class Builder {
 
+        private final ShardRoutingRoleStrategy shardRoutingRoleStrategy;
         private final Index index;
         private IndexShardRoutingTable.Builder[] shards;
 
-        public Builder(Index index) {
+        public Builder(ShardRoutingRoleStrategy shardRoutingRoleStrategy, Index index) {
+            this.shardRoutingRoleStrategy = shardRoutingRoleStrategy;
             this.index = index;
         }
 
         /**
          * Initializes a new empty index, as if it was created from an API.
          */
-        public Builder initializeAsNew(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
-            return initializeEmpty(
-                indexMetadata,
-                new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-                null,
-                shardRoutingRoleStrategy
-            );
+        public Builder initializeAsNew(IndexMetadata indexMetadata) {
+            return initializeEmpty(indexMetadata, new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null), null);
         }
 
         /**
          * Initializes an existing index.
          */
-        public Builder initializeAsRecovery(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
-            return initializeEmpty(
-                indexMetadata,
-                new UnassignedInfo(UnassignedInfo.Reason.CLUSTER_RECOVERED, null),
-                null,
-                shardRoutingRoleStrategy
-            );
+        public Builder initializeAsRecovery(IndexMetadata indexMetadata) {
+            return initializeEmpty(indexMetadata, new UnassignedInfo(UnassignedInfo.Reason.CLUSTER_RECOVERED, null), null);
         }
 
         /**
          * Initializes a new index caused by dangling index imported.
          */
-        public Builder initializeAsFromDangling(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
-            return initializeEmpty(
-                indexMetadata,
-                new UnassignedInfo(UnassignedInfo.Reason.DANGLING_INDEX_IMPORTED, null),
-                null,
-                shardRoutingRoleStrategy
-            );
+        public Builder initializeAsFromDangling(IndexMetadata indexMetadata) {
+            return initializeEmpty(indexMetadata, new UnassignedInfo(UnassignedInfo.Reason.DANGLING_INDEX_IMPORTED, null), null);
         }
 
         /**
          * Initializes a new empty index, as a result of opening a closed index.
          */
-        public Builder initializeAsFromCloseToOpen(
-            IndexMetadata indexMetadata,
-            IndexRoutingTable indexRoutingTable,
-            ShardRoutingRoleStrategy shardRoutingRoleStrategy
-        ) {
-            return initializeEmpty(
-                indexMetadata,
-                new UnassignedInfo(UnassignedInfo.Reason.INDEX_REOPENED, null),
-                indexRoutingTable,
-                shardRoutingRoleStrategy
-            );
+        public Builder initializeAsFromCloseToOpen(IndexMetadata indexMetadata, IndexRoutingTable indexRoutingTable) {
+            return initializeEmpty(indexMetadata, new UnassignedInfo(UnassignedInfo.Reason.INDEX_REOPENED, null), indexRoutingTable);
         }
 
         /**
          * Initializes a new empty index, as a result of closing an opened index.
          */
-        public Builder initializeAsFromOpenToClose(
-            IndexMetadata indexMetadata,
-            IndexRoutingTable indexRoutingTable,
-            ShardRoutingRoleStrategy shardRoutingRoleStrategy
-        ) {
-            return initializeEmpty(
-                indexMetadata,
-                new UnassignedInfo(UnassignedInfo.Reason.INDEX_CLOSED, null),
-                indexRoutingTable,
-                shardRoutingRoleStrategy
-            );
+        public Builder initializeAsFromOpenToClose(IndexMetadata indexMetadata, IndexRoutingTable indexRoutingTable) {
+            return initializeEmpty(indexMetadata, new UnassignedInfo(UnassignedInfo.Reason.INDEX_CLOSED, null), indexRoutingTable);
         }
 
         /**
@@ -415,8 +388,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
         public Builder initializeAsNewRestore(
             IndexMetadata indexMetadata,
             SnapshotRecoverySource recoverySource,
-            Set<Integer> ignoreShards,
-            ShardRoutingRoleStrategy shardRoutingRoleStrategy
+            Set<Integer> ignoreShards
         ) {
             final UnassignedInfo unassignedInfo = new UnassignedInfo(
                 UnassignedInfo.Reason.NEW_INDEX_RESTORED,
@@ -426,7 +398,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
                     + recoverySource.snapshot().getSnapshotId().getName()
                     + "]"
             );
-            return initializeAsRestore(indexMetadata, recoverySource, ignoreShards, true, unassignedInfo, null, shardRoutingRoleStrategy);
+            return initializeAsRestore(indexMetadata, recoverySource, ignoreShards, true, unassignedInfo, null);
         }
 
         /**
@@ -435,8 +407,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
         public Builder initializeAsRestore(
             IndexMetadata indexMetadata,
             SnapshotRecoverySource recoverySource,
-            IndexRoutingTable previousIndexRoutingTable,
-            ShardRoutingRoleStrategy shardRoutingRoleStrategy
+            IndexRoutingTable previousIndexRoutingTable
         ) {
             final UnassignedInfo unassignedInfo = new UnassignedInfo(
                 UnassignedInfo.Reason.EXISTING_INDEX_RESTORED,
@@ -446,15 +417,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
                     + recoverySource.snapshot().getSnapshotId().getName()
                     + "]"
             );
-            return initializeAsRestore(
-                indexMetadata,
-                recoverySource,
-                null,
-                false,
-                unassignedInfo,
-                previousIndexRoutingTable,
-                shardRoutingRoleStrategy
-            );
+            return initializeAsRestore(indexMetadata, recoverySource, null, false, unassignedInfo, previousIndexRoutingTable);
         }
 
         /**
@@ -466,8 +429,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
             Set<Integer> ignoreShards,
             boolean asNew,
             UnassignedInfo unassignedInfo,
-            @Nullable IndexRoutingTable previousIndexRoutingTable,
-            ShardRoutingRoleStrategy shardRoutingRoleStrategy
+            @Nullable IndexRoutingTable previousIndexRoutingTable
         ) {
             assert indexMetadata.getIndex().equals(index);
             if (shards != null) {
@@ -514,8 +476,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
         private Builder initializeEmpty(
             IndexMetadata indexMetadata,
             UnassignedInfo unassignedInfo,
-            @Nullable IndexRoutingTable previousIndexRoutingTable,
-            ShardRoutingRoleStrategy shardRoutingRoleStrategy
+            @Nullable IndexRoutingTable previousIndexRoutingTable
         ) {
             assert indexMetadata.getIndex().equals(index);
             assert previousIndexRoutingTable == null || previousIndexRoutingTable.size() == indexMetadata.getNumberOfShards();

@@ -62,16 +62,14 @@ public class PrimaryTermsTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder().put(createIndexMetadata(TEST_INDEX_1)).put(createIndexMetadata(TEST_INDEX_2)).build();
 
         RoutingTable routingTable = new RoutingTable.Builder().add(
-            new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_1).getIndex()).initializeAsNew(
-                metadata.index(TEST_INDEX_1),
-                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
-            ).build()
+            new IndexRoutingTable.Builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, metadata.index(TEST_INDEX_1).getIndex())
+                .initializeAsNew(metadata.index(TEST_INDEX_1))
+                .build()
         )
             .add(
-                new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_2).getIndex()).initializeAsNew(
-                    metadata.index(TEST_INDEX_2),
-                    TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
-                ).build()
+                new IndexRoutingTable.Builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, metadata.index(TEST_INDEX_2).getIndex())
+                    .initializeAsNew(metadata.index(TEST_INDEX_2))
+                    .build()
             )
             .build();
 

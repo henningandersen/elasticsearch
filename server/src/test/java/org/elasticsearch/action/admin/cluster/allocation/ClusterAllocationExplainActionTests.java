@@ -144,7 +144,7 @@ public class ClusterAllocationExplainActionTests extends ESTestCase {
         final String redIndex = randomBoolean() ? "idx1" : "idx2";
         final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(clusterState.routingTable());
         for (final IndexRoutingTable indexRoutingTable : clusterState.routingTable()) {
-            final IndexRoutingTable.Builder indexBuilder = new IndexRoutingTable.Builder(indexRoutingTable.getIndex());
+            final IndexRoutingTable.Builder indexBuilder = IndexRoutingTable.builder(indexRoutingTable.getIndex());
             for (int shardId = 0; shardId < indexRoutingTable.size(); shardId++) {
                 IndexShardRoutingTable indexShardRoutingTable = indexRoutingTable.shard(shardId);
                 final IndexShardRoutingTable.Builder shardBuilder = new IndexShardRoutingTable.Builder(indexShardRoutingTable.shardId());

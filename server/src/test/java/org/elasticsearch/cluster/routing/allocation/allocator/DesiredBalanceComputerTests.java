@@ -979,7 +979,7 @@ public class DesiredBalanceComputerTests extends ESTestCase {
     static ClusterState mutateAllocationStatuses(ClusterState clusterState) {
         final var routingTableBuilder = RoutingTable.builder();
         for (final var indexRoutingTable : clusterState.routingTable()) {
-            final var indexRoutingTableBuilder = new IndexRoutingTable.Builder(indexRoutingTable.getIndex());
+            final var indexRoutingTableBuilder = IndexRoutingTable.builder(indexRoutingTable.getIndex());
             for (int shardId = 0; shardId < indexRoutingTable.size(); shardId++) {
                 final var shardRoutingTable = indexRoutingTable.shard(shardId);
                 final var shardRoutingTableBuilder = new IndexShardRoutingTable.Builder(shardRoutingTable.shardId());
