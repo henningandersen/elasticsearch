@@ -36,7 +36,6 @@ import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.breaker.CircuitBreaker;
 import org.elasticsearch.common.breaker.CircuitBreakingException;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
-import org.elasticsearch.common.io.stream.NamedWriteableAwareStreamInput;
 import org.elasticsearch.common.io.stream.NotSerializableExceptionWrapper;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -233,10 +232,9 @@ public class ExceptionSerializationTests extends ESTestCase {
         out.setVersion(version);
         out.writeException(exception);
 
-        try (var in = new NamedWriteableAwareStreamInput(out.bytes().streamInput(), writableRegistry())) {
-            in.setVersion(version);
-            return in.readException();
-        }
+        StreamInput in = out.bytes().streamInput();
+        in.setVersion(version);
+        return in.readException();
     }
 
     public void testIllegalShardRoutingStateException() throws IOException {

@@ -82,7 +82,7 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
         ClusterState serializedClusterState = ClusterState.Builder.fromBytes(
             ClusterState.Builder.toBytes(clusterState),
             newNode("node1"),
-            new NamedWriteableRegistry(ClusterModule.getNamedWriteables(List.of()))
+            new NamedWriteableRegistry(ClusterModule.getNamedWriteables())
         );
 
         assertThat(serializedClusterState.getClusterName().value(), equalTo(clusterState.getClusterName().value()));
@@ -110,7 +110,7 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
 
         BytesStreamOutput outStream = new BytesStreamOutput();
         source.writeTo(outStream);
-        StreamInput inStream = new NamedWriteableAwareStreamInput(outStream.bytes().streamInput(), writableRegistry());
+        StreamInput inStream = outStream.bytes().streamInput();
         RoutingTable target = RoutingTable.readFrom(inStream);
 
         assertThat(target.toString(), equalTo(source.toString()));
@@ -161,7 +161,7 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
         outStream.setVersion(version);
         diffs.writeTo(outStream);
         StreamInput inStream = outStream.bytes().streamInput();
-        inStream = new NamedWriteableAwareStreamInput(inStream, new NamedWriteableRegistry(ClusterModule.getNamedWriteables(List.of())));
+        inStream = new NamedWriteableAwareStreamInput(inStream, new NamedWriteableRegistry(ClusterModule.getNamedWriteables()));
         inStream.setVersion(version);
         Diff<ClusterState> serializedDiffs = ClusterState.readDiffFrom(inStream, clusterState.nodes().getLocalNode());
         ClusterState stateAfterDiffs = serializedDiffs.apply(ClusterState.EMPTY_STATE);
@@ -174,7 +174,7 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
         outStream.setVersion(version);
         diffs.writeTo(outStream);
         inStream = outStream.bytes().streamInput();
-        inStream = new NamedWriteableAwareStreamInput(inStream, new NamedWriteableRegistry(ClusterModule.getNamedWriteables(List.of())));
+        inStream = new NamedWriteableAwareStreamInput(inStream, new NamedWriteableRegistry(ClusterModule.getNamedWriteables()));
         inStream.setVersion(version);
         serializedDiffs = ClusterState.readDiffFrom(inStream, clusterState.nodes().getLocalNode());
         stateAfterDiffs = serializedDiffs.apply(stateAfterDiffs);
@@ -188,7 +188,7 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
         diff.writeTo(outStream);
         StreamInput inStream = new NamedWriteableAwareStreamInput(
             outStream.bytes().streamInput(),
-            new NamedWriteableRegistry(ClusterModule.getNamedWriteables(List.of()))
+            new NamedWriteableRegistry(ClusterModule.getNamedWriteables())
         );
         diff = ClusterState.readDiffFrom(inStream, newNode("node-name"));
         return diff.apply(original);
@@ -216,7 +216,7 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
         clusterState1.writeTo(outStream);
         StreamInput inStream = new NamedWriteableAwareStreamInput(
             outStream.bytes().streamInput(),
-            new NamedWriteableRegistry(ClusterModule.getNamedWriteables(List.of()))
+            new NamedWriteableRegistry(ClusterModule.getNamedWriteables())
         );
         ClusterState serializedClusterState1 = ClusterState.readFrom(inStream, null);
 
@@ -365,7 +365,7 @@ public class ClusterSerializationTests extends ESAllocationTestCase {
         Diff<ClusterState> diffs = clusterState.diff(ClusterState.EMPTY_STATE);
 
         // Add the new customs to named writeables
-        final List<NamedWriteableRegistry.Entry> entries = ClusterModule.getNamedWriteables(List.of());
+        final List<NamedWriteableRegistry.Entry> entries = ClusterModule.getNamedWriteables();
         entries.add(new NamedWriteableRegistry.Entry(ClusterState.Custom.class, TestCustomOne.TYPE, TestCustomOne::new));
         entries.add(new NamedWriteableRegistry.Entry(NamedDiff.class, TestCustomOne.TYPE, TestCustomOne::readDiffFrom));
         entries.add(new NamedWriteableRegistry.Entry(ClusterState.Custom.class, TestCustomTwo.TYPE, TestCustomTwo::new));

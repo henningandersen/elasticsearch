@@ -9,7 +9,6 @@ package org.elasticsearch.xpack.core.searchablesnapshots;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.TestShardRouting;
-import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.repositories.IndexId;
@@ -80,10 +79,5 @@ public class SearchableSnapshotShardStatsTests extends AbstractWireSerializingTe
 
     private TimedCounter randomTimedCounter() {
         return new TimedCounter(randomLong(), randomLong(), randomLong(), randomLong(), randomLong());
-    }
-
-    @Override
-    protected NamedWriteableRegistry getNamedWriteableRegistry() {
-        return writableRegistry();
     }
 }

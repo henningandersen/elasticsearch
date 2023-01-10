@@ -164,7 +164,7 @@ public class SnapshotsInProgressSerializationTests extends SimpleDiffableWireSer
 
     @Override
     protected NamedWriteableRegistry getNamedWriteableRegistry() {
-        return new NamedWriteableRegistry(ClusterModule.getNamedWriteables(List.of()));
+        return new NamedWriteableRegistry(ClusterModule.getNamedWriteables());
     }
 
     @Override

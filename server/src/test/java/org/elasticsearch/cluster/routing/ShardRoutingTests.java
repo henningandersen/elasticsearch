@@ -11,7 +11,6 @@ package org.elasticsearch.cluster.routing;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
-import org.elasticsearch.common.io.stream.NamedWriteableAwareStreamInput;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.repositories.IndexId;
@@ -305,7 +304,7 @@ public class ShardRoutingTests extends ESTestCase {
             if (randomBoolean()) {
                 BytesStreamOutput out = new BytesStreamOutput();
                 routing.writeTo(out);
-                routing = new ShardRouting(new NamedWriteableAwareStreamInput(out.bytes().streamInput(), writableRegistry()));
+                routing = new ShardRouting(out.bytes().streamInput());
             }
             if (routing.initializing() || routing.relocating()) {
                 assertEquals(routing.toString(), byteSize, routing.getExpectedShardSize());

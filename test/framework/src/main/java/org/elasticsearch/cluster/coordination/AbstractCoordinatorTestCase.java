@@ -1080,8 +1080,7 @@ public class AbstractCoordinatorTestCase extends ESTestCase {
 
         private NamedWriteableRegistry getNamedWriteableRegistry() {
             return new NamedWriteableRegistry(
-                Stream.concat(ClusterModule.getNamedWriteables(List.of()).stream(), extraNamedWriteables().stream())
-                    .collect(Collectors.toList())
+                Stream.concat(ClusterModule.getNamedWriteables().stream(), extraNamedWriteables().stream()).collect(Collectors.toList())
             );
         }
 

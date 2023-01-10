@@ -180,7 +180,7 @@ public class ClusterModule extends AbstractModule {
         return allocationService.executeWithRoutingAllocation(clusterState, "reconcile-desired-balance", routingAllocationConsumer);
     }
 
-    public static List<Entry> getNamedWriteables(List<Reader<ShardCopyRole>> shardRoleReaders) { // TODO NOCOMMIT remove argument
+    public static List<Entry> getNamedWriteables() {
         List<Entry> entries = new ArrayList<>();
         // Cluster State
         registerClusterCustom(entries, SnapshotsInProgress.TYPE, SnapshotsInProgress::new, SnapshotsInProgress::readDiffFrom);

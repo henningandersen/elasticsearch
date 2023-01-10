@@ -129,8 +129,7 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
         final var routingTableIndices = (Map<String, Object>) routingTable.get("indices");
         final var routingTableIndex = (Map<String, Object>) routingTableIndices.get("test");
         final var routingTableShards = (Map<String, Object>) routingTableIndex.get("shards");
-        final var routingTableShardValues = (Collection<Object>) routingTableShards.values();
-        for (final var routingTableShardValue : routingTableShardValues) {
+        for (final var routingTableShardValue : routingTableShards.values()) {
             for (Object routingTableShardCopy : (List<Object>) routingTableShardValue) {
                 final var routingTableShard = (Map<String, String>) routingTableShardCopy;
                 assertNotNull(ShardCopyRole.valueOf(routingTableShard.get("role")));
