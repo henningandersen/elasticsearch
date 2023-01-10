@@ -205,7 +205,7 @@ public class ClusterStateUpdatersTests extends ESTestCase {
         assertFalse(initialState.routingTable().hasIndex(index));
 
         {
-            final ClusterState newState = updateRoutingTable(initialState, TestShardCopyRoles.EMPTY_FACTORY);
+            final ClusterState newState = updateRoutingTable(initialState, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
             assertTrue(newState.routingTable().hasIndex(index));
             assertThat(newState.routingTable().version(), is(0L));
             assertThat(newState.routingTable().allShards(index.getName()).size(), is(numOfShards));
@@ -219,7 +219,7 @@ public class ClusterStateUpdatersTests extends ESTestCase {
                             .build()
                     )
                     .build(),
-                TestShardCopyRoles.EMPTY_FACTORY
+                TestShardCopyRoles.DEFAULT_ROLE_ONLY
             );
             assertFalse(newState.routingTable().hasIndex(index));
         }
@@ -241,7 +241,7 @@ public class ClusterStateUpdatersTests extends ESTestCase {
                             .build()
                     )
                     .build(),
-                TestShardCopyRoles.EMPTY_FACTORY
+                TestShardCopyRoles.DEFAULT_ROLE_ONLY
             );
             assertTrue(newState.routingTable().hasIndex(index));
             assertThat(newState.routingTable().version(), is(0L));

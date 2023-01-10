@@ -48,7 +48,7 @@ public class DeadNodesAllocationTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
         ).metadata(metadata).routingTable(routingTable).build();
@@ -91,7 +91,7 @@ public class DeadNodesAllocationTests extends ESAllocationTestCase {
             ClusterState.builder(ClusterName.DEFAULT)
                 .nodes(DiscoveryNodes.builder().add(newNode("node1")).add(newNode("node2")).build())
                 .metadata(metadata)
-                .routingTable(RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build())
+                .routingTable(RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
                 .build(),
             allocationService
         );
@@ -141,7 +141,7 @@ public class DeadNodesAllocationTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
         ).metadata(metadata).routingTable(routingTable).build();
@@ -220,7 +220,7 @@ public class DeadNodesAllocationTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
         ).metadata(metadata).routingTable(routingTable).build();

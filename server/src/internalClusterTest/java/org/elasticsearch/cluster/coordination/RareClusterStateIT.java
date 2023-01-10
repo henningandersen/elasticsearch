@@ -104,7 +104,7 @@ public class RareClusterStateIT extends ESIntegTestCase {
                 ClusterState updatedState = builder.build();
 
                 RoutingTable.Builder routingTable = RoutingTable.builder(updatedState.routingTable());
-                routingTable.addAsRecovery(updatedState.metadata().index(index), TestShardCopyRoles.EMPTY_FACTORY);
+                routingTable.addAsRecovery(updatedState.metadata().index(index), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
                 updatedState = ClusterState.builder(updatedState).routingTable(routingTable.build()).build();
 
                 return allocationService.reroute(updatedState, "reroute", ActionListener.noop());

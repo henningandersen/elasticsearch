@@ -410,7 +410,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
             createContext(state, Set.of(role)),
             DISK_THRESHOLD_SETTINGS,
             createAllocationDeciders(allocationDeciders),
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
         assertThat(subject.invoke(allocationState), equalTo(expected));
     }
@@ -424,7 +424,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
             Settings.EMPTY,
             new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS),
             createAllocationDeciders(allocationDeciders),
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
         TestAutoscalingDeciderContext context = createContext(state, Set.of(DiscoveryNodeRole.DATA_HOT_NODE_ROLE));
         AutoscalingDeciderResult result = decider.scale(Settings.EMPTY, context);
@@ -662,7 +662,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
                 .build();
 
             builder.put(indexMetadata, false);
-            routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY);
+            routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
             shards -= indexMetadata.getNumberOfShards() * (indexMetadata.getNumberOfReplicas() + 1);
         }
 

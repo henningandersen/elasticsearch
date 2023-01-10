@@ -69,7 +69,7 @@ public class RestoreInProgressAllocationDeciderTests extends ESAllocationTestCas
             .addAsRestore(
                 clusterState.getMetadata().index("test"),
                 createSnapshotRecoverySource("_missing"),
-                TestShardCopyRoles.EMPTY_FACTORY
+                TestShardCopyRoles.DEFAULT_ROLE_ONLY
             )
             .build();
 
@@ -96,7 +96,7 @@ public class RestoreInProgressAllocationDeciderTests extends ESAllocationTestCas
 
         ClusterState clusterState = createInitialClusterState();
         RoutingTable routingTable = RoutingTable.builder(clusterState.getRoutingTable())
-            .addAsRestore(clusterState.getMetadata().index("test"), recoverySource, TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsRestore(clusterState.getMetadata().index("test"), recoverySource, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         clusterState = ClusterState.builder(clusterState).routingTable(routingTable).build();
@@ -188,7 +188,7 @@ public class RestoreInProgressAllocationDeciderTests extends ESAllocationTestCas
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
 
         DiscoveryNodes discoveryNodes = DiscoveryNodes.builder()
             .add(newNode("master", Collections.singleton(DiscoveryNodeRole.MASTER_ROLE)))

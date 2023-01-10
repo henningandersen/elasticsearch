@@ -160,7 +160,7 @@ public class BalanceConfigurationTests extends ESAllocationTestCase {
         Metadata metadata = metadataBuilder.build();
 
         for (IndexMetadata indexMetadata : metadata.indices().values()) {
-            routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY);
+            routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
         }
 
         RoutingTable initialRoutingTable = routingTableBuilder.build();

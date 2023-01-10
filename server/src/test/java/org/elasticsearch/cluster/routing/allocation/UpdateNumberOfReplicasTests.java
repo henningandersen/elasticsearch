@@ -44,7 +44,7 @@ public class UpdateNumberOfReplicasTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -89,7 +89,7 @@ public class UpdateNumberOfReplicasTests extends ESAllocationTestCase {
         logger.info("add another replica");
         final String[] indices = { "test" };
         RoutingTable updatedRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .updateNumberOfReplicas(2, indices, TestShardCopyRoles.EMPTY_FACTORY)
+            .updateNumberOfReplicas(2, indices, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
         metadata = Metadata.builder(clusterState.metadata()).updateNumberOfReplicas(2, indices).build();
         clusterState = ClusterState.builder(clusterState).routingTable(updatedRoutingTable).metadata(metadata).build();
@@ -148,7 +148,7 @@ public class UpdateNumberOfReplicasTests extends ESAllocationTestCase {
 
         logger.info("now remove a replica");
         updatedRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .updateNumberOfReplicas(1, indices, TestShardCopyRoles.EMPTY_FACTORY)
+            .updateNumberOfReplicas(1, indices, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
         metadata = Metadata.builder(clusterState.metadata()).updateNumberOfReplicas(1, indices).build();
         clusterState = ClusterState.builder(clusterState).routingTable(updatedRoutingTable).metadata(metadata).build();

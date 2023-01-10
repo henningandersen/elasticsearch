@@ -77,7 +77,7 @@ public class BalancedShardsAllocatorTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder(index).settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
         RoutingTable initialRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .addAsNew(metadata.index(index), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index(index), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
         clusterState = ClusterState.builder(clusterState).metadata(metadata).routingTable(initialRoutingTable).build();
 
@@ -366,7 +366,7 @@ public class BalancedShardsAllocatorTests extends ESAllocationTestCase {
         for (var index : indices) {
             var build = index.settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0).build();
             metadataBuilder.put(build, false);
-            routingTableBuilder.addAsNew(build, TestShardCopyRoles.EMPTY_FACTORY);
+            routingTableBuilder.addAsNew(build, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
         }
 
         return ClusterState.builder(ClusterName.DEFAULT)

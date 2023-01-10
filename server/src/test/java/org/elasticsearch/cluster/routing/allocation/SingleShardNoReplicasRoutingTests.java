@@ -57,7 +57,7 @@ public class SingleShardNoReplicasRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -159,7 +159,7 @@ public class SingleShardNoReplicasRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY);
+            .addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
 
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -222,7 +222,7 @@ public class SingleShardNoReplicasRoutingTests extends ESAllocationTestCase {
 
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         for (int i = 0; i < numberOfIndices; i++) {
-            routingTableBuilder.addAsNew(metadata.index("test" + i), TestShardCopyRoles.EMPTY_FACTORY);
+            routingTableBuilder.addAsNew(metadata.index("test" + i), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
         }
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -333,7 +333,7 @@ public class SingleShardNoReplicasRoutingTests extends ESAllocationTestCase {
 
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         for (int i = 0; i < numberOfIndices; i++) {
-            routingTableBuilder.addAsNew(metadata.index("test" + i), TestShardCopyRoles.EMPTY_FACTORY);
+            routingTableBuilder.addAsNew(metadata.index("test" + i), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
         }
 
         ClusterState clusterState = ClusterState.builder(

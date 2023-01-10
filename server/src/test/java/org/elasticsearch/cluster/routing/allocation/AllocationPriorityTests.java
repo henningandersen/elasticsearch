@@ -67,8 +67,8 @@ public class AllocationPriorityTests extends ESAllocationTestCase {
             )
             .build();
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("first"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("second"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("first"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("second"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)

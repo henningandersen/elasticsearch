@@ -66,7 +66,7 @@ public class FilterAllocationDeciderTests extends ESAllocationTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
         ClusterState state = createInitialClusterState(
             service,
@@ -198,8 +198,8 @@ public class FilterAllocationDeciderTests extends ESAllocationTestCase {
         final IndexMetadata indexMetadata = indexMetadataBuilder.build();
         metadata.put(indexMetadata, false);
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsFromCloseToOpen(sourceIndex, TestShardCopyRoles.EMPTY_FACTORY);
-        routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY);
+        routingTableBuilder.addAsFromCloseToOpen(sourceIndex, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
 
         RoutingTable routingTable = routingTableBuilder.build();
         ClusterState clusterState = ClusterState.builder(

@@ -78,7 +78,7 @@ public class ShardFailedClusterStateTaskExecutorTests extends ESAllocationTestCa
                     .primaryTerm(0, randomIntBetween(2, 10))
             )
             .build();
-        routingTable = RoutingTable.builder().addAsNew(metadata.index(INDEX), TestShardCopyRoles.EMPTY_FACTORY).build();
+        routingTable = RoutingTable.builder().addAsNew(metadata.index(INDEX), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
         clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
             .routingTable(routingTable)

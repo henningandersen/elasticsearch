@@ -50,7 +50,7 @@ public class ShardsLimitAllocationTests extends ESAllocationTestCase {
             )
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
 
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -97,7 +97,7 @@ public class ShardsLimitAllocationTests extends ESAllocationTestCase {
             )
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
 
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -164,7 +164,7 @@ public class ShardsLimitAllocationTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -190,7 +190,7 @@ public class ShardsLimitAllocationTests extends ESAllocationTestCase {
             )
             .build();
         RoutingTable updatedRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         clusterState = ClusterState.builder(clusterState).metadata(metadata).routingTable(updatedRoutingTable).build();

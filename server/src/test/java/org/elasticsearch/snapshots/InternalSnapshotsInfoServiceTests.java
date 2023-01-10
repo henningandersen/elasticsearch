@@ -439,7 +439,7 @@ public class InternalSnapshotsInfoServiceTests extends ESTestCase {
         final RoutingTable.Builder routingTable = RoutingTable.builder(currentState.routingTable());
         routingTable.add(
             IndexRoutingTable.builder(index)
-                .initializeAsNewRestore(indexMetadata, recoverySource, new HashSet<>(), TestShardCopyRoles.EMPTY_FACTORY)
+                .initializeAsNewRestore(indexMetadata, recoverySource, new HashSet<>(), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
                 .build()
         );
 

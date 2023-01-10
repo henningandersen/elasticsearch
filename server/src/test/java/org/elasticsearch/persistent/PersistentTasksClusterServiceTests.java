@@ -1039,7 +1039,7 @@ public class PersistentTasksClusterServiceTests extends ESTestCase {
             .numberOfReplicas(1)
             .build();
         metadata.put(indexMetadata, false);
-        routingTable.addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY);
+        routingTable.addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
     }
 
     /** Creates a PersistentTasksClusterService with a single PersistentTasksExecutor implemented by a BiFunction **/

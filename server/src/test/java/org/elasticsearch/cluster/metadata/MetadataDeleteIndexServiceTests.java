@@ -145,7 +145,7 @@ public class MetadataDeleteIndexServiceTests extends ESTestCase {
             .build();
         ClusterState before = ClusterState.builder(ClusterName.DEFAULT)
             .metadata(Metadata.builder().put(idxMetadata, false))
-            .routingTable(RoutingTable.builder().addAsNew(idxMetadata, TestShardCopyRoles.EMPTY_FACTORY).build())
+            .routingTable(RoutingTable.builder().addAsNew(idxMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
             .blocks(ClusterBlocks.builder().addBlocks(idxMetadata))
             .build();
 
@@ -233,7 +233,7 @@ public class MetadataDeleteIndexServiceTests extends ESTestCase {
             .build();
         return ClusterState.builder(ClusterName.DEFAULT)
             .metadata(Metadata.builder().put(indexMetadata, false))
-            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY).build())
+            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
             .blocks(ClusterBlocks.builder().addBlocks(indexMetadata))
             .build();
     }

@@ -78,7 +78,7 @@ public class ClusterAllocationExplainActionTests extends ESTestCase {
                         throw new UnsupportedOperationException("cannot explain");
                     }
                 }
-            }, null, null, TestShardCopyRoles.EMPTY_FACTORY)
+            }, null, null, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
         );
 
         assertEquals(shard.currentNodeId(), cae.getCurrentNode().getId());

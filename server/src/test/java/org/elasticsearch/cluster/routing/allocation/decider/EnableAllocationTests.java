@@ -55,7 +55,7 @@ public class EnableAllocationTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
 
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -82,7 +82,7 @@ public class EnableAllocationTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
 
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -117,8 +117,8 @@ public class EnableAllocationTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("disabled"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("enabled"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("disabled"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("enabled"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -176,8 +176,8 @@ public class EnableAllocationTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("always_disabled"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("always_disabled"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -297,7 +297,7 @@ public class EnableAllocationTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(

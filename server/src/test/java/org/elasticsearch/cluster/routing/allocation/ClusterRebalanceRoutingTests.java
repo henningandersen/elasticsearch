@@ -56,8 +56,8 @@ public class ClusterRebalanceRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("test2"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test2"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -150,8 +150,8 @@ public class ClusterRebalanceRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("test2"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test2"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -246,8 +246,8 @@ public class ClusterRebalanceRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("test2"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test2"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -325,8 +325,8 @@ public class ClusterRebalanceRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("test2"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test2"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -436,8 +436,8 @@ public class ClusterRebalanceRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("test2"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test2"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -516,8 +516,8 @@ public class ClusterRebalanceRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("test2"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test2"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -619,8 +619,8 @@ public class ClusterRebalanceRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -726,8 +726,8 @@ public class ClusterRebalanceRoutingTests extends ESAllocationTestCase {
         // we use a second index here (test1) that never gets assigned otherwise allocateUnassigned
         // is never called if we don't have unassigned shards.
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(

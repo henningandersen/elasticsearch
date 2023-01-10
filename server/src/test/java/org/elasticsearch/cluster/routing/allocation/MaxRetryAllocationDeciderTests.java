@@ -51,14 +51,14 @@ public class MaxRetryAllocationDeciderTests extends ESAllocationTestCase {
         new BalancedShardsAllocator(Settings.EMPTY),
         EmptyClusterInfoService.INSTANCE,
         EmptySnapshotsInfoService.INSTANCE,
-        TestShardCopyRoles.EMPTY_FACTORY
+        TestShardCopyRoles.DEFAULT_ROLE_ONLY
     );
 
     private ClusterState createInitialClusterState() {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder("idx").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("idx"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("idx"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)

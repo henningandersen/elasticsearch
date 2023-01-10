@@ -68,7 +68,7 @@ public class SearchableSnapshotAllocatorTests extends ESAllocationTestCase {
         routingTableBuilder.addAsRestore(
             metadata.index(shardId.getIndex()),
             randomSnapshotSource(shardId),
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
 
         final ClusterState state = buildClusterState(nodes, metadata, routingTableBuilder);
@@ -146,7 +146,7 @@ public class SearchableSnapshotAllocatorTests extends ESAllocationTestCase {
         routingTableBuilder.addAsRestore(
             metadata.index(shardId.getIndex()),
             randomSnapshotSource(shardId),
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
 
         final ClusterState state = buildClusterState(nodes, metadata, routingTableBuilder);
@@ -189,7 +189,7 @@ public class SearchableSnapshotAllocatorTests extends ESAllocationTestCase {
         routingTableBuilder.addAsRestore(
             metadata.index(shardId.getIndex()),
             randomSnapshotSource(shardId),
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
 
         final ClusterState state = buildClusterState(nodes, metadata, routingTableBuilder);

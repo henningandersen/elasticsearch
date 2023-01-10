@@ -110,7 +110,7 @@ public abstract class CatAllocationTestCase extends ESAllocationTestCase {
             builder.put(idxMeta, false);
             IndexRoutingTable.Builder tableBuilder = new IndexRoutingTable.Builder(idxMeta.getIndex()).initializeAsRecovery(
                 idxMeta,
-                TestShardCopyRoles.EMPTY_FACTORY
+                TestShardCopyRoles.DEFAULT_ROLE_ONLY
             );
             Map<Integer, IndexShardRoutingTable.Builder> shardIdToRouting = new HashMap<>();
             for (ShardRouting r : idx.routing) {

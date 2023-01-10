@@ -68,7 +68,7 @@ public class RandomAllocationDeciderTests extends ESAllocationTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
         int indices = scaledRandomIntBetween(1, 20);
         Builder metaBuilder = Metadata.builder();
@@ -87,7 +87,7 @@ public class RandomAllocationDeciderTests extends ESAllocationTestCase {
         Metadata metadata = metaBuilder.build();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         for (int i = 0; i < indices; i++) {
-            routingTableBuilder.addAsNew(metadata.index("INDEX_" + i), TestShardCopyRoles.EMPTY_FACTORY);
+            routingTableBuilder.addAsNew(metadata.index("INDEX_" + i), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
         }
 
         RoutingTable initialRoutingTable = routingTableBuilder.build();

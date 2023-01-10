@@ -44,7 +44,7 @@ public class GatewayServiceTests extends ESTestCase {
             settings.build(),
             (reason, priority, listener) -> fail("should not reroute"),
             clusterService,
-            TestShardCopyRoles.EMPTY_FACTORY,
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
             null
         );
     }

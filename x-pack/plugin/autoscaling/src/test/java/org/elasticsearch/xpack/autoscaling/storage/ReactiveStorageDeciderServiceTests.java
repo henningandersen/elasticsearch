@@ -225,7 +225,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             .build();
         metaBuilder.put(indexMetadata, true);
         stateBuilder.metadata(metaBuilder);
-        stateBuilder.routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY).build());
+        stateBuilder.routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build());
         addNode(stateBuilder);
         addNode(stateBuilder);
         ClusterState initialClusterState = stateBuilder.build();
@@ -286,7 +286,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             .build();
         metaBuilder.put(indexMetadata, true);
         stateBuilder.metadata(metaBuilder);
-        stateBuilder.routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY).build());
+        stateBuilder.routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build());
         ClusterState clusterState = stateBuilder.build();
 
         long baseSize = between(1, 10);
@@ -344,8 +344,8 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         stateBuilder.metadata(metaBuilder);
         stateBuilder.routingTable(
             RoutingTable.builder()
-                .addAsNew(sourceIndexMetadata, TestShardCopyRoles.EMPTY_FACTORY)
-                .addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY)
+                .addAsNew(sourceIndexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                .addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
                 .build()
         );
         ClusterState clusterState = stateBuilder.build();
@@ -380,7 +380,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
             clusterState,
             null,
-            TestShardCopyRoles.EMPTY_FACTORY,
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
             null,
             info,
             null,
@@ -427,7 +427,9 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         metaBuilder.put(indexMetadata, true);
         stateBuilder.metadata(metaBuilder);
         stateBuilder.routingTable(
-            RoutingTable.builder().addAsNewRestore(indexMetadata, recoverySource, new HashSet<>(), TestShardCopyRoles.EMPTY_FACTORY).build()
+            RoutingTable.builder()
+                .addAsNewRestore(indexMetadata, recoverySource, new HashSet<>(), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                .build()
         );
         ClusterState clusterState = stateBuilder.build();
 
@@ -459,7 +461,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
             clusterState,
             null,
-            TestShardCopyRoles.EMPTY_FACTORY,
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
             null,
             null,
             shardSizeInfo,
@@ -550,7 +552,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
             clusterState,
             null,
-            TestShardCopyRoles.EMPTY_FACTORY,
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
             thresholdSettings,
             info,
             null,
@@ -631,7 +633,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
             clusterState,
             allocationDeciders,
-            TestShardCopyRoles.EMPTY_FACTORY,
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
             new DiskThresholdSettings(Settings.EMPTY, new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS)),
             ClusterInfo.EMPTY,
             null,
@@ -735,7 +737,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
             clusterState,
             allocationDeciders,
-            TestShardCopyRoles.EMPTY_FACTORY,
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
             new DiskThresholdSettings(Settings.EMPTY, new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS)),
             ClusterInfo.EMPTY,
             null,

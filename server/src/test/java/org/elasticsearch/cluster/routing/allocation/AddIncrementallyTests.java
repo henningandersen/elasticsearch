@@ -272,7 +272,7 @@ public class AddIncrementallyTests extends ESAllocationTestCase {
         Metadata metadata = metadataBuilder.build();
 
         for (IndexMetadata indexMetadata : metadata.indices().values()) {
-            routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY);
+            routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
         }
 
         RoutingTable initialRoutingTable = routingTableBuilder.build();
@@ -313,7 +313,7 @@ public class AddIncrementallyTests extends ESAllocationTestCase {
             .numberOfReplicas(numberOfReplicas);
         IndexMetadata imd = index.build();
         metadataBuilder = metadataBuilder.put(imd, true);
-        routingTableBuilder.addAsNew(imd, TestShardCopyRoles.EMPTY_FACTORY);
+        routingTableBuilder.addAsNew(imd, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
 
         Metadata metadata = metadataBuilder.build();
         clusterState = ClusterState.builder(clusterState).metadata(metadata).routingTable(routingTableBuilder.build()).build();

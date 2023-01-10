@@ -66,7 +66,7 @@ public class NodeShutdownAllocationDeciderTests extends ESAllocationTestCase {
         new BalancedShardsAllocator(Settings.EMPTY),
         EmptyClusterInfoService.INSTANCE,
         EmptySnapshotsInfoService.INSTANCE,
-        TestShardCopyRoles.EMPTY_FACTORY
+        TestShardCopyRoles.DEFAULT_ROLE_ONLY
     );
 
     private final String idxName = "test-idx";

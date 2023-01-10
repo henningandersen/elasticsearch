@@ -77,7 +77,7 @@ public class ClusterRerouteTests extends ESAllocationTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
         ClusterState clusterState = createInitialClusterState(allocationService);
 
@@ -109,7 +109,7 @@ public class ClusterRerouteTests extends ESAllocationTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
         ClusterState clusterState = createInitialClusterState(allocationService);
 
@@ -171,7 +171,7 @@ public class ClusterRerouteTests extends ESAllocationTestCase {
         metaBuilder.put(IndexMetadata.builder("idx").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0));
         Metadata metadata = metaBuilder.build();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsNew(metadata.index("idx"), TestShardCopyRoles.EMPTY_FACTORY);
+        routingTableBuilder.addAsNew(metadata.index("idx"), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
 
         RoutingTable routingTable = routingTableBuilder.build();
         ClusterState clusterState = ClusterState.builder(

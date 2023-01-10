@@ -364,9 +364,9 @@ public class ThrottlingAllocationTests extends ESAllocationTestCase {
             IndexMetadata indexMetadata = indexMetadataBuilder.build();
             metadataBuilder.put(indexMetadata, false);
             switch (recoveryType) {
-                case 0 -> routingTableBuilder.addAsRecovery(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY);
-                case 1 -> routingTableBuilder.addAsFromCloseToOpen(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY);
-                case 2 -> routingTableBuilder.addAsFromDangling(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY);
+                case 0 -> routingTableBuilder.addAsRecovery(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+                case 1 -> routingTableBuilder.addAsFromCloseToOpen(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+                case 2 -> routingTableBuilder.addAsFromDangling(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
                 case 3 -> {
                     snapshotIndices.add(index.getName());
                     routingTableBuilder.addAsNewRestore(
@@ -378,7 +378,7 @@ public class ThrottlingAllocationTests extends ESAllocationTestCase {
                             new IndexId(indexMetadata.getIndex().getName(), UUIDs.randomBase64UUID(random()))
                         ),
                         new HashSet<>(),
-                        TestShardCopyRoles.EMPTY_FACTORY
+                        TestShardCopyRoles.DEFAULT_ROLE_ONLY
                     );
                 }
                 case 4 -> {
@@ -391,10 +391,10 @@ public class ThrottlingAllocationTests extends ESAllocationTestCase {
                             Version.CURRENT,
                             new IndexId(indexMetadata.getIndex().getName(), UUIDs.randomBase64UUID(random()))
                         ),
-                        TestShardCopyRoles.EMPTY_FACTORY
+                        TestShardCopyRoles.DEFAULT_ROLE_ONLY
                     );
                 }
-                case 5 -> routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY);
+                case 5 -> routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
                 default -> throw new IndexOutOfBoundsException();
             }
         }

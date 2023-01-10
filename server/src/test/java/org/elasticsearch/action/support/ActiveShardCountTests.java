@@ -188,7 +188,7 @@ public class ActiveShardCountTests extends ESTestCase {
             .numberOfReplicas(numReplicas)
             .build();
         final Metadata metadata = Metadata.builder().put(indexMetadata, true).build();
-        final RoutingTable routingTable = RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY).build();
+        final RoutingTable routingTable = RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
         return ClusterState.builder(new ClusterName("test_cluster")).metadata(metadata).routingTable(routingTable).build();
     }
 

@@ -515,7 +515,7 @@ public class ReactiveStorageIT extends AutoscalingStorageIntegTestCase {
             Settings.EMPTY,
             new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS),
             null,
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
         assertThat(
             service.roles().stream().sorted().collect(Collectors.toList()),

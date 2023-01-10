@@ -61,7 +61,7 @@ public class ResizeSourceIndexSettingsUpdaterTests extends ESAllocationTestCase 
             .build();
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
-            .routingTable(RoutingTable.builder().addAsNew(sourceMetadata.index(sourceIndex), TestShardCopyRoles.EMPTY_FACTORY))
+            .routingTable(RoutingTable.builder().addAsNew(sourceMetadata.index(sourceIndex), TestShardCopyRoles.DEFAULT_ROLE_ONLY))
             .metadata(sourceMetadata)
             .nodes(discoveryNodes)
             .build();
@@ -126,7 +126,7 @@ public class ResizeSourceIndexSettingsUpdaterTests extends ESAllocationTestCase 
         clusterState = ClusterState.builder(clusterState)
             .routingTable(
                 RoutingTable.builder(clusterState.routingTable())
-                    .addAsNew(clusterState.metadata().index(targetIndex), TestShardCopyRoles.EMPTY_FACTORY)
+                    .addAsNew(clusterState.metadata().index(targetIndex), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             )
             .build();
 

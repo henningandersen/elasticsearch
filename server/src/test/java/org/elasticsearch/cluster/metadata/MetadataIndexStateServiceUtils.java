@@ -38,6 +38,6 @@ public class MetadataIndexStateServiceUtils {
         final Map<Index, ClusterBlock> blockedIndices,
         final Map<Index, CloseIndexResponse.IndexResult> results
     ) {
-        return MetadataIndexStateService.closeRoutingTable(state, blockedIndices, results, TestShardCopyRoles.EMPTY_FACTORY).v1();
+        return MetadataIndexStateService.closeRoutingTable(state, blockedIndices, results, TestShardCopyRoles.DEFAULT_ROLE_ONLY).v1();
     }
 }

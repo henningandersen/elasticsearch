@@ -195,7 +195,7 @@ public class FilterRoutingTests extends ESAllocationTestCase {
             .build();
 
         final RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
@@ -314,7 +314,7 @@ public class FilterRoutingTests extends ESAllocationTestCase {
             .build();
 
         final RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(initialMetadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(initialMetadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
@@ -376,8 +376,8 @@ public class FilterRoutingTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test1"), TestShardCopyRoles.EMPTY_FACTORY)
-            .addAsNew(metadata.index("test2"), TestShardCopyRoles.EMPTY_FACTORY)
+            .addAsNew(metadata.index("test1"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test2"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))

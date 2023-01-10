@@ -83,7 +83,7 @@ public class DelayedAllocationServiceTests extends ESAllocationTestCase {
             .build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
-            .routingTable(RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build())
+            .routingTable(RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
             .build();
         clusterState = ClusterState.builder(clusterState)
             .nodes(DiscoveryNodes.builder().add(newNode("node1")).add(newNode("node2")).localNodeId("node1").masterNodeId("node1"))
@@ -129,7 +129,7 @@ public class DelayedAllocationServiceTests extends ESAllocationTestCase {
             .build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
-            .routingTable(RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build())
+            .routingTable(RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
             .build();
         clusterState = ClusterState.builder(clusterState)
             .nodes(
@@ -246,8 +246,8 @@ public class DelayedAllocationServiceTests extends ESAllocationTestCase {
             .metadata(metadata)
             .routingTable(
                 RoutingTable.builder()
-                    .addAsNew(metadata.index("short_delay"), TestShardCopyRoles.EMPTY_FACTORY)
-                    .addAsNew(metadata.index("long_delay"), TestShardCopyRoles.EMPTY_FACTORY)
+                    .addAsNew(metadata.index("short_delay"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                    .addAsNew(metadata.index("long_delay"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
                     .build()
             )
             .nodes(
@@ -435,8 +435,8 @@ public class DelayedAllocationServiceTests extends ESAllocationTestCase {
             .metadata(metadata)
             .routingTable(
                 RoutingTable.builder()
-                    .addAsNew(metadata.index("foo"), TestShardCopyRoles.EMPTY_FACTORY)
-                    .addAsNew(metadata.index("bar"), TestShardCopyRoles.EMPTY_FACTORY)
+                    .addAsNew(metadata.index("foo"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                    .addAsNew(metadata.index("bar"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
                     .build()
             )
             .build();

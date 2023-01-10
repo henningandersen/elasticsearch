@@ -1295,7 +1295,7 @@ public class AbstractCoordinatorTestCase extends ESTestCase {
                     settings,
                     new BatchedRerouteService(clusterService, allocationService::reroute),
                     clusterService,
-                    TestShardCopyRoles.EMPTY_FACTORY,
+                    TestShardCopyRoles.DEFAULT_ROLE_ONLY,
                     threadPool
                 );
 

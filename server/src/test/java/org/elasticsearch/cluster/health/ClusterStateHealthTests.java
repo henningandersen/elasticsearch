@@ -155,7 +155,7 @@ public class ClusterStateHealthTests extends ESTestCase {
             threadPool,
             new ActionFilters(new HashSet<>()),
             indexNameExpressionResolver,
-            new AllocationService(null, new TestGatewayAllocator(), null, null, null, TestShardCopyRoles.EMPTY_FACTORY)
+            new AllocationService(null, new TestGatewayAllocator(), null, null, null, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
         );
         PlainActionFuture<ClusterHealthResponse> listener = new PlainActionFuture<>();
         ActionTestUtils.execute(action, null, new ClusterHealthRequest().waitForGreenStatus(), listener);
@@ -323,7 +323,7 @@ public class ClusterStateHealthTests extends ESTestCase {
             .numberOfReplicas(numberOfReplicas)
             .build();
         final Metadata metadata = Metadata.builder().put(indexMetadata, true).build();
-        final RoutingTable routingTable = RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY).build();
+        final RoutingTable routingTable = RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
 
         ClusterState clusterState = ClusterState.builder(new ClusterName("test_cluster"))
             .metadata(metadata)
@@ -358,7 +358,7 @@ public class ClusterStateHealthTests extends ESTestCase {
             indexMetadata = idxMetaWithAllocationIds.build();
         }
         final Metadata metadata = Metadata.builder().put(indexMetadata, true).build();
-        final RoutingTable routingTable = RoutingTable.builder().addAsRecovery(indexMetadata, TestShardCopyRoles.EMPTY_FACTORY).build();
+        final RoutingTable routingTable = RoutingTable.builder().addAsRecovery(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
 
         ClusterState clusterState = ClusterState.builder(new ClusterName("test_cluster"))
             .metadata(metadata)

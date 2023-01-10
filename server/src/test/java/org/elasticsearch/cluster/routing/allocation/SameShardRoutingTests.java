@@ -62,7 +62,7 @@ public class SameShardRoutingTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(indexSettings).numberOfShards(2).numberOfReplicas(1))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
         ClusterState clusterState = ClusterState.builder(CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
             .routingTable(routingTable)
@@ -153,7 +153,7 @@ public class SameShardRoutingTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(indexSettings).numberOfShards(2).numberOfReplicas(1))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
         ClusterState clusterState = ClusterState.builder(CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
             .routingTable(routingTable)
@@ -292,7 +292,7 @@ public class SameShardRoutingTests extends ESAllocationTestCase {
         final ClusterState clusterState = applyStartedShardsUntilNoChange(
             ClusterState.builder(CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
                 .metadata(metadata)
-                .routingTable(RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.EMPTY_FACTORY).build())
+                .routingTable(RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
                 .nodes(DiscoveryNodes.builder().add(node1).add(node2))
                 .build(),
             strategy

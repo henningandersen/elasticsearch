@@ -106,7 +106,9 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder(indexName).settings(settings(Version.CURRENT)).numberOfShards(numShards).numberOfReplicas(1))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index(indexName), TestShardCopyRoles.EMPTY_FACTORY).build();
+        RoutingTable routingTable = RoutingTable.builder()
+            .addAsNew(metadata.index(indexName), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .build();
 
         ClusterState clusterState = ClusterState.builder(new ClusterName(clusterName))
             .metadata(metadata)
@@ -141,7 +143,7 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
             new BalancedShardsAllocator(settings),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         );
     }
 

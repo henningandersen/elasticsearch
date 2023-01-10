@@ -90,7 +90,7 @@ public class MetadataIndexStateServiceTests extends ESTestCase {
             state,
             blockedIndices,
             results,
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         ).v1();
         assertThat(updatedState.metadata().indices().size(), equalTo(nonBlockedIndices.size() + blockedIndices.size()));
 
@@ -121,7 +121,7 @@ public class MetadataIndexStateServiceTests extends ESTestCase {
             state,
             Map.of(index, block),
             Map.of(index, new IndexResult(index)),
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         ).v1();
         assertIsOpened(index.getName(), updatedState);
         assertThat(updatedState.blocks().hasIndexBlockWithId(index.getName(), INDEX_CLOSED_BLOCK_ID), is(true));
@@ -140,7 +140,7 @@ public class MetadataIndexStateServiceTests extends ESTestCase {
             state,
             Map.of(index, block),
             Map.of(index, new IndexResult(index)),
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         ).v1();
         assertIsOpened(index.getName(), updatedState);
         assertThat(updatedState.blocks().hasIndexBlockWithId(index.getName(), INDEX_CLOSED_BLOCK_ID), is(true));
@@ -311,7 +311,7 @@ public class MetadataIndexStateServiceTests extends ESTestCase {
             state,
             blockedIndices,
             Map.copyOf(verifyResults),
-            TestShardCopyRoles.EMPTY_FACTORY
+            TestShardCopyRoles.DEFAULT_ROLE_ONLY
         ).v2();
         assertThat(closingResults, hasSize(numIndices));
         Set<Index> failedIndices = closingResults.stream()

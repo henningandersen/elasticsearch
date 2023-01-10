@@ -64,13 +64,13 @@ public class PrimaryTermsTests extends ESAllocationTestCase {
         RoutingTable routingTable = new RoutingTable.Builder().add(
             new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_1).getIndex()).initializeAsNew(
                 metadata.index(TEST_INDEX_1),
-                TestShardCopyRoles.EMPTY_FACTORY
+                TestShardCopyRoles.DEFAULT_ROLE_ONLY
             ).build()
         )
             .add(
                 new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_2).getIndex()).initializeAsNew(
                     metadata.index(TEST_INDEX_2),
-                    TestShardCopyRoles.EMPTY_FACTORY
+                    TestShardCopyRoles.DEFAULT_ROLE_ONLY
                 ).build()
             )
             .build();
