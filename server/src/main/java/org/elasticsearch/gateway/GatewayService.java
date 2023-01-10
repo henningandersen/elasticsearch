@@ -71,7 +71,7 @@ public class GatewayService extends AbstractLifecycleComponent implements Cluste
 
     static final TimeValue DEFAULT_RECOVER_AFTER_TIME_IF_EXPECTED_NODES_IS_SET = TimeValue.timeValueMinutes(5);
 
-    private final ShardRoutingRoleStrategy roleFactory;
+    private final ShardRoutingRoleStrategy shardRoutingRoleStrategy;
     private final ThreadPool threadPool;
 
     private final RerouteService rerouteService;
@@ -89,12 +89,12 @@ public class GatewayService extends AbstractLifecycleComponent implements Cluste
         final Settings settings,
         final RerouteService rerouteService,
         final ClusterService clusterService,
-        final ShardRoutingRoleStrategy roleFactory,
+        final ShardRoutingRoleStrategy shardRoutingRoleStrategy,
         final ThreadPool threadPool
     ) {
         this.rerouteService = rerouteService;
         this.clusterService = clusterService;
-        this.roleFactory = roleFactory;
+        this.shardRoutingRoleStrategy = shardRoutingRoleStrategy;
         this.threadPool = threadPool;
         this.expectedDataNodes = EXPECTED_DATA_NODES_SETTING.get(settings);
 
@@ -218,7 +218,9 @@ public class GatewayService extends AbstractLifecycleComponent implements Cluste
                 logger.debug("cluster is already recovered");
                 return currentState;
             }
-            return ClusterStateUpdaters.removeStateNotRecoveredBlock(ClusterStateUpdaters.updateRoutingTable(currentState, roleFactory));
+            return ClusterStateUpdaters.removeStateNotRecoveredBlock(
+                ClusterStateUpdaters.updateRoutingTable(currentState, shardRoutingRoleStrategy)
+            );
         }
 
         @Override

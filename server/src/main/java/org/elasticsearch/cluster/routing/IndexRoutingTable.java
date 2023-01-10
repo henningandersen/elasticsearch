@@ -344,26 +344,36 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
         /**
          * Initializes a new empty index, as if it was created from an API.
          */
-        public Builder initializeAsNew(IndexMetadata indexMetadata, ShardRoutingRoleStrategy roleFactory) {
-            return initializeEmpty(indexMetadata, new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null), null, roleFactory);
+        public Builder initializeAsNew(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
+            return initializeEmpty(
+                indexMetadata,
+                new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
+                null,
+                shardRoutingRoleStrategy
+            );
         }
 
         /**
          * Initializes an existing index.
          */
-        public Builder initializeAsRecovery(IndexMetadata indexMetadata, ShardRoutingRoleStrategy roleFactory) {
-            return initializeEmpty(indexMetadata, new UnassignedInfo(UnassignedInfo.Reason.CLUSTER_RECOVERED, null), null, roleFactory);
+        public Builder initializeAsRecovery(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
+            return initializeEmpty(
+                indexMetadata,
+                new UnassignedInfo(UnassignedInfo.Reason.CLUSTER_RECOVERED, null),
+                null,
+                shardRoutingRoleStrategy
+            );
         }
 
         /**
          * Initializes a new index caused by dangling index imported.
          */
-        public Builder initializeAsFromDangling(IndexMetadata indexMetadata, ShardRoutingRoleStrategy roleFactory) {
+        public Builder initializeAsFromDangling(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
             return initializeEmpty(
                 indexMetadata,
                 new UnassignedInfo(UnassignedInfo.Reason.DANGLING_INDEX_IMPORTED, null),
                 null,
-                roleFactory
+                shardRoutingRoleStrategy
             );
         }
 
@@ -373,13 +383,13 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
         public Builder initializeAsFromCloseToOpen(
             IndexMetadata indexMetadata,
             IndexRoutingTable indexRoutingTable,
-            ShardRoutingRoleStrategy roleFactory
+            ShardRoutingRoleStrategy shardRoutingRoleStrategy
         ) {
             return initializeEmpty(
                 indexMetadata,
                 new UnassignedInfo(UnassignedInfo.Reason.INDEX_REOPENED, null),
                 indexRoutingTable,
-                roleFactory
+                shardRoutingRoleStrategy
             );
         }
 
@@ -389,13 +399,13 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
         public Builder initializeAsFromOpenToClose(
             IndexMetadata indexMetadata,
             IndexRoutingTable indexRoutingTable,
-            ShardRoutingRoleStrategy roleFactory
+            ShardRoutingRoleStrategy shardRoutingRoleStrategy
         ) {
             return initializeEmpty(
                 indexMetadata,
                 new UnassignedInfo(UnassignedInfo.Reason.INDEX_CLOSED, null),
                 indexRoutingTable,
-                roleFactory
+                shardRoutingRoleStrategy
             );
         }
 
@@ -406,7 +416,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
             IndexMetadata indexMetadata,
             SnapshotRecoverySource recoverySource,
             Set<Integer> ignoreShards,
-            ShardRoutingRoleStrategy roleFactory
+            ShardRoutingRoleStrategy shardRoutingRoleStrategy
         ) {
             final UnassignedInfo unassignedInfo = new UnassignedInfo(
                 UnassignedInfo.Reason.NEW_INDEX_RESTORED,
@@ -416,7 +426,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
                     + recoverySource.snapshot().getSnapshotId().getName()
                     + "]"
             );
-            return initializeAsRestore(indexMetadata, recoverySource, ignoreShards, true, unassignedInfo, null, roleFactory);
+            return initializeAsRestore(indexMetadata, recoverySource, ignoreShards, true, unassignedInfo, null, shardRoutingRoleStrategy);
         }
 
         /**
@@ -426,7 +436,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
             IndexMetadata indexMetadata,
             SnapshotRecoverySource recoverySource,
             IndexRoutingTable previousIndexRoutingTable,
-            ShardRoutingRoleStrategy roleFactory
+            ShardRoutingRoleStrategy shardRoutingRoleStrategy
         ) {
             final UnassignedInfo unassignedInfo = new UnassignedInfo(
                 UnassignedInfo.Reason.EXISTING_INDEX_RESTORED,
@@ -436,7 +446,15 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
                     + recoverySource.snapshot().getSnapshotId().getName()
                     + "]"
             );
-            return initializeAsRestore(indexMetadata, recoverySource, null, false, unassignedInfo, previousIndexRoutingTable, roleFactory);
+            return initializeAsRestore(
+                indexMetadata,
+                recoverySource,
+                null,
+                false,
+                unassignedInfo,
+                previousIndexRoutingTable,
+                shardRoutingRoleStrategy
+            );
         }
 
         /**
@@ -449,7 +467,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
             boolean asNew,
             UnassignedInfo unassignedInfo,
             @Nullable IndexRoutingTable previousIndexRoutingTable,
-            ShardRoutingRoleStrategy roleFactory
+            ShardRoutingRoleStrategy shardRoutingRoleStrategy
         ) {
             assert indexMetadata.getIndex().equals(index);
             if (shards != null) {
@@ -470,7 +488,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
                                 primary,
                                 primary ? EmptyStoreRecoverySource.INSTANCE : PeerRecoverySource.INSTANCE,
                                 unassignedInfo,
-                                roleFactory.newRestoredRole(i)
+                                shardRoutingRoleStrategy.newRestoredRole(i)
                             )
                         );
                     } else {
@@ -480,7 +498,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
                                 primary,
                                 primary ? recoverySource : PeerRecoverySource.INSTANCE,
                                 withLastAllocatedNodeId(unassignedInfo, previousNodes, i),
-                                roleFactory.newRestoredRole(i)
+                                shardRoutingRoleStrategy.newRestoredRole(i)
                             )
                         );
                     }
@@ -497,7 +515,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
             IndexMetadata indexMetadata,
             UnassignedInfo unassignedInfo,
             @Nullable IndexRoutingTable previousIndexRoutingTable,
-            ShardRoutingRoleStrategy roleFactory
+            ShardRoutingRoleStrategy shardRoutingRoleStrategy
         ) {
             assert indexMetadata.getIndex().equals(index);
             assert previousIndexRoutingTable == null || previousIndexRoutingTable.size() == indexMetadata.getNumberOfShards();
@@ -528,7 +546,7 @@ public class IndexRoutingTable implements SimpleDiffable<IndexRoutingTable> {
                             primary,
                             primary ? primaryRecoverySource : PeerRecoverySource.INSTANCE,
                             withLastAllocatedNodeId(unassignedInfo, previousNodes, i),
-                            roleFactory.newEmptyRole(i)
+                            shardRoutingRoleStrategy.newEmptyRole(i)
                         )
                     );
                 }

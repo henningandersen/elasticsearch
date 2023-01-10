@@ -33,17 +33,17 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
 
     private final DiskThresholdSettings diskThresholdSettings;
     private final AllocationDeciders allocationDeciders;
-    private final ShardRoutingRoleStrategy roleFactory;
+    private final ShardRoutingRoleStrategy shardRoutingRoleStrategy;
 
     public ProactiveStorageDeciderService(
         Settings settings,
         ClusterSettings clusterSettings,
         AllocationDeciders allocationDeciders,
-        ShardRoutingRoleStrategy roleFactory
+        ShardRoutingRoleStrategy shardRoutingRoleStrategy
     ) {
         this.diskThresholdSettings = new DiskThresholdSettings(settings, clusterSettings);
         this.allocationDeciders = allocationDeciders;
-        this.roleFactory = roleFactory;
+        this.shardRoutingRoleStrategy = shardRoutingRoleStrategy;
     }
 
     @Override
@@ -70,7 +70,7 @@ public class ProactiveStorageDeciderService implements AutoscalingDeciderService
             context,
             diskThresholdSettings,
             allocationDeciders,
-            roleFactory
+            shardRoutingRoleStrategy
 
         );
         long unassignedBytesBeforeForecast = allocationState.storagePreventsAllocation().sizeInBytes();

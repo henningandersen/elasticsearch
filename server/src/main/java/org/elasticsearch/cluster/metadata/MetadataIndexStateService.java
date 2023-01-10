@@ -811,7 +811,7 @@ public class MetadataIndexStateService {
         final ClusterState currentState,
         final Map<Index, ClusterBlock> blockedIndices,
         final Map<Index, IndexResult> verifyResult,
-        ShardRoutingRoleStrategy roleFactory
+        ShardRoutingRoleStrategy shardRoutingRoleStrategy
     ) {
         final Metadata.Builder metadata = Metadata.builder(currentState.metadata());
         final ClusterBlocks.Builder blocks = ClusterBlocks.builder(currentState.blocks());
@@ -890,7 +890,7 @@ public class MetadataIndexStateService {
                         .settingsVersion(indexMetadata.getSettingsVersion() + 1)
                         .settings(Settings.builder().put(indexMetadata.getSettings()).put(VERIFIED_BEFORE_CLOSE_SETTING.getKey(), true))
                 );
-                routingTable.addAsFromOpenToClose(metadata.getSafe(index), roleFactory);
+                routingTable.addAsFromOpenToClose(metadata.getSafe(index), shardRoutingRoleStrategy);
 
                 logger.debug("closing index {} succeeded", index);
                 closedIndices.add(index.getName());
