@@ -130,10 +130,7 @@ public class ShardsAvailabilityHealthIndicatorBenchmark {
                 .numberOfReplicas(numReplicas)
                 .build();
 
-            final IndexRoutingTable.Builder indexRountingTableBuilder = new IndexRoutingTable.Builder(
-                ShardRoutingRoleStrategy.NO_SHARD_CREATION,
-                indexMetadata.getIndex()
-            );
+            final IndexRoutingTable.Builder indexRountingTableBuilder = IndexRoutingTable.builder(indexMetadata.getIndex());
             for (int shardIdNumber = 0; shardIdNumber < numShards; shardIdNumber++) {
                 ShardId shardId = new ShardId(indexMetadata.getIndex(), shardIdNumber);
                 final IndexShardRoutingTable.Builder shardBuilder = new IndexShardRoutingTable.Builder(shardId);
