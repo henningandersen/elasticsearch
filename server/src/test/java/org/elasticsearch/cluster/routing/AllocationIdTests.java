@@ -8,7 +8,6 @@
 
 package org.elasticsearch.cluster.routing;
 
-import org.elasticsearch.cluster.TestShardCopyRoles;
 import org.elasticsearch.cluster.routing.RecoverySource.ExistingStoreRecoverySource;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.index.shard.ShardId;
@@ -33,7 +32,7 @@ public class AllocationIdTests extends ESTestCase {
             true,
             ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         assertThat(shard.allocationId(), nullValue());
 
@@ -59,7 +58,7 @@ public class AllocationIdTests extends ESTestCase {
             true,
             ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         shard = shard.initialize("node1", null, -1);
         shard = shard.moveToStarted(ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE);
@@ -88,7 +87,7 @@ public class AllocationIdTests extends ESTestCase {
             true,
             ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         shard = shard.initialize("node1", null, -1);
         shard = shard.moveToStarted(ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE);
@@ -114,7 +113,7 @@ public class AllocationIdTests extends ESTestCase {
             true,
             ExistingStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         shard = shard.initialize("node1", null, -1);
         shard = shard.moveToStarted(ShardRouting.UNAVAILABLE_EXPECTED_SHARD_SIZE);

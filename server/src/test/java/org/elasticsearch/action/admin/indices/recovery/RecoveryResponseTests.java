@@ -9,9 +9,9 @@
 package org.elasticsearch.action.admin.indices.recovery;
 
 import org.elasticsearch.Version;
-import org.elasticsearch.cluster.TestShardCopyRoles;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.RecoverySource;
+import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.index.shard.ShardId;
@@ -51,7 +51,7 @@ public class RecoveryResponseTests extends ESTestCase {
                                         randomBoolean(),
                                         RecoverySource.PeerRecoverySource.INSTANCE,
                                         new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, null),
-                                        TestShardCopyRoles.EMPTY_ROLE
+                                        ShardCopyRole.DEFAULT
                                     ).initialize(sourceNode.getId(), null, randomNonNegativeLong()),
                                     sourceNode,
                                     targetNode

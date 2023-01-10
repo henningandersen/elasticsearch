@@ -10,49 +10,23 @@ package org.elasticsearch.benchmark.routing.allocation;
 
 import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardCopyRoleFactory;
-import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.xcontent.XContentBuilder;
 
 public class TestShardCopyRoles {
-    public static final ShardCopyRole EMPTY_ROLE = new ShardCopyRole() {
-        @Override
-        public boolean isPromotableToPrimary() {
-            return true;
-        }
-
-        @Override
-        public boolean isSearchable() {
-            return true;
-        }
-
-        @Override
-        public String getWriteableName() {
-            return ShardCopyRole.WRITEABLE_NAME;
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) {}
-
-        @Override
-        public XContentBuilder toXContent(XContentBuilder builder, Params params) {
-            return builder;
-        }
-    };
 
     public static final ShardCopyRoleFactory EMPTY_FACTORY = new ShardCopyRoleFactory() {
         @Override
         public ShardCopyRole newReplicaRole() {
-            return EMPTY_ROLE;
+            return ShardCopyRole.DEFAULT;
         }
 
         @Override
         public ShardCopyRole newRestoredRole(int copyIndex) {
-            return EMPTY_ROLE;
+            return ShardCopyRole.DEFAULT;
         }
 
         @Override
         public ShardCopyRole newEmptyRole(int copyIndex) {
-            return EMPTY_ROLE;
+            return ShardCopyRole.DEFAULT;
         }
     };
 

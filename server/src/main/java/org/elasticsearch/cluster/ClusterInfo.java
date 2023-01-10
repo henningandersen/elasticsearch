@@ -135,42 +135,8 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(REINITIALIZED, "fake"),
-            LegacyEmptyShardCopyRole.INSTANCE // ok, this is only used prior to DATA_PATH_NEW_KEY_VERSION which has no other roles
+            ShardCopyRole.DEFAULT // ok, this is only used prior to DATA_PATH_NEW_KEY_VERSION which has no other roles
         ).initialize(nodeAndShard.nodeId, null, 0L).moveToStarted(0L);
-    }
-
-    private static class LegacyEmptyShardCopyRole implements ShardCopyRole {
-        static LegacyEmptyShardCopyRole INSTANCE = new LegacyEmptyShardCopyRole();
-
-        @Override
-        public XContentBuilder toXContent(XContentBuilder builder, Params params) {
-            return builder;
-        }
-
-        @Override
-        public String getWriteableName() {
-            return ShardCopyRole.WRITEABLE_NAME;
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) {
-            assert out.getVersion().before(DATA_PATH_NEW_KEY_VERSION);
-        }
-
-        @Override
-        public String toString() {
-            return "";
-        }
-
-        @Override
-        public boolean isPromotableToPrimary() {
-            return true;
-        }
-
-        @Override
-        public boolean isSearchable() {
-            return true;
-        }
     }
 
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {

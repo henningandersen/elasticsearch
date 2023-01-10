@@ -8,13 +8,11 @@
 
 package org.elasticsearch.plugins;
 
-import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardCopyRoleFactory;
 import org.elasticsearch.cluster.routing.allocation.ExistingShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.WriteLoadForecaster;
 import org.elasticsearch.cluster.routing.allocation.allocator.ShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDecider;
-import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -69,10 +67,6 @@ public interface ClusterPlugin {
         ClusterSettings clusterSettings
     ) {
         return Collections.emptyList();
-    }
-
-    default Writeable.Reader<ShardCopyRole> getShardRoleReader() {
-        return null;
     }
 
     default ShardCopyRoleFactory getShardRoleFactory() {

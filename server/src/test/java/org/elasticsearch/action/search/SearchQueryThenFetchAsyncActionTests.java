@@ -15,10 +15,10 @@ import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.OriginalIndices;
-import org.elasticsearch.cluster.TestShardCopyRoles;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.GroupShardsIterator;
 import org.elasticsearch.cluster.routing.RecoverySource;
+import org.elasticsearch.cluster.routing.ShardCopyRole;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.common.breaker.CircuitBreaker;
@@ -272,7 +272,7 @@ public class SearchQueryThenFetchAsyncActionTests extends ESTestCase {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "foobar"),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         routingNewVersionShard = routingNewVersionShard.initialize(newVersionNode.getId(), "p0", 0);
         routingNewVersionShard.started();
@@ -283,7 +283,7 @@ public class SearchQueryThenFetchAsyncActionTests extends ESTestCase {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "foobar"),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         routingOldVersionShard = routingOldVersionShard.initialize(oldVersionNode.getId(), "p1", 0);
         routingOldVersionShard.started();
@@ -372,7 +372,7 @@ public class SearchQueryThenFetchAsyncActionTests extends ESTestCase {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "foobar"),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         routingNewVersionShard = routingNewVersionShard.initialize(newVersionNode.getId(), "p0", 0);
         routingNewVersionShard.started();
@@ -383,7 +383,7 @@ public class SearchQueryThenFetchAsyncActionTests extends ESTestCase {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "foobar"),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         routingOldVersionShard = routingOldVersionShard.initialize(oldVersionNode.getId(), "p1", 0);
         routingOldVersionShard.started();
@@ -516,7 +516,7 @@ public class SearchQueryThenFetchAsyncActionTests extends ESTestCase {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "foobar"),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         routingNewVersionShard1 = routingNewVersionShard1.initialize(newVersionNode1.getId(), "p0", 0);
         routingNewVersionShard1.started();
@@ -527,7 +527,7 @@ public class SearchQueryThenFetchAsyncActionTests extends ESTestCase {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "foobar"),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         routingNewVersionShard2 = routingNewVersionShard2.initialize(newVersionNode2.getId(), "p1", 0);
         routingNewVersionShard2.started();
@@ -628,7 +628,7 @@ public class SearchQueryThenFetchAsyncActionTests extends ESTestCase {
             true,
             RecoverySource.EmptyStoreRecoverySource.INSTANCE,
             new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "foobar"),
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
         SearchShardIterator shardIt = new SearchShardIterator(
             null,

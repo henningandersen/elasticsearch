@@ -531,7 +531,7 @@ public class Node implements Closeable {
                 IndicesModule.getNamedWriteables().stream(),
                 searchModule.getNamedWriteables().stream(),
                 pluginsService.flatMap(Plugin::getNamedWriteables),
-                ClusterModule.getNamedWriteables(pluginsService.flatMap(ClusterModule::getShardCopyRoleReaders).toList()).stream(),
+                ClusterModule.getNamedWriteables(List.of()).stream(),
                 SystemIndexMigrationExecutor.getNamedWriteables().stream()
             ).flatMap(Function.identity()).toList();
             final NamedWriteableRegistry namedWriteableRegistry = new NamedWriteableRegistry(namedWriteables);

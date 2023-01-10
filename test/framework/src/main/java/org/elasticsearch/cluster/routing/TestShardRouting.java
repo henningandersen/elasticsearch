@@ -9,7 +9,6 @@
 package org.elasticsearch.cluster.routing;
 
 import org.elasticsearch.Version;
-import org.elasticsearch.cluster.TestShardCopyRoles;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.index.shard.ShardId;
@@ -47,7 +46,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             buildAllocationId(state),
             -1,
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
     }
 
@@ -69,7 +68,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             buildAllocationId(state),
             -1,
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
     }
 
@@ -108,7 +107,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             buildAllocationId(state),
             -1,
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
     }
 
@@ -150,7 +149,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             allocationId,
             -1,
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
     }
 
@@ -192,7 +191,7 @@ public class TestShardRouting {
             buildRelocationFailureInfo(state),
             buildAllocationId(state),
             -1,
-            TestShardCopyRoles.EMPTY_ROLE
+            ShardCopyRole.DEFAULT
         );
     }
 

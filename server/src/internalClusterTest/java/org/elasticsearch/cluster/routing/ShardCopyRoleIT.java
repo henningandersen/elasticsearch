@@ -13,9 +13,6 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.CollectionUtils;
 import org.elasticsearch.plugins.ClusterPlugin;
@@ -23,88 +20,26 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.InternalTestCluster;
 import org.elasticsearch.test.XContentTestUtils;
-import org.elasticsearch.xcontent.XContentBuilder;
-import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 
 public class ShardCopyRoleIT extends ESIntegTestCase {
 
-    private enum TestRole implements ShardCopyRole {
-        ROLE_1((byte) 1, true, false),
-        ROLE_2((byte) 2, true, true),
-        ROLE_3((byte) 3, false, true);
-
-        private final byte code;
-        private final boolean promotable;
-        private final boolean searchable;
-
-        TestRole(byte code, boolean promotable, boolean searchable) {
-            this.code = code;
-            this.promotable = promotable;
-            this.searchable = searchable;
-        }
-
-        @Override
-        public String getWriteableName() {
-            return ShardCopyRole.WRITEABLE_NAME;
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            out.writeByte(code);
-        }
-
-        public static TestRole readFrom(StreamInput in) throws IOException {
-            var code = in.readByte();
-            for (TestRole value : TestRole.values()) {
-                if (value.code == code) {
-                    return value;
-                }
-            }
-            assert false : code;
-            throw new IllegalArgumentException("unknown shard role with code [" + code + "]");
-        }
-
-        @Override
-        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            return builder.field("role", toString());
-            // TODO test this is visible in routing table JSON
-        }
-
-        @Override
-        public boolean isPromotableToPrimary() {
-            return promotable;
-        }
-
-        @Override
-        public boolean isSearchable() {
-            return searchable;
-        }
-    }
-
     public static class TestPlugin extends Plugin implements ClusterPlugin {
-        @Override
-        public Writeable.Reader<ShardCopyRole> getShardRoleReader() {
-            return TestRole::readFrom;
-        }
-
         @Override
         public ShardCopyRoleFactory getShardRoleFactory() {
             return new ShardCopyRoleFactory() {
                 @Override
                 public ShardCopyRole newReplicaRole() {
-                    return TestRole.ROLE_3;
+                    return ShardCopyRole.SEARCH_ONLY;
                 }
 
                 @Override
@@ -114,11 +49,7 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
 
                 @Override
                 public ShardCopyRole newEmptyRole(int copyIndex) {
-                    return switch (copyIndex) {
-                        case 0 -> TestRole.ROLE_1;
-                        case 1 -> TestRole.ROLE_2;
-                        default -> TestRole.ROLE_3;
-                    };
+                    return copyIndex <= 1 ? ShardCopyRole.INDEX_ONLY : ShardCopyRole.SEARCH_ONLY;
                 }
             };
         }
@@ -138,7 +69,6 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
             Settings.builder().put(IndexMetadata.SETTING_NUMBER_OF_SHARDS, 2).put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 2).build()
         );
         ensureGreen("test");
-
 
         final var clusterStateAtStart = client().admin().cluster().prepareState().get().getState();
 
@@ -183,7 +113,7 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
 
         for (RoutingNode routingNode : client().admin().cluster().prepareState().get().getState().getRoutingNodes()) {
             for (ShardRouting shardRouting : routingNode) {
-                assertThat(shardRouting.getRole(), Matchers.oneOf(TestRole.ROLE_1, TestRole.ROLE_2));
+                assertThat(shardRouting.getRole(), Matchers.oneOf(ShardCopyRole.INDEX_ONLY, ShardCopyRole.SEARCH_ONLY));
             }
         }
     }
@@ -191,7 +121,7 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
     @SuppressWarnings("unchecked")
     private void assertRolesInRoutingTable(ClusterState state) throws IOException {
         var stateAsString = state.toString();
-        for (var testRole : TestRole.values()) {
+        for (var testRole : ShardCopyRole.values()) {
             assertThat(stateAsString, containsString("[" + testRole + "]"));
         }
 
@@ -203,7 +133,7 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
         for (final var routingTableShardValue : routingTableShardValues) {
             for (Object routingTableShardCopy : (List<Object>) routingTableShardValue) {
                 final var routingTableShard = (Map<String, String>) routingTableShardCopy;
-                assertNotNull(TestRole.valueOf(routingTableShard.get("role")));
+                assertNotNull(ShardCopyRole.valueOf(routingTableShard.get("role")));
             }
         }
     }

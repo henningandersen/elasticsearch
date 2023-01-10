@@ -326,7 +326,11 @@ public final class ShardRouting implements Writeable, ToXContentObject {
         } else {
             expectedShardSize = UNAVAILABLE_EXPECTED_SHARD_SIZE;
         }
-        shardCopyRole = in.readNamedWriteable(ShardCopyRole.class, ShardCopyRole.WRITEABLE_NAME);
+        if (in.getVersion().onOrAfter(Version.V_8_7_0)) {
+            shardCopyRole = ShardCopyRole.readFrom(in);
+        } else {
+            shardCopyRole = ShardCopyRole.DEFAULT;
+        }
         targetRelocatingShard = initializeTargetRelocatingShard();
     }
 
@@ -358,7 +362,14 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             || (state == ShardRoutingState.STARTED && out.getVersion().onOrAfter(EXPECTED_SHARD_SIZE_FOR_STARTED_VERSION))) {
             out.writeLong(expectedShardSize);
         }
-        shardCopyRole.writeTo(out); // NB name deliberately omitted, it's hard-coded as ShardCopyRole.WRITEABLE_NAME on read
+
+        if (out.getVersion().onOrAfter(Version.V_8_7_0)) {
+            shardCopyRole.writeTo(out);
+        } else if (shardCopyRole != ShardCopyRole.DEFAULT) {
+            throw new IllegalStateException(
+                Strings.format("cannot send role [%s] to node of version [%s]", shardCopyRole, out.getVersion())
+            );
+        }
     }
 
     @Override
