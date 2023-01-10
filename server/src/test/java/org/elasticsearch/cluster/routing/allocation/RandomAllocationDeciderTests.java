@@ -13,7 +13,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
 import org.elasticsearch.cluster.EmptyClusterInfoService;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.metadata.Metadata.Builder;
@@ -68,7 +68,7 @@ public class RandomAllocationDeciderTests extends ESAllocationTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
         int indices = scaledRandomIntBetween(1, 20);
         Builder metaBuilder = Metadata.builder();
@@ -87,7 +87,7 @@ public class RandomAllocationDeciderTests extends ESAllocationTestCase {
         Metadata metadata = metaBuilder.build();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         for (int i = 0; i < indices; i++) {
-            routingTableBuilder.addAsNew(metadata.index("INDEX_" + i), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            routingTableBuilder.addAsNew(metadata.index("INDEX_" + i), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         }
 
         RoutingTable initialRoutingTable = routingTableBuilder.build();

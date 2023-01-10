@@ -12,7 +12,7 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
 import org.elasticsearch.cluster.RestoreInProgress;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -69,7 +69,7 @@ public class RestoreInProgressAllocationDeciderTests extends ESAllocationTestCas
             .addAsRestore(
                 clusterState.getMetadata().index("test"),
                 createSnapshotRecoverySource("_missing"),
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             )
             .build();
 
@@ -96,7 +96,7 @@ public class RestoreInProgressAllocationDeciderTests extends ESAllocationTestCas
 
         ClusterState clusterState = createInitialClusterState();
         RoutingTable routingTable = RoutingTable.builder(clusterState.getRoutingTable())
-            .addAsRestore(clusterState.getMetadata().index("test"), recoverySource, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsRestore(clusterState.getMetadata().index("test"), recoverySource, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
             .build();
 
         clusterState = ClusterState.builder(clusterState).routingTable(routingTable).build();
@@ -188,7 +188,9 @@ public class RestoreInProgressAllocationDeciderTests extends ESAllocationTestCas
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
+        RoutingTable routingTable = RoutingTable.builder()
+            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .build();
 
         DiscoveryNodes discoveryNodes = DiscoveryNodes.builder()
             .add(newNode("master", Collections.singleton(DiscoveryNodeRole.MASTER_ROLE)))

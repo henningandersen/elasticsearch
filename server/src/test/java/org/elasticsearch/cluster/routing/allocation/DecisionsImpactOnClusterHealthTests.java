@@ -14,7 +14,7 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
 import org.elasticsearch.cluster.EmptyClusterInfoService;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.health.ClusterStateHealth;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
@@ -107,7 +107,7 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
             .build();
 
         RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index(indexName), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index(indexName), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
             .build();
 
         ClusterState clusterState = ClusterState.builder(new ClusterName(clusterName))
@@ -143,7 +143,7 @@ public class DecisionsImpactOnClusterHealthTests extends ESAllocationTestCase {
             new BalancedShardsAllocator(settings),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
     }
 

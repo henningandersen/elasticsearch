@@ -15,7 +15,7 @@ import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
@@ -161,7 +161,8 @@ public class DesiredBalanceShardsAllocatorTests extends ESTestCase {
                 var newState = ClusterState.builder(currentState)
                     .metadata(Metadata.builder(currentState.metadata()).put(indexMetadata, true))
                     .routingTable(
-                        RoutingTable.builder(currentState.routingTable()).addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                        RoutingTable.builder(currentState.routingTable())
+                            .addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
                     )
                     .build();
                 return allocationService.reroute(
@@ -267,7 +268,8 @@ public class DesiredBalanceShardsAllocatorTests extends ESTestCase {
                 var newState = ClusterState.builder(currentState)
                     .metadata(Metadata.builder(currentState.metadata()).put(indexMetadata, true))
                     .routingTable(
-                        RoutingTable.builder(currentState.routingTable()).addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                        RoutingTable.builder(currentState.routingTable())
+                            .addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
                     )
                     .build();
                 return allocationService.reroute(newState, "test", ActionListener.wrap(response -> {
@@ -367,7 +369,8 @@ public class DesiredBalanceShardsAllocatorTests extends ESTestCase {
                 var newState = ClusterState.builder(currentState)
                     .metadata(Metadata.builder(currentState.metadata()).put(indexMetadata, true))
                     .routingTable(
-                        RoutingTable.builder(currentState.routingTable()).addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                        RoutingTable.builder(currentState.routingTable())
+                            .addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
                     )
                     .build();
                 return allocationService.reroute(
@@ -441,7 +444,7 @@ public class DesiredBalanceShardsAllocatorTests extends ESTestCase {
             desiredBalanceShardsAllocator,
             () -> ClusterInfo.EMPTY,
             () -> SnapshotShardSizeInfo.EMPTY,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
     }
 

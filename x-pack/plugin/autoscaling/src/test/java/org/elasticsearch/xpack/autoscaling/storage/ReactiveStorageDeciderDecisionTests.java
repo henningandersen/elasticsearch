@@ -15,7 +15,7 @@ import org.elasticsearch.cluster.ClusterModule;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.DiskUsage;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -410,7 +410,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
             createContext(state, Set.of(role)),
             DISK_THRESHOLD_SETTINGS,
             createAllocationDeciders(allocationDeciders),
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
         assertThat(subject.invoke(allocationState), equalTo(expected));
     }
@@ -424,7 +424,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
             Settings.EMPTY,
             new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS),
             createAllocationDeciders(allocationDeciders),
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
         TestAutoscalingDeciderContext context = createContext(state, Set.of(DiscoveryNodeRole.DATA_HOT_NODE_ROLE));
         AutoscalingDeciderResult result = decider.scale(Settings.EMPTY, context);
@@ -662,7 +662,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
                 .build();
 
             builder.put(indexMetadata, false);
-            routingTableBuilder.addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            routingTableBuilder.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
             shards -= indexMetadata.getNumberOfShards() * (indexMetadata.getNumberOfReplicas() + 1);
         }
 

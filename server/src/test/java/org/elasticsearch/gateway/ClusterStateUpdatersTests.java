@@ -9,7 +9,7 @@ package org.elasticsearch.gateway;
 
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.coordination.CoordinationMetadata;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
@@ -205,7 +205,7 @@ public class ClusterStateUpdatersTests extends ESTestCase {
         assertFalse(initialState.routingTable().hasIndex(index));
 
         {
-            final ClusterState newState = updateRoutingTable(initialState, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            final ClusterState newState = updateRoutingTable(initialState, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
             assertTrue(newState.routingTable().hasIndex(index));
             assertThat(newState.routingTable().version(), is(0L));
             assertThat(newState.routingTable().allShards(index.getName()).size(), is(numOfShards));
@@ -219,7 +219,7 @@ public class ClusterStateUpdatersTests extends ESTestCase {
                             .build()
                     )
                     .build(),
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             );
             assertFalse(newState.routingTable().hasIndex(index));
         }
@@ -241,7 +241,7 @@ public class ClusterStateUpdatersTests extends ESTestCase {
                             .build()
                     )
                     .build(),
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             );
             assertTrue(newState.routingTable().hasIndex(index));
             assertThat(newState.routingTable().version(), is(0L));

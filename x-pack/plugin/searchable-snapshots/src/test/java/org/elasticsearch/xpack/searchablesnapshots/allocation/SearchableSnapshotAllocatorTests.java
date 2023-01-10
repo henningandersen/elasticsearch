@@ -16,7 +16,7 @@ import org.elasticsearch.client.internal.Client;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -68,7 +68,7 @@ public class SearchableSnapshotAllocatorTests extends ESAllocationTestCase {
         routingTableBuilder.addAsRestore(
             metadata.index(shardId.getIndex()),
             randomSnapshotSource(shardId),
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
 
         final ClusterState state = buildClusterState(nodes, metadata, routingTableBuilder);
@@ -146,7 +146,7 @@ public class SearchableSnapshotAllocatorTests extends ESAllocationTestCase {
         routingTableBuilder.addAsRestore(
             metadata.index(shardId.getIndex()),
             randomSnapshotSource(shardId),
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
 
         final ClusterState state = buildClusterState(nodes, metadata, routingTableBuilder);
@@ -189,7 +189,7 @@ public class SearchableSnapshotAllocatorTests extends ESAllocationTestCase {
         routingTableBuilder.addAsRestore(
             metadata.index(shardId.getIndex()),
             randomSnapshotSource(shardId),
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
 
         final ClusterState state = buildClusterState(nodes, metadata, routingTableBuilder);

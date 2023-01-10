@@ -9,7 +9,7 @@ package org.elasticsearch.cluster.metadata;
 
 import org.elasticsearch.action.admin.indices.close.CloseIndexResponse;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.block.ClusterBlock;
 import org.elasticsearch.index.Index;
 
@@ -38,6 +38,7 @@ public class MetadataIndexStateServiceUtils {
         final Map<Index, ClusterBlock> blockedIndices,
         final Map<Index, CloseIndexResponse.IndexResult> results
     ) {
-        return MetadataIndexStateService.closeRoutingTable(state, blockedIndices, results, TestShardCopyRoles.DEFAULT_ROLE_ONLY).v1();
+        return MetadataIndexStateService.closeRoutingTable(state, blockedIndices, results, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .v1();
     }
 }

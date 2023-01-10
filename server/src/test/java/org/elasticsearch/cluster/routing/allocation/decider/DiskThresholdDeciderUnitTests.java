@@ -15,7 +15,7 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.DiskUsage;
 import org.elasticsearch.cluster.ESAllocationTestCase;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -93,7 +93,9 @@ public class DiskThresholdDeciderUnitTests extends ESAllocationTestCase {
             Version.CURRENT
         );
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
+        RoutingTable routingTable = RoutingTable.builder()
+            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .build();
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
@@ -175,7 +177,9 @@ public class DiskThresholdDeciderUnitTests extends ESAllocationTestCase {
             Version.CURRENT
         );
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
+        RoutingTable routingTable = RoutingTable.builder()
+            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .build();
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
@@ -323,7 +327,9 @@ public class DiskThresholdDeciderUnitTests extends ESAllocationTestCase {
         test_3 = ShardRoutingHelper.moveToStarted(test_3);
         // Intentionally not in the shardRoutingMap. We want to test what happens when we don't know where it is.
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
+        RoutingTable routingTable = RoutingTable.builder()
+            .addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .build();
 
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -458,8 +464,8 @@ public class DiskThresholdDeciderUnitTests extends ESAllocationTestCase {
         );
         Metadata metadata = metaBuilder.build();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
-        routingTableBuilder.addAsNew(metadata.index("other"), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(metadata.index("other"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
         ).metadata(metadata).routingTable(routingTableBuilder.build()).build();
@@ -711,9 +717,9 @@ public class DiskThresholdDeciderUnitTests extends ESAllocationTestCase {
         );
         Metadata metadata = metaBuilder.build();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
-        routingTableBuilder.addAsNew(metadata.index("target"), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
-        routingTableBuilder.addAsNew(metadata.index("target2"), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(metadata.index("target"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(metadata.index("target2"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
         ).metadata(metadata).routingTable(routingTableBuilder.build()).build();
@@ -912,7 +918,9 @@ public class DiskThresholdDeciderUnitTests extends ESAllocationTestCase {
             Version.CURRENT
         );
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
+        RoutingTable routingTable = RoutingTable.builder()
+            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .build();
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
@@ -989,7 +997,9 @@ public class DiskThresholdDeciderUnitTests extends ESAllocationTestCase {
             Version.CURRENT
         );
 
-        RoutingTable routingTable = RoutingTable.builder().addAsNew(metadata.index("test"), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
+        RoutingTable routingTable = RoutingTable.builder()
+            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .build();
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)

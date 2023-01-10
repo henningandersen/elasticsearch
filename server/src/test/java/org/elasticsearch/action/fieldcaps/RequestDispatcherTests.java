@@ -17,7 +17,7 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
 import org.elasticsearch.cluster.EmptyClusterInfoService;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -896,7 +896,7 @@ public class RequestDispatcherTests extends ESAllocationTestCase {
     private ClusterState newClusterState(Metadata metadata, DiscoveryNodes discoveryNodes) {
         final RoutingTable.Builder routingTable = RoutingTable.builder();
         for (IndexMetadata imd : metadata) {
-            routingTable.addAsNew(metadata.index(imd.getIndex()), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            routingTable.addAsNew(metadata.index(imd.getIndex()), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         }
         final ClusterState clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(discoveryNodes)

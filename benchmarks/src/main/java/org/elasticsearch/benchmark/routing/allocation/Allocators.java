@@ -82,7 +82,7 @@ public final class Allocators {
             new BalancedShardsAllocator(settings),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.DEFAULT_ONLY_STRATEGY
+            TestShardRoutingRoleStrategies.DEFAULT_ONLY_STRATEGY
         );
     }
 

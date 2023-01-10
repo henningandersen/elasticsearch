@@ -13,7 +13,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.health.ClusterStateHealth;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
@@ -479,7 +479,7 @@ public class PrimaryShardAllocatorTests extends ESAllocationTestCase {
                     Version.CURRENT,
                     new IndexId(shardId.getIndexName(), UUIDs.randomBase64UUID(random()))
                 ),
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             )
             .build();
         ClusterState state = ClusterState.builder(org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
@@ -511,14 +511,17 @@ public class PrimaryShardAllocatorTests extends ESAllocationTestCase {
             .build();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         switch (reason) {
-            case INDEX_CREATED -> routingTableBuilder.addAsNew(metadata.index(shardId.getIndex()), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            case INDEX_CREATED -> routingTableBuilder.addAsNew(
+                metadata.index(shardId.getIndex()),
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+            );
             case CLUSTER_RECOVERED -> routingTableBuilder.addAsRecovery(
                 metadata.index(shardId.getIndex()),
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             );
             case INDEX_REOPENED -> routingTableBuilder.addAsFromCloseToOpen(
                 metadata.index(shardId.getIndex()),
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             );
             default -> throw new IllegalArgumentException("can't do " + reason + " for you. teach me");
         }

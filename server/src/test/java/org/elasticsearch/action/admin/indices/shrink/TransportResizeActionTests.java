@@ -17,7 +17,7 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
 import org.elasticsearch.cluster.EmptyClusterInfoService;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
@@ -60,7 +60,7 @@ public class TransportResizeActionTests extends ESTestCase {
         metaBuilder.put(indexMetadata, false);
         Metadata metadata = metaBuilder.build();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsNew(metadata.index(name), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(metadata.index(name), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         RoutingTable routingTable = routingTableBuilder.build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
@@ -137,7 +137,7 @@ public class TransportResizeActionTests extends ESTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
 
         RoutingTable routingTable = service.reroute(clusterState, "reroute", ActionListener.noop()).routingTable();
@@ -167,7 +167,7 @@ public class TransportResizeActionTests extends ESTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
 
         RoutingTable routingTable = service.reroute(clusterState, "reroute", ActionListener.noop()).routingTable();
@@ -210,7 +210,7 @@ public class TransportResizeActionTests extends ESTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
 
         RoutingTable routingTable = service.reroute(clusterState, "reroute", ActionListener.noop()).routingTable();
@@ -258,7 +258,7 @@ public class TransportResizeActionTests extends ESTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
 
         RoutingTable routingTable = service.reroute(clusterState, "reroute", ActionListener.noop()).routingTable();
@@ -323,7 +323,7 @@ public class TransportResizeActionTests extends ESTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             EmptyClusterInfoService.INSTANCE,
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
 
         RoutingTable routingTable = service.reroute(clusterState, "reroute", ActionListener.noop()).routingTable();

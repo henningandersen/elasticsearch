@@ -11,7 +11,7 @@ package org.elasticsearch.benchmark.routing.allocation;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingRoleStrategy;
 
-public class TestShardCopyRoles {
+public class TestShardRoutingRoleStrategies {
 
     public static final ShardRoutingRoleStrategy DEFAULT_ONLY_STRATEGY = new ShardRoutingRoleStrategy() {
         @Override
@@ -25,7 +25,7 @@ public class TestShardCopyRoles {
         }
     };
 
-    private TestShardCopyRoles() {
+    private TestShardRoutingRoleStrategies() {
         // no instances
     }
 }

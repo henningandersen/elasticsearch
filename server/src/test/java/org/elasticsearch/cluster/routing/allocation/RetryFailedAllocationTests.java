@@ -14,7 +14,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
@@ -45,7 +45,7 @@ public class RetryFailedAllocationTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder(INDEX_NAME).settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
         RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index(INDEX_NAME), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index(INDEX_NAME), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
             .build();
         clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .metadata(metadata)

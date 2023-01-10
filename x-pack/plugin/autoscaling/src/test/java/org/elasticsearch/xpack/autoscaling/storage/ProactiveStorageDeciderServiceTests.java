@@ -11,7 +11,7 @@ import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterModule;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.DiskUsage;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.DataStream;
 import org.elasticsearch.cluster.metadata.DataStreamTestHelper;
 import org.elasticsearch.cluster.metadata.IndexAbstraction;
@@ -97,7 +97,7 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             Settings.EMPTY,
             clusterSettings,
             allocationDeciders,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
         AutoscalingCapacity currentCapacity = ReactiveStorageDeciderDecisionTests.randomCurrentCapacity();
         ClusterInfo info = randomClusterInfo(state);
@@ -179,7 +179,7 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
             state,
             null,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
             null,
             null,
             null,
@@ -212,7 +212,7 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
             state,
             null,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
             null,
             randomClusterInfo(state),
             null,
@@ -257,7 +257,7 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         ReactiveStorageDeciderService.AllocationState allocationState = new ReactiveStorageDeciderService.AllocationState(
             state,
             null,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
             null,
             info,
             null,
@@ -366,7 +366,7 @@ public class ProactiveStorageDeciderServiceTests extends AutoscalingTestCase {
     }
 
     private RoutingTable.Builder addRouting(Iterable<IndexMetadata> indices, RoutingTable.Builder builder) {
-        indices.forEach(indexMetadata -> builder.addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY));
+        indices.forEach(indexMetadata -> builder.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY));
         return builder;
     }
 

@@ -20,7 +20,7 @@ import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.MappingMetadata;
@@ -104,7 +104,7 @@ public class RareClusterStateIT extends ESIntegTestCase {
                 ClusterState updatedState = builder.build();
 
                 RoutingTable.Builder routingTable = RoutingTable.builder(updatedState.routingTable());
-                routingTable.addAsRecovery(updatedState.metadata().index(index), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+                routingTable.addAsRecovery(updatedState.metadata().index(index), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
                 updatedState = ClusterState.builder(updatedState).routingTable(routingTable.build()).build();
 
                 return allocationService.reroute(updatedState, "reroute", ActionListener.noop());

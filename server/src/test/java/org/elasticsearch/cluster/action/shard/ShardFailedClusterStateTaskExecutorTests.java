@@ -14,7 +14,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.action.shard.ShardStateAction.FailedShardEntry;
 import org.elasticsearch.cluster.action.shard.ShardStateAction.FailedShardUpdateTask;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
@@ -78,7 +78,7 @@ public class ShardFailedClusterStateTaskExecutorTests extends ESAllocationTestCa
                     .primaryTerm(0, randomIntBetween(2, 10))
             )
             .build();
-        routingTable = RoutingTable.builder().addAsNew(metadata.index(INDEX), TestShardCopyRoles.DEFAULT_ROLE_ONLY).build();
+        routingTable = RoutingTable.builder().addAsNew(metadata.index(INDEX), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build();
         clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
             .routingTable(routingTable)

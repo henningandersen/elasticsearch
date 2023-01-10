@@ -12,7 +12,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -44,7 +44,7 @@ public class GatewayServiceTests extends ESTestCase {
             settings.build(),
             (reason, priority, listener) -> fail("should not reroute"),
             clusterService,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY,
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
             null
         );
     }

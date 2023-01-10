@@ -370,7 +370,7 @@ public abstract class ESAllocationTestCase extends ESTestCase {
                 shardsAllocator,
                 clusterInfoService,
                 snapshotsInfoService,
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             );
         }
 

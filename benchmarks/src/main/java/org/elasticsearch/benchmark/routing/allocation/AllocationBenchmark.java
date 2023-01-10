@@ -133,7 +133,7 @@ public class AllocationBenchmark {
         Metadata metadata = mb.build();
         RoutingTable.Builder rb = RoutingTable.builder();
         for (int i = 1; i <= numIndices; i++) {
-            rb.addAsNew(metadata.index("test_" + i), TestShardCopyRoles.DEFAULT_ONLY_STRATEGY);
+            rb.addAsNew(metadata.index("test_" + i), TestShardRoutingRoleStrategies.DEFAULT_ONLY_STRATEGY);
         }
         RoutingTable routingTable = rb.build();
         DiscoveryNodes.Builder nb = DiscoveryNodes.builder();

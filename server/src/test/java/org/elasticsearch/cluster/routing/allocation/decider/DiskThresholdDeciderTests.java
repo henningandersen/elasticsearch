@@ -17,7 +17,7 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.DiskUsage;
 import org.elasticsearch.cluster.ESAllocationTestCase;
 import org.elasticsearch.cluster.RestoreInProgress;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -124,7 +124,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         var indexMetadata = IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1).build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(Metadata.builder().put(indexMetadata, false).build())
-            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
+            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build())
             .build();
 
         logger.info("--> adding two nodes");
@@ -290,7 +290,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         var indexMetadata = IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(2).build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(Metadata.builder().put(indexMetadata, false).build())
-            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
+            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build())
             .build();
 
         logger.info("--> adding node1 and node2 node");
@@ -495,7 +495,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         var indexMetadata = IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0).build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(Metadata.builder().put(indexMetadata, false).build())
-            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
+            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build())
             .build();
         logger.info("--> adding node1");
         // node2 is added because DiskThresholdDecider automatically ignore single-node clusters
@@ -542,7 +542,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         var indexMetadata = IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0).build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(Metadata.builder().put(indexMetadata, false).build())
-            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
+            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build())
             .build();
         logger.info("--> adding node1");
         clusterState = ClusterState.builder(clusterState)
@@ -641,8 +641,8 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
             .metadata(Metadata.builder().put(indexMetadata1, false).put(indexMetadata2, false).build())
             .routingTable(
                 RoutingTable.builder()
-                    .addAsNew(indexMetadata1, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
-                    .addAsNew(indexMetadata2, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                    .addAsNew(indexMetadata1, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+                    .addAsNew(indexMetadata2, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
                     .build()
             )
             .build();
@@ -835,8 +835,8 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
             .metadata(Metadata.builder().put(testMetadata, false).put(fooMetadata, false).build())
             .routingTable(
                 RoutingTable.builder()
-                    .addAsNew(testMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
-                    .addAsNew(fooMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                    .addAsNew(testMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+                    .addAsNew(fooMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
                     .build()
             )
             .nodes(DiscoveryNodes.builder().add(discoveryNode1).add(discoveryNode2).build())
@@ -1007,7 +1007,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         ClusterState clusterState = ClusterState.builder(new ClusterName("test"))
             .nodes(discoveryNodesBuilder.build())
             .metadata(Metadata.builder().put(testMetadata, false).build())
-            .routingTable(RoutingTable.builder().addAsNew(testMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY).build())
+            .routingTable(RoutingTable.builder().addAsNew(testMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build())
             .build();
 
         // validate that the shard cannot be allocated
@@ -1138,7 +1138,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
                         indexMetadata,
                         new RecoverySource.SnapshotRecoverySource("_restore_uuid", snapshot, Version.CURRENT, indexId),
                         new HashSet<>(),
-                        TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                        TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
                     )
                     .build()
             )
@@ -1272,7 +1272,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
             new BalancedShardsAllocator(Settings.EMPTY),
             clusterInfoService,
             snapshotShardSizeInfoService,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
     }
 

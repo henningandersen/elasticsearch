@@ -13,7 +13,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -61,7 +61,9 @@ public class ResizeSourceIndexSettingsUpdaterTests extends ESAllocationTestCase 
             .build();
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
-            .routingTable(RoutingTable.builder().addAsNew(sourceMetadata.index(sourceIndex), TestShardCopyRoles.DEFAULT_ROLE_ONLY))
+            .routingTable(
+                RoutingTable.builder().addAsNew(sourceMetadata.index(sourceIndex), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            )
             .metadata(sourceMetadata)
             .nodes(discoveryNodes)
             .build();
@@ -126,7 +128,7 @@ public class ResizeSourceIndexSettingsUpdaterTests extends ESAllocationTestCase 
         clusterState = ClusterState.builder(clusterState)
             .routingTable(
                 RoutingTable.builder(clusterState.routingTable())
-                    .addAsNew(clusterState.metadata().index(targetIndex), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+                    .addAsNew(clusterState.metadata().index(targetIndex), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
             )
             .build();
 

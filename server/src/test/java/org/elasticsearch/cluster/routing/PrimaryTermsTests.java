@@ -12,7 +12,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.health.ClusterStateHealth;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
@@ -64,13 +64,13 @@ public class PrimaryTermsTests extends ESAllocationTestCase {
         RoutingTable routingTable = new RoutingTable.Builder().add(
             new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_1).getIndex()).initializeAsNew(
                 metadata.index(TEST_INDEX_1),
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             ).build()
         )
             .add(
                 new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_2).getIndex()).initializeAsNew(
                     metadata.index(TEST_INDEX_2),
-                    TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                    TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
                 ).build()
             )
             .build();

@@ -15,7 +15,7 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.RestoreInProgress;
 import org.elasticsearch.cluster.SnapshotsInProgress;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.block.ClusterBlock;
 import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.routing.IndexRoutingTable;
@@ -90,7 +90,7 @@ public class MetadataIndexStateServiceTests extends ESTestCase {
             state,
             blockedIndices,
             results,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         ).v1();
         assertThat(updatedState.metadata().indices().size(), equalTo(nonBlockedIndices.size() + blockedIndices.size()));
 
@@ -121,7 +121,7 @@ public class MetadataIndexStateServiceTests extends ESTestCase {
             state,
             Map.of(index, block),
             Map.of(index, new IndexResult(index)),
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         ).v1();
         assertIsOpened(index.getName(), updatedState);
         assertThat(updatedState.blocks().hasIndexBlockWithId(index.getName(), INDEX_CLOSED_BLOCK_ID), is(true));
@@ -140,7 +140,7 @@ public class MetadataIndexStateServiceTests extends ESTestCase {
             state,
             Map.of(index, block),
             Map.of(index, new IndexResult(index)),
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         ).v1();
         assertIsOpened(index.getName(), updatedState);
         assertThat(updatedState.blocks().hasIndexBlockWithId(index.getName(), INDEX_CLOSED_BLOCK_ID), is(true));
@@ -311,7 +311,7 @@ public class MetadataIndexStateServiceTests extends ESTestCase {
             state,
             blockedIndices,
             Map.copyOf(verifyResults),
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         ).v2();
         assertThat(closingResults, hasSize(numIndices));
         Set<Index> failedIndices = closingResults.stream()

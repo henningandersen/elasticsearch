@@ -13,7 +13,7 @@ import org.elasticsearch.cluster.ClusterInfo;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.EmptyClusterInfoService;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -132,7 +132,7 @@ public class AllocationServiceTests extends ESTestCase {
             },
             new EmptyClusterInfoService(),
             EmptySnapshotsInfoService.INSTANCE,
-            TestShardCopyRoles.DEFAULT_ROLE_ONLY
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
         );
 
         final String unrealisticAllocatorName = "unrealistic";
@@ -172,10 +172,10 @@ public class AllocationServiceTests extends ESTestCase {
             );
 
         final RoutingTable.Builder routingTableBuilder = RoutingTable.builder()
-            .addAsRecovery(metadata.get("highPriority"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
-            .addAsRecovery(metadata.get("mediumPriority"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
-            .addAsRecovery(metadata.get("lowPriority"), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
-            .addAsRecovery(metadata.get("invalid"), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            .addAsRecovery(metadata.get("highPriority"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsRecovery(metadata.get("mediumPriority"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsRecovery(metadata.get("lowPriority"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsRecovery(metadata.get("invalid"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final ClusterState clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(nodesBuilder)
@@ -231,7 +231,13 @@ public class AllocationServiceTests extends ESTestCase {
     }
 
     public void testExplainsNonAllocationOfShardWithUnknownAllocator() {
-        final AllocationService allocationService = new AllocationService(null, null, null, null, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+        final AllocationService allocationService = new AllocationService(
+            null,
+            null,
+            null,
+            null,
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+        );
         allocationService.setExistingShardsAllocators(
             Collections.singletonMap(GatewayAllocator.ALLOCATOR_NAME, new TestGatewayAllocator())
         );
@@ -249,7 +255,7 @@ public class AllocationServiceTests extends ESTestCase {
             );
 
         final RoutingTable.Builder routingTableBuilder = RoutingTable.builder()
-            .addAsRecovery(metadata.get("index"), TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            .addAsRecovery(metadata.get("index"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final ClusterState clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(nodesBuilder)

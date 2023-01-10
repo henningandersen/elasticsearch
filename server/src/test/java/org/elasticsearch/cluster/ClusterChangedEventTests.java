@@ -503,7 +503,7 @@ public class ClusterChangedEventTests extends ESTestCase {
     private static RoutingTable createRoutingTable(final long version, final Metadata metadata) {
         final RoutingTable.Builder builder = RoutingTable.builder().version(version);
         for (IndexMetadata indexMetadata : metadata.indices().values()) {
-            builder.addAsNew(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            builder.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         }
         return builder.build();
     }

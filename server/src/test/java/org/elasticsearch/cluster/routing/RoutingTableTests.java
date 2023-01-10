@@ -13,7 +13,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.Diff;
 import org.elasticsearch.cluster.ESAllocationTestCase;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.metadata.MetadataIndexStateService;
@@ -77,13 +77,13 @@ public class RoutingTableTests extends ESAllocationTestCase {
         RoutingTable testRoutingTable = new RoutingTable.Builder().add(
             new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_1).getIndex()).initializeAsNew(
                 metadata.index(TEST_INDEX_1),
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             ).build()
         )
             .add(
                 new IndexRoutingTable.Builder(metadata.index(TEST_INDEX_2).getIndex()).initializeAsNew(
                     metadata.index(TEST_INDEX_2),
-                    TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                    TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
                 ).build()
             )
             .build();
@@ -349,7 +349,7 @@ public class RoutingTableTests extends ESAllocationTestCase {
             assertThat(e.getMessage(), containsString("cannot be reused"));
         }
         try {
-            b.updateNumberOfReplicas(1, new String[] { "foo" }, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            b.updateNumberOfReplicas(1, new String[] { "foo" }, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
             fail("expected exception");
         } catch (IllegalStateException e) {
             assertThat(e.getMessage(), containsString("cannot be reused"));
@@ -421,16 +421,20 @@ public class RoutingTableTests extends ESAllocationTestCase {
     public void testAddAsRecovery() {
         {
             final IndexMetadata indexMetadata = createIndexMetadata(TEST_INDEX_1).state(IndexMetadata.State.OPEN).build();
-            final RoutingTable routingTable = new RoutingTable.Builder().addAsRecovery(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
-                .build();
+            final RoutingTable routingTable = new RoutingTable.Builder().addAsRecovery(
+                indexMetadata,
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+            ).build();
             assertThat(routingTable.hasIndex(TEST_INDEX_1), is(true));
             assertThat(routingTable.allShards(TEST_INDEX_1).size(), is(this.shardsPerIndex));
             assertThat(routingTable.index(TEST_INDEX_1).shardsWithState(UNASSIGNED).size(), is(this.shardsPerIndex));
         }
         {
             final IndexMetadata indexMetadata = createIndexMetadata(TEST_INDEX_1).state(IndexMetadata.State.CLOSE).build();
-            final RoutingTable routingTable = new RoutingTable.Builder().addAsRecovery(indexMetadata, TestShardCopyRoles.DEFAULT_ROLE_ONLY)
-                .build();
+            final RoutingTable routingTable = new RoutingTable.Builder().addAsRecovery(
+                indexMetadata,
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+            ).build();
             assertThat(routingTable.hasIndex(TEST_INDEX_1), is(false));
             expectThrows(IndexNotFoundException.class, () -> routingTable.allShards(TEST_INDEX_1));
         }
@@ -447,7 +451,7 @@ public class RoutingTableTests extends ESAllocationTestCase {
                 .settingsVersion(indexMetadata.getSettingsVersion() + 1);
             final RoutingTable routingTable = new RoutingTable.Builder().addAsRecovery(
                 indexMetadataBuilder.build(),
-                TestShardCopyRoles.DEFAULT_ROLE_ONLY
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
             ).build();
             assertThat(routingTable.hasIndex(TEST_INDEX_1), is(true));
             assertThat(routingTable.allShards(TEST_INDEX_1).size(), is(this.shardsPerIndex));

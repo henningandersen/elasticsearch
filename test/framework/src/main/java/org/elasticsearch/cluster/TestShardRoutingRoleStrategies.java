@@ -12,10 +12,10 @@ import org.elasticsearch.cluster.routing.ShardRoutingRoleStrategy;
 
 import java.util.List;
 
-public class TestShardCopyRoles {
+public class TestShardRoutingRoleStrategies {
     public static final ShardRoutingRoleStrategy DEFAULT_ROLE_ONLY = ClusterModule.getShardRoutingRoleStrategy(List.of());
 
-    private TestShardCopyRoles() {
+    private TestShardRoutingRoleStrategies() {
         // no instances
     }
 }

@@ -16,7 +16,7 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ESAllocationTestCase;
 import org.elasticsearch.cluster.EmptyClusterInfoService;
-import org.elasticsearch.cluster.TestShardCopyRoles;
+import org.elasticsearch.cluster.TestShardRoutingRoleStrategies;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
@@ -77,7 +77,7 @@ public class BalancedShardsAllocatorTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder(index).settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
         RoutingTable initialRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .addAsNew(metadata.index(index), TestShardCopyRoles.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index(index), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
             .build();
         clusterState = ClusterState.builder(clusterState).metadata(metadata).routingTable(initialRoutingTable).build();
 
@@ -366,7 +366,7 @@ public class BalancedShardsAllocatorTests extends ESAllocationTestCase {
         for (var index : indices) {
             var build = index.settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0).build();
             metadataBuilder.put(build, false);
-            routingTableBuilder.addAsNew(build, TestShardCopyRoles.DEFAULT_ROLE_ONLY);
+            routingTableBuilder.addAsNew(build, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         }
 
         return ClusterState.builder(ClusterName.DEFAULT)
