@@ -222,13 +222,13 @@ public class Autoscaling extends Plugin implements ActionPlugin, ExtensiblePlugi
                 clusterService.getSettings(),
                 clusterService.getClusterSettings(),
                 allocationService.getAllocationDeciders(),
-                allocationService.getShardCopyRoleFactory()
+                allocationService.getShardRoutingRoleStrategy()
             ),
             new ProactiveStorageDeciderService(
                 clusterService.getSettings(),
                 clusterService.getClusterSettings(),
                 allocationService.getAllocationDeciders(),
-                allocationService.getShardCopyRoleFactory()
+                allocationService.getShardRoutingRoleStrategy()
             ),
             new FrozenShardsDeciderService(),
             new FrozenStorageDeciderService(),

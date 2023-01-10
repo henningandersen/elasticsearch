@@ -216,7 +216,7 @@ public class MetadataUpdateSettingsService {
                     routingTableBuilder.updateNumberOfReplicas(
                         updatedNumberOfReplicas,
                         actualIndices,
-                        allocationService.getShardCopyRoleFactory()
+                        allocationService.getShardRoutingRoleStrategy()
                     );
                     metadataBuilder.updateNumberOfReplicas(updatedNumberOfReplicas, actualIndices);
                     logger.info("updating number_of_replicas to [{}] for indices {}", updatedNumberOfReplicas, actualIndices);

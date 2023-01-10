@@ -226,7 +226,7 @@ public class MetadataIndexStateService {
                         state,
                         task.blockedIndices,
                         task.verifyResults,
-                        allocationService.getShardCopyRoleFactory()
+                        allocationService.getShardRoutingRoleStrategy()
                     );
                     state = closingResult.v1();
                     final List<IndexResult> indices = closingResult.v2();
@@ -1158,7 +1158,7 @@ public class MetadataIndexStateService {
                 if (previousIndexMetadata.getState() != IndexMetadata.State.OPEN) {
                     routingTable.addAsFromCloseToOpen(
                         updatedState.metadata().getIndexSafe(previousIndexMetadata.getIndex()),
-                        allocationService.getShardCopyRoleFactory()
+                        allocationService.getShardRoutingRoleStrategy()
                     );
                 }
             }

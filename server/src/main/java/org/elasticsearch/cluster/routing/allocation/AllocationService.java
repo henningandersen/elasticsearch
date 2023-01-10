@@ -77,7 +77,7 @@ public class AllocationService {
     private final ShardsAllocator shardsAllocator;
     private final ClusterInfoService clusterInfoService;
     private final SnapshotsInfoService snapshotsInfoService;
-    private final ShardRoutingRoleStrategy roleFactory;
+    private final ShardRoutingRoleStrategy shardRoutingRoleStrategy;
 
     // only for tests that use the GatewayAllocator as the unique ExistingShardsAllocator
     public AllocationService(
@@ -86,9 +86,9 @@ public class AllocationService {
         ShardsAllocator shardsAllocator,
         ClusterInfoService clusterInfoService,
         SnapshotsInfoService snapshotsInfoService,
-        ShardRoutingRoleStrategy roleFactory
+        ShardRoutingRoleStrategy shardRoutingRoleStrategy
     ) {
-        this(allocationDeciders, shardsAllocator, clusterInfoService, snapshotsInfoService, roleFactory);
+        this(allocationDeciders, shardsAllocator, clusterInfoService, snapshotsInfoService, shardRoutingRoleStrategy);
         setExistingShardsAllocators(Collections.singletonMap(GatewayAllocator.ALLOCATOR_NAME, gatewayAllocator));
     }
 
@@ -97,13 +97,13 @@ public class AllocationService {
         ShardsAllocator shardsAllocator,
         ClusterInfoService clusterInfoService,
         SnapshotsInfoService snapshotsInfoService,
-        ShardRoutingRoleStrategy roleFactory
+        ShardRoutingRoleStrategy shardRoutingRoleStrategy
     ) {
         this.allocationDeciders = allocationDeciders;
         this.shardsAllocator = shardsAllocator;
         this.clusterInfoService = clusterInfoService;
         this.snapshotsInfoService = snapshotsInfoService;
-        this.roleFactory = roleFactory;
+        this.shardRoutingRoleStrategy = shardRoutingRoleStrategy;
     }
 
     /**
@@ -122,8 +122,8 @@ public class AllocationService {
         return allocationDeciders;
     }
 
-    public ShardRoutingRoleStrategy getShardCopyRoleFactory() {
-        return roleFactory;
+    public ShardRoutingRoleStrategy getShardRoutingRoleStrategy() {
+        return shardRoutingRoleStrategy;
     }
 
     /**
@@ -313,7 +313,7 @@ public class AllocationService {
                 final String[] indices = entry.getValue().toArray(Strings.EMPTY_ARRAY);
                 // we do *not* update the in sync allocation ids as they will be removed upon the first index
                 // operation which make these copies stale
-                routingTableBuilder.updateNumberOfReplicas(numberOfReplicas, indices, roleFactory);
+                routingTableBuilder.updateNumberOfReplicas(numberOfReplicas, indices, shardRoutingRoleStrategy);
                 metadataBuilder.updateNumberOfReplicas(numberOfReplicas, indices);
                 // update settings version for each index
                 for (final String index : indices) {

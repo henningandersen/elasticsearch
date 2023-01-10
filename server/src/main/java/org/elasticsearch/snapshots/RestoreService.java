@@ -1322,7 +1322,7 @@ public class RestoreService implements ClusterStateApplier {
                         updatedIndexMetadata,
                         recoverySource,
                         ignoreShards,
-                        allocationService.getShardCopyRoleFactory()
+                        allocationService.getShardRoutingRoleStrategy()
                     );
                     blocks.addBlocks(updatedIndexMetadata);
                 } else {
@@ -1343,7 +1343,7 @@ public class RestoreService implements ClusterStateApplier {
                         ensureNoAliasNameConflicts(snapshotIndexMetadata);
                     }
                     updatedIndexMetadata = indexMdBuilder.build();
-                    rtBuilder.addAsRestore(updatedIndexMetadata, recoverySource, allocationService.getShardCopyRoleFactory());
+                    rtBuilder.addAsRestore(updatedIndexMetadata, recoverySource, allocationService.getShardRoutingRoleStrategy());
                     blocks.updateBlocks(updatedIndexMetadata);
                 }
 

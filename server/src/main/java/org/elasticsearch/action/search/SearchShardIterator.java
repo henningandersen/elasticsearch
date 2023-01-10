@@ -68,7 +68,7 @@ public final class SearchShardIterator implements Comparable<SearchShardIterator
         ShardSearchContextId searchContextId,
         TimeValue searchContextKeepAlive
     ) {
-        // TODO ensure all target nodes hold searchable shards - at the moment, PIT searches don't check this
+        // TODO ensure all target nodes hold shards with a searchable ShardRoutingRole - at the moment, PIT searches don't check this
         this.shardId = shardId;
         this.targetNodesIterator = new PlainIterator<>(targetNodeIds);
         this.originalIndices = originalIndices;

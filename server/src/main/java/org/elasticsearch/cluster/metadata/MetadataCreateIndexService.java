@@ -510,7 +510,7 @@ public class MetadataCreateIndexService {
                 request.blocks(),
                 indexMetadata,
                 metadataTransformer,
-                allocationService.getShardCopyRoleFactory()
+                allocationService.getShardRoutingRoleStrategy()
             );
             if (request.performReroute()) {
                 updated = allocationService.reroute(updated, "index [" + indexMetadata.getIndex().getName() + "] created", rerouteListener);
@@ -1227,7 +1227,7 @@ public class MetadataCreateIndexService {
         Set<ClusterBlock> clusterBlocks,
         IndexMetadata indexMetadata,
         BiConsumer<Metadata.Builder, IndexMetadata> metadataTransformer,
-        ShardRoutingRoleStrategy roleFactory
+        ShardRoutingRoleStrategy shardRoutingRoleStrategy
     ) {
         final Metadata newMetadata;
         if (metadataTransformer != null) {
@@ -1245,7 +1245,7 @@ public class MetadataCreateIndexService {
         ClusterState updatedState = ClusterState.builder(currentState).blocks(blocks).metadata(newMetadata).build();
 
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder(updatedState.routingTable())
-            .addAsNew(updatedState.metadata().index(indexName), roleFactory);
+            .addAsNew(updatedState.metadata().index(indexName), shardRoutingRoleStrategy);
         return ClusterState.builder(updatedState).routingTable(routingTableBuilder.build()).build();
     }
 

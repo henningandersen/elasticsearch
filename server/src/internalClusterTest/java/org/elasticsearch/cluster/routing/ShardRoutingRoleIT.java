@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.containsString;
 
-public class ShardCopyRoleIT extends ESIntegTestCase {
+public class ShardRoutingRoleIT extends ESIntegTestCase {
 
     public static class TestPlugin extends Plugin implements ClusterPlugin {
         @Override
@@ -55,7 +55,7 @@ public class ShardCopyRoleIT extends ESIntegTestCase {
         return CollectionUtils.appendToCopy(super.nodePlugins(), TestPlugin.class);
     }
 
-    public void testShardCopyRole() throws Exception {
+    public void testShardRoutingRole() throws Exception {
         internalCluster().ensureAtLeastNumDataNodes(3);
         internalCluster().ensureAtMostNumDataNodes(3);
 
