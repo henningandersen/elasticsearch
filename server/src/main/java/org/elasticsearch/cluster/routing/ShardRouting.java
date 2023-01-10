@@ -924,8 +924,8 @@ public final class ShardRouting implements Writeable, ToXContentObject {
         }
 
         /**
-         * @return whether a shard copy with this role may be promoted from replica to primary. If {@code index.number_of_replicas} is reduced,
-         * unpromotable replicas are removed first.
+         * @return whether a shard copy with this role may be promoted from replica to primary. If {@code index.number_of_replicas} is
+         * reduced, unpromotable replicas are removed first.
          */
         public boolean isPromotableToPrimary() {
             return promotable;
