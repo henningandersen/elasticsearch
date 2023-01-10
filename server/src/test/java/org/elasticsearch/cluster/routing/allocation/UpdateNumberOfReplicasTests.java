@@ -43,8 +43,8 @@ public class UpdateNumberOfReplicasTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
 
-        RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable initialRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -88,9 +88,10 @@ public class UpdateNumberOfReplicasTests extends ESAllocationTestCase {
 
         logger.info("add another replica");
         final String[] indices = { "test" };
-        RoutingTable updatedRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .updateNumberOfReplicas(2, indices, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .build();
+        RoutingTable updatedRoutingTable = RoutingTable.builder(
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
+            clusterState.routingTable()
+        ).updateNumberOfReplicas(2, indices).build();
         metadata = Metadata.builder(clusterState.metadata()).updateNumberOfReplicas(2, indices).build();
         clusterState = ClusterState.builder(clusterState).routingTable(updatedRoutingTable).metadata(metadata).build();
 
@@ -147,9 +148,7 @@ public class UpdateNumberOfReplicasTests extends ESAllocationTestCase {
         );
 
         logger.info("now remove a replica");
-        updatedRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .updateNumberOfReplicas(1, indices, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .build();
+        updatedRoutingTable = RoutingTable.builder(clusterState.routingTable()).updateNumberOfReplicas(1, indices).build();
         metadata = Metadata.builder(clusterState.metadata()).updateNumberOfReplicas(1, indices).build();
         clusterState = ClusterState.builder(clusterState).routingTable(updatedRoutingTable).metadata(metadata).build();
 

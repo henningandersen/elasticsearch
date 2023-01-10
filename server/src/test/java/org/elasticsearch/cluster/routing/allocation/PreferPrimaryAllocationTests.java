@@ -46,9 +46,9 @@ public class PreferPrimaryAllocationTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test2").settings(settings(Version.CURRENT)).numberOfShards(10).numberOfReplicas(0))
             .build();
 
-        RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test1"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .addAsNew(metadata.index("test2"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable initialRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test1"))
+            .addAsNew(metadata.index("test2"))
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -67,9 +67,10 @@ public class PreferPrimaryAllocationTests extends ESAllocationTestCase {
 
         logger.info("increasing the number of replicas to 1, and perform a reroute (to get the replicas allocation going)");
         final String[] indices = { "test1", "test2" };
-        RoutingTable updatedRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .updateNumberOfReplicas(1, indices, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .build();
+        RoutingTable updatedRoutingTable = RoutingTable.builder(
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
+            clusterState.routingTable()
+        ).updateNumberOfReplicas(1, indices).build();
         metadata = Metadata.builder(clusterState.metadata()).updateNumberOfReplicas(1, indices).build();
         clusterState = ClusterState.builder(clusterState).routingTable(updatedRoutingTable).metadata(metadata).build();
 
@@ -83,8 +84,8 @@ public class PreferPrimaryAllocationTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("new_index").settings(settings(Version.CURRENT)).numberOfShards(4).numberOfReplicas(0))
             .build();
 
-        updatedRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .addAsNew(metadata.index("new_index"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        updatedRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, clusterState.routingTable())
+            .addAsNew(metadata.index("new_index"))
             .build();
 
         clusterState = ClusterState.builder(clusterState).metadata(metadata).routingTable(updatedRoutingTable).build();

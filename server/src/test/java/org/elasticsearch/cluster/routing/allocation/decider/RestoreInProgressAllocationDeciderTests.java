@@ -65,12 +65,8 @@ public class RestoreInProgressAllocationDeciderTests extends ESAllocationTestCas
 
     public void testCannotAllocatePrimaryMissingInRestoreInProgress() {
         ClusterState clusterState = createInitialClusterState();
-        RoutingTable routingTable = RoutingTable.builder(clusterState.getRoutingTable())
-            .addAsRestore(
-                clusterState.getMetadata().index("test"),
-                createSnapshotRecoverySource("_missing"),
-                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
-            )
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, clusterState.getRoutingTable())
+            .addAsRestore(clusterState.getMetadata().index("test"), createSnapshotRecoverySource("_missing"))
             .build();
 
         clusterState = ClusterState.builder(clusterState).routingTable(routingTable).build();
@@ -95,8 +91,8 @@ public class RestoreInProgressAllocationDeciderTests extends ESAllocationTestCas
         RecoverySource.SnapshotRecoverySource recoverySource = createSnapshotRecoverySource("_existing");
 
         ClusterState clusterState = createInitialClusterState();
-        RoutingTable routingTable = RoutingTable.builder(clusterState.getRoutingTable())
-            .addAsRestore(clusterState.getMetadata().index("test"), recoverySource, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, clusterState.getRoutingTable())
+            .addAsRestore(clusterState.getMetadata().index("test"), recoverySource)
             .build();
 
         clusterState = ClusterState.builder(clusterState).routingTable(routingTable).build();
@@ -188,8 +184,8 @@ public class RestoreInProgressAllocationDeciderTests extends ESAllocationTestCas
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
 
         DiscoveryNodes discoveryNodes = DiscoveryNodes.builder()

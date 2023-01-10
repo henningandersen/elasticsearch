@@ -87,8 +87,8 @@ public class AllocationCommandsTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -162,8 +162,8 @@ public class AllocationCommandsTests extends ESAllocationTestCase {
             .build();
         // shard routing is added as "from recovery" instead of "new index creation" so that we can test below that allocating an empty
         // primary with accept_data_loss flag set to false fails
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsRecovery(metadata.index(index), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsRecovery(metadata.index(index))
             .build();
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -381,8 +381,8 @@ public class AllocationCommandsTests extends ESAllocationTestCase {
             .build();
         // shard routing is added as "from recovery" instead of "new index creation" so that we can test below that allocating an empty
         // primary with accept_data_loss flag set to false fails
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsRecovery(metadata.index(index), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsRecovery(metadata.index(index))
             .build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
@@ -435,8 +435,8 @@ public class AllocationCommandsTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -847,8 +847,8 @@ public class AllocationCommandsTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -920,8 +920,8 @@ public class AllocationCommandsTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -1019,10 +1019,10 @@ public class AllocationCommandsTests extends ESAllocationTestCase {
                     .putInSyncAllocationIds(1, Collections.singleton("randomAllocID2"))
             )
             .build();
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsRecovery(metadata.index(index1), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .addAsRecovery(metadata.index(index2), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .addAsRecovery(metadata.index(index3), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsRecovery(metadata.index(index1))
+            .addAsRecovery(metadata.index(index2))
+            .addAsRecovery(metadata.index(index3))
             .build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)

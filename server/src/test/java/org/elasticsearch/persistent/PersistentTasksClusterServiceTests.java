@@ -863,7 +863,10 @@ public class PersistentTasksClusterServiceTests extends ESTestCase {
             // change routing table to simulate a change
             logger.info("changed routing table");
             Metadata.Builder metadata = Metadata.builder(clusterState.metadata());
-            RoutingTable.Builder routingTable = RoutingTable.builder(clusterState.routingTable());
+            RoutingTable.Builder routingTable = RoutingTable.builder(
+                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
+                clusterState.routingTable()
+            );
             changeRoutingTable(metadata, routingTable);
             builder.metadata(metadata).routingTable(routingTable.build());
         }
@@ -911,7 +914,10 @@ public class PersistentTasksClusterServiceTests extends ESTestCase {
                 logger.info("changed routing table");
                 Metadata.Builder metadata = Metadata.builder(clusterState.metadata());
                 metadata.putCustom(PersistentTasksCustomMetadata.TYPE, tasksBuilder.build());
-                RoutingTable.Builder routingTable = RoutingTable.builder(clusterState.routingTable());
+                RoutingTable.Builder routingTable = RoutingTable.builder(
+                    TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
+                    clusterState.routingTable()
+                );
                 changeRoutingTable(metadata, routingTable);
                 builder.metadata(metadata).routingTable(routingTable.build());
                 return builder.build();
@@ -1018,7 +1024,7 @@ public class PersistentTasksClusterServiceTests extends ESTestCase {
 
     private ClusterState initialState() {
         Metadata.Builder metadata = Metadata.builder();
-        RoutingTable.Builder routingTable = RoutingTable.builder();
+        RoutingTable.Builder routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         int randomIndices = randomIntBetween(0, 5);
         for (int i = 0; i < randomIndices; i++) {
             changeRoutingTable(metadata, routingTable);
@@ -1039,7 +1045,7 @@ public class PersistentTasksClusterServiceTests extends ESTestCase {
             .numberOfReplicas(1)
             .build();
         metadata.put(indexMetadata, false);
-        routingTable.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsNew(indexMetadata);
     }
 
     /** Creates a PersistentTasksClusterService with a single PersistentTasksExecutor implemented by a BiFunction **/

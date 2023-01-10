@@ -161,8 +161,8 @@ public class DesiredBalanceShardsAllocatorTests extends ESTestCase {
                 var newState = ClusterState.builder(currentState)
                     .metadata(Metadata.builder(currentState.metadata()).put(indexMetadata, true))
                     .routingTable(
-                        RoutingTable.builder(currentState.routingTable())
-                            .addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+                        RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, currentState.routingTable())
+                            .addAsNew(indexMetadata)
                     )
                     .build();
                 return allocationService.reroute(
@@ -268,8 +268,8 @@ public class DesiredBalanceShardsAllocatorTests extends ESTestCase {
                 var newState = ClusterState.builder(currentState)
                     .metadata(Metadata.builder(currentState.metadata()).put(indexMetadata, true))
                     .routingTable(
-                        RoutingTable.builder(currentState.routingTable())
-                            .addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+                        RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, currentState.routingTable())
+                            .addAsNew(indexMetadata)
                     )
                     .build();
                 return allocationService.reroute(newState, "test", ActionListener.wrap(response -> {
@@ -369,8 +369,8 @@ public class DesiredBalanceShardsAllocatorTests extends ESTestCase {
                 var newState = ClusterState.builder(currentState)
                     .metadata(Metadata.builder(currentState.metadata()).put(indexMetadata, true))
                     .routingTable(
-                        RoutingTable.builder(currentState.routingTable())
-                            .addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+                        RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, currentState.routingTable())
+                            .addAsNew(indexMetadata)
                     )
                     .build();
                 return allocationService.reroute(

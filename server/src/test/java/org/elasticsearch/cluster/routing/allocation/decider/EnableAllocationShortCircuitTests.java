@@ -55,7 +55,7 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
         }
 
         final Metadata.Builder metadataBuilder = Metadata.builder();
-        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
+        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         for (int i = randomIntBetween(1, 10); i >= 0; i--) {
             final IndexMetadata indexMetadata = IndexMetadata.builder("test" + i)
                 .settings(settings(Version.CURRENT))
@@ -63,7 +63,7 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
                 .numberOfReplicas(randomIntBetween(0, numberOfNodes - 1))
                 .build();
             metadataBuilder.put(indexMetadata, true);
-            routingTableBuilder.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            routingTableBuilder.addAsNew(indexMetadata);
         }
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.get(Settings.EMPTY))
@@ -184,8 +184,8 @@ public class EnableAllocationShortCircuitTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
 
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))

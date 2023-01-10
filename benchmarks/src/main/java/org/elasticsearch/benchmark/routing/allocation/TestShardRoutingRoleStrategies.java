@@ -13,7 +13,7 @@ import org.elasticsearch.cluster.routing.ShardRoutingRoleStrategy;
 
 public class TestShardRoutingRoleStrategies {
 
-    public static final ShardRoutingRoleStrategy DEFAULT_ONLY_STRATEGY = new ShardRoutingRoleStrategy() {
+    public static final ShardRoutingRoleStrategy DEFAULT_ROLE_ONLY = new ShardRoutingRoleStrategy() {
         @Override
         public ShardRouting.Role newReplicaRole() {
             return ShardRouting.Role.DEFAULT;

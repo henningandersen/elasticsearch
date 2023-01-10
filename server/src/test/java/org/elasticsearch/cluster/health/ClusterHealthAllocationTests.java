@@ -33,8 +33,8 @@ public class ClusterHealthAllocationTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(2).numberOfReplicas(1))
             .build();
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
         clusterState = ClusterState.builder(clusterState).metadata(metadata).routingTable(routingTable).build();
         MockAllocationService allocation = createAllocationService();

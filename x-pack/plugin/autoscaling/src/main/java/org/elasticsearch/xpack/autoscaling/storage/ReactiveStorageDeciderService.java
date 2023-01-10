@@ -566,8 +566,8 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 this.updatedDataStream = updatedDataStream;
             }
 
-            public void applyRouting(RoutingTable.Builder routing, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
-                additionalIndices.keySet().forEach(indexMetadata -> routing.addAsNew(indexMetadata, shardRoutingRoleStrategy));
+            public void applyRouting(RoutingTable.Builder routing) {
+                additionalIndices.keySet().forEach(indexMetadata -> routing.addAsNew(indexMetadata));
             }
 
             public void applyMetadata(Metadata.Builder metadataBuilder) {
@@ -605,10 +605,10 @@ public class ReactiveStorageDeciderService implements AutoscalingDeciderService 
                 return this;
             }
             Metadata.Builder metadataBuilder = Metadata.builder(state.metadata());
-            RoutingTable.Builder routingTableBuilder = RoutingTable.builder(state.routingTable());
+            RoutingTable.Builder routingTableBuilder = RoutingTable.builder(shardRoutingRoleStrategy, state.routingTable());
             Map<String, Long> sizeBuilder = new HashMap<>();
             singleForecasts.forEach(p -> p.applyMetadata(metadataBuilder));
-            singleForecasts.forEach(p -> p.applyRouting(routingTableBuilder, shardRoutingRoleStrategy));
+            singleForecasts.forEach(p -> p.applyRouting(routingTableBuilder));
             RoutingTable routingTable = routingTableBuilder.build();
             singleForecasts.forEach(p -> p.applySize(sizeBuilder, routingTable));
             ClusterState forecastClusterState = ClusterState.builder(state).metadata(metadataBuilder).routingTable(routingTable).build();

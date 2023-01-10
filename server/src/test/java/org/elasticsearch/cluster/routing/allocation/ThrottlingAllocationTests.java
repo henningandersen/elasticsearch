@@ -349,7 +349,7 @@ public class ThrottlingAllocationTests extends ESAllocationTestCase {
     ) {
         DiscoveryNode node1 = newNode("node1");
         Metadata.Builder metadataBuilder = Metadata.builder(metadata);
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         Snapshot snapshot = new Snapshot("repo", new SnapshotId("snap", "randomId"));
         Set<String> snapshotIndices = new HashSet<>();
         String restoreUUID = UUIDs.randomBase64UUID();
@@ -363,9 +363,9 @@ public class ThrottlingAllocationTests extends ESAllocationTestCase {
             IndexMetadata indexMetadata = indexMetadataBuilder.build();
             metadataBuilder.put(indexMetadata, false);
             switch (recoveryType) {
-                case 0 -> routingTableBuilder.addAsRecovery(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
-                case 1 -> routingTableBuilder.addAsFromCloseToOpen(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
-                case 2 -> routingTableBuilder.addAsFromDangling(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+                case 0 -> routingTableBuilder.addAsRecovery(indexMetadata);
+                case 1 -> routingTableBuilder.addAsFromCloseToOpen(indexMetadata);
+                case 2 -> routingTableBuilder.addAsFromDangling(indexMetadata);
                 case 3 -> {
                     snapshotIndices.add(index.getName());
                     routingTableBuilder.addAsNewRestore(
@@ -376,8 +376,7 @@ public class ThrottlingAllocationTests extends ESAllocationTestCase {
                             Version.CURRENT,
                             new IndexId(indexMetadata.getIndex().getName(), UUIDs.randomBase64UUID(random()))
                         ),
-                        new HashSet<>(),
-                        TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+                        new HashSet<>()
                     );
                 }
                 case 4 -> {
@@ -389,11 +388,10 @@ public class ThrottlingAllocationTests extends ESAllocationTestCase {
                             snapshot,
                             Version.CURRENT,
                             new IndexId(indexMetadata.getIndex().getName(), UUIDs.randomBase64UUID(random()))
-                        ),
-                        TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+                        )
                     );
                 }
-                case 5 -> routingTableBuilder.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+                case 5 -> routingTableBuilder.addAsNew(indexMetadata);
                 default -> throw new IndexOutOfBoundsException();
             }
         }

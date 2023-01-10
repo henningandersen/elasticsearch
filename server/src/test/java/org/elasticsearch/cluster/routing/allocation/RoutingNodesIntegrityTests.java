@@ -66,9 +66,9 @@ public class RoutingNodesIntegrityTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test1").settings(settings(Version.CURRENT)).numberOfShards(3).numberOfReplicas(1))
             .build();
 
-        RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .addAsNew(metadata.index("test1"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable initialRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
+            .addAsNew(metadata.index("test1"))
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -134,9 +134,9 @@ public class RoutingNodesIntegrityTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test1").settings(settings(Version.CURRENT)).numberOfShards(3).numberOfReplicas(1))
             .build();
 
-        RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .addAsNew(metadata.index("test1"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable initialRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
+            .addAsNew(metadata.index("test1"))
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -195,8 +195,8 @@ public class RoutingNodesIntegrityTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(3).numberOfReplicas(1))
             .build();
 
-        RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable initialRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -275,9 +275,7 @@ public class RoutingNodesIntegrityTests extends ESAllocationTestCase {
                     )
             )
             .build();
-        RoutingTable updatedRoutingTable = RoutingTable.builder(clusterState.routingTable())
-            .addAsNew(metadata.index("test1"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .build();
+        RoutingTable updatedRoutingTable = RoutingTable.builder(clusterState.routingTable()).addAsNew(metadata.index("test1")).build();
         clusterState = ClusterState.builder(clusterState).metadata(metadata).routingTable(updatedRoutingTable).build();
         routingNodes = clusterState.getRoutingNodes();
 
@@ -373,7 +371,7 @@ public class RoutingNodesIntegrityTests extends ESAllocationTestCase {
             )
             .build();
         final var metadata = Metadata.builder().put(indexMetadata, true).build();
-        final var routingTable = RoutingTable.builder().addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).addAsNew(indexMetadata).build();
 
         final var nodeCount = between(numberOfReplicas + 1, 6);
         final var discoveryNodes = DiscoveryNodes.builder();

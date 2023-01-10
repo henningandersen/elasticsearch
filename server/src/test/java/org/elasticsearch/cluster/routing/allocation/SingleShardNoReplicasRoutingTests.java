@@ -56,8 +56,8 @@ public class SingleShardNoReplicasRoutingTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
 
-        RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable initialRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -158,8 +158,8 @@ public class SingleShardNoReplicasRoutingTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(0))
             .build();
 
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"));
 
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -220,9 +220,9 @@ public class SingleShardNoReplicasRoutingTests extends ESAllocationTestCase {
         }
         Metadata metadata = metadataBuilder.build();
 
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         for (int i = 0; i < numberOfIndices; i++) {
-            routingTableBuilder.addAsNew(metadata.index("test" + i), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            routingTableBuilder.addAsNew(metadata.index("test" + i));
         }
         ClusterState clusterState = ClusterState.builder(
             org.elasticsearch.cluster.ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)
@@ -331,9 +331,9 @@ public class SingleShardNoReplicasRoutingTests extends ESAllocationTestCase {
         }
         Metadata metadata = metadataBuilder.build();
 
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         for (int i = 0; i < numberOfIndices; i++) {
-            routingTableBuilder.addAsNew(metadata.index("test" + i), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            routingTableBuilder.addAsNew(metadata.index("test" + i));
         }
 
         ClusterState clusterState = ClusterState.builder(

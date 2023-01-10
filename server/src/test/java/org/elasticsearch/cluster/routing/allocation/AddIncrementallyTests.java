@@ -259,7 +259,7 @@ public class AddIncrementallyTests extends ESAllocationTestCase {
         int numberOfReplicas
     ) {
         Metadata.Builder metadataBuilder = Metadata.builder();
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         for (int i = 0; i < numberOfIndices; i++) {
             IndexMetadata.Builder index = IndexMetadata.builder("test" + i)
@@ -272,7 +272,7 @@ public class AddIncrementallyTests extends ESAllocationTestCase {
         Metadata metadata = metadataBuilder.build();
 
         for (IndexMetadata indexMetadata : metadata.indices().values()) {
-            routingTableBuilder.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            routingTableBuilder.addAsNew(indexMetadata);
         }
 
         RoutingTable initialRoutingTable = routingTableBuilder.build();
@@ -305,7 +305,10 @@ public class AddIncrementallyTests extends ESAllocationTestCase {
         int numberOfReplicas
     ) {
         Metadata.Builder metadataBuilder = Metadata.builder(clusterState.getMetadata());
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(clusterState.routingTable());
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
+            clusterState.routingTable()
+        );
 
         IndexMetadata.Builder index = IndexMetadata.builder("test" + indexOrdinal)
             .settings(settings(Version.CURRENT))
@@ -313,7 +316,7 @@ public class AddIncrementallyTests extends ESAllocationTestCase {
             .numberOfReplicas(numberOfReplicas);
         IndexMetadata imd = index.build();
         metadataBuilder = metadataBuilder.put(imd, true);
-        routingTableBuilder.addAsNew(imd, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(imd);
 
         Metadata metadata = metadataBuilder.build();
         clusterState = ClusterState.builder(clusterState).metadata(metadata).routingTable(routingTableBuilder.build()).build();

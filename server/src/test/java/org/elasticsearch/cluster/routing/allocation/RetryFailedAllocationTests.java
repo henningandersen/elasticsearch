@@ -44,8 +44,8 @@ public class RetryFailedAllocationTests extends ESAllocationTestCase {
         Metadata metadata = Metadata.builder()
             .put(IndexMetadata.builder(INDEX_NAME).settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index(INDEX_NAME), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index(INDEX_NAME))
             .build();
         clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .metadata(metadata)

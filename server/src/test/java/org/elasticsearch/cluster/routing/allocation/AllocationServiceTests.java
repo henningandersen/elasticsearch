@@ -171,11 +171,11 @@ public class AllocationServiceTests extends ESTestCase {
                 )
             );
 
-        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder()
-            .addAsRecovery(metadata.get("highPriority"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .addAsRecovery(metadata.get("mediumPriority"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .addAsRecovery(metadata.get("lowPriority"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-            .addAsRecovery(metadata.get("invalid"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsRecovery(metadata.get("highPriority"))
+            .addAsRecovery(metadata.get("mediumPriority"))
+            .addAsRecovery(metadata.get("lowPriority"))
+            .addAsRecovery(metadata.get("invalid"));
 
         final ClusterState clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(nodesBuilder)
@@ -254,8 +254,8 @@ public class AllocationServiceTests extends ESTestCase {
                 )
             );
 
-        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder()
-            .addAsRecovery(metadata.get("index"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsRecovery(metadata.get("index"));
 
         final ClusterState clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(nodesBuilder)

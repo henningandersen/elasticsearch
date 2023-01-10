@@ -653,7 +653,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
         String[] tierSettingNames = new String[] { DataTier.TIER_PREFERENCE };
         int shards = randomIntBetween(minShards, 20);
         Metadata.Builder builder = Metadata.builder();
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         while (shards > 0) {
             IndexMetadata indexMetadata = IndexMetadata.builder("test" + "-" + shards)
                 .settings(settings(Version.CURRENT).put(randomFrom(tierSettingNames), "data_hot"))
@@ -662,7 +662,7 @@ public class ReactiveStorageDeciderDecisionTests extends AutoscalingTestCase {
                 .build();
 
             builder.put(indexMetadata, false);
-            routingTableBuilder.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            routingTableBuilder.addAsNew(indexMetadata);
             shards -= indexMetadata.getNumberOfShards() * (indexMetadata.getNumberOfReplicas() + 1);
         }
 

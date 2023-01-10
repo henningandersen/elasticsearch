@@ -28,4 +28,17 @@ public interface ShardRoutingRoleStrategy {
      * {@code 1..N} for replicas).
      */
     ShardRouting.Role newEmptyRole(int copyIndex);
+
+    ShardRoutingRoleStrategy NO_SHARD_CREATION = new ShardRoutingRoleStrategy() {
+        @Override
+        public ShardRouting.Role newReplicaRole() {
+            assert false : "no shard creation permitted";
+            throw new IllegalStateException("no shard creation permitted");
+        }
+
+        @Override
+        public ShardRouting.Role newEmptyRole(int copyIndex) {
+            return newReplicaRole();
+        }
+    };
 }

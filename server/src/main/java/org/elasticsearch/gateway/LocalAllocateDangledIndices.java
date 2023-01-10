@@ -118,7 +118,10 @@ public class LocalAllocateDangledIndices {
                     }
                     Metadata.Builder metadata = Metadata.builder(currentState.metadata());
                     ClusterBlocks.Builder blocks = ClusterBlocks.builder().blocks(currentState.blocks());
-                    RoutingTable.Builder routingTableBuilder = RoutingTable.builder(currentState.routingTable());
+                    RoutingTable.Builder routingTableBuilder = RoutingTable.builder(
+                        allocationService.getShardRoutingRoleStrategy(),
+                        currentState.routingTable()
+                    );
                     final Version minIndexCompatibilityVersion = currentState.getNodes()
                         .getMaxNodeVersion()
                         .minimumIndexCompatibilityVersion();
@@ -199,7 +202,7 @@ public class LocalAllocateDangledIndices {
                         metadata.put(newIndexMetadata, false);
                         blocks.addBlocks(newIndexMetadata);
                         if (newIndexMetadata.getState() == IndexMetadata.State.OPEN || isIndexVerifiedBeforeClosed(indexMetadata)) {
-                            routingTableBuilder.addAsFromDangling(newIndexMetadata, allocationService.getShardRoutingRoleStrategy());
+                            routingTableBuilder.addAsFromDangling(newIndexMetadata);
                         }
                         sb.append("[").append(newIndexMetadata.getIndex()).append("/").append(newIndexMetadata.getState()).append("]");
                     }

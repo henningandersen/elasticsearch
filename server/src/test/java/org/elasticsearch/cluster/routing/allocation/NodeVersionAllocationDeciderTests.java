@@ -93,8 +93,8 @@ public class NodeVersionAllocationDeciderTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(5).numberOfReplicas(2))
             .build();
 
-        RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable initialRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -186,7 +186,7 @@ public class NodeVersionAllocationDeciderTests extends ESAllocationTestCase {
 
         logger.info("Building initial routing table");
         Metadata.Builder builder = Metadata.builder();
-        RoutingTable.Builder rtBuilder = RoutingTable.builder();
+        RoutingTable.Builder rtBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         int numIndices = between(1, 20);
         for (int i = 0; i < numIndices; i++) {
             builder.put(
@@ -199,7 +199,7 @@ public class NodeVersionAllocationDeciderTests extends ESAllocationTestCase {
         Metadata metadata = builder.build();
 
         for (int i = 0; i < numIndices; i++) {
-            rtBuilder.addAsNew(metadata.index("test_" + i), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            rtBuilder.addAsNew(metadata.index("test_" + i));
         }
         RoutingTable routingTable = rtBuilder.build();
 
@@ -248,8 +248,8 @@ public class NodeVersionAllocationDeciderTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(5).numberOfReplicas(2))
             .build();
 
-        RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
 
         ClusterState clusterState = ClusterState.builder(
@@ -476,11 +476,10 @@ public class NodeVersionAllocationDeciderTests extends ESAllocationTestCase {
         ClusterState state = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .metadata(metadata)
             .routingTable(
-                RoutingTable.builder()
+                RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
                     .addAsRestore(
                         metadata.index("test"),
-                        new SnapshotRecoverySource(UUIDs.randomBase64UUID(), snapshot, Version.CURRENT, indexId),
-                        TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+                        new SnapshotRecoverySource(UUIDs.randomBase64UUID(), snapshot, Version.CURRENT, indexId)
                     )
                     .build()
             )
@@ -583,8 +582,8 @@ public class NodeVersionAllocationDeciderTests extends ESAllocationTestCase {
             .put(IndexMetadata.builder("test").settings(settings(Version.CURRENT)).numberOfShards(1).numberOfReplicas(1))
             .build();
 
-        RoutingTable initialRoutingTable = RoutingTable.builder()
-            .addAsNew(metadata.index("test"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable initialRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(metadata.index("test"))
             .build();
 
         RoutingNode newNode = RoutingNodesHelper.routingNode("newNode", newNode("newNode", Version.CURRENT));

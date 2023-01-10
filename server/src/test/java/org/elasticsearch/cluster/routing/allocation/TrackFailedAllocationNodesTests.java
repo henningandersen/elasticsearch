@@ -46,7 +46,7 @@ public class TrackFailedAllocationNodesTests extends ESAllocationTestCase {
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
             .nodes(discoNodes)
             .metadata(metadata)
-            .routingTable(RoutingTable.builder().addAsNew(metadata.index("idx"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build())
+            .routingTable(RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).addAsNew(metadata.index("idx")).build())
             .build();
         clusterState = allocationService.reroute(clusterState, "reroute", ActionListener.noop());
         Set<String> failedNodeIds = new HashSet<>();

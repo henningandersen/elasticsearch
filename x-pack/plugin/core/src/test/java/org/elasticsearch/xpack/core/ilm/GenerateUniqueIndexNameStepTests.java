@@ -192,7 +192,7 @@ public class GenerateUniqueIndexNameStepTests extends AbstractStepTestCase<Gener
                 .numberOfReplicas(randomIntBetween(1, 5))
                 .build();
             ClusterState clusterState = ClusterState.builder(ClusterName.DEFAULT)
-                .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build())
+                .routingTable(RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).addAsNew(indexMetadata).build())
                 .metadata(Metadata.builder().put(indexMetadata, false))
                 .build();
 

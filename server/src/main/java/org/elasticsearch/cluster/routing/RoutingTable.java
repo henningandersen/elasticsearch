@@ -441,21 +441,40 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
         return new Builder(routingTable);
     }
 
+    public static Builder builder(ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
+        return new Builder(shardRoutingRoleStrategy);
+    }
+
+    public static Builder builder(ShardRoutingRoleStrategy shardRoutingRoleStrategy, RoutingTable routingTable) {
+        return new Builder(shardRoutingRoleStrategy, routingTable);
+    }
+
     /**
      * Builder for the routing table. Note that build can only be called one time.
      */
     public static class Builder {
 
+        private final ShardRoutingRoleStrategy shardRoutingRoleStrategy;
         private long version;
         private ImmutableOpenMap.Builder<String, IndexRoutingTable> indicesRouting;
 
         public Builder() {
-            indicesRouting = ImmutableOpenMap.builder();
+            this(ShardRoutingRoleStrategy.NO_SHARD_CREATION);
         }
 
         public Builder(RoutingTable routingTable) {
-            version = routingTable.version;
-            indicesRouting = ImmutableOpenMap.builder(routingTable.indicesRouting);
+            this(ShardRoutingRoleStrategy.NO_SHARD_CREATION, routingTable);
+        }
+
+        public Builder(ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
+            this.shardRoutingRoleStrategy = shardRoutingRoleStrategy;
+            this.indicesRouting = ImmutableOpenMap.builder();
+        }
+
+        public Builder(ShardRoutingRoleStrategy shardRoutingRoleStrategy, RoutingTable routingTable) {
+            this.shardRoutingRoleStrategy = shardRoutingRoleStrategy;
+            this.version = routingTable.version;
+            this.indicesRouting = ImmutableOpenMap.builder(routingTable.indicesRouting);
         }
 
         private static void addShard(
@@ -474,11 +493,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
          * @param indices          the indices to update the number of replicas for
          * @return the builder
          */
-        public Builder updateNumberOfReplicas(
-            final int numberOfReplicas,
-            final String[] indices,
-            final ShardRoutingRoleStrategy shardRoutingRoleStrategy
-        ) {
+        public Builder updateNumberOfReplicas(final int numberOfReplicas, final String[] indices) {
             if (indicesRouting == null) {
                 throw new IllegalStateException("once build is called the builder cannot be reused");
             }
@@ -510,7 +525,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
             return this;
         }
 
-        public Builder addAsNew(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
+        public Builder addAsNew(IndexMetadata indexMetadata) {
             if (indexMetadata.getState() == IndexMetadata.State.OPEN) {
                 IndexRoutingTable.Builder indexRoutingBuilder = new IndexRoutingTable.Builder(indexMetadata.getIndex()).initializeAsNew(
                     indexMetadata,
@@ -521,7 +536,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
             return this;
         }
 
-        public Builder addAsRecovery(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
+        public Builder addAsRecovery(IndexMetadata indexMetadata) {
             if (indexMetadata.getState() == IndexMetadata.State.OPEN || isIndexVerifiedBeforeClosed(indexMetadata)) {
                 IndexRoutingTable.Builder indexRoutingBuilder = new IndexRoutingTable.Builder(indexMetadata.getIndex())
                     .initializeAsRecovery(indexMetadata, shardRoutingRoleStrategy);
@@ -530,7 +545,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
             return this;
         }
 
-        public Builder addAsFromDangling(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
+        public Builder addAsFromDangling(IndexMetadata indexMetadata) {
             if (indexMetadata.getState() == IndexMetadata.State.OPEN || isIndexVerifiedBeforeClosed(indexMetadata)) {
                 IndexRoutingTable.Builder indexRoutingBuilder = new IndexRoutingTable.Builder(indexMetadata.getIndex())
                     .initializeAsFromDangling(indexMetadata, shardRoutingRoleStrategy);
@@ -539,7 +554,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
             return this;
         }
 
-        public Builder addAsFromCloseToOpen(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
+        public Builder addAsFromCloseToOpen(IndexMetadata indexMetadata) {
             if (indexMetadata.getState() == IndexMetadata.State.OPEN) {
                 IndexRoutingTable.Builder indexRoutingBuilder = new IndexRoutingTable.Builder(indexMetadata.getIndex())
                     .initializeAsFromCloseToOpen(
@@ -552,7 +567,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
             return this;
         }
 
-        public Builder addAsFromOpenToClose(IndexMetadata indexMetadata, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
+        public Builder addAsFromOpenToClose(IndexMetadata indexMetadata) {
             assert isIndexVerifiedBeforeClosed(indexMetadata);
             IndexRoutingTable.Builder indexRoutingBuilder = new IndexRoutingTable.Builder(indexMetadata.getIndex())
                 .initializeAsFromOpenToClose(
@@ -563,11 +578,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
             return add(indexRoutingBuilder);
         }
 
-        public Builder addAsRestore(
-            IndexMetadata indexMetadata,
-            SnapshotRecoverySource recoverySource,
-            ShardRoutingRoleStrategy shardRoutingRoleStrategy
-        ) {
+        public Builder addAsRestore(IndexMetadata indexMetadata, SnapshotRecoverySource recoverySource) {
             IndexRoutingTable.Builder indexRoutingBuilder = new IndexRoutingTable.Builder(indexMetadata.getIndex()).initializeAsRestore(
                 indexMetadata,
                 recoverySource,
@@ -578,12 +589,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
             return this;
         }
 
-        public Builder addAsNewRestore(
-            IndexMetadata indexMetadata,
-            SnapshotRecoverySource recoverySource,
-            Set<Integer> ignoreShards,
-            ShardRoutingRoleStrategy shardRoutingRoleStrategy
-        ) {
+        public Builder addAsNewRestore(IndexMetadata indexMetadata, SnapshotRecoverySource recoverySource, Set<Integer> ignoreShards) {
             IndexRoutingTable.Builder indexRoutingBuilder = new IndexRoutingTable.Builder(indexMetadata.getIndex()).initializeAsNewRestore(
                 indexMetadata,
                 recoverySource,

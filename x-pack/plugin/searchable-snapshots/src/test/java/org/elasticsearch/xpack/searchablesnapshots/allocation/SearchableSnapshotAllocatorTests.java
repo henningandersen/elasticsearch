@@ -64,12 +64,8 @@ public class SearchableSnapshotAllocatorTests extends ESAllocationTestCase {
         final DeterministicTaskQueue deterministicTaskQueue = new DeterministicTaskQueue();
 
         final Metadata metadata = buildSingleShardIndexMetadata(shardId);
-        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsRestore(
-            metadata.index(shardId.getIndex()),
-            randomSnapshotSource(shardId),
-            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
-        );
+        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsRestore(metadata.index(shardId.getIndex()), randomSnapshotSource(shardId));
 
         final ClusterState state = buildClusterState(nodes, metadata, routingTableBuilder);
         final long shardSize = randomNonNegativeLong();
@@ -142,12 +138,8 @@ public class SearchableSnapshotAllocatorTests extends ESAllocationTestCase {
         final DeterministicTaskQueue deterministicTaskQueue = new DeterministicTaskQueue();
 
         final Metadata metadata = buildSingleShardIndexMetadata(shardId);
-        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsRestore(
-            metadata.index(shardId.getIndex()),
-            randomSnapshotSource(shardId),
-            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
-        );
+        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsRestore(metadata.index(shardId.getIndex()), randomSnapshotSource(shardId));
 
         final ClusterState state = buildClusterState(nodes, metadata, routingTableBuilder);
         final RoutingAllocation allocation = buildAllocation(
@@ -185,12 +177,8 @@ public class SearchableSnapshotAllocatorTests extends ESAllocationTestCase {
         final DeterministicTaskQueue deterministicTaskQueue = new DeterministicTaskQueue();
 
         final Metadata metadata = buildSingleShardIndexMetadata(shardId, builder -> builder.put(SNAPSHOT_PARTIAL_SETTING.getKey(), true));
-        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsRestore(
-            metadata.index(shardId.getIndex()),
-            randomSnapshotSource(shardId),
-            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
-        );
+        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsRestore(metadata.index(shardId.getIndex()), randomSnapshotSource(shardId));
 
         final ClusterState state = buildClusterState(nodes, metadata, routingTableBuilder);
         final RoutingAllocation allocation = buildAllocation(

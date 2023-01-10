@@ -306,14 +306,14 @@ public class AllocationService {
         if (autoExpandReplicaChanges.isEmpty()) {
             return clusterState;
         } else {
-            final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(clusterState.routingTable());
+            final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(shardRoutingRoleStrategy, clusterState.routingTable());
             final Metadata.Builder metadataBuilder = Metadata.builder(clusterState.metadata());
             for (Map.Entry<Integer, List<String>> entry : autoExpandReplicaChanges.entrySet()) {
                 final int numberOfReplicas = entry.getKey();
                 final String[] indices = entry.getValue().toArray(Strings.EMPTY_ARRAY);
                 // we do *not* update the in sync allocation ids as they will be removed upon the first index
                 // operation which make these copies stale
-                routingTableBuilder.updateNumberOfReplicas(numberOfReplicas, indices, shardRoutingRoleStrategy);
+                routingTableBuilder.updateNumberOfReplicas(numberOfReplicas, indices);
                 metadataBuilder.updateNumberOfReplicas(numberOfReplicas, indices);
                 // update settings version for each index
                 for (final String index : indices) {

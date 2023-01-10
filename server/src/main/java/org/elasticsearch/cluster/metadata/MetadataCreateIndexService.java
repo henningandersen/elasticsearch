@@ -1244,8 +1244,8 @@ public class MetadataCreateIndexService {
 
         ClusterState updatedState = ClusterState.builder(currentState).blocks(blocks).metadata(newMetadata).build();
 
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(updatedState.routingTable())
-            .addAsNew(updatedState.metadata().index(indexName), shardRoutingRoleStrategy);
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(shardRoutingRoleStrategy, updatedState.routingTable())
+            .addAsNew(updatedState.metadata().index(indexName));
         return ClusterState.builder(updatedState).routingTable(routingTableBuilder.build()).build();
     }
 

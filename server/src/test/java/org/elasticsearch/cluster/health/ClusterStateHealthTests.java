@@ -323,8 +323,8 @@ public class ClusterStateHealthTests extends ESTestCase {
             .numberOfReplicas(numberOfReplicas)
             .build();
         final Metadata metadata = Metadata.builder().put(indexMetadata, true).build();
-        final RoutingTable routingTable = RoutingTable.builder()
-            .addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        final RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsNew(indexMetadata)
             .build();
 
         ClusterState clusterState = ClusterState.builder(new ClusterName("test_cluster"))
@@ -360,8 +360,8 @@ public class ClusterStateHealthTests extends ESTestCase {
             indexMetadata = idxMetaWithAllocationIds.build();
         }
         final Metadata metadata = Metadata.builder().put(indexMetadata, true).build();
-        final RoutingTable routingTable = RoutingTable.builder()
-            .addAsRecovery(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        final RoutingTable routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            .addAsRecovery(indexMetadata)
             .build();
 
         ClusterState clusterState = ClusterState.builder(new ClusterName("test_cluster"))

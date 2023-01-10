@@ -1259,7 +1259,10 @@ public class RestoreService implements ClusterStateApplier {
             // Updating cluster state
             final Metadata.Builder mdBuilder = Metadata.builder(currentState.metadata());
             final ClusterBlocks.Builder blocks = ClusterBlocks.builder().blocks(currentState.blocks());
-            final RoutingTable.Builder rtBuilder = RoutingTable.builder(currentState.routingTable());
+            final RoutingTable.Builder rtBuilder = RoutingTable.builder(
+                allocationService.getShardRoutingRoleStrategy(),
+                currentState.routingTable()
+            );
 
             final Map<ShardId, ShardRestoreStatus> shards = new HashMap<>();
 
@@ -1318,12 +1321,7 @@ public class RestoreService implements ClusterStateApplier {
                     if (partial) {
                         populateIgnoredShards(index.getName(), ignoreShards);
                     }
-                    rtBuilder.addAsNewRestore(
-                        updatedIndexMetadata,
-                        recoverySource,
-                        ignoreShards,
-                        allocationService.getShardRoutingRoleStrategy()
-                    );
+                    rtBuilder.addAsNewRestore(updatedIndexMetadata, recoverySource, ignoreShards);
                     blocks.addBlocks(updatedIndexMetadata);
                 } else {
                     // Index exists and it's closed - open it in metadata and start recovery
@@ -1343,7 +1341,7 @@ public class RestoreService implements ClusterStateApplier {
                         ensureNoAliasNameConflicts(snapshotIndexMetadata);
                     }
                     updatedIndexMetadata = indexMdBuilder.build();
-                    rtBuilder.addAsRestore(updatedIndexMetadata, recoverySource, allocationService.getShardRoutingRoleStrategy());
+                    rtBuilder.addAsRestore(updatedIndexMetadata, recoverySource);
                     blocks.updateBlocks(updatedIndexMetadata);
                 }
 

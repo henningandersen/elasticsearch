@@ -225,7 +225,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             .build();
         metaBuilder.put(indexMetadata, true);
         stateBuilder.metadata(metaBuilder);
-        stateBuilder.routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build());
+        stateBuilder.routingTable(RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).addAsNew(indexMetadata).build());
         addNode(stateBuilder);
         addNode(stateBuilder);
         ClusterState initialClusterState = stateBuilder.build();
@@ -286,7 +286,7 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
             .build();
         metaBuilder.put(indexMetadata, true);
         stateBuilder.metadata(metaBuilder);
-        stateBuilder.routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).build());
+        stateBuilder.routingTable(RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).addAsNew(indexMetadata).build());
         ClusterState clusterState = stateBuilder.build();
 
         long baseSize = between(1, 10);
@@ -343,9 +343,9 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         metaBuilder.put(indexMetadata, true);
         stateBuilder.metadata(metaBuilder);
         stateBuilder.routingTable(
-            RoutingTable.builder()
-                .addAsNew(sourceIndexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
-                .addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+                .addAsNew(sourceIndexMetadata)
+                .addAsNew(indexMetadata)
                 .build()
         );
         ClusterState clusterState = stateBuilder.build();
@@ -427,8 +427,8 @@ public class ReactiveStorageDeciderServiceTests extends AutoscalingTestCase {
         metaBuilder.put(indexMetadata, true);
         stateBuilder.metadata(metaBuilder);
         stateBuilder.routingTable(
-            RoutingTable.builder()
-                .addAsNewRestore(indexMetadata, recoverySource, new HashSet<>(), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+            RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+                .addAsNewRestore(indexMetadata, recoverySource, new HashSet<>())
                 .build()
         );
         ClusterState clusterState = stateBuilder.build();

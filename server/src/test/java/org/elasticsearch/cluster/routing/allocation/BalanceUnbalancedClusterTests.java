@@ -52,8 +52,8 @@ public class BalanceUnbalancedClusterTests extends CatAllocationTestCase {
             .put(IndexMetadata.builder(index).settings(settings(Version.CURRENT)).numberOfShards(5).numberOfReplicas(1))
             .build();
 
-        RoutingTable initialRoutingTable = RoutingTable.builder(state.routingTable())
-            .addAsNew(metadata.index(index), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY)
+        RoutingTable initialRoutingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY, state.routingTable())
+            .addAsNew(metadata.index(index))
             .build();
 
         ClusterState clusterState = ClusterState.builder(state).metadata(metadata).routingTable(initialRoutingTable).build();

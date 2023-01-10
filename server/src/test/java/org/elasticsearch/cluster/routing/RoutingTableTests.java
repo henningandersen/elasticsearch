@@ -334,7 +334,7 @@ public class RoutingTableTests extends ESAllocationTestCase {
     }
 
     public void testRoutingTableBuiltMoreThanOnce() {
-        RoutingTable.Builder b = RoutingTable.builder();
+        RoutingTable.Builder b = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
         b.build(); // Ok the first time
         try {
             b.build();
@@ -349,7 +349,7 @@ public class RoutingTableTests extends ESAllocationTestCase {
             assertThat(e.getMessage(), containsString("cannot be reused"));
         }
         try {
-            b.updateNumberOfReplicas(1, new String[] { "foo" }, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            b.updateNumberOfReplicas(1, new String[] { "foo" });
             fail("expected exception");
         } catch (IllegalStateException e) {
             assertThat(e.getMessage(), containsString("cannot be reused"));
@@ -421,9 +421,8 @@ public class RoutingTableTests extends ESAllocationTestCase {
     public void testAddAsRecovery() {
         {
             final IndexMetadata indexMetadata = createIndexMetadata(TEST_INDEX_1).state(IndexMetadata.State.OPEN).build();
-            final RoutingTable routingTable = new RoutingTable.Builder().addAsRecovery(
-                indexMetadata,
-                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+            final RoutingTable routingTable = new RoutingTable.Builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).addAsRecovery(
+                indexMetadata
             ).build();
             assertThat(routingTable.hasIndex(TEST_INDEX_1), is(true));
             assertThat(routingTable.allShards(TEST_INDEX_1).size(), is(this.shardsPerIndex));
@@ -431,9 +430,8 @@ public class RoutingTableTests extends ESAllocationTestCase {
         }
         {
             final IndexMetadata indexMetadata = createIndexMetadata(TEST_INDEX_1).state(IndexMetadata.State.CLOSE).build();
-            final RoutingTable routingTable = new RoutingTable.Builder().addAsRecovery(
-                indexMetadata,
-                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+            final RoutingTable routingTable = new RoutingTable.Builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).addAsRecovery(
+                indexMetadata
             ).build();
             assertThat(routingTable.hasIndex(TEST_INDEX_1), is(false));
             expectThrows(IndexNotFoundException.class, () -> routingTable.allShards(TEST_INDEX_1));
@@ -449,9 +447,8 @@ public class RoutingTableTests extends ESAllocationTestCase {
                         .build()
                 )
                 .settingsVersion(indexMetadata.getSettingsVersion() + 1);
-            final RoutingTable routingTable = new RoutingTable.Builder().addAsRecovery(
-                indexMetadataBuilder.build(),
-                TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY
+            final RoutingTable routingTable = new RoutingTable.Builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).addAsRecovery(
+                indexMetadataBuilder.build()
             ).build();
             assertThat(routingTable.hasIndex(TEST_INDEX_1), is(true));
             assertThat(routingTable.allShards(TEST_INDEX_1).size(), is(this.shardsPerIndex));

@@ -196,9 +196,9 @@ public class FilterAllocationDeciderTests extends ESAllocationTestCase {
             .numberOfReplicas(1);
         final IndexMetadata indexMetadata = indexMetadataBuilder.build();
         metadata.put(indexMetadata, false);
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsFromCloseToOpen(sourceIndex, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
-        routingTableBuilder.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsFromCloseToOpen(sourceIndex);
+        routingTableBuilder.addAsNew(indexMetadata);
 
         RoutingTable routingTable = routingTableBuilder.build();
         ClusterState clusterState = ClusterState.builder(

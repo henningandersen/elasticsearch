@@ -815,7 +815,7 @@ public class MetadataIndexStateService {
     ) {
         final Metadata.Builder metadata = Metadata.builder(currentState.metadata());
         final ClusterBlocks.Builder blocks = ClusterBlocks.builder(currentState.blocks());
-        final RoutingTable.Builder routingTable = RoutingTable.builder(currentState.routingTable());
+        final RoutingTable.Builder routingTable = RoutingTable.builder(shardRoutingRoleStrategy, currentState.routingTable());
 
         final Set<String> closedIndices = new HashSet<>();
         Map<Index, IndexResult> closingResults = new HashMap<>(verifyResult);
@@ -890,7 +890,7 @@ public class MetadataIndexStateService {
                         .settingsVersion(indexMetadata.getSettingsVersion() + 1)
                         .settings(Settings.builder().put(indexMetadata.getSettings()).put(VERIFIED_BEFORE_CLOSE_SETTING.getKey(), true))
                 );
-                routingTable.addAsFromOpenToClose(metadata.getSafe(index), shardRoutingRoleStrategy);
+                routingTable.addAsFromOpenToClose(metadata.getSafe(index));
 
                 logger.debug("closing index {} succeeded", index);
                 closedIndices.add(index.getName());
@@ -1153,13 +1153,13 @@ public class MetadataIndexStateService {
 
             ClusterState updatedState = ClusterState.builder(currentState).metadata(metadata).blocks(blocks).build();
 
-            final RoutingTable.Builder routingTable = RoutingTable.builder(updatedState.routingTable());
+            final RoutingTable.Builder routingTable = RoutingTable.builder(
+                allocationService.getShardRoutingRoleStrategy(),
+                updatedState.routingTable()
+            );
             for (IndexMetadata previousIndexMetadata : indicesToOpen) {
                 if (previousIndexMetadata.getState() != IndexMetadata.State.OPEN) {
-                    routingTable.addAsFromCloseToOpen(
-                        updatedState.metadata().getIndexSafe(previousIndexMetadata.getIndex()),
-                        allocationService.getShardRoutingRoleStrategy()
-                    );
+                    routingTable.addAsFromCloseToOpen(updatedState.metadata().getIndexSafe(previousIndexMetadata.getIndex()));
                 }
             }
             return ClusterState.builder(updatedState).routingTable(routingTable).build();

@@ -151,8 +151,8 @@ public class MetadataCreateIndexServiceTests extends ESTestCase {
             .build();
         metaBuilder.put(indexMetadata, false);
         Metadata metadata = metaBuilder.build();
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsNew(metadata.index(name), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(metadata.index(name));
 
         RoutingTable routingTable = routingTableBuilder.build();
         ClusterState clusterState = ClusterState.builder(

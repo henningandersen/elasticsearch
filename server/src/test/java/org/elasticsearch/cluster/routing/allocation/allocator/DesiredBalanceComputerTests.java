@@ -972,7 +972,7 @@ public class DesiredBalanceComputerTests extends ESTestCase {
         return ClusterState.builder(ClusterName.DEFAULT)
             .nodes(discoveryNodes.masterNodeId("master").localNodeId("master"))
             .metadata(Metadata.builder().put(indexMetadata, true))
-            .routingTable(RoutingTable.builder().addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY))
+            .routingTable(RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY).addAsNew(indexMetadata))
             .build();
     }
 

@@ -71,8 +71,8 @@ public class ResizeAllocationDeciderTests extends ESAllocationTestCase {
                 .setRoutingNumShards(16)
         );
         Metadata metadata = metaBuilder.build();
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        routingTableBuilder.addAsNew(metadata.index("source"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTableBuilder.addAsNew(metadata.index("source"));
 
         RoutingTable routingTable = routingTableBuilder.build();
         ClusterState clusterState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
@@ -136,8 +136,11 @@ public class ResizeAllocationDeciderTests extends ESAllocationTestCase {
                 .numberOfReplicas(0)
         );
         Metadata metadata = metaBuilder.build();
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(clusterState.routingTable());
-        routingTableBuilder.addAsNew(metadata.index("target"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
+            clusterState.routingTable()
+        );
+        routingTableBuilder.addAsNew(metadata.index("target"));
 
         clusterState = ClusterState.builder(clusterState).routingTable(routingTableBuilder.build()).metadata(metadata).build();
         Index idx = clusterState.metadata().index("target").getIndex();
@@ -175,8 +178,11 @@ public class ResizeAllocationDeciderTests extends ESAllocationTestCase {
                 .numberOfReplicas(0)
         );
         Metadata metadata = metaBuilder.build();
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(clusterState.routingTable());
-        routingTableBuilder.addAsNew(metadata.index("target"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
+            clusterState.routingTable()
+        );
+        routingTableBuilder.addAsNew(metadata.index("target"));
 
         clusterState = ClusterState.builder(clusterState).routingTable(routingTableBuilder.build()).metadata(metadata).build();
         Index idx = clusterState.metadata().index("target").getIndex();
@@ -232,8 +238,11 @@ public class ResizeAllocationDeciderTests extends ESAllocationTestCase {
                 .numberOfReplicas(0)
         );
         Metadata metadata = metaBuilder.build();
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(clusterState.routingTable());
-        routingTableBuilder.addAsNew(metadata.index("target"), TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(
+            TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY,
+            clusterState.routingTable()
+        );
+        routingTableBuilder.addAsNew(metadata.index("target"));
 
         clusterState = ClusterState.builder(clusterState).routingTable(routingTableBuilder.build()).metadata(metadata).build();
         Index idx = clusterState.metadata().index("target").getIndex();

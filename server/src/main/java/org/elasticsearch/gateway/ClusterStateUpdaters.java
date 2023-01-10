@@ -85,9 +85,9 @@ public class ClusterStateUpdaters {
 
     static ClusterState updateRoutingTable(final ClusterState state, ShardRoutingRoleStrategy shardRoutingRoleStrategy) {
         // initialize all index routing tables as empty
-        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(state.routingTable());
+        final RoutingTable.Builder routingTableBuilder = RoutingTable.builder(shardRoutingRoleStrategy, state.routingTable());
         for (final IndexMetadata indexMetadata : state.metadata().indices().values()) {
-            routingTableBuilder.addAsRecovery(indexMetadata, shardRoutingRoleStrategy);
+            routingTableBuilder.addAsRecovery(indexMetadata);
         }
         // start with 0 based versions for routing table
         routingTableBuilder.version(0);

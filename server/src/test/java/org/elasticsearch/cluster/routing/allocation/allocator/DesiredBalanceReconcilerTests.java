@@ -201,15 +201,15 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
 
         final var discoveryNodes = discoveryNodes(2);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final var indexMetadata0 = randomPriorityIndex("index-0", 1, 1);
         metadata.put(indexMetadata0, true);
-        routingTable.addAsNew(indexMetadata0, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsNew(indexMetadata0);
 
         final var indexMetadata1 = randomPriorityIndex("index-1", 1, 1);
         metadata.put(indexMetadata1, true);
-        routingTable.addAsNew(indexMetadata1, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsNew(indexMetadata1);
 
         final var clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(discoveryNodes)
@@ -285,7 +285,7 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
 
         final var discoveryNodes = discoveryNodes(4);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         var shardsRemaining = 4;
         var indexNum = 0;
@@ -294,7 +294,7 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
             shardsRemaining -= shardCount;
             final var indexMetadata = randomPriorityIndex("index-" + indexNum++, shardCount, 3);
             metadata.put(indexMetadata, true);
-            routingTable.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            routingTable.addAsNew(indexMetadata);
         }
 
         final var clusterState = ClusterState.builder(ClusterName.DEFAULT)
@@ -367,15 +367,15 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
     public void testUnassignedShardsPriority() {
         final var discoveryNodes = discoveryNodes(2);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final var indexMetadata0 = randomPriorityIndex("index-0", 2, 1);
         final var indexMetadata1 = randomPriorityIndex("index-1", 2, 1);
 
         metadata.put(indexMetadata0, true);
         metadata.put(indexMetadata1, true);
-        routingTable.addAsNew(indexMetadata0, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
-        routingTable.addAsNew(indexMetadata1, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsNew(indexMetadata0);
+        routingTable.addAsNew(indexMetadata1);
 
         final var comparisonResult = Comparator.<IndexMetadata>comparingInt(indexMetadata -> indexMetadata.isSystem() ? 1 : 0)
             .thenComparingInt(IndexMetadata::priority)
@@ -488,12 +488,12 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
     public void testUnassignedRespectsDesiredBalance() {
         final var discoveryNodes = discoveryNodes(5);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         for (var i = 0; i < 5; i++) {
             final var indexMetadata = randomPriorityIndex("index-" + i, between(1, 5), between(0, 4));
             metadata.put(indexMetadata, true);
-            routingTable.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            routingTable.addAsNew(indexMetadata);
         }
 
         final var clusterState = ClusterState.builder(ClusterName.DEFAULT)
@@ -544,11 +544,11 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
     public void testUnassignedAllocationPredictsDiskUsage() {
         final var discoveryNodes = discoveryNodes(1);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final var existingIndexMetadata = randomPriorityIndex("index-existing", 1, 0);
         metadata.put(existingIndexMetadata, true);
-        routingTable.addAsRecovery(existingIndexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsRecovery(existingIndexMetadata);
 
         final var restoredIndexMetadata = randomPriorityIndex("index-restored", 1, 0);
         metadata.put(restoredIndexMetadata, true);
@@ -558,7 +558,7 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
             Version.CURRENT,
             new IndexId("index", UUIDs.randomBase64UUID(random()))
         );
-        routingTable.addAsRestore(restoredIndexMetadata, recoverySource, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsRestore(restoredIndexMetadata, recoverySource);
 
         final var clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(discoveryNodes)
@@ -619,11 +619,11 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
     public void testUnassignedSkipsEquivalentReplicas() {
         final var discoveryNodes = discoveryNodes(2);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final var indexMetadata = randomPriorityIndex("index-0", 1, between(0, 5));
         metadata.put(indexMetadata, true);
-        routingTable.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsNew(indexMetadata);
 
         final var clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(discoveryNodes)
@@ -678,11 +678,11 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
     public void testUnassignedSetsAllocationStatusOnUnassignedShards() {
         final var discoveryNodes = discoveryNodes(2);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final var indexMetadata = randomPriorityIndex("index-0", 1, between(0, 5));
         metadata.put(indexMetadata, true);
-        routingTable.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsNew(indexMetadata);
 
         final var clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(discoveryNodes)
@@ -736,11 +736,11 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
 
         final var discoveryNodes = discoveryNodes(2);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final var indexMetadata0 = randomPriorityIndex("index-0", 2, 0);
         metadata.put(indexMetadata0, true);
-        routingTable.addAsNew(indexMetadata0, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsNew(indexMetadata0);
 
         final var clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(discoveryNodes)
@@ -807,11 +807,11 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
     public void testMoveShards() {
         final var discoveryNodes = discoveryNodes(4);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final var indexMetadata = randomPriorityIndex("index-0", 3, 1);
         metadata.put(indexMetadata, true);
-        routingTable.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsNew(indexMetadata);
 
         var clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(discoveryNodes)
@@ -931,11 +931,11 @@ public class DesiredBalanceReconcilerTests extends ESTestCase {
     public void testRebalance() {
         final var discoveryNodes = discoveryNodes(4);
         final var metadata = Metadata.builder();
-        final var routingTable = RoutingTable.builder();
+        final var routingTable = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         final var indexMetadata = randomPriorityIndex("index-0", 3, 1);
         metadata.put(indexMetadata, true);
-        routingTable.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+        routingTable.addAsNew(indexMetadata);
 
         var clusterState = ClusterState.builder(ClusterName.DEFAULT)
             .nodes(discoveryNodes)

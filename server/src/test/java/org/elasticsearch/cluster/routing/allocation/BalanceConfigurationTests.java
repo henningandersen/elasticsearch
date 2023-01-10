@@ -147,7 +147,7 @@ public class BalanceConfigurationTests extends ESAllocationTestCase {
 
     private ClusterState initCluster(AllocationService strategy) {
         Metadata.Builder metadataBuilder = Metadata.builder();
-        RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
+        RoutingTable.Builder routingTableBuilder = RoutingTable.builder(TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
 
         for (int i = 0; i < numberOfIndices; i++) {
             IndexMetadata.Builder index = IndexMetadata.builder("test" + i)
@@ -160,7 +160,7 @@ public class BalanceConfigurationTests extends ESAllocationTestCase {
         Metadata metadata = metadataBuilder.build();
 
         for (IndexMetadata indexMetadata : metadata.indices().values()) {
-            routingTableBuilder.addAsNew(indexMetadata, TestShardRoutingRoleStrategies.DEFAULT_ROLE_ONLY);
+            routingTableBuilder.addAsNew(indexMetadata);
         }
 
         RoutingTable initialRoutingTable = routingTableBuilder.build();
