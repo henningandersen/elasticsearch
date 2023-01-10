@@ -825,9 +825,8 @@ public final class ShardRouting implements Writeable, ToXContentObject {
             sb.append("relocating [").append(relocatingNodeId).append("], ");
         }
         // TODO test role appears
-        var roleString = role.toString();
-        if (Strings.isNullOrBlank(roleString) == false) {
-            sb.append("[").append(roleString).append("], ");
+        if (role != Role.DEFAULT) {
+            sb.append("[").append(role).append("], ");
         }
         if (primary) {
             sb.append("[P]");
@@ -940,7 +939,7 @@ public final class ShardRouting implements Writeable, ToXContentObject {
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            return builder.field("role", toString());
+            return this == DEFAULT ? builder : builder.field("role", toString());
         }
 
         @Override
