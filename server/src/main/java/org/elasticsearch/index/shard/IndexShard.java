@@ -2800,7 +2800,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 || trackedGlobalCheckpointsNeedSync;
             // only sync if index is not closed and there is a shard lagging the primary
             if (syncNeeded && indexSettings.getIndexMetadata().getState() == IndexMetadata.State.OPEN) {
-                syncGlobalCheckpoints(reason);
+//                syncGlobalCheckpoints(reason);
             }
         }
     }

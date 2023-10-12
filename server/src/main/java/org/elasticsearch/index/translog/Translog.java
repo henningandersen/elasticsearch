@@ -387,7 +387,7 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
         if (closed.compareAndSet(false, true)) {
             try (ReleasableLock lock = writeLock.acquire()) {
                 try {
-                    current.sync();
+//                    current.sync();
                 } finally {
                     closeFilesIfNoPendingRetentionLocks();
                 }

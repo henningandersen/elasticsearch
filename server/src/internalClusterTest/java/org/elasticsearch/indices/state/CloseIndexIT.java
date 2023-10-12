@@ -166,16 +166,39 @@ public class CloseIndexIT extends ESIntegTestCase {
     public void testCloseUnassignedIndex() throws Exception {
         final String indexName = randomAlphaOfLength(10).toLowerCase(Locale.ROOT);
         assertAcked(
-            prepareCreate(indexName).setWaitForActiveShards(ActiveShardCount.NONE)
-                .setSettings(Settings.builder().put("index.routing.allocation.include._name", "nothing").build())
+            prepareCreate(indexName).setSettings(Settings.builder().put(IndexSettings.INDEX_REFRESH_INTERVAL_SETTING.getKey(), "1m")
+                .put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 0).build())
         );
 
-        final ClusterState clusterState = clusterAdmin().prepareState().get().getState();
-        assertThat(clusterState.metadata().indices().get(indexName).getState(), is(IndexMetadata.State.OPEN));
-        assertThat(clusterState.routingTable().allShards().allMatch(ShardRouting::unassigned), is(true));
+        final int nbDocs = randomIntBetween(1, 1);
+        indexRandom(
+            randomBoolean(),
+            false,
+            randomBoolean(),
+            IntStream.range(0, nbDocs)
+                .mapToObj(i -> client().prepareIndex(indexName).setId(String.valueOf(i)).setSource("num", i))
+                .collect(toList())
+        );
 
-        assertBusy(() -> closeIndices(indicesAdmin().prepareClose(indexName).setWaitForActiveShards(ActiveShardCount.NONE)));
+        internalCluster().restartNode(internalCluster().nodesInclude(indexName).iterator().next(), new InternalTestCluster.RestartCallback() {
+            @Override
+            public Settings onNodeStopped(String nodeName) throws Exception {
+                closeIndices(indicesAdmin().prepareClose(indexName).setWaitForActiveShards(ActiveShardCount.NONE));
+
+                return super.onNodeStopped(nodeName);
+            }
+        });
         assertIndexIsClosed(indexName);
+
+
+        String newNode = internalCluster().startDataOnlyNode();
+//        assertAcked(client().admin().indices().prepareUpdateSettings(indexName).setSettings(Settings.builder().put("index.routing.allocation.include._name", newNode)));
+//        waitForRelocation();
+
+        assertAcked(client().admin().indices().prepareOpen(indexName));
+
+        assertHitCount(client().prepareSearch(indexName).setSize(0).get(), nbDocs);
+
     }
 
     public void testConcurrentClose() throws InterruptedException {

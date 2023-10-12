@@ -1871,7 +1871,7 @@ public abstract class Engine implements Closeable {
                         // TODO we might force a flush in the future since we have the write lock already even though recoveries
                         // are running.
                         // TODO: We are not waiting for full durability here atm because we are on the cluster state update thread
-                        flush(false, false, ActionListener.noop());
+//                        flush(false, false, ActionListener.noop());
                     } catch (AlreadyClosedException ex) {
                         logger.debug("engine already closed - skipping flushAndClose");
                     }
