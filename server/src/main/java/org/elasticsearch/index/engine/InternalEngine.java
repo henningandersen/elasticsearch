@@ -3401,4 +3401,9 @@ public class InternalEngine extends Engine {
     protected long getPreCommitSegmentGeneration() {
         return preCommitSegmentGeneration.get();
     }
+
+    // for tests
+    Set<OnGoingMerge> onGoingMerges() {
+        return mergeScheduler.onGoingMerges();
+    }
 }

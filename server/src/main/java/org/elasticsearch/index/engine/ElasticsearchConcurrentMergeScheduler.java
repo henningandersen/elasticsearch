@@ -12,6 +12,13 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.ConcurrentMergeScheduler;
 import org.apache.lucene.index.MergePolicy;
 import org.apache.lucene.index.MergeScheduler;
+import org.apache.lucene.store.BufferedChecksumIndexInput;
+import org.apache.lucene.store.ChecksumIndexInput;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FilterDirectory;
+import org.apache.lucene.store.FilterIndexInput;
+import org.apache.lucene.store.IOContext;
+import org.apache.lucene.store.IndexInput;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.metrics.CounterMetric;
 import org.elasticsearch.common.metrics.MeanMetric;
@@ -215,6 +222,52 @@ class ElasticsearchConcurrentMergeScheduler extends ConcurrentMergeScheduler {
             enableAutoIOThrottle();
         } else if (config.isAutoThrottle() == false && isEnabled) {
             disableAutoIOThrottle();
+        }
+    }
+
+    @Override
+    public Directory wrapForMerge(MergePolicy.OneMerge merge, Directory in) {
+        Directory original = super.wrapForMerge(merge, in);
+
+        return new FilterDirectory(original) {
+            @Override
+            public ChecksumIndexInput openChecksumInput(String name, IOContext context) throws IOException {
+                IndexInput main = openInput(name, context);
+                return new BufferedChecksumIndexInput(new AbortingIndexingInput(main, merge));
+            }
+        };
+    }
+
+    private static class AbortingIndexingInput extends FilterIndexInput {
+        private final MergePolicy.OneMerge merge;
+
+        AbortingIndexingInput(IndexInput in, MergePolicy.OneMerge merge) {
+            super(in.toString(), in);
+            this.merge = merge;
+        }
+
+        @Override
+        public void readBytes(byte[] b, int offset, int len) throws IOException {
+            merge.checkAborted();
+            super.readBytes(b, offset, len);
+        }
+
+        @Override
+        public byte readByte() throws IOException {
+            merge.checkAborted();
+            return super.readByte();
+        }
+
+        @Override
+        public IndexInput slice(String sliceDescription, long offset, long length) throws IOException {
+            IndexInput sliced = super.slice(sliceDescription, offset, length);
+            return new AbortingIndexingInput(sliced, merge);
+        }
+
+        @Override
+        public IndexInput clone() {
+            IndexInput clone = super.clone();
+            return new AbortingIndexingInput(clone, merge);
         }
     }
 }

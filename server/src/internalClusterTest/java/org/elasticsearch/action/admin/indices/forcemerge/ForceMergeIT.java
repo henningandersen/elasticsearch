@@ -26,6 +26,20 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class ForceMergeIT extends ESIntegTestCase {
 
+    public void testForceMerge() {
+        internalCluster().ensureAtLeastNumDataNodes(2);
+        final String index = "test-index";
+        createIndex(index, 1, 1);
+        ensureGreen(index);
+
+        index(index, "1", "{}");
+        flush(index);
+        index(index, "2", "{}");
+        flush(index);
+        final BroadcastResponse forceMergeResponse = indicesAdmin().prepareForceMerge(index).setMaxNumSegments(1).get();
+
+
+    }
     public void testForceMergeUUIDConsistent() throws IOException {
         internalCluster().ensureAtLeastNumDataNodes(2);
         final String index = "test-index";

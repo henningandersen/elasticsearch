@@ -57,6 +57,10 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TotalHitCountCollector;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FilterDirectory;
+import org.apache.lucene.store.FilterIndexInput;
+import org.apache.lucene.store.IOContext;
+import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.Lock;
 import org.apache.lucene.tests.store.MockDirectoryWrapper;
 import org.apache.lucene.util.Bits;
@@ -121,6 +125,7 @@ import org.elasticsearch.index.seqno.SequenceNumbers;
 import org.elasticsearch.index.shard.SearcherHelper;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.shard.ShardUtils;
+import org.elasticsearch.index.store.LuceneFilesExtensions;
 import org.elasticsearch.index.store.Store;
 import org.elasticsearch.index.translog.SnapshotMatchers;
 import org.elasticsearch.index.translog.TestTranslog;
@@ -7700,6 +7705,93 @@ public class InternalEngineTests extends EngineTestCase {
             assertTrue(future2.isDone());
             assertThat(future2.actionGet(), equalTo(engine.getLastCommittedSegmentInfos().getGeneration()));
 
+        }
+    }
+
+    public void testMergeAbortsDuringStoredFieldsMerge() throws IOException, InterruptedException {
+        Directory directory = newDirectory();
+        CyclicBarrier barrier = new CyclicBarrier(2);
+        AtomicBoolean enableSlowRead = new AtomicBoolean();
+        Directory mockDirectory = new FilterDirectory(directory) {
+            @Override
+            public IndexInput openInput(String name, IOContext context) throws IOException {
+                IndexInput indexInput = super.openInput(name, context);
+                if (name.endsWith("." + LuceneFilesExtensions.FDT.getExtension()) == false) {
+                    return indexInput;
+                }
+
+                logger.info("--> opening " + name);
+                return new FilterIndexInput(indexInput.toString(), indexInput) {
+                    @Override
+                    public void readBytes(byte[] b, int offset, int len) throws IOException {
+                        if (enableSlowRead.get()) {
+                            logger.info("--> wait for barrier " + Thread.currentThread());
+                            safeAwait(barrier);
+                            logger.info("--> barrier 1 reached " + Thread.currentThread());
+                            safeAwait(barrier);
+                            logger.info("--> barrier 2 reached " + Thread.currentThread());
+                        }
+                        super.readBytes(b, offset, len);
+                    }
+
+                    @Override
+                    public IndexInput clone() {
+                        fail("clone not expected");
+                        return super.clone();
+                    }
+
+                    @Override
+                    public IndexInput slice(String sliceDescription, long offset, long length) throws IOException {
+                        fail("slice not expected");
+                        return super.slice(sliceDescription, offset, length);
+                    }
+                };
+            }
+        };
+        try (Store store = createStore(mockDirectory); InternalEngine engine = createEngine(store, createTempDir())) {
+            // 2 segments
+            for (int round = 0; round < 2; ++round) {
+                int numDocs = between(10000, 100000);
+                for (int i = 0; i < numDocs; ++i) {
+                    index(engine, i);
+                }
+                engine.flush(true, true);
+//                engine.refresh("test");
+            }
+
+            Thread closer = new Thread(() -> {
+                try {
+                    engine.close();
+                } catch (IOException e) {
+                    fail(e);
+                    throw new RuntimeException(e);
+                }
+                logger.info("--> closer done");
+            });
+
+            Thread waiter = new Thread(() -> {
+                safeAwait(barrier);
+                closer.start();
+                try {
+                    assertBusy(() -> engine.onGoingMerges().forEach(onGoingMerge -> assertTrue(onGoingMerge.isAborted())));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                safeAwait(barrier);
+                logger.info("--> waiter done");
+            });
+            waiter.start();
+
+            enableSlowRead.set(true);
+
+            // verification is that this completes without failing the wait on barrier.
+            expectThrows(AlreadyClosedException.class, () ->
+                engine.forceMerge(true, 1, false, randomUUID())
+            );
+            waiter.join(10000);
+            closer.join(10000);
+            assertThat(waiter.isAlive(), is(false));
+            assertThat(closer.isAlive(), is(false));
         }
     }
 

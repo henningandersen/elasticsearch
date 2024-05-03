@@ -49,4 +49,8 @@ public class OnGoingMerge {
     public List<SegmentCommitInfo> getMergedSegments() {
         return oneMerge.segments;
     }
+
+    public boolean isAborted() {
+        return oneMerge.isAborted();
+    }
 }
