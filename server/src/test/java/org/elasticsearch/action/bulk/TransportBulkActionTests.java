@@ -93,7 +93,7 @@ public class TransportBulkActionTests extends ESTestCase {
             super(
                 TransportBulkActionTests.this.threadPool,
                 transportService,
-                clusterService,
+                TransportBulkActionTests.this.clusterService,
                 null,
                 mockFeatureService,
                 new NodeClient(Settings.EMPTY, TransportBulkActionTests.this.threadPool),
