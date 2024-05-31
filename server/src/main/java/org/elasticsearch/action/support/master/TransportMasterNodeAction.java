@@ -332,8 +332,6 @@ public abstract class TransportMasterNodeAction<Request extends MasterNodeReques
                         currentStateVersion
                     );
                 }
-                // todo: figure out if executor need to be of certain type like scaling to avoid spurious rejections
-                // (and what about shutdown).
             }, clusterState -> isTaskCancelled() || statePredicate.test(clusterState), null, executor);
         }
 

@@ -26,6 +26,7 @@ import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.common.util.concurrent.PrioritizedEsThreadPoolExecutor;
@@ -248,7 +249,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
 
     /**
      * Adds a cluster state listener that is expected to be removed during a short period of time.
-     * If provided, the listener will be notified once a specific time has elapsed.
+     * If provided, the listener will be notified using the specified executor once a specific time has elapsed.
      *
      * NOTE: the listener is not removed on timeout. This is the responsibility of the caller.
      */
@@ -622,7 +623,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         recordingService.updateStats(recorder);
     }
 
-    private class NotifyTimeout implements Runnable {
+    private class NotifyTimeout extends AbstractRunnable {
         final TimeoutClusterStateListener listener;
         @Nullable
         final TimeValue timeout;
@@ -640,7 +641,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         }
 
         @Override
-        public void run() {
+        protected void doRun() throws Exception {
             assert timeout != null : "This should only ever execute if there's an actual timeout set";
             if (cancellable != null && cancellable.isCancelled()) {
                 return;
@@ -651,6 +652,23 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
                 listener.onTimeout(this.timeout);
             }
             // note, we rely on the listener to remove itself in case of timeout if needed
+        }
+
+        @Override
+        public boolean isForceExecution() {
+            return true;
+        }
+
+        @Override
+        public void onRejection(Exception e) {
+            // only during shutdown, no heroics, since a timeout is best effort in that case.
+            assert cancellable.isCancelled() : e;
+            super.onRejection(e);
+        }
+
+        @Override
+        public void onFailure(Exception e) {
+            assert false : e;
         }
     }
 
