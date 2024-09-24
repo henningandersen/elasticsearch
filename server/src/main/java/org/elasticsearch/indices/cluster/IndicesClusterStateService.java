@@ -88,6 +88,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -219,7 +220,12 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent imple
     }
 
     @Override
-    protected void doClose() {}
+    protected void doClose() {
+        // wait for all ongoing shard closes to complete (those that were initiated before the node started closing)
+        // notice that there might still be a benign race in case a cluster applier is running concurrently with stopping.
+        CountDownLatch latch = new CountDownLatch(1);
+        lastClusterStateShardsClosedListener.addListener(ActionListener.running(latch::countDown));
+    }
 
     /**
      * Completed when all the shards removed by earlier-applied cluster states have fully closed.
