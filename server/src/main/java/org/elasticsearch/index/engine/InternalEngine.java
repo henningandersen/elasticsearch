@@ -632,12 +632,20 @@ public class InternalEngine extends Engine {
             // thread to continue with recovery, but if it doesn't do anything async then there's no need to fork, hence why we use a
             // SubscribableListener here
             final var flushListener = new SubscribableListener<FlushResult>();
-            flush(false, true, flushListener);
+            flushCompletedTranslogRecovery(flushListener);
             flushListener.addListener(l.delegateFailureAndWrap((ll, r) -> {
                 translog.trimUnreferencedReaders();
                 ll.onResponse(null);
             }), engineConfig.getThreadPool().generic(), null);
         });
+    }
+
+    protected void flushCompletedTranslogRecovery(SubscribableListener<FlushResult> flushListener) {
+        flush(false, true, flushListener);
+    }
+
+    protected boolean pendingTranslogRecovery() {
+        return pendingTranslogRecovery.get();
     }
 
     protected Translog.Snapshot newTranslogSnapshot(long fromSeqNo, long toSeqNo) throws IOException {
@@ -2979,7 +2987,9 @@ public class InternalEngine extends Engine {
         return Collections.emptyMap();
     }
 
-    final void ensureCanFlush() {
+    // todo: this protection is no longer needed, after ES now relies on sequence numbers for figuring out which translog to replay.
+    // in the past, ES would attach the latest translog generation to a commit, making it unsafe to flush during translog replay.
+    protected void ensureCanFlush() {
         // translog recovery happens after the engine is fully constructed.
         // If we are in this stage we have to prevent flushes from this
         // engine otherwise we might loose documents if the flush succeeds
