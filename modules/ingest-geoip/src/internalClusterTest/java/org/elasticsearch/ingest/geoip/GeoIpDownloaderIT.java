@@ -41,7 +41,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.xcontent.XContentBuilder;
-import org.elasticsearch.xcontent.XContentType;
 import org.elasticsearch.xcontent.json.JsonXContent;
 import org.junit.After;
 
@@ -67,9 +66,11 @@ import java.util.stream.StreamSupport;
 import java.util.zip.GZIPInputStream;
 
 import static org.elasticsearch.ingest.ConfigurationUtils.readStringProperty;
+import static org.elasticsearch.ingest.IngestPipelineTestUtils.jsonSimulatePipelineRequest;
 import static org.elasticsearch.ingest.geoip.GeoIpTestUtils.copyDefaultDatabases;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertResponse;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -172,10 +173,15 @@ public class GeoIpDownloaderIT extends AbstractGeoIpIT {
             for (Path geoIpTmpDir : geoIpTmpDirs) {
                 try (Stream<Path> files = Files.list(geoIpTmpDir)) {
                     Set<String> names = files.map(f -> f.getFileName().toString()).collect(Collectors.toSet());
-                    assertThat(names, not(hasItem("GeoLite2-ASN.mmdb")));
-                    assertThat(names, not(hasItem("GeoLite2-City.mmdb")));
-                    assertThat(names, not(hasItem("GeoLite2-Country.mmdb")));
-                    assertThat(names, not(hasItem("MyCustomGeoLite2-City.mmdb")));
+                    assertThat(
+                        names,
+                        allOf(
+                            not(hasItem("GeoLite2-ASN.mmdb")),
+                            not(hasItem("GeoLite2-City.mmdb")),
+                            not(hasItem("GeoLite2-Country.mmdb")),
+                            not(hasItem("MyCustomGeoLite2-City.mmdb"))
+                        )
+                    );
                 }
             }
         });
@@ -494,7 +500,7 @@ public class GeoIpDownloaderIT extends AbstractGeoIpIT {
             builder.endObject();
             bytes = BytesReference.bytes(builder);
         }
-        SimulatePipelineRequest simulateRequest = new SimulatePipelineRequest(bytes, XContentType.JSON);
+        SimulatePipelineRequest simulateRequest = jsonSimulatePipelineRequest(bytes);
         simulateRequest.setId("_id");
         // Avoid executing on a coordinating only node, because databases are not available there and geoip processor won't do any lookups.
         // (some test seeds repeatedly hit such nodes causing failures)
@@ -658,7 +664,7 @@ public class GeoIpDownloaderIT extends AbstractGeoIpIT {
             .map(DiscoveryNode::getId)
             .collect(Collectors.toSet());
         // All nodes share the same geoip base dir in the shared tmp dir:
-        Path geoipBaseTmpDir = internalCluster().getDataNodeInstance(Environment.class).tmpFile().resolve("geoip-databases");
+        Path geoipBaseTmpDir = internalCluster().getDataNodeInstance(Environment.class).tmpDir().resolve("geoip-databases");
         assertThat(Files.exists(geoipBaseTmpDir), is(true));
         final List<Path> geoipTmpDirs;
         try (Stream<Path> files = Files.list(geoipBaseTmpDir)) {
@@ -670,7 +676,7 @@ public class GeoIpDownloaderIT extends AbstractGeoIpIT {
 
     private void setupDatabasesInConfigDirectory() throws Exception {
         StreamSupport.stream(internalCluster().getInstances(Environment.class).spliterator(), false)
-            .map(Environment::configFile)
+            .map(Environment::configDir)
             .map(path -> path.resolve("ingest-geoip"))
             .distinct()
             .forEach(path -> {
@@ -698,7 +704,7 @@ public class GeoIpDownloaderIT extends AbstractGeoIpIT {
 
     private void deleteDatabasesInConfigDirectory() throws Exception {
         StreamSupport.stream(internalCluster().getInstances(Environment.class).spliterator(), false)
-            .map(Environment::configFile)
+            .map(Environment::configDir)
             .map(path -> path.resolve("ingest-geoip"))
             .distinct()
             .forEach(path -> {

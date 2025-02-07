@@ -24,6 +24,9 @@ import org.elasticsearch.compute.data.LongBlock;
 import org.elasticsearch.compute.data.LongVector;
 import org.elasticsearch.compute.data.Page;
 import org.elasticsearch.compute.lucene.ValuesSourceReaderOperatorTests;
+import org.elasticsearch.compute.test.ComputeTestCase;
+import org.elasticsearch.compute.test.OperatorTestCase;
+import org.elasticsearch.compute.test.TestResultPageSinkOperator;
 import org.elasticsearch.core.IOUtils;
 import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.mapper.KeywordFieldMapper;
@@ -300,6 +303,7 @@ public class TimeSeriesAggregationOperatorTests extends ComputeTestCase {
         List<Page> results = new ArrayList<>();
         OperatorTestCase.runDriver(
             new Driver(
+                "test",
                 ctx,
                 sourceOperatorFactory.get(ctx),
                 CollectionUtils.concatLists(intermediateOperators, List.of(intialAgg, intermediateAgg, finalAgg)),

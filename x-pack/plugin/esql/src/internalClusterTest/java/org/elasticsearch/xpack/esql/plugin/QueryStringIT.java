@@ -137,4 +137,95 @@ public class QueryStringIT extends AbstractEsqlIntegTestCase {
             .get();
         ensureYellow(indexName);
     }
+
+    public void testWhereQstrWithScoring() {
+        var query = """
+            FROM test
+            METADATA _score
+            | WHERE qstr("content: fox")
+            | KEEP id, _score
+            """;
+
+        try (var resp = run(query)) {
+            assertColumnNames(resp.columns(), List.of("id", "_score"));
+            assertColumnTypes(resp.columns(), List.of("integer", "double"));
+            assertValuesInAnyOrder(
+                resp.values(),
+                List.of(
+                    List.of(2, 0.3028995096683502),
+                    List.of(3, 0.3028995096683502),
+                    List.of(4, 0.2547692656517029),
+                    List.of(5, 0.28161853551864624)
+                )
+            );
+
+        }
+    }
+
+    public void testWhereQstrWithScoringSorted() {
+        var query = """
+            FROM test
+            METADATA _score
+            | WHERE qstr("content:fox fox")
+            | KEEP id, _score
+            | SORT _score DESC
+            """;
+
+        try (var resp = run(query)) {
+            assertColumnNames(resp.columns(), List.of("id", "_score"));
+            assertColumnTypes(resp.columns(), List.of("integer", "double"));
+            assertValues(
+                resp.values(),
+                List.of(
+                    List.of(3, 1.5605685710906982),
+                    List.of(2, 0.6057990193367004),
+                    List.of(5, 0.5632370710372925),
+                    List.of(4, 0.5095385313034058)
+                )
+            );
+
+        }
+    }
+
+    public void testWhereQstrWithScoringNoSort() {
+        var query = """
+            FROM test
+            METADATA _score
+            | WHERE qstr("content: fox")
+            | KEEP id, _score
+            """;
+
+        try (var resp = run(query)) {
+            assertColumnNames(resp.columns(), List.of("id", "_score"));
+            assertColumnTypes(resp.columns(), List.of("integer", "double"));
+            assertValuesInAnyOrder(
+                resp.values(),
+                List.of(
+                    List.of(2, 0.3028995096683502),
+                    List.of(3, 0.3028995096683502),
+                    List.of(4, 0.2547692656517029),
+                    List.of(5, 0.28161853551864624)
+                )
+            );
+        }
+    }
+
+    public void testWhereQstrWithNonPushableAndScoring() {
+        var query = """
+            FROM test
+            METADATA _score
+            | WHERE qstr("content: fox")
+              AND abs(id) > 0
+            | EVAL c_score = ceil(_score)
+            | KEEP id, c_score
+            | SORT id DESC
+            | LIMIT 2
+            """;
+
+        try (var resp = run(query)) {
+            assertColumnNames(resp.columns(), List.of("id", "c_score"));
+            assertColumnTypes(resp.columns(), List.of("integer", "double"));
+            assertValuesInAnyOrder(resp.values(), List.of(List.of(5, 1.0), List.of(4, 1.0)));
+        }
+    }
 }

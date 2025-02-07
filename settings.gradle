@@ -18,6 +18,8 @@ plugins {
   id 'elasticsearch.java-toolchain'
 }
 
+enableFeaturePreview "STABLE_CONFIGURATION_CACHE"
+
 rootProject.name = "elasticsearch"
 
 dependencyResolutionManagement {
@@ -66,8 +68,6 @@ List projects = [
   'distribution:docker:docker-export',
   'distribution:docker:ironbank-docker-aarch64-export',
   'distribution:docker:ironbank-docker-export',
-  'distribution:docker:ubi-docker-aarch64-export',
-  'distribution:docker:ubi-docker-export',
   'distribution:docker:wolfi-docker-aarch64-export',
   'distribution:docker:wolfi-docker-export',
   'distribution:packages:aarch64-deb',
@@ -75,9 +75,12 @@ List projects = [
   'distribution:packages:aarch64-rpm',
   'distribution:packages:rpm',
   'distribution:bwc:bugfix',
+  'distribution:bwc:bugfix2',
   'distribution:bwc:maintenance',
   'distribution:bwc:minor',
   'distribution:bwc:staged',
+  'distribution:bwc:staged2',
+  'distribution:bwc:main',
   'distribution:tools:java-version-checker',
   'distribution:tools:cli-launcher',
   'distribution:tools:server-cli',
@@ -88,7 +91,11 @@ List projects = [
   'distribution:tools:ansi-console',
   'server',
   'test:framework',
+  'test:fixtures:aws-ec2-fixture',
+  'test:fixtures:aws-fixture-utils',
+  'test:fixtures:aws-sts-fixture',
   'test:fixtures:azure-fixture',
+  'test:fixtures:ec2-imds-fixture',
   'test:fixtures:gcs-fixture',
   'test:fixtures:hdfs-fixture',
   'test:fixtures:krb5kdc-fixture',

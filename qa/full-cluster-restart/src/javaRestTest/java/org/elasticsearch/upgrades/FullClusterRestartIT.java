@@ -39,9 +39,9 @@ import org.elasticsearch.test.cluster.ElasticsearchCluster;
 import org.elasticsearch.test.cluster.FeatureFlag;
 import org.elasticsearch.test.cluster.local.LocalClusterConfigProvider;
 import org.elasticsearch.test.cluster.local.distribution.DistributionType;
+import org.elasticsearch.test.cluster.util.Version;
 import org.elasticsearch.test.rest.ESRestTestCase;
 import org.elasticsearch.test.rest.ObjectPath;
-import org.elasticsearch.test.rest.RestTestLegacyFeatures;
 import org.elasticsearch.xcontent.ToXContent;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentType;
@@ -104,7 +104,7 @@ public class FullClusterRestartIT extends ParameterizedFullClusterRestartTestCas
 
     private static ElasticsearchCluster cluster = ElasticsearchCluster.local()
         .distribution(DistributionType.DEFAULT)
-        .version(getOldClusterTestVersion())
+        .version(Version.fromString(OLD_CLUSTER_VERSION))
         .nodes(2)
         .setting("path.repo", () -> repoDirectory.getRoot().getPath())
         .setting("xpack.security.enabled", "false")
@@ -262,7 +262,7 @@ public class FullClusterRestartIT extends ParameterizedFullClusterRestartTestCas
     }
 
     public void testSearchTimeSeriesMode() throws Exception {
-        assumeTrue("indexing time series indices changed in 8.2.0", oldClusterHasFeature(RestTestLegacyFeatures.TSDB_NEW_INDEX_FORMAT));
+        assumeTrue("indexing time series indices changed in 8.2.0", oldClusterHasFeature("gte_v8.2.0"));
         int numDocs;
         if (isRunningAgainstOldCluster()) {
             numDocs = createTimeSeriesModeIndex(1);
@@ -300,7 +300,7 @@ public class FullClusterRestartIT extends ParameterizedFullClusterRestartTestCas
     }
 
     public void testNewReplicasTimeSeriesMode() throws Exception {
-        assumeTrue("indexing time series indices changed in 8.2.0", oldClusterHasFeature(RestTestLegacyFeatures.TSDB_NEW_INDEX_FORMAT));
+        assumeTrue("indexing time series indices changed in 8.2.0", oldClusterHasFeature("gte_v8.2.0"));
         if (isRunningAgainstOldCluster()) {
             createTimeSeriesModeIndex(0);
         } else {

@@ -69,6 +69,7 @@ import org.elasticsearch.plugins.ClusterCoordinationPlugin;
 import org.elasticsearch.plugins.ClusterPlugin;
 import org.elasticsearch.plugins.MetadataUpgrader;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.plugins.PluginsLoader;
 import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.readiness.ReadinessService;
 import org.elasticsearch.repositories.RepositoriesService;
@@ -180,8 +181,8 @@ public class Node implements Closeable {
      *
      * @param environment         the initial environment for this node, which will be added to by plugins
      */
-    public Node(Environment environment) {
-        this(NodeConstruction.prepareConstruction(environment, new NodeServiceProvider(), true));
+    public Node(Environment environment, PluginsLoader pluginsLoader) {
+        this(NodeConstruction.prepareConstruction(environment, pluginsLoader, new NodeServiceProvider(), true));
     }
 
     /**
@@ -651,7 +652,7 @@ public class Node implements Closeable {
      * Writes a file to the logs dir containing the ports for the given transport type
      */
     private void writePortsFile(String type, BoundTransportAddress boundAddress) {
-        Path tmpPortsFile = environment.logsFile().resolve(type + ".ports.tmp");
+        Path tmpPortsFile = environment.logsDir().resolve(type + ".ports.tmp");
         try (BufferedWriter writer = Files.newBufferedWriter(tmpPortsFile, Charset.forName("UTF-8"))) {
             for (TransportAddress address : boundAddress.boundAddresses()) {
                 InetAddress inetAddress = InetAddress.getByName(address.getAddress());
@@ -660,7 +661,7 @@ public class Node implements Closeable {
         } catch (IOException e) {
             throw new RuntimeException("Failed to write ports file", e);
         }
-        Path portsFile = environment.logsFile().resolve(type + ".ports");
+        Path portsFile = environment.logsDir().resolve(type + ".ports");
         try {
             Files.move(tmpPortsFile, portsFile, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
