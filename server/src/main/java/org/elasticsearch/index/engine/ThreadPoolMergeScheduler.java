@@ -244,21 +244,19 @@ public class ThreadPoolMergeScheduler extends MergeScheduler implements Elastics
     }
 
     private void submitNewMergeTask(PendingMerge pendingMerge) {
+        boolean queued = false;
         try {
             // Do not execute within the synchronized block as it opens a searcher
             MergeTask mergeTask = newMergeTask(pendingMerge.source(), pendingMerge.merge(), pendingMerge.trigger());
 
-            boolean queued = false;
             boolean abortDueToTragedy = false;
             // Need to be synchronized to avoid enqueuing merges during a tragic event
-            synchronized (this) {
-                if (tragedy == null) {
-                    queued = threadPoolMergeExecutorService.submitMergeTask(mergeTask); // may abort the merge immediately
-                    // TODO Enable the following assertions once unit tests are fixed to not use Mockito
-                    // assert queued || pendingMerge.merge().isAborted();
-                } else {
-                    abortDueToTragedy = true;
-                }
+            if (tragedy == null) {
+                queued = threadPoolMergeExecutorService.submitMergeTask(mergeTask); // may abort the merge immediately
+                // TODO Enable the following assertions once unit tests are fixed to not use Mockito
+                // assert queued || pendingMerge.merge().isAborted();
+            } else {
+                abortDueToTragedy = true;
             }
             if (queued) {
                 mergeMetrics.incrementQueuedMergeBytes(mergeTask.getOnGoingMerge(), mergeTask.getMergeMemoryEstimateBytes());
@@ -268,6 +266,11 @@ public class ThreadPoolMergeScheduler extends MergeScheduler implements Elastics
             }
         } finally {
             checkMergeTaskThrottling();
+            if (queued && tragedy != null) {
+                // ensure that if `onTragicEvent` races with this, we still abort
+                // what we just submitted.
+                abortQueuedMergesOnTragedy();
+            }
         }
     }
 
@@ -365,6 +368,17 @@ public class ThreadPoolMergeScheduler extends MergeScheduler implements Elastics
     public void onTragicEvent(Throwable tragedy) {
         assert tragedy != null;
         assert tragedy instanceof MergePolicy.MergeAbortedException == false;
+        synchronized (this) {
+            if (this.tragedy != null) {
+                return; // nothing to do, the merge scheduler is already failed
+            }
+            this.tragedy = tragedy;
+        }
+        abortQueuedMergesOnTragedy();
+    }
+
+    private void abortQueuedMergesOnTragedy() {
+        assert tragedy != null;
         try {
             // Merges that have been pulled from Lucene using MergePolicy#getNextMerge before the tragic exception was set require special
             // handling, because Lucene considers them as "running" and will wait for those to complete in IndexWriter#abortMerges when
@@ -391,10 +405,6 @@ public class ThreadPoolMergeScheduler extends MergeScheduler implements Elastics
             // IndexWriter#maybeCloseOnTragicEvent).
             int abortedBackloggedTasks = 0;
             synchronized (this) {
-                if (this.tragedy != null) {
-                    return; // nothing to do, the merge scheduler is already failed
-                }
-                this.tragedy = tragedy;
                 // Abort backlogged merges
                 abortedBackloggedTasks = abortBackloggedMergeTasks();
                 // Abort all queued tasks that have been created by this merge scheduler
