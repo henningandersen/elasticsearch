@@ -33,7 +33,6 @@ import org.elasticsearch.index.shard.ShardId;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -83,11 +82,11 @@ public class ThreadPoolMergeScheduler extends MergeScheduler implements Elastics
     record PendingMerge(MergeSource source, MergePolicy.OneMerge merge, MergeTrigger trigger) {}
 
     // List of pending merges
-    private final LinkedList<PendingMerge> pendingMerges = new LinkedList<>();
+    // private final LinkedList<PendingMerge> pendingMerges = new LinkedList<>();
     private final CountDownLatch closedWithNoRunningMerges = new CountDownLatch(1);
     private volatile boolean closed = false;
     // Tragic event that causes the IndexWriter and ThreadPoolMergeScheduler to be closed
-    private Throwable tragedy = null;
+    private volatile Throwable tragedy = null;
 
     /**
      * Creates a thread-pool-based merge scheduler that runs merges in a thread pool.
@@ -150,18 +149,15 @@ public class ThreadPoolMergeScheduler extends MergeScheduler implements Elastics
         }
         PendingMerge pendingMerge = null;
         try {
-            // Need to be synchronized to avoid more merges to be pulled during a tragic event
-            synchronized (this) {
-                if (tragedy != null) {
-                    return; // IndexWriter is closing due to a tragic event, don't pull a new merge
-                }
-                // From this point on Lucene considers the OneMerge as "running",
-                // but it's not yet in the thread pool executor tasks queue!
-                var merge = mergeSource.getNextMerge();
-                if (merge != null) {
-                    pendingMerge = new PendingMerge(mergeSource, merge, trigger);
-                    pendingMerges.add(pendingMerge);
-                }
+            // Optimistic check
+            if (tragedy != null) {
+                return; // IndexWriter is closing due to a tragic event, don't pull a new merge
+            }
+            // From this point on Lucene considers the OneMerge as "running",
+            // but it's not yet in the thread pool executor tasks queue!
+            var merge = mergeSource.getNextMerge();
+            if (merge != null) {
+                pendingMerge = new PendingMerge(mergeSource, merge, trigger);
             }
         } catch (IllegalStateException e) {
             if (verbose()) {
@@ -253,24 +249,22 @@ public class ThreadPoolMergeScheduler extends MergeScheduler implements Elastics
             MergeTask mergeTask = newMergeTask(pendingMerge.source(), pendingMerge.merge(), pendingMerge.trigger());
 
             boolean queued = false;
+            boolean abortDueToTragedy = false;
             // Need to be synchronized to avoid enqueuing merges during a tragic event
             synchronized (this) {
-                try {
-                    if (tragedy == null) {
-                        queued = threadPoolMergeExecutorService.submitMergeTask(mergeTask); // may abort the merge immediately
-                        // TODO Enable the following assertions once unit tests are fixed to not use Mockito
-                        // assert queued || pendingMerge.merge().isAborted();
-                    }
-                } finally {
-                    // O(n) complexity but the list of pending merges should remain small
-                    var removed = pendingMerges.remove(pendingMerge);
-                    assert removed || pendingMerges.isEmpty();
-                    assert removed || tragedy != null;
+                if (tragedy == null) {
+                    queued = threadPoolMergeExecutorService.submitMergeTask(mergeTask); // may abort the merge immediately
+                    // TODO Enable the following assertions once unit tests are fixed to not use Mockito
+                    // assert queued || pendingMerge.merge().isAborted();
+                } else {
+                    abortDueToTragedy = true;
                 }
             }
             if (queued) {
                 mergeMetrics.incrementQueuedMergeBytes(mergeTask.getOnGoingMerge(), mergeTask.getMergeMemoryEstimateBytes());
                 mergeQueued(mergeTask.onGoingMerge);
+            } else if (abortDueToTragedy) {
+                mergeTask.abort();
             }
         } finally {
             checkMergeTaskThrottling();
@@ -401,8 +395,6 @@ public class ThreadPoolMergeScheduler extends MergeScheduler implements Elastics
                     return; // nothing to do, the merge scheduler is already failed
                 }
                 this.tragedy = tragedy;
-                // Abort pending merges that have not been submitted to the thread pool executor
-                abortPendingMerges();
                 // Abort backlogged merges
                 abortedBackloggedTasks = abortBackloggedMergeTasks();
                 // Abort all queued tasks that have been created by this merge scheduler
@@ -415,34 +407,6 @@ public class ThreadPoolMergeScheduler extends MergeScheduler implements Elastics
         } catch (Exception e) {
             logger.warn("exception when aborting non-running merge tasks", e);
             tragedy.addSuppressed(e);
-        }
-    }
-
-    private void abortPendingMerges() throws Exception {
-        assert tragedy != null;
-        assert Thread.holdsLock(this);
-
-        int maxExceptions = 10;
-        Exception firstException = null;
-        var it = this.pendingMerges.iterator();
-        while (it.hasNext()) {
-            try {
-                var pending = it.next();
-                pending.merge().setAborted();
-                pending.source().merge(pending.merge());
-            } catch (Exception e) {
-                assert false : e;
-                if (firstException != null && maxExceptions-- >= 0) {
-                    firstException.addSuppressed(e);
-                } else {
-                    firstException = e;
-                }
-            } finally {
-                it.remove();
-            }
-        }
-        if (firstException != null) {
-            throw firstException;
         }
     }
 
