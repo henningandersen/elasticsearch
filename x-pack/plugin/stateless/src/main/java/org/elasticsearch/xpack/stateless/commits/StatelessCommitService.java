@@ -870,12 +870,17 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
                         ),
                         e
                     );
+                    // sendNewUploadedCommitNotification may have failed before starting the async notification,
+                    // so clean up the pending notification entry here to avoid a leak.
+                    commitState.closeAndRemovePendingNotificationVbcc(virtualBcc.getPrimaryTermAndGeneration().generation());
                 }
             }
 
             @Override
             public void onFailure(Exception e) {
                 assert assertClosedOrRejectionFailure(e);
+                // Upload failed: no notification will be sent, so remove and close the VBCC now.
+                commitState.closeAndRemovePendingNotificationVbcc(virtualBcc.getPrimaryTermAndGeneration().generation());
                 ShardCommitState.State state = commitState.state;
                 if (commitState.isClosed()) {
                     logger.debug(
@@ -915,7 +920,7 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
                 return true;
             }
         }, commitState, virtualBcc), () -> {
-            IOUtils.closeWhileHandlingException(virtualBcc);
+            // VBCC lifecycle is managed via pendingNotificationBccGenerations; closed when notification completes
             blobReference.decRef();
         });
     }
@@ -1191,7 +1196,7 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
         private final TriConsumer<Long, GlobalCheckpointListeners.GlobalCheckpointListener, TimeValue> addGlobalCheckpointListenerFunction;
         private final Runnable triggerTranslogReplicator;
 
-        // The following three fields represent the state of a batched compound commit can have in its lifecycle.
+        // The following fields represent the states a batched compound commit can have in its lifecycle.
         // 1. currentVirtualBcc - A BCC starts its lifecycle from here. It is used to append new CCs. The field itself begins from null,
         // gets assigned at commit appending time, and gets resets back to null again by freeze, then starts over. Mutating this field
         // MUST be performed with synchronization.
@@ -1200,9 +1205,16 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
         // request from search nodes. A VBCC is removed from this list once it is uploaded.
         // 3. latestUploadedBcc - This field tracks highest generation BCC ever uploaded. It is updated with the VBCC that just gets
         // uploaded which is then removed from pendingUploadBccGenerations.
+        // 4. pendingNotificationBccGenerations - When a VBCC is frozen it is also added here alongside pendingUploadBccGenerations.
+        // A search node receiving an uploaded-commit notification may issue cache-fill requests (via IndexingShardCacheBlobReader) to
+        // the indexing node for the newly uploaded BCC, because updateLatestUploadedBcc on the search node is deferred until after the
+        // prefetch completes. This map keeps the VBCC alive so those requests can be served even after upload finishes (at which point
+        // it is removed from pendingUploadBccGenerations). An entry is removed and the VBCC closed once the search-node notification
+        // roundtrip completes (or when upload itself fails, in which case no notification is sent).
         private volatile VirtualBatchedCompoundCommit currentVirtualBcc = null;
         private final Map<Long, VirtualBatchedCompoundCommit> pendingUploadBccGenerations = new ConcurrentHashMap<>();
         private volatile BatchedCompoundCommit latestUploadedBcc = null;
+        private final Map<Long, VirtualBatchedCompoundCommit> pendingNotificationBccGenerations = new ConcurrentHashMap<>();
         // NOTE When moving a VBCC through its lifecycle, we must update it first in the new state before remove it from the old state.
         // That is, we must first add it to the `pendingUploadBccGenerations` before un-assigning it from `currentVirtualBcc`,
         // and we must set it to `latestUploadedBcc` before removing it from `pendingUploadBccGenerations`. This is to ensure the VBCC
@@ -1533,10 +1545,10 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
             if (currentVirtualBcc != null && currentVirtualBcc.getPrimaryTermAndGeneration().equals(primaryTermAndGeneration)) {
                 return currentVirtualBcc;
             }
-            var pendingUploadVirtualBcc = pendingUploadBccGenerations.get(primaryTermAndGeneration.generation());
-            if (pendingUploadVirtualBcc != null) {
-                assert pendingUploadVirtualBcc.getPrimaryTermAndGeneration().equals(primaryTermAndGeneration);
-                return pendingUploadVirtualBcc;
+            var pendingNotificationVirtualBcc = pendingNotificationBccGenerations.get(primaryTermAndGeneration.generation());
+            if (pendingNotificationVirtualBcc != null) {
+                assert pendingNotificationVirtualBcc.getPrimaryTermAndGeneration().equals(primaryTermAndGeneration);
+                return pendingNotificationVirtualBcc;
             }
 
             // We did not find the generation, so it should be already uploaded.
@@ -1574,6 +1586,17 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
                 // This length adjustment is needed because the last CC is not padded in a vBCC
                 long length = Math.min(request.getLength(), vbcc.getTotalSizeInBytes() - request.getOffset());
                 vbcc.getBytesByRange(request.getOffset(), length, output);
+            }
+        }
+
+        /**
+         * Removes the VBCC for the given generation from {@code pendingNotificationBccGenerations} and closes it.
+         * Safe to call concurrently: the VBCC is closed only by the first caller that successfully removes it.
+         */
+        void closeAndRemovePendingNotificationVbcc(long generation) {
+            var vbcc = pendingNotificationBccGenerations.remove(generation);
+            if (vbcc != null) {
+                IOUtils.closeWhileHandlingException(vbcc);
             }
         }
 
@@ -1757,6 +1780,11 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
                     expectedVirtualBcc
                 );
                 assert previous == null : "expected null, but got " + previous;
+                final var previousNotification = pendingNotificationBccGenerations.put(
+                    expectedVirtualBcc.getPrimaryTermAndGeneration().generation(),
+                    expectedVirtualBcc
+                );
+                assert previousNotification == null : "expected null, but got " + previousNotification;
                 // reset after add to pending list so that vbcc is always visible as either pending or current
                 currentVirtualBcc = null;
                 logger.trace(
@@ -2203,6 +2231,7 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
                     Set.of()
                 );
 
+                closeAndRemovePendingNotificationVbcc(uploadedBcc.primaryTermAndGeneration().generation());
                 return;
             }
 
@@ -2230,7 +2259,7 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
                 clusterService.state().version(),
                 clusterService.localNode().getId(),
                 clusterService,
-                ActionListener.wrap(searchNodesAndCommitsResult -> {
+                ActionListener.runBefore(ActionListener.wrap(searchNodesAndCommitsResult -> {
                     onNewUploadedCommitNotificationResponse(
                         // Open PITs might be transferred between search nodes during relocations, for that reason we are conservative,
                         // and we just consider responses from started or old nodes retaining commits, that way we won't delete any
@@ -2248,7 +2277,7 @@ public class StatelessCommitService extends AbstractLifecycleComponent implement
                         "upload",
                         e
                     )
-                )
+                ), () -> closeAndRemovePendingNotificationVbcc(uploadedBcc.primaryTermAndGeneration().generation()))
             );
         }
 

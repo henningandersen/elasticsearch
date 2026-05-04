@@ -28,6 +28,7 @@ import org.elasticsearch.xpack.stateless.cache.StatelessSharedBlobCacheService;
 import org.elasticsearch.xpack.stateless.cache.reader.CacheBlobReader;
 import org.elasticsearch.xpack.stateless.cache.reader.CacheBlobReaderService;
 import org.elasticsearch.xpack.stateless.cache.reader.MutableObjectStoreUploadTracker;
+import org.elasticsearch.xpack.stateless.cache.reader.NotificationAwareObjectStoreUploadTracker;
 import org.elasticsearch.xpack.stateless.commits.BlobFile;
 import org.elasticsearch.xpack.stateless.commits.BlobFileRanges;
 import org.elasticsearch.xpack.stateless.commits.BlobLocation;
@@ -274,16 +275,34 @@ public class SearchDirectory extends BlobStoreCacheDirectory {
      * <p>
      * We allow creating this reader from any thread but the actual downloading of
      * bytes will happen on the stateless_prewarm pool.
+     * <p>
+     * When {@code latestUploadedBccTermAndGen} is non-null, BCC generations up to and including
+     * that value are treated as uploaded to the object store for the purpose of reader selection.
+     * This ensures that BCC blobs known to be uploaded from the notification are read from the
+     * object store during prefetching, even before {@link #updateLatestUploadedBcc} has been called.
      *
-     * @param blobFile blob file
+     * @param blobFile                   blob file
+     * @param latestUploadedBccTermAndGen the latest uploaded BCC term and generation known from the
+     *                                   commit notification, or {@code null} if not known
      * @return a CacheBlobReader for reading the specified file
      */
-    public CacheBlobReader getCacheBlobReaderForPreFetching(BlobFile blobFile) {
-        return getCacheBlobReader(
-            blobFile.blobName(),
+    public CacheBlobReader getCacheBlobReaderForPreFetching(
+        BlobFile blobFile,
+        @Nullable PrimaryTermAndGeneration latestUploadedBccTermAndGen
+    ) {
+        MutableObjectStoreUploadTracker trackerForPrefetch = latestUploadedBccTermAndGen == null
+            ? objectStoreUploadTracker
+            : new NotificationAwareObjectStoreUploadTracker(objectStoreUploadTracker, latestUploadedBccTermAndGen);
+        return cacheBlobReaderService.getCacheBlobReader(
+            shardId,
+            this::getBlobContainer,
             blobFile,
+            trackerForPrefetch,
+            totalBytesWarmedFromObjectStore::add,
+            totalBytesWarmedFromIndexing::add,
             BlobCacheMetrics.CachePopulationReason.PreFetchingNewCommit,
-            EsExecutors.DIRECT_EXECUTOR_SERVICE
+            EsExecutors.DIRECT_EXECUTOR_SERVICE,
+            blobFile.blobName()
         );
     }
 

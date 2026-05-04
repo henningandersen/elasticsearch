@@ -16,6 +16,7 @@ import org.elasticsearch.common.blobstore.OperationPurpose;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeValue;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.core.CheckedRunnable;
 import org.elasticsearch.core.Nullable;
 import org.elasticsearch.core.TimeValue;
@@ -658,6 +659,101 @@ public class SearchCommitPrefetcherIT extends AbstractStatelessPluginIntegTestCa
         } else {
             assertBusy(() -> assertThat(searchEngine.getTotalPrefetchedBytes(), is(lessThan(bccBlobsTotalSizeInBytes))));
         }
+    }
+
+    public void testCacheMissDuringUploadedCommitPrefetchWindowUsesIndexingNode() throws Exception {
+        // Check that we still fetch data from indexing node during synchronous warming.
+        // Test strategy:
+        // 1. Fill all prewarm pool threads with blocking tasks so that the populate tasks submitted
+        // by the prefetch queue in the pool and cannot start.
+        // 2. Fail any object-store read that arrives on a shard-read thread.
+        // 3. Flush to trigger an uploaded-commit notification.
+        // 4. Wait for the prewarm pool queue to become non-empty. That is the definitive signal
+        // that the notification has been received, onCommitNotification has run and prefetch
+        // populate tasks have been submitted.
+        // 5. Run a search whose segment data is cold in the cache.
+        var nodeSettings = Settings.builder()
+            .put(SearchCommitPrefetcher.PREFETCH_NON_UPLOADED_COMMITS_SETTING.getKey(), false)
+            .put(SearchCommitPrefetcher.BACKGROUND_PREFETCH_ENABLED_SETTING.getKey(), false)
+            .put(SearchCommitPrefetcherDynamicSettings.STATELESS_SEARCH_USE_INTERNAL_FILES_REPLICATED_CONTENT.getKey(), false)
+            .build();
+        startMasterAndIndexNode(nodeSettings);
+        var searchNode = startSearchNode(nodeSettings);
+        var indexName = randomIdentifier();
+        createIndex(indexName, indexSettings(1, 1).put(IndexSettings.INDEX_REFRESH_INTERVAL_SETTING.getKey(), -1).build());
+        ensureGreen(indexName);
+        // Break the search-idle barrier so prefetching is not skipped.
+        assertNoFailures(prepareSearch(indexName));
+
+        var latestCommitGen = client().admin().indices().prepareStats(indexName).get().getAt(0).getCommitStats().getGeneration();
+        var newBccBlobName = BatchedCompoundCommit.blobNameFromGeneration(latestCommitGen + 1);
+        // Index enough documents per round so the BCC is large enough that the normal searcher-
+        // opening reads during refresh do not warm the entire BCC into cache. The remaining cold
+        // ranges are what the prefetch must populate, and what the test's search will read.
+        for (int j = 0; j < randomIntBetween(5, 8); j++) {
+            indexDocs(indexName, 10_000);
+            refresh(indexName);
+        }
+
+        ThreadPool searchNodeThreadPool = internalCluster().getInstance(ThreadPool.class, searchNode);
+        int maxPrewarmThreads = searchNodeThreadPool.info(StatelessPlugin.PREWARM_THREAD_POOL).getMax();
+        var prewarmBlocker = new CountDownLatch(1);
+        var allPrewarmBusy = new CountDownLatch(maxPrewarmThreads);
+        var prewarmExecutor = searchNodeThreadPool.executor(StatelessPlugin.PREWARM_THREAD_POOL);
+        for (int i = 0; i < maxPrewarmThreads; i++) {
+            prewarmExecutor.execute(() -> {
+                allPrewarmBusy.countDown();
+                safeAwait(prewarmBlocker);
+            });
+        }
+        safeAwait(allPrewarmBusy);
+
+        // Fail shard-read blob-store reads for the newly uploaded BCC blob only.
+        setNodeRepositoryStrategy(searchNode, new StatelessMockRepositoryStrategy() {
+            @Override
+            public InputStream blobContainerReadBlob(
+                CheckedSupplier<InputStream, IOException> originalSupplier,
+                OperationPurpose purpose,
+                String blobName,
+                long position,
+                long length
+            ) throws IOException {
+                if (newBccBlobName.equals(blobName)
+                    && StatelessPlugin.PREWARM_THREAD_POOL.equals(EsExecutors.executorName(Thread.currentThread())) == false) {
+                    throw new IOException(
+                        "Unexpected object-store read from non-prewarm thread during prefetch window: " + Thread.currentThread().getName()
+                    );
+                }
+                return super.blobContainerReadBlob(originalSupplier, purpose, blobName, position, length);
+            }
+        });
+
+        // Flush triggers the uploaded-commit notification. In foreground mode the flush response
+        // waits for the prefetch to complete, which is stalled, so we must not await the flush here.
+        var flushFuture = client().admin().indices().prepareFlush(indexName).execute();
+
+        try {
+            // Wait until the prewarm pool has queued tasks. This confirms the notification has been
+            // received, onCommitNotification has run, and the PrefetchExecutor has submitted populate
+            // tasks to the prewarm pool.
+            assertBusy(() -> {
+                int queuedTasks = searchNodeThreadPool.stats()
+                    .stats()
+                    .stream()
+                    .filter(s -> s.name().equals(StatelessPlugin.PREWARM_THREAD_POOL))
+                    .findFirst()
+                    .orElseThrow()
+                    .queue();
+                assertThat(queuedTasks, is(greaterThan(0)));
+            });
+
+            // Run a search that must read cold segment data.
+            assertNoFailures(client().prepareSearch(indexName).setQuery(new MatchAllQueryBuilder()).setSize(10_000));
+        } finally {
+            prewarmBlocker.countDown();
+        }
+
+        safeGet(flushFuture);
     }
 
     public void testUpdateDynamicSettings() throws Exception {

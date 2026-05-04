@@ -16,6 +16,7 @@ import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.util.concurrent.ThrottledTaskRunner;
+import org.elasticsearch.core.Nullable;
 import org.elasticsearch.core.Releasable;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.logging.LogManager;
@@ -272,7 +273,10 @@ public class SearchCommitPrefetcher {
 
                 var cacheKey = new FileCacheKey(shardId, blobFile.primaryTerm(), blobFile.blobName());
 
-                var cacheBlobReader = cacheBlobReaderSupplier.getCacheBlobReaderForPreFetching(blobFile);
+                var cacheBlobReader = cacheBlobReaderSupplier.getCacheBlobReaderForPreFetching(
+                    blobFile,
+                    notification.latestUploadedBatchedCompoundCommitTermAndGen()
+                );
 
                 // Calculate regions from the full range first, then compute the adjusted range per-region.
                 // This avoids Integer.MAX_VALUE truncation for > 2GB blobs.
@@ -445,7 +449,7 @@ public class SearchCommitPrefetcher {
     }
 
     public interface CacheBlobReaderSupplier {
-        CacheBlobReader getCacheBlobReaderForPreFetching(BlobFile blobFile);
+        CacheBlobReader getCacheBlobReaderForPreFetching(BlobFile blobFile, @Nullable PrimaryTermAndGeneration latestUploadedBccTermAndGen);
     }
 
     public static class PrefetchExecutor implements Executor {

@@ -324,7 +324,6 @@ public class SearchEngine extends Engine {
             notification.clusterStateVersion()
         );
         var ccTermAndGen = notification.compoundCommit().primaryTermAndGeneration();
-        searchDirectory.updateLatestUploadedBcc(notification.latestUploadedBatchedCompoundCommitTermAndGen());
         searchDirectory.updateLatestCommitInfo(ccTermAndGen, notification.nodeId());
 
         SubscribableListener
@@ -334,6 +333,9 @@ public class SearchEngine extends Engine {
             // cache space and requests.
             .<Void>newForked(l -> maybePreFetchLatestCommit(notification, l))
             .<Void>andThen(l -> {
+                // Update the upload marker after prefetching so that cache misses during the
+                // prefetch (when synchronous) are served from the indexing node rather than the object store.
+                searchDirectory.updateLatestUploadedBcc(notification.latestUploadedBatchedCompoundCommitTermAndGen());
                 if (addOrExecuteSegmentGenerationListener(ccTermAndGen, l.map(g -> null))) {
                     commitNotifications.add(notification);
                     if (pendingCommitNotifications.incrementAndGet() == 1) {
