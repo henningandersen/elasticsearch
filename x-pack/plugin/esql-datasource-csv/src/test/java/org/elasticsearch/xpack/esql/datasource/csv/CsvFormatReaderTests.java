@@ -34,6 +34,7 @@ import org.elasticsearch.xpack.esql.datasources.spi.StorageObject;
 import org.elasticsearch.xpack.esql.datasources.spi.StoragePath;
 import org.elasticsearch.xpack.esql.parser.ParsingException;
 import org.elasticsearch.xpack.esql.type.EsqlDataTypeConverter;
+import org.hamcrest.Matchers;
 import org.junit.After;
 
 import java.io.ByteArrayInputStream;
@@ -2957,6 +2958,21 @@ public class CsvFormatReaderTests extends ESTestCase {
         assertEquals("f_1", schema.get(1).name());
     }
 
+    public void testHeaderlessSchemaWithEmptyPrefixYieldsDigitNames() throws IOException {
+        // Documented edge case: empty prefix produces names like "0", "1" that need backtick quoting
+        // in ES|QL. The reader does not reject this, so verify the names are exactly the digits.
+        String csv = "1,2\n3,4\n";
+        StorageObject object = createStorageObject(csv);
+        CsvFormatReader reader = (CsvFormatReader) new CsvFormatReader(blockFactory).withConfig(
+            Map.of("header_row", false, "column_prefix", "")
+        );
+
+        List<Attribute> schema = reader.schema(object);
+        assertEquals(2, schema.size());
+        assertEquals("0", schema.get(0).name());
+        assertEquals("1", schema.get(1).name());
+    }
+
     public void testHeaderlessReadConsumesRow0AsData() throws IOException {
         // Without header_row=false this would have lost row 0 to the header.
         String csv = "10,20\n30,40\n50,60\n";
@@ -2994,7 +3010,16 @@ public class CsvFormatReaderTests extends ESTestCase {
         CsvFormatReader reader = (CsvFormatReader) new CsvFormatReader(blockFactory).withConfig(Map.of("header_row", false));
 
         IOException ex = expectThrows(IOException.class, () -> reader.schema(object));
-        assertTrue(ex.getMessage().toLowerCase(Locale.ROOT).contains("no data rows"));
+        assertThat(ex.getMessage().toLowerCase(Locale.ROOT), Matchers.containsString("no data rows"));
+    }
+
+    public void testHeaderlessCommentsOnlyInputThrows() {
+        // Filtered by comment prefix so no data rows remain — must surface the same clean IOException.
+        StorageObject object = createStorageObject("// only comments\n// another\n");
+        CsvFormatReader reader = (CsvFormatReader) new CsvFormatReader(blockFactory).withConfig(Map.of("header_row", false));
+
+        IOException ex = expectThrows(IOException.class, () -> reader.schema(object));
+        assertThat(ex.getMessage().toLowerCase(Locale.ROOT), Matchers.containsString("no data rows"));
     }
 
     public void testInvalidHeaderRowOptionThrows() {
@@ -3003,7 +3028,125 @@ public class CsvFormatReaderTests extends ESTestCase {
             IllegalArgumentException.class,
             () -> new CsvFormatReader(blockFactory).withConfig(Map.of("header_row", "not_a_bool"))
         );
-        assertTrue(ex.getMessage().contains("Invalid boolean value"));
+        assertThat(ex.getMessage(), Matchers.containsString("Invalid boolean value"));
+        assertThat(ex.getMessage(), Matchers.containsString("header_row"));
+    }
+
+    public void testHeaderlessTreatsTypedSchemaLineAsData() throws IOException {
+        // With header_row=false, a row that LOOKS like a typed header (name:type) is data, not schema.
+        String csv = "id:long,age:int\n1,30\n2,25\n";
+        StorageObject object = createStorageObject(csv);
+        CsvFormatReader reader = (CsvFormatReader) new CsvFormatReader(blockFactory).withConfig(Map.of("header_row", false));
+
+        List<Attribute> schema = reader.schema(object);
+        assertEquals(2, schema.size());
+        assertEquals("col0", schema.get(0).name());
+        assertEquals("col1", schema.get(1).name());
+        // Cells contain "id:long" / "age:int" / "1" / "2" — mixed strings and ints widen to KEYWORD.
+        assertEquals(DataType.KEYWORD, schema.get(0).dataType());
+        assertEquals(DataType.KEYWORD, schema.get(1).dataType());
+
+        try (CloseableIterator<Page> iterator = reader.read(object, null, 10)) {
+            assertTrue(iterator.hasNext());
+            Page page = iterator.next();
+            assertEquals(3, page.getPositionCount());
+            BytesRefBlock col0 = (BytesRefBlock) page.getBlock(0);
+            assertEquals(new BytesRef("id:long"), col0.getBytesRef(0, new BytesRef()));
+            assertEquals(new BytesRef("1"), col0.getBytesRef(1, new BytesRef()));
+            assertEquals(new BytesRef("2"), col0.getBytesRef(2, new BytesRef()));
+        }
+    }
+
+    public void testHeaderlessReadAcrossMultipleBatches() throws IOException {
+        // Exercise the batch-reader path: enough rows to span several pages so prefetchedRows are
+        // drained and additional rows are read via the csv iterator after schema inference.
+        StringBuilder csv = new StringBuilder();
+        for (int i = 0; i < 50; i++) {
+            csv.append(i).append(',').append(i * 10).append('\n');
+        }
+        StorageObject object = createStorageObject(csv.toString());
+        CsvFormatReader reader = (CsvFormatReader) new CsvFormatReader(blockFactory).withConfig(Map.of("header_row", false));
+
+        int totalRows = 0;
+        try (CloseableIterator<Page> iterator = reader.read(object, null, 7)) {
+            while (iterator.hasNext()) {
+                Page page = iterator.next();
+                IntBlock col0 = (IntBlock) page.getBlock(0);
+                IntBlock col1 = (IntBlock) page.getBlock(1);
+                for (int i = 0; i < page.getPositionCount(); i++) {
+                    int id = col0.getInt(i);
+                    assertEquals(id * 10, col1.getInt(i));
+                }
+                totalRows += page.getPositionCount();
+            }
+        }
+        assertEquals(50, totalRows);
+    }
+
+    public void testHeaderlessProjectedColumns() throws IOException {
+        String csv = "10,20,30\n40,50,60\n";
+        StorageObject object = createStorageObject(csv);
+        CsvFormatReader reader = (CsvFormatReader) new CsvFormatReader(blockFactory).withConfig(Map.of("header_row", false));
+
+        // Project col2 first then col0 to exercise reordering.
+        try (CloseableIterator<Page> iterator = reader.read(object, List.of("col2", "col0"), 10)) {
+            assertTrue(iterator.hasNext());
+            Page page = iterator.next();
+            assertEquals(2, page.getPositionCount());
+            assertEquals(2, page.getBlockCount());
+            IntBlock first = (IntBlock) page.getBlock(0);
+            IntBlock second = (IntBlock) page.getBlock(1);
+            assertEquals(30, first.getInt(0));
+            assertEquals(60, first.getInt(1));
+            assertEquals(10, second.getInt(0));
+            assertEquals(40, second.getInt(1));
+        }
+    }
+
+    public void testHeaderlessCustomPrefixViaReadPath() throws IOException {
+        String csv = "1,2\n3,4\n";
+        StorageObject object = createStorageObject(csv);
+        CsvFormatReader reader = (CsvFormatReader) new CsvFormatReader(blockFactory).withConfig(
+            Map.of("header_row", false, "column_prefix", "f_")
+        );
+
+        // Project by the synthesized name to confirm the runtime path uses the same prefix.
+        try (CloseableIterator<Page> iterator = reader.read(object, List.of("f_1"), 10)) {
+            assertTrue(iterator.hasNext());
+            Page page = iterator.next();
+            assertEquals(2, page.getPositionCount());
+            assertEquals(1, page.getBlockCount());
+            IntBlock col = (IntBlock) page.getBlock(0);
+            assertEquals(2, col.getInt(0));
+            assertEquals(4, col.getInt(1));
+        }
+    }
+
+    public void testHeaderlessSkipRowOnMalformedData() throws IOException {
+        // Need the schema sample to lock col0=INTEGER before the malformed row is read. Cap the
+        // sample size to 10 so the bad row at position 30 is encountered only at runtime.
+        StringBuilder csv = new StringBuilder();
+        for (int i = 1; i <= 30; i++) {
+            csv.append(i).append(',').append(i * 100L).append('\n');
+        }
+        csv.append("not_a_number,42\n");
+        csv.append("99,9900\n");
+        StorageObject object = createStorageObject(csv.toString());
+        CsvFormatReader reader = (CsvFormatReader) new CsvFormatReader(blockFactory).withConfig(
+            Map.of("header_row", false, "schema_sample_size", 10)
+        );
+        ErrorPolicy skipRow = new ErrorPolicy(ErrorPolicy.Mode.SKIP_ROW, 10, 1.0, false);
+
+        int totalRows = 0;
+        try (
+            CloseableIterator<Page> iterator = reader.read(object, FormatReadContext.builder().batchSize(50).errorPolicy(skipRow).build())
+        ) {
+            while (iterator.hasNext()) {
+                totalRows += iterator.next().getPositionCount();
+            }
+        }
+        // 30 good rows + 1 bad (skipped, not counted) + 1 good = 31 total rows returned.
+        assertEquals(31, totalRows);
     }
 
     // --- Duplicate-name guard (header_row=true) ---
@@ -3016,8 +3159,21 @@ public class CsvFormatReaderTests extends ESTestCase {
         CsvFormatReader reader = new CsvFormatReader(blockFactory);
 
         ParsingException ex = expectThrows(ParsingException.class, () -> reader.schema(object));
-        assertTrue(ex.getMessage().contains("duplicate column names"));
-        assertTrue(ex.getMessage().contains("header_row"));
+        assertThat(ex.getMessage(), Matchers.containsString("duplicate column names"));
+        assertThat(ex.getMessage(), Matchers.containsString("header_row"));
+    }
+
+    public void testBlankHeaderNamesThrowParsingException() {
+        // Two adjacent commas at the start of the header line produce two empty-string column names
+        // — the most common real-world trigger of the duplicate-name path. (A trailing-comma case
+        // like ",a," would be String.split-stripped and not hit this guard.)
+        String csv = ",,a\n1,2,3\n";
+        StorageObject object = createStorageObject(csv);
+        CsvFormatReader reader = new CsvFormatReader(blockFactory);
+
+        ParsingException ex = expectThrows(ParsingException.class, () -> reader.schema(object));
+        assertThat(ex.getMessage(), Matchers.containsString("duplicate column names"));
+        assertThat(ex.getMessage(), Matchers.containsString("['']"));
     }
 
     public void testDuplicateTypedHeaderNamesThrowParsingException() {
@@ -3026,7 +3182,7 @@ public class CsvFormatReaderTests extends ESTestCase {
         CsvFormatReader reader = new CsvFormatReader(blockFactory);
 
         ParsingException ex = expectThrows(ParsingException.class, () -> reader.schema(object));
-        assertTrue(ex.getMessage().contains("duplicate column names"));
+        assertThat(ex.getMessage(), Matchers.containsString("duplicate column names"));
     }
 
     private StorageObject createStorageObject(String csvContent) {
