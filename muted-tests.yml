@@ -557,3 +557,6 @@ tests:
 - class: org.elasticsearch.xpack.stateless.lucene.BlobCacheIndexInputTests
   method: testWithByteBufferSlicesReturnsFalseAfterEviction
   issue: https://github.com/elastic/elasticsearch/issues/148330
+- class: org.elasticsearch.xpack.security.authc.esnative.ReservedRealmElasticAutoconfigIntegTests
+  method: testAutoconfigFailedPasswordPromotion
+  issue: https://github.com/elastic/elasticsearch/issues/122668
