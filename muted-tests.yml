@@ -551,3 +551,6 @@ tests:
 - class: org.elasticsearch.xpack.esql.action.ExternalParquetCountPushdownIT
   method: testCountStarPushdownManyRowGroups
   issue: https://github.com/elastic/elasticsearch/issues/148117
+- class: org.elasticsearch.xpack.stateless.commits.StatelessCommitServiceTests
+  method: testCommitsTrackingTakesIntoAccountSearchNodeUsage
+  issue: https://github.com/elastic/elasticsearch/issues/148300
