@@ -524,3 +524,6 @@ tests:
 - class: org.elasticsearch.xpack.security.QueryableReservedRolesIT
   method: testDeletingAndCreatingSecurityIndexTriggersSynchronization
   issue: https://github.com/elastic/elasticsearch/issues/148432
+- class: org.elasticsearch.xpack.security.QueryableReservedRolesIT
+  method: testConfiguredReservedRolesAfterClosingAndOpeningIndex
+  issue: https://github.com/elastic/elasticsearch/issues/147972
