@@ -560,3 +560,6 @@ tests:
 - class: org.elasticsearch.xpack.security.ReindexRelocationWithSecurityIT
   method: testReindexRelocatesWhenCoordinatorShutsDown
   issue: https://github.com/elastic/elasticsearch/issues/148373
+- class: org.elasticsearch.xpack.esql.analysis.VerifierTests
+  method: testFlattenedSorting
+  issue: https://github.com/elastic/elasticsearch/issues/148374
