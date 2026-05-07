@@ -144,7 +144,7 @@ public class SparseFileTracker {
      * Called before reading a range from the file to ensure that this range is present. Returns a {@link Gaps} for the caller to claim
      * and fill, unless there are no gaps at call time in which case the optional is empty. The range from the file is defined by
      * {@code range} but the listener is executed as soon as a (potentially smaller) sub range {@code subRange} becomes available.
-     * Notice that the gaps returned may extend beyond the `range` and then the caller is still responsible for filling them.
+     * All gaps returned are strictly within {@code range}.
      *
      * @param range    A ByteRange that contains the (inclusive) start and (exclusive) end of the desired range
      * @param subRange A ByteRange that contains the (inclusive) start and (exclusive) end of the listener's range
@@ -212,9 +212,18 @@ public class SparseFileTracker {
 
                     if (targetRange.start == firstExistingRange.start) {
                         if (firstExistingRange.isPending()) {
-                            pendingRanges.add(firstExistingRange);
-                            if (firstExistingRange.claimed == false) {
+                            if (firstExistingRange.claimed == false && firstExistingRange.end > range.end()) {
+                                // Split at range.end() so the gap we return ends within range
+                                final Range[] parts = splitRange(firstExistingRange, range.end());
+                                // parts[0] = [firstExistingRange.start, range.end()) — within range
+                                // parts[1] = [range.end(), firstExistingRange.end) — outside range, not added
+                                pendingRanges.add(parts[0]);
                                 hasGaps = true;
+                            } else {
+                                pendingRanges.add(firstExistingRange);
+                                if (firstExistingRange.claimed == false) {
+                                    hasGaps = true;
+                                }
                             }
                         }
                         targetRange.start = Math.min(range.end(), firstExistingRange.end);
@@ -267,14 +276,87 @@ public class SparseFileTracker {
             if (range.start() < lastEarlierRange.end) {
                 boolean unclaimed = false;
                 if (lastEarlierRange.isPending()) {
-                    pendingRanges.add(lastEarlierRange);
-                    unclaimed = lastEarlierRange.claimed == false;
+                    if (lastEarlierRange.claimed == false && range.start() < range.end()) {
+                        // Split at range.start() so the gap we return starts within range
+                        final Range[] partsAtStart = splitRange(lastEarlierRange, range.start());
+                        // partsAtStart[0] = [lastEarlierRange.start, range.start()) — outside range, not added
+                        // partsAtStart[1] = [range.start(), lastEarlierRange.end) — within range at start
+                        Range innerRange = partsAtStart[1];
+                        if (innerRange.end > range.end()) {
+                            // Also split at range.end() so the gap does not extend beyond range
+                            final Range[] partsAtEnd = splitRange(innerRange, range.end());
+                            innerRange = partsAtEnd[0]; // [range.start(), range.end())
+                            // partsAtEnd[1] = [range.end(), lastEarlierRange.end) — outside range, not added
+                        }
+                        pendingRanges.add(innerRange);
+                        unclaimed = true;
+                    } else {
+                        pendingRanges.add(lastEarlierRange);
+                    }
                 }
                 targetRange.start = Math.min(range.end(), lastEarlierRange.end);
                 return unclaimed;
             }
         }
         return false;
+    }
+
+    /**
+     * Splits an unclaimed pending range at {@code splitPoint} into two new pending ranges, both added to {@link #ranges}.
+     * The original range is removed. Listeners previously registered on the original completion listener are transferred
+     * to the new sub-range futures so they receive timely progress notifications:
+     * <ul>
+     *   <li>Listeners at thresholds {@code <= splitPoint} go directly to the lower half's future (A).</li>
+     *   <li>Listeners at thresholds {@code > splitPoint} require both halves to complete, so each is gated by a small
+     *       {@link RefCountingListener} that waits for A to reach {@code splitPoint} and B to reach the original threshold.
+     *       The B-side ref is added to the upper half's future now so that a subsequent split of B will pick it up via
+     *       {@link ProgressListenableActionFuture#stealListeners()} and redistribute it correctly.</li>
+     * </ul>
+     *
+     * @param existing   the unclaimed pending range to split; must satisfy {@code existing.start < splitPoint < existing.end}
+     * @param splitPoint the exclusive end of the lower half / inclusive start of the upper half
+     * @return {@code {lowerRange, upperRange}} — both already inserted into {@link #ranges}
+     */
+    private Range[] splitRange(final Range existing, final long splitPoint) {
+        assert Thread.holdsLock(ranges);
+        assert existing.isPending();
+        assert existing.claimed == false;
+        assert existing.start < splitPoint : existing.start + " >= " + splitPoint;
+        assert splitPoint < existing.end : splitPoint + " >= " + existing.end;
+
+        boolean removed = ranges.remove(existing);
+        assert removed;
+
+        final var completionListenerA = new ProgressListenableActionFuture(existing.start, splitPoint, progressConsumer(existing.start));
+        final var completionListenerB = new ProgressListenableActionFuture(splitPoint, existing.end, progressConsumer(splitPoint));
+        final Range rangeA = new Range(existing.start, splitPoint, completionListenerA);
+        final Range rangeB = new Range(splitPoint, existing.end, completionListenerB);
+        ranges.add(rangeA);
+        ranges.add(rangeB);
+
+        // Transfer listeners from the old completion listener to the appropriate sub-range future.
+        // Listeners whose threshold is within the lower half go directly to A. Listeners whose threshold
+        // is in the upper half must wait for BOTH halves to complete before they can fire, so a small
+        // RefCountingListener gates each one on A reaching splitPoint AND B reaching the original threshold.
+        // Adding the B-side ref to completionListenerB now (not lazily) means a subsequent split of B will
+        // pick it up via stealListeners and correctly redistribute it.
+        for (var pal : existing.completionListener.stealListeners()) {
+            final long threshold = pal.position();
+            if (threshold <= splitPoint) {
+                completionListenerA.addListener(pal.listener(), threshold);
+            } else {
+                final ActionListener<Long> original = pal.listener();
+                try (var bothFiredRef = new RefCountingListener(
+                    ActionListener.wrap(v -> original.onResponse(threshold), original::onFailure)
+                )) {
+                    completionListenerA.addListener(bothFiredRef.acquire(v -> {}), splitPoint);
+                    completionListenerB.addListener(bothFiredRef.acquire(v -> {}), threshold);
+                }
+            }
+        }
+
+        assert invariant();
+        return new Range[] { rangeA, rangeB };
     }
 
     private LongConsumer progressConsumer(long rangeStart) {
@@ -589,6 +671,8 @@ public class SparseFileTracker {
 
             lengthOfRanges += range.end - range.start;
             previousRange = range;
+
+            assert range.isPending() || range.claimed;
         }
 
         // sum of ranges lengths never exceed maximum length
@@ -720,6 +804,7 @@ public class SparseFileTracker {
             this.start = start;
             this.end = end;
             this.completionListener = completionListener;
+            this.claimed = completionListener == null;
         }
 
         boolean isPending() {

@@ -435,42 +435,198 @@ public class SparseFileTrackerTests extends ESTestCase {
     }
 
     /**
-     * The tracker allocates pending ranges at coarse granularity. When a second caller requests a range that partially
-     * overlaps an existing pending range, the second caller may receive gaps that extend outside the range it requested.
-     * The second caller is responsible for filling the entire gap, not just the portion within its requested range.
+     * When a second caller requests a range that partially overlaps an existing unclaimed pending range, the tracker
+     * splits the overlapping range at the boundary so that each caller receives only gaps that lie within its own
+     * requested range.
      */
-    public void testClaimedGapsCanExtendBeyondRequestedRange() {
+    public void testClaimedGapsDoNotExtendBeyondRequestedRange() {
         final SparseFileTracker tracker = new SparseFileTracker("test", 100);
 
-        // Caller 1 creates a pending range covering [0, 50)
+        // Caller 1 creates a pending range [0, 50) but only needs [0, 40) — subRange ends inside the
+        // split-off upper half, so its listener is wired to only fire when completes and B reaches 40
         final PlainActionFuture<Void> future1 = new PlainActionFuture<>();
-        final var gaps1 = tracker.waitForRange(ByteRange.of(0, 50), ByteRange.of(0, 50), future1);
+        final var gaps1 = tracker.waitForRange(ByteRange.of(0, 50), ByteRange.of(0, 40), future1);
         assertTrue(gaps1.isPresent());
 
-        // Caller 2 requests [30, 80) — partially overlapping with caller 1's pending range
+        // Caller 2 requests [30, 80) with subRange [30, 70) — its listener threshold on the gap [50,80) is
+        // capped to 70 rather than 80, exercising the Math.min path in subscribeToCompletionListeners.
         final PlainActionFuture<Void> future2 = new PlainActionFuture<>();
-        final var gaps2 = tracker.waitForRange(ByteRange.of(30, 80), ByteRange.of(30, 80), future2);
+        final var gaps2 = tracker.waitForRange(ByteRange.of(30, 80), ByteRange.of(30, 70), future2);
         assertTrue(gaps2.isPresent());
 
-        // Caller 2 claims first: it wins the [0, 50) range even though that starts before its own range of [30, 80)
+        // Caller 2 claims: all gaps must be within [30, 80)
         final List<SparseFileTracker.Gap> gaps2List = gaps2.get().claim();
-        assertThat(gaps2List.stream().anyMatch(g -> g.start() < 30), is(true));
-        assertThat(gaps2List.size(), equalTo(2));
+        assertThat(gaps2List.size(), equalTo(2)); // [30, 50) and [50, 80)
+        assertThat(gaps2List.get(0).start(), equalTo(30L));
+        assertThat(gaps2List.get(0).end(), equalTo(50L));
+        assertThat(gaps2List.get(1).start(), equalTo(50L));
+        assertThat(gaps2List.get(1).end(), equalTo(80L));
 
-        // Caller 1 now claims nothing for [0, 50) since it was already taken by caller 2
-        assertThat(gaps1.get().claim(), equalTo(List.of()));
+        // Caller 1 claims: gets the [0, 30) split-off portion (still within [0, 50))
+        final List<SparseFileTracker.Gap> gaps1List = gaps1.get().claim();
+        assertThat(gaps1List.size(), equalTo(1)); // [0, 30)
+        assertThat(gaps1List.get(0).start(), equalTo(0L));
+        assertThat(gaps1List.get(0).end(), equalTo(30L));
 
-        // Caller 2 fills all its gaps (including the bytes before 30 that are outside its requested range)
+        // Fill caller 1's gap [0, 30): future1 needs subRange [0,40) — A is done but B has not yet
+        // reached 40, so the bothFiredRef for future1 has not closed.
+        for (SparseFileTracker.Gap gap : gaps1List) {
+            for (long i = gap.start(); i < gap.end(); i++) {
+                if (randomBoolean()) {
+                    gap.onProgress(i + 1);
+                }
+            }
+            gap.onCompletion();
+        }
+
+        // future1 is not done yet: B=[30,50) has not yet reached 40 (end of subRange)
+        assertFalse(future1.isDone());
+
+        // Fill caller 2's gaps [30, 50) and [50, 80): future1 fires when B reaches 40;
+        // future2 fires when the gap [50,80) reaches 70 (end of its subRange).
+        for (SparseFileTracker.Gap gap : gaps2List) {
+            for (long i = gap.start(); i < gap.end(); i++) {
+                if (randomBoolean()) {
+                    gap.onProgress(i + 1);
+                    if (i >= 40) {
+                        assertTrue(future1.isDone());
+                    }
+                }
+            }
+            gap.onCompletion();
+        }
+
+        // Both listeners must have fired now
+        assertTrue(future1.isDone());
+        assertTrue(future2.isDone());
+    }
+
+    /**
+     * When caller 2 claims before caller 1 in the overlapping case, caller 2 still only gets gaps within its own
+     * range and caller 1 picks up the remainder. Using range != subRange verifies that the bothFiredRef on the split
+     * correctly requires both halves before firing the listener regardless of fill order.
+     */
+    public void testClaimedGapsDoNotExtendBeyondRequestedRangeWhenClaimer2First() {
+        final SparseFileTracker tracker = new SparseFileTracker("test", 100);
+
+        // Caller 1 range [0,50), subRange [0,40): listener threshold 40 lies inside B=[30,50), so the
+        // bothFiredRef from splitRange gates future1 on A completing AND B reaching 40.
+        final PlainActionFuture<Void> future1 = new PlainActionFuture<>();
+        final var gaps1 = tracker.waitForRange(ByteRange.of(0, 50), ByteRange.of(0, 40), future1);
+        assertTrue(gaps1.isPresent());
+
+        // Caller 2 range [30, 80), subRange [30, 70)
+        final PlainActionFuture<Void> future2 = new PlainActionFuture<>();
+        final var gaps2 = tracker.waitForRange(ByteRange.of(30, 80), ByteRange.of(30, 70), future2);
+        assertTrue(gaps2.isPresent());
+
+        // Caller 2 claims first this time
+        final List<SparseFileTracker.Gap> gaps2List = gaps2.get().claim();
+        assertThat(gaps2List.size(), equalTo(2)); // [30, 50) and [50, 80)
+        assertThat(gaps2List.get(0).start(), equalTo(30L));
+        assertThat(gaps2List.get(0).end(), equalTo(50L));
+        assertThat(gaps2List.get(1).start(), equalTo(50L));
+        assertThat(gaps2List.get(1).end(), equalTo(80L));
+
+        // Caller 1 then claims its portion
+        final List<SparseFileTracker.Gap> gaps1List = gaps1.get().claim();
+        assertThat(gaps1List.size(), equalTo(1)); // [0, 30)
+        assertThat(gaps1List.get(0).start(), equalTo(0L));
+        assertThat(gaps1List.get(0).end(), equalTo(30L));
+
+        // Fill caller 2's gaps first: when B=[30,50) passes 40 the listener is not yet invoked
+        for (SparseFileTracker.Gap gap : gaps2List) {
+            for (long i = gap.start(); i < gap.end(); i++) {
+                if (randomBoolean()) {
+                    gap.onProgress(i + 1);
+                    if (i >= 70) {
+                        assertTrue(future2.isDone());
+                    }
+                }
+            }
+            gap.onCompletion();
+        }
+
+        assertFalse(future1.isDone()); // A=[0,30) not done; botFiredRef still open
+        assertTrue(future2.isDone());
+
+        for (SparseFileTracker.Gap gap : gaps1List) {
+            for (long i = gap.start(); i < gap.end(); i++) {
+                if (randomBoolean()) {
+                    gap.onProgress(i + 1);
+                }
+            }
+            gap.onCompletion();
+        }
+
+        assertTrue(future1.isDone());
+        assertTrue(future2.isDone());
+    }
+
+    /**
+     * When an existing unclaimed pending range spans entirely beyond the requested range (starts before and ends
+     * after), the returned gap covers exactly the intersection. Using subRange=[0,80) for caller 1 places its
+     * listener threshold at 80, which after the double-split lands on D=[60,100) and is redistributed correctly
+     * by the second splitRange call.
+     */
+    public void testGapClippedWhenExistingRangeSpansEntireRequestedRange() {
+        final SparseFileTracker tracker = new SparseFileTracker("test", 100);
+
+        // Caller 1 range [0, 100), subRange [0, 80): threshold 80 will be redistributed to D=[60,100)
+        // by the second split, so future1 fires when [0,80) is fully available.
+        final PlainActionFuture<Void> future1 = new PlainActionFuture<>();
+        final var gaps1 = tracker.waitForRange(ByteRange.of(0, 100), ByteRange.of(0, 80), future1);
+        assertTrue(gaps1.isPresent());
+
+        // Caller 2 requests a narrow inner range [20, 60)
+        final PlainActionFuture<Void> future2 = new PlainActionFuture<>();
+        final var gaps2 = tracker.waitForRange(ByteRange.of(20, 60), ByteRange.of(20, 60), future2);
+        assertTrue(gaps2.isPresent());
+
+        // Caller 2 gets exactly [20, 60)
+        final List<SparseFileTracker.Gap> gaps2List = gaps2.get().claim();
+        assertThat(gaps2List.size(), equalTo(1));
+        assertThat(gaps2List.get(0).start(), equalTo(20L));
+        assertThat(gaps2List.get(0).end(), equalTo(60L));
+
+        // Caller 1 claims [0, 20) and [60, 100)
+        final List<SparseFileTracker.Gap> gaps1List = gaps1.get().claim();
+        assertThat(gaps1List.size(), equalTo(2));
+        assertThat(gaps1List.get(0).start(), equalTo(0L));
+        assertThat(gaps1List.get(0).end(), equalTo(20L));
+        assertThat(gaps1List.get(1).start(), equalTo(60L));
+        assertThat(gaps1List.get(1).end(), equalTo(100L));
+
+        // Fill caller 2's gap [20, 60): future2 fires; future1 still needs A=[0,20) and D to reach 80
         for (SparseFileTracker.Gap gap : gaps2List) {
             for (long i = gap.start(); i < gap.end(); i++) {
                 gap.onProgress(i + 1);
             }
             gap.onCompletion();
         }
-
-        // Both listeners fire: caller 2's [30, 80) is complete, and caller 1's [0, 50) was filled by caller 2
-        assertTrue(future1.isDone());
         assertTrue(future2.isDone());
+        assertFalse(future1.isDone()); // A and D not yet filled
+
+        // Fill A=[0, 20): A-side bothFiredRef fires but D has not reached 80 yet
+        final SparseFileTracker.Gap gapA = gaps1List.get(0);
+        for (long i = gapA.start(); i < gapA.end(); i++) {
+            gapA.onProgress(i + 1);
+        }
+        gapA.onCompletion();
+        assertFalse(future1.isDone()); // D=[60,100) has not yet reached 80 (subRange end)
+
+        // Fill D=[60, 100): future1 fires when D reaches 80, before D even completes
+        final SparseFileTracker.Gap gapD = gaps1List.get(1);
+        for (long i = gapD.start(); i < gapD.end(); i++) {
+            if (randomBoolean()) {
+                gapD.onProgress(i + 1);
+                if (i >= 80) {
+                    assertTrue(future1.isDone());
+                }
+            }
+        }
+        gapD.onCompletion();
+        assertTrue(future1.isDone());
     }
 
     /**
