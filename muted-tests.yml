@@ -536,3 +536,6 @@ tests:
 - class: org.elasticsearch.xpack.stateless.cache.SearchCommitPrefetcherIT
   method: testSearchNodePrefetchesOnlyLatestGenerationOnFirstCommitNotifcation
   issue: https://github.com/elastic/elasticsearch/issues/148480
+- class: org.elasticsearch.compute.data.BlockAccountingTests
+  method: testBytesRefVector
+  issue: https://github.com/elastic/elasticsearch/issues/148481
