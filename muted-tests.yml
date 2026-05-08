@@ -532,3 +532,6 @@ tests:
   issue: https://github.com/elastic/elasticsearch/issues/148339
 - class: org.elasticsearch.benchmark.vector.scorer.VectorScorerOSQBenchmarkTests
   issue: https://github.com/elastic/elasticsearch/issues/148598
+- class: org.elasticsearch.xpack.esql.qa.single_node.GenerativeRandomMappingIT
+  method: test
+  issue: https://github.com/elastic/elasticsearch/issues/148190
