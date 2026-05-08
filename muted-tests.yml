@@ -527,3 +527,6 @@ tests:
 - class: org.elasticsearch.index.reindex.ReindexPluginMetricsIT
   method: testLocalReindexPitOpenFailureMetrics
   issue: https://github.com/elastic/elasticsearch/issues/148559
+- class: org.elasticsearch.index.reindex.ReindexPluginMetricsIT
+  method: testRemoteReindexVersionLookupFailureMetrics
+  issue: https://github.com/elastic/elasticsearch/issues/148560
