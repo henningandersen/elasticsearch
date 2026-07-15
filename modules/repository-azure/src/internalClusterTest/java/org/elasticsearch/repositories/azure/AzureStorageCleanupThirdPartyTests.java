@@ -59,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.CheckedOutputStream;
@@ -253,7 +254,7 @@ public class AzureStorageCleanupThirdPartyTests extends AbstractThirdPartyReposi
                         }
                         assert channel.position() == offset;
                         return new BufferedInputStream(limitStream(Channels.newInputStream(channel), length));
-                    }, false);
+                    }, false, (Executor) Runnable::run);
                 }
 
                 long bytesCount = 0L;

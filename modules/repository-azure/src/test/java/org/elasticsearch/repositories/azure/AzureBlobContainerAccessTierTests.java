@@ -51,6 +51,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -294,7 +295,8 @@ public class AzureBlobContainerAccessTierTests extends ESTestCase {
             blobName,
             blobSize,
             (offset, length) -> new ByteArrayInputStream(data, Math.toIntExact(offset), Math.toIntExact(length)),
-            false
+            false,
+            (Executor) Runnable::run
         );
 
         asserAccessTier(dataAccessTier, blobName);

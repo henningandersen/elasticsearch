@@ -80,11 +80,16 @@ import java.io.OutputStream;
 import java.nio.file.NoSuchFileException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -333,6 +338,193 @@ class S3BlobContainer extends AbstractBlobContainer {
     public void writeBlobAtomic(OperationPurpose purpose, String blobName, BytesReference bytes, boolean failIfAlreadyExists)
         throws IOException {
         writeBlob(purpose, blobName, bytes, failIfAlreadyExists);
+    }
+
+    @Override
+    public boolean supportsConcurrentMultipartUploads() {
+        return true;
+    }
+
+    @Override
+    public void writeBlobAtomic(
+        OperationPurpose purpose,
+        String blobName,
+        long blobSize,
+        BlobMultiPartInputStreamProvider provider,
+        boolean failIfAlreadyExists,
+        Executor executor
+    ) throws IOException {
+        assert BlobContainer.assertPurposeConsistency(purpose, blobName);
+        final var condition = failIfAlreadyExists ? ConditionalOperation.IF_NONE_MATCH : ConditionalOperation.NONE;
+        if (blobSize <= getLargeBlobThresholdInBytes()) {
+            try (InputStream stream = provider.apply(0L, blobSize)) {
+                executeSingleUpload(purpose, blobStore, buildKey(blobName), stream, blobSize, condition);
+            }
+        } else {
+            executeConcurrentMultipartUpload(purpose, blobStore, buildKey(blobName), blobSize, provider, condition, executor);
+        }
+    }
+
+    /**
+     * Uploads a blob using concurrent multipart upload requests, with each part uploaded in parallel using the provided executor.
+     * <p>
+     * Uses a work-stealing pattern where the calling thread participates as a worker alongside those dispatched to the executor.
+     * This guarantees forward progress even if the executor is fully saturated (e.g. when the caller runs on the same pool),
+     * preventing deadlock.
+     */
+    private void executeConcurrentMultipartUpload(
+        final OperationPurpose purpose,
+        final S3BlobStore s3BlobStore,
+        final String blobName,
+        final long blobSize,
+        final BlobMultiPartInputStreamProvider provider,
+        final ConditionalOperation condition,
+        final Executor executor
+    ) throws IOException {
+        ensureMultiPartUploadSize(blobSize);
+        final long partSize = s3BlobStore.bufferSizeInBytes();
+        final Tuple<Long, Long> multiparts = numberOfMultiparts(blobSize, partSize);
+
+        if (multiparts.v1() > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Too many multipart upload requests, maybe try a larger part size?");
+        }
+
+        final int nbParts = multiparts.v1().intValue();
+        final long lastPartSize = multiparts.v2();
+        assert blobSize == (((nbParts - 1) * partSize) + lastPartSize) : "blobSize does not match multipart sizes";
+
+        final List<Runnable> cleanupOnFailureActions = new ArrayList<>(1);
+        final String bucketName = s3BlobStore.bucket();
+        try {
+            final String uploadId;
+            try (AmazonS3Reference clientReference = s3BlobStore.clientReference()) {
+                uploadId = clientReference.client()
+                    .createMultipartUpload(createMultipartUpload(purpose, Operation.PUT_MULTIPART_OBJECT, blobName))
+                    .uploadId();
+                cleanupOnFailureActions.add(() -> {
+                    try {
+                        abortMultiPartUpload(purpose, uploadId, blobName);
+                    } catch (Exception e) {
+                        if (e instanceof SdkServiceException sdkServiceException
+                            && sdkServiceException.statusCode() == RestStatus.NOT_FOUND.getStatus()) {
+                            logger.atDebug()
+                                .withThrowable(e)
+                                .log("multipart upload of [{}] with ID [{}] not found on abort", blobName, uploadId);
+                        } else {
+                            logger.atWarn()
+                                .withThrowable(e)
+                                .log("failed to clean up multipart upload of [{}] with ID [{}] after earlier failure", blobName, uploadId);
+                        }
+                    }
+                });
+            }
+            if (Strings.isEmpty(uploadId)) {
+                throw new IOException("Failed to initialize multipart operation for " + blobName);
+            }
+
+            // Shared state for work-stealing part uploads
+            final CompletedPart[] completed = new CompletedPart[nbParts];
+            final AtomicInteger nextPart = new AtomicInteger(1);
+            final AtomicReference<Exception> firstFailure = new AtomicReference<>();
+
+            final Runnable workerLoop = () -> {
+                int partNum;
+                while (firstFailure.get() == null && (partNum = nextPart.getAndIncrement()) <= nbParts) {
+                    final boolean lastPart = partNum == nbParts;
+                    final long curPartSize = lastPart ? lastPartSize : partSize;
+                    final long offset = (long) (partNum - 1) * partSize;
+                    try {
+                        try (InputStream stream = provider.apply(offset, curPartSize)) {
+                            assert stream.markSupported() : "stream for S3 multipart part must support mark/reset for SDK retries";
+                            final UploadPartRequest uploadRequest = createPartUploadRequest(
+                                purpose,
+                                uploadId,
+                                partNum,
+                                blobName,
+                                curPartSize,
+                                lastPart
+                            );
+                            try (var clientReference = s3BlobStore.clientReference()) {
+                                final UploadPartResponse uploadResponse = clientReference.client()
+                                    .uploadPart(uploadRequest, RequestBody.fromInputStream(stream, curPartSize));
+                                completed[partNum - 1] = CompletedPart.builder().partNumber(partNum).eTag(uploadResponse.eTag()).build();
+                            }
+                        }
+                    } catch (Exception e) {
+                        firstFailure.compareAndSet(null, e);
+                    }
+                }
+            };
+
+            // Dispatch extra workers to the executor. The calling thread always runs a worker loop too,
+            // ensuring forward progress regardless of executor availability. The caller is responsible for
+            // throttling the executor (e.g. via ThrottledTaskRunner) if needed.
+            final int extraWorkers = nbParts - 1;
+            final CountDownLatch latch = new CountDownLatch(extraWorkers);
+            for (int i = 0; i < extraWorkers; i++) {
+                try {
+                    executor.execute(() -> {
+                        try {
+                            workerLoop.run();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                } catch (Exception e) {
+                    // Worker was not submitted (e.g. pool is shutting down); release the latch slot
+                    latch.countDown();
+                }
+            }
+
+            try {
+                workerLoop.run(); // calling thread participates as a worker
+            } finally {
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    firstFailure.compareAndSet(null, e);
+                }
+            }
+
+            final Exception failure = firstFailure.get();
+            if (failure != null) {
+                throw new IOException("Failed to execute concurrent multipart upload for [" + blobName + "]", failure);
+            }
+
+            final var completeMultipartUploadRequestBuilder = CompleteMultipartUploadRequest.builder()
+                .bucket(bucketName)
+                .key(blobName)
+                .uploadId(uploadId)
+                .multipartUpload(b -> b.parts(Arrays.asList(completed)));
+
+            if (s3BlobStore.supportsConditionalWrites()) {
+                switch (condition) {
+                    case ConditionalOperation.IfMatch ifMatch -> completeMultipartUploadRequestBuilder.ifMatch(ifMatch.etag);
+                    case ConditionalOperation.IfNoneMatch ignored -> completeMultipartUploadRequestBuilder.ifNoneMatch("*");
+                    case ConditionalOperation.None ignored -> {
+                    }
+                }
+            }
+
+            S3BlobStore.configureRequestForMetrics(
+                completeMultipartUploadRequestBuilder,
+                blobStore,
+                Operation.PUT_MULTIPART_OBJECT,
+                purpose
+            );
+            try (var clientReference = s3BlobStore.clientReference()) {
+                clientReference.client().completeMultipartUpload(completeMultipartUploadRequestBuilder.build());
+            }
+            cleanupOnFailureActions.clear();
+        } catch (final SdkException e) {
+            if (e instanceof SdkServiceException sse && sse.statusCode() == RestStatus.NOT_FOUND.getStatus()) {
+                throw new NoSuchFileException(blobName, null, e.getMessage());
+            }
+            throw new IOException("Unable to upload object [" + blobName + "] using concurrent multipart upload", e);
+        } finally {
+            cleanupOnFailureActions.forEach(Runnable::run);
+        }
     }
 
     /**
